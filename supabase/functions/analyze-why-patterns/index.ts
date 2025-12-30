@@ -332,16 +332,16 @@ async function analyzeRootCauses(
 }
 
 /**
- * Generate Prime Perspective using OpenAI GPT-4
+ * Generate Prime Perspective using Claude
  */
 async function generatePrimePerspective(
   happyAnalysis: any,
   painAnalysis: any,
   rootCauses: any
 ): Promise<string> {
-  const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
-  if (!openaiApiKey) {
-    console.warn("OpenAI API key not found, using fallback");
+  const anthropicApiKey = Deno.env.get("ANTHROPIC_API_KEY");
+  if (!anthropicApiKey) {
+    console.warn("Anthropic API key not found, using fallback");
     return generateFallbackPrimePerspective(
       happyAnalysis,
       painAnalysis,
@@ -368,33 +368,29 @@ Prime Perspective는 다음 형식으로 작성해주세요:
 
 한 문장으로 명확하고 구체적으로 작성해주세요.`;
 
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${openaiApiKey}`,
+        "x-api-key": anthropicApiKey,
+        "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "gpt-4",
+        model: "claude-3-5-sonnet-20241022",
+        max_tokens: 256,
+        system: "당신은 개인의 행복과 고통 패턴을 분석하여 핵심 정체성을 도출하는 심리 분석 전문가입니다. 간결하게 한 문장으로 답변하세요.",
         messages: [
-          {
-            role: "system",
-            content:
-              "당신은 개인의 행복과 고통 패턴을 분석하여 핵심 정체성을 도출하는 심리 분석 전문가입니다.",
-          },
           { role: "user", content: prompt },
         ],
-        temperature: 0.7,
-        max_tokens: 150,
       }),
     });
 
     if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.statusText}`);
+      throw new Error(`Claude API error: ${response.statusText}`);
     }
 
     const data = await response.json();
-    const primePerspective = data.choices[0].message.content.trim();
+    const primePerspective = data.content?.[0]?.text?.trim() ?? "";
 
     console.log("Generated Prime Perspective:", primePerspective);
     return primePerspective;

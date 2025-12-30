@@ -144,15 +144,15 @@ async function analyzeRelationship(
   const totalUniqueKeywords = new Set([...keywords1, ...keywords2]).size;
   const overlapRatio = totalUniqueKeywords > 0 ? (commonCount * 2) / (keywords1.length + keywords2.length) : 0;
 
-  // Use OpenAI for enhanced analysis (optional, can fallback to heuristic)
-  const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+  // Use Claude for enhanced analysis
+  const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
 
   let aiInsights = "";
   let relationship_type: "synergy" | "conflict" | "neutral";
   let strength_score: number;
   let description: string;
 
-  if (OPENAI_API_KEY) {
+  if (ANTHROPIC_API_KEY) {
     try {
       const prompt = `Analyze the relationship between two personas:
 
@@ -178,31 +178,30 @@ Respond in JSON format:
 {
   "type": "synergy|conflict|neutral",
   "strength": 0-100,
-  "description": "brief description",
-  "insights": "strategic insights and recommendations"
+  "description": "brief description in Korean",
+  "insights": "strategic insights and recommendations in Korean"
 }`;
 
-      const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${OPENAI_API_KEY}`,
+          "x-api-key": ANTHROPIC_API_KEY,
+          "anthropic-version": "2023-06-01",
         },
         body: JSON.stringify({
-          model: "gpt-4-turbo-preview",
+          model: "claude-3-5-sonnet-20241022",
+          max_tokens: 1024,
+          system: "You are an expert in personal branding and multi-persona analysis. Provide concise, actionable insights in Korean. Always respond with valid JSON only.",
           messages: [
-            {
-              role: "system",
-              content: "You are an expert in personal branding and multi-persona analysis. Provide concise, actionable insights.",
-            },
             { role: "user", content: prompt },
           ],
-          response_format: { type: "json_object" },
         }),
       });
 
       const aiData = await response.json();
-      const result = JSON.parse(aiData.choices[0].message.content);
+      const content = aiData.content?.[0]?.text || "{}";
+      const result = JSON.parse(content);
 
       relationship_type = result.type;
       strength_score = result.strength;

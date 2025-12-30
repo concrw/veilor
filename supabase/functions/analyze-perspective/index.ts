@@ -1,7 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -16,8 +16,8 @@ serve(async (req: Request) => {
   }
 
   try {
-    if (!openAIApiKey) {
-      return new Response(JSON.stringify({ error: 'OPENAI_API_KEY가 설정되지 않았습니다.' }), {
+    if (!ANTHROPIC_API_KEY) {
+      return new Response(JSON.stringify({ error: 'ANTHROPIC_API_KEY가 설정되지 않았습니다.' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -45,39 +45,34 @@ serve(async (req: Request) => {
       `3. 회피하는 요소들은 무엇인지\n\n` +
       `2-3문장으로 Prime Perspective를 작성해줘. 한국어로 답변해줘.`;
 
-    const body = {
-      model: 'gpt-4o-mini',
-      messages: [
-        {
-          role: 'system',
-          content:
-            '너는 커리어 분석가다. 입력 데이터를 간결히 통합하여 2-3문장으로 Prime Perspective를 한국어로 작성한다. 불필요한 서론, 헤더, 목록 없이 자연스러운 단락으로만 작성한다.',
-        },
-        { role: 'user', content: userPrompt },
-      ],
-      temperature: 0.7,
-    };
-
-    const aiResp = await fetch('https://api.openai.com/v1/chat/completions', {
+    const aiResp = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
+        'x-api-key': ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify({
+        model: 'claude-3-5-sonnet-20241022',
+        max_tokens: 1024,
+        system: '너는 커리어 분석가다. 입력 데이터를 간결히 통합하여 2-3문장으로 Prime Perspective를 한국어로 작성한다. 불필요한 서론, 헤더, 목록 없이 자연스러운 단락으로만 작성한다.',
+        messages: [
+          { role: 'user', content: userPrompt },
+        ],
+      }),
     });
 
     if (!aiResp.ok) {
       const details = await aiResp.text();
-      console.error('OpenAI error:', aiResp.status, details);
-      return new Response(JSON.stringify({ error: 'OpenAI API 호출 실패', details }), {
+      console.error('Anthropic error:', aiResp.status, details);
+      return new Response(JSON.stringify({ error: 'Claude API 호출 실패', details }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
     const data = await aiResp.json();
-    const content: string = data?.choices?.[0]?.message?.content?.trim() ?? '';
+    const content: string = data?.content?.[0]?.text?.trim() ?? '';
 
     return new Response(JSON.stringify({ primePerspective: content }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
