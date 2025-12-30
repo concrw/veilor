@@ -6,7 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const openAIApiKey = Deno.env.get("OPENAI_API_KEY");
+const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -14,8 +14,8 @@ serve(async (req) => {
   }
 
   try {
-    if (!openAIApiKey) {
-      return new Response(JSON.stringify({ error: "Missing OPENAI_API_KEY" }), {
+    if (!ANTHROPIC_API_KEY) {
+      return new Response(JSON.stringify({ error: "Missing ANTHROPIC_API_KEY" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -104,28 +104,25 @@ ${whyContext}
    - 단계별 가격 전략 (입문-중급-프리미엄)
    - 다양한 수익화 채널 제안`;
 
-    const res = await fetch("https://api.openai.com/v1/chat/completions", {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${openAIApiKey}`,
+        "x-api-key": ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
+        model: "claude-3-5-sonnet-20241022",
+        max_tokens: 2048,
+        system: "당신은 한국어로 응답하는 브랜드 전략 전문가입니다. 반드시 유효한 JSON 형식으로만 응답하세요. JSON 외의 다른 텍스트는 포함하지 마세요.",
         messages: [
-          {
-            role: "system",
-            content: "당신은 한국어로 응답하는 브랜드 전략 전문가입니다. 반드시 유효한 JSON 형식으로만 응답하세요. JSON 외의 다른 텍스트는 포함하지 마세요."
-          },
           { role: "user", content: prompt },
         ],
-        temperature: 0.7,
-        max_tokens: 2000,
       }),
     });
 
     const data = await res.json();
-    const content = data?.choices?.[0]?.message?.content || "{}";
+    const content = data?.content?.[0]?.text || "{}";
 
     let parsed;
     try {

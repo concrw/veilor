@@ -91,12 +91,10 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Generate recommendations based on keywords
-    // Try Claude API first, then OpenAI, then fallback to mock
+    // Generate recommendations using Claude API
     const anthropicKey = Deno.env.get("ANTHROPIC_API_KEY");
-    const openAIKey = Deno.env.get("OPENAI_API_KEY");
 
-    if (!anthropicKey && !openAIKey) {
+    if (!anthropicKey) {
       // Return mock recommendations if no API key
       const mockRecommendations: ContentRecommendation[] = generateMockRecommendations(keywords);
       return new Response(
@@ -125,53 +123,25 @@ Deno.serve(async (req) => {
 
     let content = "";
 
-    // Try Claude API first if available
-    if (anthropicKey) {
-      const claudeResponse = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": anthropicKey,
-          "anthropic-version": "2023-06-01",
-        },
-        body: JSON.stringify({
-          model: "claude-3-haiku-20240307",
-          max_tokens: 1000,
-          messages: [
-            { role: "user", content: prompt },
-          ],
-        }),
-      });
+    const claudeResponse = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": anthropicKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: "claude-3-haiku-20240307",
+        max_tokens: 1000,
+        messages: [
+          { role: "user", content: prompt },
+        ],
+      }),
+    });
 
-      if (claudeResponse.ok) {
-        const claudeResult = await claudeResponse.json();
-        content = claudeResult.content?.[0]?.text || "";
-      }
-    }
-
-    // Fallback to OpenAI if Claude failed or not available
-    if (!content && openAIKey) {
-      const openAIResponse = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${openAIKey}`,
-        },
-        body: JSON.stringify({
-          model: "gpt-4o-mini",
-          messages: [
-            { role: "system", content: "You are a content recommendation assistant. Always respond with valid JSON array only." },
-            { role: "user", content: prompt },
-          ],
-          temperature: 0.7,
-          max_tokens: 1000,
-        }),
-      });
-
-      if (openAIResponse.ok) {
-        const aiResult = await openAIResponse.json();
-        content = aiResult.choices?.[0]?.message?.content || "";
-      }
+    if (claudeResponse.ok) {
+      const claudeResult = await claudeResponse.json();
+      content = claudeResult.content?.[0]?.text || "";
     }
 
     let recommendations: ContentRecommendation[];

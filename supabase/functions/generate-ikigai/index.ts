@@ -10,7 +10,7 @@ const corsHeaders = {
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
 
 function toTokens(input: any): string[] {
   const arr: string[] = [];
@@ -43,8 +43,8 @@ serve(async (req) => {
   }
 
   try {
-    if (!OPENAI_API_KEY) {
-      return new Response(JSON.stringify({ error: "Missing OPENAI_API_KEY" }), {
+    if (!ANTHROPIC_API_KEY) {
+      return new Response(JSON.stringify({ error: "Missing ANTHROPIC_API_KEY" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -137,26 +137,25 @@ serve(async (req) => {
       paid_for: Math.min(100, Math.round((PAID_FOR.length / 10) * 100)),
     };
 
-    // 5) Final IKIGAI sentence via OpenAI
-    const payload = {
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: "You are a concise Korean career coach. Output one short sentence." },
-        { role: "user", content: `아래 4원소와 교집합을 바탕으로 최종 IKIGAI(한 문장)를 한국어로 제시하세요. 간결하게, 200자 이내.\n\nLOVE:${LOVE.join(", ")}\nGOOD_AT:${GOOD_AT.join(", ")}\nWORLD_NEEDS:${WORLD_NEEDS.join(", ")}\nPAID_FOR:${PAID_FOR.join(", ")}\n\nPassion:${Passion.join(", ")}\nMission:${Mission.join(", ")}\nProfession:${Profession.join(", ")}\nVocation:${Vocation.join(", ")}` },
-      ],
-      temperature: 0.6,
-    } as const;
-
-    const aiRes = await fetch("https://api.openai.com/v1/chat/completions", {
+    // 5) Final IKIGAI sentence via Claude
+    const aiRes = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
+        "x-api-key": ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        model: "claude-3-5-sonnet-20241022",
+        max_tokens: 256,
+        system: "You are a concise Korean career coach. Output one short sentence only.",
+        messages: [
+          { role: "user", content: `아래 4원소와 교집합을 바탕으로 최종 IKIGAI(한 문장)를 한국어로 제시하세요. 간결하게, 200자 이내.\n\nLOVE:${LOVE.join(", ")}\nGOOD_AT:${GOOD_AT.join(", ")}\nWORLD_NEEDS:${WORLD_NEEDS.join(", ")}\nPAID_FOR:${PAID_FOR.join(", ")}\n\nPassion:${Passion.join(", ")}\nMission:${Mission.join(", ")}\nProfession:${Profession.join(", ")}\nVocation:${Vocation.join(", ")}` },
+        ],
+      }),
     });
     const aiJson = await aiRes.json();
-    const finalSentence = aiJson?.choices?.[0]?.message?.content?.trim() || "당신의 강점과 열정, 시장의 필요와 수익 가능성이 만나는 지점을 실천으로 연결하세요.";
+    const finalSentence = aiJson?.content?.[0]?.text?.trim() || "당신의 강점과 열정, 시장의 필요와 수익 가능성이 만나는 지점을 실천으로 연결하세요.";
 
     const record = {
       user_id: user.id,

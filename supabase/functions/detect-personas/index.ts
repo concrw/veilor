@@ -17,13 +17,6 @@ interface JobEntry {
   category: string;
 }
 
-interface ClusterResult {
-  cluster_id: number;
-  jobs: JobEntry[];
-  centroid: number[];
-  silhouette_score: number;
-}
-
 interface PersonaTheme {
   theme: string;
   persona_name: string;
@@ -101,131 +94,108 @@ serve(async (req) => {
 
     console.log(`Found ${happyJobs.length} happy jobs`);
 
-    // 2. Call OpenAI to get embeddings for each job
-    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-    if (!OPENAI_API_KEY) {
-      throw new Error("OpenAI API key not configured");
+    // 2. Use Claude to analyze and cluster jobs
+    const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
+    if (!ANTHROPIC_API_KEY) {
+      throw new Error("Anthropic API key not configured");
     }
 
-    const embeddings = await Promise.all(
-      happyJobs.map(async (job) => {
-        const combinedText = `${job.definition || ""} ${job.reason || ""} ${
-          job.first_memory || ""
-        }`.trim();
+    // Prepare job descriptions for clustering
+    const jobDescriptions = happyJobs
+      .map(
+        (j) =>
+          `- ${j.job_name}: "${j.definition || ''}"\n  이유: ${j.reason || ''}\n  각인 순간: ${j.first_memory || ''}`
+      )
+      .join("\n");
 
-        const response = await fetch(
-          "https://api.openai.com/v1/embeddings",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${OPENAI_API_KEY}`,
-            },
-            body: JSON.stringify({
-              model: "text-embedding-3-small",
-              input: combinedText,
-            }),
-          }
-        );
-
-        const data = await response.json();
-        return {
-          job,
-          embedding: data.data[0].embedding as number[],
-        };
-      })
-    );
-
-    console.log(`Generated ${embeddings.length} embeddings`);
-
-    // 3. Simple K-means clustering
-    const optimalK = Math.min(
-      Math.max(Math.floor(happyJobs.length / 5), 2),
-      5
-    ); // 2-5 clusters
-    console.log(`Clustering into ${optimalK} groups`);
-
-    const clusters = kMeansClustering(embeddings, optimalK);
-
-    // 4. Generate persona themes for each cluster using OpenAI
-    const personas = await Promise.all(
-      clusters.map(async (cluster, index) => {
-        const clusterJobs = cluster.jobs;
-        const jobDescriptions = clusterJobs
-          .map(
-            (j) =>
-              `- ${j.job_name}: "${j.definition}"\n  이유: ${j.reason}\n  각인 순간: ${j.first_memory}`
-          )
-          .join("\n");
-
-        const prompt = `다음은 사용자가 행복을 느낄 것 같다고 선택한 직업군입니다:
+    // Use Claude to cluster and generate personas
+    const clusterPrompt = `다음은 사용자가 행복을 느낄 것 같다고 선택한 직업들입니다:
 
 ${jobDescriptions}
 
-각 직업의 정의, 이유, 각인 순간을 분석하여 다음 정보를 JSON 형식으로 제공하세요:
-1. theme: 이 클러스터의 핵심 테마를 한 문장으로 요약
-2. persona_name: 페르소나 이름 제안 (예: "돕는 나", "창작하는 나")
-3. keywords: 대표 키워드 5개 추출
-4. archetype: 원형 분류 (Healer, Creator, Strategist, Analyst, Builder, Teacher, Explorer, Guardian 중 하나)
+이 직업들을 분석하여 2~5개의 페르소나 클러스터로 그룹화해주세요.
+각 클러스터에 대해 다음 정보를 JSON 배열로 제공하세요:
 
-응답 형식:
-{
-  "theme": "...",
-  "persona_name": "...",
-  "keywords": ["...", "...", "...", "...", "..."],
-  "archetype": "..."
-}`;
+[
+  {
+    "cluster_id": 0,
+    "job_indices": [0, 2, 5],  // 해당 클러스터에 속하는 직업 인덱스 (0부터 시작)
+    "theme": "이 클러스터의 핵심 테마를 한 문장으로 요약",
+    "persona_name": "페르소나 이름 (예: '돕는 나', '창작하는 나')",
+    "keywords": ["키워드1", "키워드2", "키워드3", "키워드4", "키워드5"],
+    "archetype": "Healer|Creator|Strategist|Analyst|Builder|Teacher|Explorer|Guardian 중 하나",
+    "strength_score": 75  // 0-100 사이의 강도 점수
+  }
+]
 
-        const response = await fetch(
-          "https://api.openai.com/v1/chat/completions",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${OPENAI_API_KEY}`,
-            },
-            body: JSON.stringify({
-              model: "gpt-4o-mini",
-              messages: [{ role: "user", content: prompt }],
-              response_format: { type: "json_object" },
-              temperature: 0.7,
-            }),
-          }
-        );
+응답은 반드시 유효한 JSON 배열만 반환하세요.`;
 
-        const data = await response.json();
-        const themeData = JSON.parse(
-          data.choices[0].message.content
-        ) as PersonaTheme;
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: "claude-3-5-sonnet-20241022",
+        max_tokens: 2048,
+        system: "당신은 커리어 분석 전문가입니다. 직업들의 공통 테마를 분석하여 페르소나를 도출합니다. 반드시 유효한 JSON 배열만 응답하세요.",
+        messages: [
+          { role: "user", content: clusterPrompt },
+        ],
+      }),
+    });
 
-        // Get archetype config
-        const archetypeConfig =
-          ARCHETYPE_CONFIG[themeData.archetype] ||
-          ARCHETYPE_CONFIG.Explorer;
+    const aiData = await response.json();
+    const content = aiData.content?.[0]?.text || "[]";
 
-        return {
-          cluster_id: index,
-          jobs: clusterJobs,
-          theme: themeData.theme,
-          persona_name: themeData.persona_name,
-          keywords: themeData.keywords,
-          archetype: themeData.archetype,
-          color_hex: archetypeConfig.color,
-          icon_name: archetypeConfig.icon,
-          strength_score: cluster.silhouette_score * 100,
-          rank_order: index + 1,
-        };
-      })
-    );
+    let clusters;
+    try {
+      // Try to extract JSON from the response
+      const jsonMatch = content.match(/\[[\s\S]*\]/);
+      clusters = jsonMatch ? JSON.parse(jsonMatch[0]) : [];
+    } catch (e) {
+      console.error("Failed to parse AI response:", e);
+      clusters = [];
+    }
 
-    console.log(`Generated ${personas.length} personas`);
+    if (clusters.length === 0) {
+      throw new Error("Failed to generate persona clusters");
+    }
 
-    // 5. Save personas to database
+    console.log(`Generated ${clusters.length} persona clusters`);
+
+    // 3. Build personas from clusters
+    const personas = clusters.map((cluster: any, index: number) => {
+      const archetypeConfig =
+        ARCHETYPE_CONFIG[cluster.archetype] || ARCHETYPE_CONFIG.Explorer;
+
+      // Get jobs for this cluster
+      const clusterJobs = (cluster.job_indices || [])
+        .filter((i: number) => i >= 0 && i < happyJobs.length)
+        .map((i: number) => happyJobs[i]);
+
+      return {
+        cluster_id: index,
+        jobs: clusterJobs,
+        theme: cluster.theme,
+        persona_name: cluster.persona_name,
+        keywords: cluster.keywords || [],
+        archetype: cluster.archetype,
+        color_hex: archetypeConfig.color,
+        icon_name: archetypeConfig.icon,
+        strength_score: cluster.strength_score || 70,
+        rank_order: index + 1,
+      };
+    });
+
+    // 4. Save personas to database
     const { data: insertedPersonas, error: personaError } =
       await supabaseClient
         .from("persona_profiles")
         .insert(
-          personas.map((p) => ({
+          personas.map((p: any) => ({
             user_id: targetUserId,
             persona_name: p.persona_name,
             persona_archetype: p.archetype,
@@ -245,47 +215,51 @@ ${jobDescriptions}
       throw personaError;
     }
 
-    // 6. Create persona-job mappings
-    const mappings = personas.flatMap((persona, index) =>
-      persona.jobs.map((job) => ({
+    // 5. Create persona-job mappings
+    const mappings = personas.flatMap((persona: any, index: number) =>
+      persona.jobs.map((job: JobEntry) => ({
         persona_id: insertedPersonas![index].id,
         job_entry_id: job.id,
-        cluster_confidence: 0.85, // Simplified - could calculate actual confidence
+        cluster_confidence: 0.85,
       }))
     );
 
-    const { error: mappingError } = await supabaseClient
-      .from("persona_job_mappings")
-      .insert(mappings);
+    if (mappings.length > 0) {
+      const { error: mappingError } = await supabaseClient
+        .from("persona_job_mappings")
+        .insert(mappings);
 
-    if (mappingError) {
-      console.error("Error inserting mappings:", mappingError);
-      throw mappingError;
+      if (mappingError) {
+        console.error("Error inserting mappings:", mappingError);
+        throw mappingError;
+      }
     }
 
-    // 7. Insert keywords
-    const keywordInserts = personas.flatMap((persona, index) =>
-      persona.keywords.map((keyword) => ({
+    // 6. Insert keywords
+    const keywordInserts = personas.flatMap((persona: any, index: number) =>
+      persona.keywords.map((keyword: string) => ({
         persona_id: insertedPersonas![index].id,
         keyword,
         frequency: 1,
       }))
     );
 
-    const { error: keywordError } = await supabaseClient
-      .from("persona_keywords")
-      .insert(keywordInserts);
+    if (keywordInserts.length > 0) {
+      const { error: keywordError } = await supabaseClient
+        .from("persona_keywords")
+        .insert(keywordInserts);
 
-    if (keywordError) {
-      console.error("Error inserting keywords:", keywordError);
+      if (keywordError) {
+        console.error("Error inserting keywords:", keywordError);
+      }
     }
 
-    // 8. Update user profile
+    // 7. Update user profile
     const { error: profileError } = await supabaseClient
       .from("profiles")
       .update({
         has_multiple_personas: personas.length > 1,
-        active_persona_id: insertedPersonas![0].id, // Set first as active
+        active_persona_id: insertedPersonas![0].id,
       })
       .eq("id", targetUserId);
 
@@ -293,7 +267,7 @@ ${jobDescriptions}
       console.error("Error updating profile:", profileError);
     }
 
-    // 9. Create default milestones for each persona
+    // 8. Create default milestones for each persona
     for (const persona of insertedPersonas!) {
       const { error: milestonesError } = await supabaseClient.rpc(
         "create_default_milestones",
@@ -309,7 +283,6 @@ ${jobDescriptions}
           `Error creating milestones for persona ${persona.id}:`,
           milestonesError
         );
-        // Don't throw - milestones are nice-to-have, not critical
       } else {
         console.log(`Created default milestones for persona: ${persona.persona_name}`);
       }
@@ -336,118 +309,3 @@ ${jobDescriptions}
     );
   }
 });
-
-// Simple K-means clustering implementation
-function kMeansClustering(
-  embeddings: Array<{ job: JobEntry; embedding: number[] }>,
-  k: number
-): ClusterResult[] {
-  const vectors = embeddings.map((e) => e.embedding);
-  const n = vectors.length;
-  const dim = vectors[0].length;
-
-  // Initialize centroids randomly
-  const centroids: number[][] = [];
-  const indices = new Set<number>();
-  while (centroids.length < k) {
-    const idx = Math.floor(Math.random() * n);
-    if (!indices.has(idx)) {
-      indices.add(idx);
-      centroids.push([...vectors[idx]]);
-    }
-  }
-
-  // Iterate until convergence (max 50 iterations)
-  let assignments = new Array(n).fill(0);
-  for (let iter = 0; iter < 50; iter++) {
-    // Assign points to nearest centroid
-    const newAssignments = vectors.map((vec) => {
-      let minDist = Infinity;
-      let bestCluster = 0;
-      centroids.forEach((centroid, cIdx) => {
-        const dist = euclideanDistance(vec, centroid);
-        if (dist < minDist) {
-          minDist = dist;
-          bestCluster = cIdx;
-        }
-      });
-      return bestCluster;
-    });
-
-    // Check convergence
-    if (
-      newAssignments.every((val, idx) => val === assignments[idx])
-    ) {
-      break;
-    }
-    assignments = newAssignments;
-
-    // Update centroids
-    for (let c = 0; c < k; c++) {
-      const clusterVectors = vectors.filter(
-        (_, idx) => assignments[idx] === c
-      );
-      if (clusterVectors.length > 0) {
-        centroids[c] = clusterVectors[0].map((_, d) =>
-          clusterVectors.reduce((sum, vec) => sum + vec[d], 0) /
-          clusterVectors.length
-        );
-      }
-    }
-  }
-
-  // Build cluster results
-  const clusters: ClusterResult[] = [];
-  for (let c = 0; c < k; c++) {
-    const clusterIndices = assignments
-      .map((a, idx) => (a === c ? idx : -1))
-      .filter((idx) => idx >= 0);
-
-    if (clusterIndices.length === 0) continue;
-
-    const clusterJobs = clusterIndices.map((idx) => embeddings[idx].job);
-    const clusterVectors = clusterIndices.map((idx) => vectors[idx]);
-
-    // Calculate silhouette score (simplified)
-    const silhouetteScore = calculateSilhouetteScore(
-      clusterVectors,
-      centroids[c],
-      vectors,
-      centroids
-    );
-
-    clusters.push({
-      cluster_id: c,
-      jobs: clusterJobs,
-      centroid: centroids[c],
-      silhouette_score: Math.max(0.3, Math.min(0.9, silhouetteScore)), // Clamp between 0.3-0.9
-    });
-  }
-
-  return clusters;
-}
-
-function euclideanDistance(a: number[], b: number[]): number {
-  return Math.sqrt(a.reduce((sum, val, idx) => sum + (val - b[idx]) ** 2, 0));
-}
-
-function calculateSilhouetteScore(
-  clusterVectors: number[][],
-  centroid: number[],
-  allVectors: number[][],
-  allCentroids: number[][]
-): number {
-  // Simplified silhouette score: intra-cluster distance vs nearest other cluster
-  const intraDist =
-    clusterVectors.reduce(
-      (sum, vec) => sum + euclideanDistance(vec, centroid),
-      0
-    ) / clusterVectors.length;
-
-  const otherCentroids = allCentroids.filter((c) => c !== centroid);
-  const interDist = Math.min(
-    ...otherCentroids.map((c) => euclideanDistance(centroid, c))
-  );
-
-  return (interDist - intraDist) / Math.max(intraDist, interDist);
-}
