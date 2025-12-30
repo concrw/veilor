@@ -23,7 +23,7 @@ function toTokens(input: any): string[] {
   walk(input);
   const text = arr.join(" ").toLowerCase();
   return text
-    .split(/[^a-zA-Z0-9가-힣#\+]+/)
+    .split(/[^a-zA-Z0-9가-힣#+]+/)
     .filter((t) => t && t.length > 1);
 }
 

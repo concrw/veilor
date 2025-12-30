@@ -24,7 +24,7 @@ function extractTokens(obj: any): Set<string> {
     else if (typeof val === "string") {
       val
         .toLowerCase()
-        .split(/[^a-zA-Z0-9가-힣#\+]+/)
+        .split(/[^a-zA-Z0-9가-힣#+]+/)
         .filter(Boolean)
         .forEach((t) => tokens.add(t));
     }

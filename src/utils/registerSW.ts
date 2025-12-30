@@ -118,9 +118,9 @@ export function checkPWAInstallability() {
         return false;
       }
 
-      // @ts-ignore
+      // @ts-expect-error - BeforeInstallPromptEvent type not recognized
       deferredPrompt.prompt();
-      // @ts-ignore
+      // @ts-expect-error - BeforeInstallPromptEvent type not recognized
       const { outcome } = await deferredPrompt.userChoice;
       console.log('[PWA] Install prompt outcome:', outcome);
       deferredPrompt = null;
