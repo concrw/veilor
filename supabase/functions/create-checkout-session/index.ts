@@ -46,7 +46,7 @@ serve(async (req) => {
     const { priceId, tier } = await req.json();
 
     // Get or create Stripe customer
-    let { data: stripeCustomer } = await supabase
+    const { data: stripeCustomer } = await supabase
       .from("stripe_customers")
       .select("stripe_customer_id")
       .eq("user_id", user.id)
