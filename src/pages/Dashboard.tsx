@@ -21,6 +21,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { NotificationDropdown } from "@/components/notifications/NotificationDropdown";
+import { PushNotificationToggle } from "@/components/notifications/PushNotificationToggle";
 import { ContentRecommendations } from "@/components/recommendations/ContentRecommendations";
 
 import {
@@ -437,7 +438,7 @@ const Dashboard = () => {
           <Settings className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48">
+      <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuItem
           onClick={() => setProfileDialogOpen(true)}
           className="text-xs"
@@ -445,10 +446,10 @@ const Dashboard = () => {
           <User className="mr-2 h-3 w-3" />
           프로필 편집
         </DropdownMenuItem>
-        <DropdownMenuItem className="text-xs">
-          <Bell className="mr-2 h-3 w-3" />
-          알림 설정
-        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <div className="px-2 py-1.5">
+          <PushNotificationToggle variant="switch" className="w-full" />
+        </div>
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={handleLogout}
@@ -1058,6 +1059,7 @@ const Dashboard = () => {
         <header className="flex items-center justify-between mb-6">
           <h1 className="text-sm font-medium">안녕하세요, {greeting}님</h1>
           <div className="flex items-center gap-2">
+            <PushNotificationToggle variant="button" showLabel={false} />
             <NotificationDropdown />
             <SettingsDropdown />
           </div>
