@@ -51,7 +51,10 @@ export async function requestNotificationPermission() {
   return 'denied';
 }
 
-export async function subscribeToPushNotifications(registration: ServiceWorkerRegistration) {
+export async function subscribeToPushNotifications(
+  registration: ServiceWorkerRegistration,
+  supabaseClient?: { from: (table: string) => unknown }
+) {
   try {
     const permission = await requestNotificationPermission();
 
@@ -68,10 +71,55 @@ export async function subscribeToPushNotifications(registration: ServiceWorkerRe
     });
 
     console.log('[PWA] Push subscription:', subscription);
+
+    // Save subscription to database if supabase client provided
+    if (supabaseClient && subscription) {
+      await saveSubscriptionToDatabase(subscription, supabaseClient);
+    }
+
     return subscription;
   } catch (error) {
     console.error('[PWA] Push subscription failed:', error);
     return null;
+  }
+}
+
+async function saveSubscriptionToDatabase(
+  subscription: PushSubscription,
+  supabaseClient: { from: (table: string) => unknown }
+) {
+  try {
+    const subscriptionJson = subscription.toJSON();
+    const keys = subscriptionJson.keys as { p256dh: string; auth: string } | undefined;
+
+    if (!keys?.p256dh || !keys?.auth) {
+      console.error('[PWA] Missing subscription keys');
+      return;
+    }
+
+    const subscriptionData = {
+      endpoint: subscription.endpoint,
+      p256dh: keys.p256dh,
+      auth: keys.auth,
+      user_agent: navigator.userAgent,
+      is_active: true,
+    };
+
+    // @ts-expect-error - Supabase client type not fully specified
+    const { error } = await supabaseClient
+      .from('push_subscriptions')
+      .upsert(subscriptionData, {
+        onConflict: 'user_id,endpoint',
+        ignoreDuplicates: false,
+      });
+
+    if (error) {
+      console.error('[PWA] Failed to save subscription:', error);
+    } else {
+      console.log('[PWA] Subscription saved to database');
+    }
+  } catch (error) {
+    console.error('[PWA] Error saving subscription:', error);
   }
 }
 
@@ -90,12 +138,28 @@ function urlBase64ToUint8Array(base64String: string) {
   return outputArray;
 }
 
-export async function unsubscribeFromPushNotifications() {
+export async function unsubscribeFromPushNotifications(
+  supabaseClient?: { from: (table: string) => unknown }
+) {
   if ('serviceWorker' in navigator) {
     const registration = await navigator.serviceWorker.ready;
     const subscription = await registration.pushManager.getSubscription();
 
     if (subscription) {
+      // Remove from database if supabase client provided
+      if (supabaseClient) {
+        try {
+          // @ts-expect-error - Supabase client type not fully specified
+          await supabaseClient
+            .from('push_subscriptions')
+            .delete()
+            .eq('endpoint', subscription.endpoint);
+          console.log('[PWA] Subscription removed from database');
+        } catch (error) {
+          console.error('[PWA] Error removing subscription from database:', error);
+        }
+      }
+
       await subscription.unsubscribe();
       console.log('[PWA] Unsubscribed from push notifications');
     }
