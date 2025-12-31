@@ -22,24 +22,39 @@ CREATE INDEX IF NOT EXISTS idx_push_subscriptions_active ON push_subscriptions(i
 ALTER TABLE push_subscriptions ENABLE ROW LEVEL SECURITY;
 
 -- Users can view their own subscriptions
-CREATE POLICY "Users can view own subscriptions" ON push_subscriptions
-  FOR SELECT USING (auth.uid() = user_id);
+DO $$ BEGIN
+  CREATE POLICY "Users can view own subscriptions" ON push_subscriptions
+    FOR SELECT USING (auth.uid() = user_id);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- Users can insert their own subscriptions
-CREATE POLICY "Users can insert own subscriptions" ON push_subscriptions
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
+DO $$ BEGIN
+  CREATE POLICY "Users can insert own subscriptions" ON push_subscriptions
+    FOR INSERT WITH CHECK (auth.uid() = user_id);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- Users can update their own subscriptions
-CREATE POLICY "Users can update own subscriptions" ON push_subscriptions
-  FOR UPDATE USING (auth.uid() = user_id);
+DO $$ BEGIN
+  CREATE POLICY "Users can update own subscriptions" ON push_subscriptions
+    FOR UPDATE USING (auth.uid() = user_id);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- Users can delete their own subscriptions
-CREATE POLICY "Users can delete own subscriptions" ON push_subscriptions
-  FOR DELETE USING (auth.uid() = user_id);
+DO $$ BEGIN
+  CREATE POLICY "Users can delete own subscriptions" ON push_subscriptions
+    FOR DELETE USING (auth.uid() = user_id);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- Service role can access all subscriptions (for edge functions)
-CREATE POLICY "Service role full access" ON push_subscriptions
-  FOR ALL USING (auth.role() = 'service_role');
+DO $$ BEGIN
+  CREATE POLICY "Service role full access" ON push_subscriptions
+    FOR ALL USING (auth.role() = 'service_role');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- Function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_push_subscription_timestamp()
