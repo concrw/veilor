@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Veilrum — Vent v5</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=DM+Sans:wght@300;400&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#111;display:flex;justify-content:center;align-items:center;min-height:100vh;font-family:DM Sans,sans-serif;padding:20px;}
+
+.phone{width:340px;height:720px;background:#1C1917;border-radius:40px;border:1px solid #44403C;display:flex;flex-direction:column;overflow:hidden;--ac:#D4A574;}
+
+.status-bar{padding:14px 26px 8px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;}
+.s-time{font-size:12px;color:#78716C;}
+.s-icons{display:flex;gap:5px;}
+.s-dot{width:4px;height:4px;border-radius:50%;background:#57534E;}
+
+/* 캐릭터 헤더 */
+
+.global-tab-name{display:flex;flex-direction:column;gap:2px;flex-shrink:0;}
+.global-tab-title{font-family:Cormorant Garamond,serif;font-weight:400;font-size:22px;color:#E7E5E4;letter-spacing:.01em;line-height:1;}
+.global-tab-desc{font-size:10px;font-weight:300;color:#57534E;letter-spacing:.02em;}
+.amber-avatar-btn{width:30px;height:30px;border-radius:50%;background:#D4A57415;border:1px solid #D4A57433;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;cursor:pointer;}
+.amber-sheet-overlay{position:absolute;inset:0;background:rgba(0,0,0,.5);z-index:30;opacity:0;pointer-events:none;transition:opacity .3s;border-radius:40px;}
+.amber-sheet-overlay.show{opacity:1;pointer-events:all;}
+.amber-sheet{position:absolute;bottom:0;left:0;right:0;background:#1C1917;border-radius:20px 20px 40px 40px;border:1px solid #44403C;border-bottom:none;z-index:31;display:flex;flex-direction:column;transform:translateY(100%);transition:transform .35s cubic-bezier(.4,0,.2,1);max-height:78%;}
+.amber-sheet.show{transform:translateY(0);}
+.amber-sheet-handle{width:32px;height:3px;border-radius:99px;background:#3C3835;margin:10px auto 0;}
+.amber-sheet-header{padding:10px 20px 8px;display:flex;align-items:center;gap:9px;border-bottom:1px solid #2A2624;flex-shrink:0;}
+.amber-sheet-av{width:28px;height:28px;border-radius:50%;background:#D4A57415;border:1px solid #D4A57433;display:flex;align-items:center;justify-content:center;}
+.amber-sheet-av-inner{width:17px;height:17px;border-radius:50%;background:#D4A574;}
+.amber-sheet-name{font-family:Cormorant Garamond,serif;font-weight:400;font-size:15px;color:#E7E5E4;flex:1;}
+.amber-sheet-close{width:26px;height:26px;border-radius:50%;border:1px solid #3C3835;background:transparent;cursor:pointer;color:#57534E;font-size:13px;display:flex;align-items:center;justify-content:center;}
+.amber-chat-area{flex:1;overflow-y:auto;padding:12px 18px;display:flex;flex-direction:column;gap:8px;min-height:0;scrollbar-width:none;}
+.amber-chat-area::-webkit-scrollbar{display:none;}
+.amber-ai-b{background:#292524;border:1px solid #3C3835;border-radius:11px 11px 11px 3px;padding:10px 13px;flex-shrink:0;}
+.amber-ai-t{font-family:Cormorant Garamond,serif;font-weight:300;font-size:15px;color:#E7E5E4;line-height:1.55;word-break:keep-all;}
+.amber-ai-tone{font-size:9px;font-weight:300;color:#D4A57477;margin-top:2px;}
+.amber-user-b{background:#D4A5740D;border:1px solid #D4A57422;border-radius:11px 11px 3px 11px;padding:9px 13px;align-self:flex-end;max-width:85%;flex-shrink:0;}
+.amber-user-t{font-size:12px;font-weight:300;color:#A8A29E;line-height:1.6;word-break:keep-all;}
+.amber-input-bar{flex-shrink:0;padding:8px 14px 14px;border-top:1px solid #2A2624;display:flex;align-items:center;gap:7px;}
+.amber-field{flex:1;background:#292524;border:1px solid #3C3835;border-radius:20px;padding:7px 13px;font-family:DM Sans,sans-serif;font-size:12px;font-weight:300;color:#A8A29E;outline:none;}
+.amber-field::placeholder{color:#57534E;}
+.amber-send-btn{width:28px;height:28px;border-radius:50%;border:none;background:#D4A574;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
+
+.char-bar{flex-shrink:0;padding:8px 22px 10px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #2A2624;}
+.char-av-inner{width:21px;height:21px;border-radius:50%;background:#D4A574;}
+.char-pulse{position:absolute;inset:-3px;border-radius:50%;border:1px solid #D4A57418;animation:cpulse 3s ease-in-out infinite;}
+@keyframes cpulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0;transform:scale(1.4)}}
+.char-name{font-family:Cormorant Garamond,serif;font-weight:400;font-size:16px;color:#E7E5E4;}
+.char-st{font-size:10px;font-weight:300;color:#57534E;margin-top:2px;}
+
+/* 메인 콘텐츠 */
+.content{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0;}
+
+/* 화면 슬라이드 */
+.screen{flex:1;position:relative;overflow:hidden;}
+.view{position:absolute;inset:0;display:flex;flex-direction:column;padding:18px 22px 12px;transition:transform .38s cubic-bezier(.4,0,.2,1),opacity .3s;will-change:transform,opacity;}
+.view.active{transform:translateX(0);opacity:1;}
+.view.left{transform:translateX(-100%);opacity:0;pointer-events:none;}
+.view.right{transform:translateX(100%);opacity:0;pointer-events:none;}
+
+.eyebrow{font-size:10px;font-weight:400;letter-spacing:.1em;text-transform:uppercase;color:#D4A574;margin-bottom:5px;flex-shrink:0;}
+.panel-title{font-family:Cormorant Garamond,serif;font-weight:300;font-size:26px;color:#E7E5E4;line-height:1.2;margin-bottom:3px;flex-shrink:0;}
+.panel-sub{font-size:11px;font-weight:300;color:#57534E;margin-bottom:12px;flex-shrink:0;}
+
+/* 감정 그리드 4×2 */
+.emotion-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;flex-shrink:0;margin-bottom:12px;}
+.emo-btn{display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 6px;background:#292524;border:1px solid #3C3835;border-radius:10px;cursor:pointer;transition:all .2s;}
+.emo-btn:hover{border-color:#D4A57444;background:#D4A57407;}
+.emo-btn.on{border-color:#D4A57466;background:#D4A5740F;}
+.emo-icon{width:22px;height:22px;flex-shrink:0;}
+.emo-lbl{font-size:10px;font-weight:300;color:#78716C;text-align:center;line-height:1.3;transition:color .2s;word-break:keep-all;}
+.emo-btn.on .emo-lbl{color:#D4A574;}
+.emo-btn:hover .emo-lbl{color:#A8A29E;}
+
+/* 커뮤니티 배너 */
+.community-banner{background:#292524;border:1px solid #3C3835;border-radius:10px;padding:10px 13px;display:flex;align-items:center;gap:9px;flex-shrink:0;margin-bottom:10px;}
+.cb-dot{width:7px;height:7px;border-radius:50%;background:#D4A574;flex-shrink:0;animation:cbpulse 2.5s ease-in-out infinite;}
+@keyframes cbpulse{0%,100%{opacity:1}50%{opacity:.3}}
+.cb-text{font-family:Cormorant Garamond,serif;font-weight:300;font-size:14px;color:#A8A29E;line-height:1.4;flex:1;}
+.cb-count{font-family:Cormorant Garamond,serif;font-weight:400;font-size:16px;color:#D4A574;flex-shrink:0;}
+
+/* 대화 영역 */
+.chat-area{flex:1;display:flex;flex-direction:column;gap:8px;overflow-y:auto;min-height:0;scrollbar-width:none;}
+.chat-area::-webkit-scrollbar{display:none;}
+
+.ai-b{background:#292524;border:1px solid #3C3835;border-radius:12px 12px 12px 3px;padding:12px 14px;flex-shrink:0;}
+.ai-t{font-family:Cormorant Garamond,serif;font-weight:300;font-size:16px;color:#E7E5E4;line-height:1.6;word-break:keep-all;}
+.ai-tone{font-size:10px;font-weight:300;color:#D4A57466;margin-top:3px;}
+.user-b{background:#D4A5740D;border:1px solid #D4A57422;border-radius:12px 12px 3px 12px;padding:10px 14px;align-self:flex-end;max-width:84%;flex-shrink:0;}
+.user-t{font-size:13px;font-weight:300;color:#A8A29E;line-height:1.6;word-break:keep-all;}
+
+/* 감정 요약 카드 */
+.summary-card{background:#292524;border:1px solid #D4A57422;border-radius:11px;padding:14px 15px;flex-shrink:0;}
+.sc-label{font-size:10px;font-weight:400;letter-spacing:.08em;text-transform:uppercase;color:#D4A574;margin-bottom:6px;}
+.sc-emotion-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
+.sc-chip{font-size:11px;font-weight:300;padding:3px 10px;border-radius:99px;border:1px solid #D4A57433;color:#D4A574;background:#D4A5740A;}
+.sc-suggestion{font-family:Cormorant Garamond,serif;font-weight:300;font-size:14px;color:#A8A29E;line-height:1.65;margin-bottom:10px;word-break:keep-all;}
+.sc-btns{display:flex;gap:7px;}
+.sc-btn-more{flex:1;padding:9px 0;border-radius:9px;border:1px solid #D4A57444;background:#D4A5740A;font-family:DM Sans,sans-serif;font-size:11px;font-weight:300;color:#D4A574;cursor:pointer;transition:background .15s;}
+.sc-btn-more:hover{background:#D4A57414;}
+.sc-btn-next{flex:1;padding:9px 0;border-radius:9px;border:1px solid #3C3835;background:transparent;font-family:DM Sans,sans-serif;font-size:11px;font-weight:300;color:#57534E;cursor:pointer;transition:all .15s;}
+.sc-btn-next:hover{border-color:#5C5754;color:#A8A29E;}
+
+/* 입력창 */
+
+/* 3레이어 신호 배너 */
+.layer-signal{background:#292524;border:1px solid #D4A57422;border-radius:10px;padding:10px 14px;flex-shrink:0;margin-top:8px;display:none;animation:fadeUp .3s ease both;}
+.layer-signal.show{display:flex;align-items:flex-start;gap:9px;}
+.ls-dot{width:6px;height:6px;border-radius:50%;background:#D4A574;flex-shrink:0;margin-top:4px;animation:lsdot 2s ease-in-out infinite;}
+@keyframes lsdot{0%,100%{opacity:1}50%{opacity:.3}}
+.ls-body{flex:1;}
+.ls-label{font-size:9px;font-weight:400;letter-spacing:.07em;text-transform:uppercase;color:#D4A574;margin-bottom:3px;}
+.ls-q{font-family:Cormorant Garamond,serif;font-weight:300;font-size:15px;color:#E7E5E4;line-height:1.5;word-break:keep-all;margin-bottom:8px;}
+.ls-opts{display:flex;flex-direction:column;gap:5px;}
+.ls-opt{background:#1C1917;border:1px solid #3C3835;border-radius:8px;padding:8px 12px;cursor:pointer;font-family:Cormorant Garamond,serif;font-weight:300;font-size:13px;color:#78716C;transition:all .18s;word-break:keep-all;}
+.ls-opt:hover{border-color:#D4A57433;color:#A8A29E;}
+.ls-opt.on{border-color:#D4A57455;color:#E7E5E4;background:#D4A57408;}
+.ls-skip{font-size:10px;font-weight:300;color:#3C3835;cursor:pointer;margin-top:5px;text-align:right;}
+.ls-skip:hover{color:#57534E;}
+
+.input-bar{flex-shrink:0;padding:8px 16px 14px;border-top:1px solid #2A2624;display:flex;align-items:center;gap:8px;}
+.input-toggle{width:32px;height:32px;border-radius:50%;border:1px solid #3C3835;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s;flex-shrink:0;}
+.input-toggle:hover{background:#292524;}
+/* 일상 질문 카드 */
+.quick-qs{display:flex;flex-direction:column;gap:7px;flex-shrink:0;margin-top:4px;}
+.quick-q-label{font-size:10px;font-weight:400;letter-spacing:.08em;text-transform:uppercase;color:#3C3835;margin-bottom:2px;}
+.quick-q{background:#292524;border:1px solid #3C3835;border-radius:10px;padding:11px 14px;cursor:pointer;transition:border-color .2s,background .2s;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.quick-q:hover{border-color:#D4A57433;background:#D4A57407;}
+.quick-q-text{font-family:Cormorant Garamond,serif;font-weight:300;font-size:14px;color:#78716C;line-height:1.5;flex:1;word-break:keep-all;}
+.quick-q-arr{font-size:12px;color:#3C3835;flex-shrink:0;transition:color .2s;}
+.quick-q:hover .quick-q-arr{color:#D4A57466;}
+
+.input-field{flex:1;background:#292524;border:1px solid #3C3835;border-radius:20px;padding:8px 14px;font-family:DM Sans,sans-serif;font-size:12px;font-weight:300;color:#A8A29E;outline:none;transition:border-color .2s;}
+.input-field::placeholder{color:#57534E;}
+.input-field:focus{border-color:#5C5754;}
+.input-send{width:32px;height:32px;border-radius:50%;border:none;background:#D4A574;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:transform .1s;}
+.input-send:active{transform:scale(.92);}
+
+/* nav */
+.bottom-nav{flex-shrink:0;background:#1C1917;border-top:1px solid #2A2624;padding:9px 10px 16px;display:flex;justify-content:space-around;}
+.nav-btn{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;padding:4px 12px;border-radius:9px;border:none;background:transparent;}
+.nav-dot{width:5px;height:5px;border-radius:50%;background:#3C3835;transition:background .2s,transform .2s;}
+.nav-lbl{font-size:11px;font-weight:300;color:#57534E;transition:color .2s;}
+.nav-btn.on .nav-dot{background:#D4A574;transform:scale(1.3);}
+.nav-btn.on .nav-lbl{color:#D4A574;font-weight:400;}
+.nav-btn.on{background:#D4A5740A;}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+.fade-in{animation:fadeUp .32s ease both;}
+
+/* Amber/Frost 어텐션 애니메이션 */
+@keyframes amber-flash{
+  0%{box-shadow:0 0 0 0 rgba(212,165,116,0);transform:scale(1);}
+  20%{box-shadow:0 0 0 7px rgba(212,165,116,0.4);transform:scale(1.12);}
+  40%{box-shadow:0 0 0 3px rgba(212,165,116,0.15);transform:scale(1.05);}
+  60%{box-shadow:0 0 0 9px rgba(212,165,116,0.25);transform:scale(1.08);}
+  80%{box-shadow:0 0 0 2px rgba(212,165,116,0.08);transform:scale(1.02);}
+  100%{box-shadow:0 0 0 0 rgba(212,165,116,0);transform:scale(1);}
+}
+@keyframes fpulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0;transform:scale(1.4)}}
+.amber-avatar-btn{transition:transform .2s;}
+.amber-avatar-btn.flashing{animation:amber-flash 1.4s ease-out forwards;}
+</style>
+</head>
+<body>
+<div class="phone" style="position:relative;">
+
+  <div class="status-bar">
+    <span class="s-time">9:41</span>
+    <div class="s-icons"><div class="s-dot"></div><div class="s-dot"></div><div class="s-dot"></div></div>
+  </div>
+
+  <!-- 글로벌 헤더 -->
+  <div class="char-bar">
+    <div class="global-tab-name">
+      <div class="global-tab-title">VENT</div>
+      <div class="global-tab-desc">지금 다 쏟아내도 돼요</div>
+    </div>
+    <div style="flex:1;"></div>
+    <div class="amber-avatar-btn" id="amber-avatar-btn" onclick="openAmber()">
+      <div class="char-pulse"></div>
+      <div class="char-av-inner"></div>
+    </div>
+  </div>
+
+  <!-- Amber 대화 시트 -->
+  <div class="amber-sheet-overlay" id="amber-overlay" onclick="closeAmber()"></div>
+  <div class="amber-sheet" id="amber-sheet">
+    <div class="amber-sheet-handle"></div>
+    <div class="amber-sheet-header">
+      <div class="amber-sheet-av"><div class="amber-sheet-av-inner"></div></div>
+      <div class="amber-sheet-name">엠버</div>
+      <button class="amber-sheet-close" onclick="closeAmber()">&#x2715;</button>
+    </div>
+    <div class="amber-chat-area" id="amber-chat">
+      <div class="amber-ai-b">
+        <div class="amber-ai-t">지금 어떤 감정인지 꺼내놔도 괜찮아요. 여기 있어요.</div>
+        <div class="amber-ai-tone">여기 있어요</div>
+      </div>
+    </div>
+    <div class="amber-input-bar">
+      <input class="amber-field" id="amber-field" placeholder="Amber에게 말해요..."/>
+      <button class="amber-send-btn" onclick="sendAmber()">
+        <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M6 11V1M1 6l5-5 5 5" stroke="#1C1917" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+  </div>
+
+
+  <!-- Vent 섹션 탭 -->
+  <div style="flex-shrink:0;display:flex;border-bottom:1px solid #2A2624;padding:0 22px;">
+    <div class="vstab on" id="vstab-vent" onclick="switchVentSection('vent',this)" style="font-size:11px;font-weight:300;color:#D4A574;padding:9px 0;margin-right:18px;cursor:pointer;border-bottom:2px solid #D4A574;user-select:none;">지금 기분</div>
+    <div class="vstab" id="vstab-layer" onclick="switchVentSection('layer',this)" style="font-size:11px;font-weight:300;color:#57534E;padding:9px 0;margin-right:18px;cursor:pointer;border-bottom:2px solid transparent;user-select:none;">나의 레이어</div>
+    <div class="vstab" id="vstab-community" onclick="switchVentSection('community',this)" style="font-size:11px;font-weight:300;color:#57534E;padding:9px 0;cursor:pointer;border-bottom:2px solid transparent;user-select:none;">커뮤니티</div>
+  </div>
+  <div class="content" id="vent-main-content">
+    <div class="screen">
+
+      <!-- VIEW 0: 감정 선택 -->
+      <div class="view active" id="v0">
+        <div class="panel-title" id="main-greeting">지금 기분이 어때요?</div>
+        <div class="panel-sub" id="main-sub">여기 있어요</div>
+
+        <div class="emotion-grid">
+          <!-- Row 1 -->
+          <button class="emo-btn" onclick="pickEmotion('불안해',this)">
+            <svg class="emo-icon" viewBox="0 0 24 24" fill="none" stroke="#78716C" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 15s1-2 4-2 4 2 4 2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/><path d="M8.5 8.5c.5-1 1.5-1.5 2.5-1.5"/><path d="M15.5 8.5c-.5-1-1.5-1.5-2.5-1.5"/></svg>
+            <span class="emo-lbl">불안해</span>
+          </button>
+          <button class="emo-btn" onclick="pickEmotion('슬퍼',this)">
+            <svg class="emo-icon" viewBox="0 0 24 24" fill="none" stroke="#78716C" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+            <span class="emo-lbl">슬퍼</span>
+          </button>
+          <button class="emo-btn" onclick="pickEmotion('화가 나',this)">
+            <svg class="emo-icon" viewBox="0 0 24 24" fill="none" stroke="#78716C" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><path d="M8.5 8.5l2 1.5"/><path d="M15.5 8.5l-2 1.5"/></svg>
+            <span class="emo-lbl">화가 나</span>
+          </button>
+          <button class="emo-btn" onclick="pickEmotion('혼란스러워',this)">
+            <svg class="emo-icon" viewBox="0 0 24 24" fill="none" stroke="#78716C" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <span class="emo-lbl">혼란스러워</span>
+          </button>
+          <!-- Row 2 -->
+          <button class="emo-btn" onclick="pickEmotion('외로워',this)">
+            <svg class="emo-icon" viewBox="0 0 24 24" fill="none" stroke="#78716C" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 15h.01M12 15h.01M16 15h.01"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+            <span class="emo-lbl">외로워</span>
+          </button>
+          <button class="emo-btn" onclick="pickEmotion('무감각해',this)">
+            <svg class="emo-icon" viewBox="0 0 24 24" fill="none" stroke="#78716C" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+            <span class="emo-lbl">무감각해</span>
+          </button>
+          <button class="emo-btn" onclick="pickEmotion('지쳐',this)">
+            <svg class="emo-icon" viewBox="0 0 24 24" fill="none" stroke="#78716C" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 13s1 2 4 2 4-2 4-2"/><path d="M8 9l2 1"/><path d="M16 9l-2 1"/></svg>
+            <span class="emo-lbl">지쳐</span>
+          </button>
+          <button class="emo-btn" onclick="pickEmotion('상처받았어',this)">
+            <svg class="emo-icon" viewBox="0 0 24 24" fill="none" stroke="#78716C" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/><line x1="12" y1="10" x2="12" y2="14"/></svg>
+            <span class="emo-lbl">상처받았어</span>
+          </button>
+        </div>
+
+
+        <!-- 일상 질문 카드 -->
+        <div class="quick-qs" id="quick-qs">
+          <div class="quick-q-label">아니면 이런 건 어때요?</div>
+          <div class="quick-q" onclick="quickPick('relationship')">
+            <span class="quick-q-text">가까운 사람과 무슨 일이 있었어</span>
+            <span class="quick-q-arr">→</span>
+          </div>
+          <div class="quick-q" onclick="quickPick('work')">
+            <span class="quick-q-text">해야 할 일이 자꾸 마음에 걸려</span>
+            <span class="quick-q-arr">→</span>
+          </div>
+          <div class="quick-q" onclick="quickPick('self')">
+            <span class="quick-q-text">딱히 뭐라고 할 수 없는데 뭔가 이상해</span>
+            <span class="quick-q-arr">→</span>
+          </div>
+          <div class="quick-q" onclick="quickPick('body')">
+            <span class="quick-q-text">몸이 무겁고 피곤하고 어딘가 조여</span>
+            <span class="quick-q-arr">→</span>
+          </div>
+        </div>
+
+        <!-- 커뮤니티 배너 -->
+        <div class="community-banner" id="comm-banner" style="display:none;">
+          <div class="cb-dot"></div>
+          <div class="cb-text" id="comm-text">지금 비슷한 감정인 친구들이</div>
+          <div class="cb-count" id="comm-count">0</div>
+        </div>
+
+      </div>
+
+      <!-- VIEW 1: 대화 화면 -->
+      <div class="view right" id="v1">
+        <div class="panel-title" id="v1-title">불안해</div>
+        <div class="panel-sub" id="v1-sub">여기 있어요</div>
+
+        <!-- 커뮤니티 배너 -->
+        <div class="community-banner" id="comm-banner2" style="margin-bottom:10px;flex-shrink:0;">
+          <div class="cb-dot"></div>
+          <div class="cb-text" id="comm-text2">지금 비슷한 감정인 친구들이</div>
+          <div class="cb-count" id="comm-count2">0</div>
+        </div>
+
+        <div class="chat-area" id="chat-main"></div>
+
+        <!-- 3레이어 신호 수집 배너 -->
+        <div class="layer-signal" id="layer-signal">
+          <div class="ls-dot"></div>
+          <div class="ls-body">
+            <div class="ls-label" id="ls-label">다른 상황에서는요?</div>
+            <div class="ls-q" id="ls-q"></div>
+            <div class="ls-opts" id="ls-opts"></div>
+            <div class="ls-skip" onclick="skipLayerQ()">이 질문 건너뛰기</div>
+          </div>
+        </div>
+
+        <!-- 감정 요약 카드 (N개 이상 대화 후 등장) -->
+        <div class="summary-card fade-in" id="summary-card" style="display:none;margin-top:8px;">
+          <div class="sc-label">지금 감정</div>
+          <div class="sc-emotion-row" id="sc-emotions"></div>
+          <div class="sc-suggestion" id="sc-suggest"></div>
+          <div class="sc-btns">
+            <button class="sc-btn-more" onclick="keepTalking()">더 이야기할게요</button>
+            <button class="sc-btn-next" onclick="goDigSuggest()">이걸 해볼게요 →</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="input-bar" id="main-input">
+    <button class="input-toggle" title="Voice">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="5" y="1" width="6" height="9" rx="3" stroke="#78716C" stroke-width="1.2"/><path d="M2 7.5C2 10.538 4.686 13 8 13s6-2.462 6-5.5" stroke="#78716C" stroke-width="1.2" stroke-linecap="round" fill="none"/><line x1="8" y1="13" x2="8" y2="15" stroke="#78716C" stroke-width="1.2" stroke-linecap="round"/></svg>
+    </button>
+    <input class="input-field" id="main-msg" placeholder="지금 어떤 마음이에요?" onkeydown="if(event.key==='Enter')sendMsg()"/>
+    <button class="input-send" onclick="sendMsg()">
+      <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M6 11V1M1 6l5-5 5 5" stroke="#1C1917" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+  </div>
+
+  <!-- 나의 레이어 뷰 -->
+  <div id="v-layer" style="display:none;flex:1;flex-direction:column;overflow:hidden;min-height:0;">
+    <!-- 그룹 선택 -->
+    <div id="layer-groups" style="flex:1;overflow-y:auto;padding:14px 22px;display:flex;flex-direction:column;gap:8px;scrollbar-width:none;">
+      <div style="font-size:11px;font-weight:300;color:#57534E;margin-bottom:4px;flex-shrink:0;">어떤 상황에서의 나를 살펴볼까요?</div>
+
+      <div onclick="toggleLG('social',this)" style="background:#292524;border:1px solid #3C3835;border-radius:11px;padding:13px 15px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-shrink:0;transition:border-color .2s;">
+        <div><div style="font-family:Cormorant Garamond,serif;font-weight:300;font-size:17px;color:#E7E5E4;margin-bottom:2px;">사회적인 나</div><div style="font-size:10px;font-weight:300;color:#57534E;">직장, 처음 만남, SNS, 공식적인 자리</div></div>
+        <div style="font-size:11px;color:#3C3835;flex-shrink:0;" id="arr-social">›</div>
+      </div>
+      <div id="sl-social" style="display:none;flex-direction:column;gap:5px;padding-left:8px;">
+        <div onclick="enterLayer('social_work','직장/학교에서의 나')" style="background:#1C1917;border:1px solid #3C3835;border-radius:9px;padding:10px 13px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;">
+          <span style="font-family:Cormorant Garamond,serif;font-weight:300;font-size:15px;color:#A8A29E;">직장 / 학교에서의 나</span>
+          <span style="font-size:9px;padding:2px 8px;border-radius:99px;border:1px solid #3C3835;color:#57534E;flex-shrink:0;">일반</span>
+        </div>
+        <div onclick="enterLayer('social_stranger','처음 만나는 사람 앞에서')" style="background:#1C1917;border:1px solid #3C3835;border-radius:9px;padding:10px 13px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;">
+          <span style="font-family:Cormorant Garamond,serif;font-weight:300;font-size:15px;color:#A8A29E;">처음 만나는 사람 앞</span>
+          <span style="font-size:9px;padding:2px 8px;border-radius:99px;border:1px solid #3C3835;color:#57534E;flex-shrink:0;">일반</span>
+        </div>
+        <div onclick="enterLayer('social_sns','SNS에서의 나')" style="background:#1C1917;border:1px solid #3C3835;border-radius:9px;padding:10px 13px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;">
+          <span style="font-family:Cormorant Garamond,serif;font-weight:300;font-size:15px;color:#A8A29E;">SNS에서의 나</span>
+          <span style="font-size:9px;padding:2px 8px;border-radius:99px;border:1px solid #3C3835;color:#57534E;flex-shrink:0;">일반</span>
+        </div>
+        <div onclick="enterLayer('social_formal','공식적인 자리에서')" style="background:#1C1917;border:1px solid #3C3835;border-radius:9px;padding:10px 13px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;">
+          <span style="font-family:Cormorant Garamond,serif;font-weight:300;font-size:15px;color:#A8A29E;">공식적인 자리에서</span>
+          <span style="font-size:9px;padding:2px 8px;border-radius:99px;border:1px solid #3C3835;color:#57534E;flex-shrink:0;">일반</span>
+        </div>
+      </div>
+
+      <div onclick="toggleLG('general',this)" style="background:#292524;border:1px solid #3C3835;border-radius:11px;padding:13px 15px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-shrink:0;transition:border-color .2s;">
+        <div><div style="font-family:Cormorant Garamond,serif;font-weight:300;font-size:17px;color:#E7E5E4;margin-bottom:2px;">일반적인 나</div><div style="font-size:10px;font-weight:300;color:#57534E;">가족, 친한 친구, 연인, 혼자</div></div>
+        <div style="font-size:11px;color:#3C3835;flex-shrink:0;" id="arr-general">›</div>
+      </div>
+      <div id="sl-general" style="display:none;flex-direction:column;gap:5px;padding-left:8px;">
+        <div onclick="enterLayer('general_family','가족 안에서의 나')" style="background:#1C1917;border:1px solid #3C3835;border-radius:9px;padding:10px 13px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;">
+          <span style="font-family:Cormorant Garamond,serif;font-weight:300;font-size:15px;color:#A8A29E;">가족 안에서의 나</span>
+          <span style="font-size:9px;padding:2px 8px;border-radius:99px;border:1px solid #3C3835;color:#57534E;flex-shrink:0;">일반</span>
+        </div>
+        <div onclick="enterLayer('general_friend','친한 친구 앞에서')" style="background:#1C1917;border:1px solid #3C3835;border-radius:9px;padding:10px 13px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;">
+          <span style="font-family:Cormorant Garamond,serif;font-weight:300;font-size:15px;color:#A8A29E;">친한 친구 앞에서</span>
+          <span style="font-size:9px;padding:2px 8px;border-radius:99px;border:1px solid #3C3835;color:#57534E;flex-shrink:0;">일반</span>
+        </div>
+        <div onclick="enterLayer('general_partner','연인/파트너 앞에서')" style="background:#1C1917;border:1px solid #3C3835;border-radius:9px;padding:10px 13px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;">
+          <span style="font-family:Cormorant Garamond,serif;font-weight:300;font-size:15px;color:#A8A29E;">연인 / 파트너 앞에서</span>
+          <span style="font-size:9px;padding:2px 8px;border-radius:99px;border:1px solid #A0785033;color:#A07850;background:#A078500A;flex-shrink:0;">민감</span>
+        </div>
+        <div onclick="enterLayer('general_alone','혼자 있을 때의 나')" style="background:#1C1917;border:1px solid #3C3835;border-radius:9px;padding:10px 13px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;">
+          <span style="font-family:Cormorant Garamond,serif;font-weight:300;font-size:15px;color:#A8A29E;">혼자 있을 때의 나</span>
+          <span style="font-size:9px;padding:2px 8px;border-radius:99px;border:1px solid #3C3835;color:#57534E;flex-shrink:0;">일반</span>
+        </div>
+      </div>
+
+      <div onclick="toggleLG('secret',this)" style="background:#292524;border:1px solid #3C3835;border-radius:11px;padding:13px 15px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-shrink:0;transition:border-color .2s;">
+        <div><div style="font-family:Cormorant Garamond,serif;font-weight:300;font-size:17px;color:#E7E5E4;margin-bottom:2px;">비밀스러운 나</div><div style="font-size:10px;font-weight:300;color:#57534E;">감정적 비밀, 관계적 비밀, 욕망, 수치심, 야망</div></div>
+        <div style="font-size:11px;color:#3C3835;flex-shrink:0;" id="arr-secret">›</div>
+      </div>
+      <div id="sl-secret" style="display:none;flex-direction:column;gap:5px;padding-left:8px;">
+        <div onclick="enterLayer('secret_emotion','감정적 비밀')" style="background:#1C1917;border:1px solid #3C3835;border-radius:9px;padding:10px 13px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;">
+          <span style="font-family:Cormorant Garamond,serif;font-weight:300;font-size:15px;color:#A8A29E;">감정적 비밀</span>
+          <span style="font-size:9px;padding:2px 8px;border-radius:99px;border:1px solid #A0785033;color:#A07850;background:#A078500A;flex-shrink:0;">민감</span>
+        </div>
+        <div onclick="enterLayer('secret_relation','관계적 비밀')" style="background:#1C1917;border:1px solid #3C3835;border-radius:9px;padding:10px 13px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;">
+          <span style="font-family:Cormorant Garamond,serif;font-weight:300;font-size:15px;color:#A8A29E;">관계적 비밀</span>
+          <span style="font-size:9px;padding:2px 8px;border-radius:99px;border:1px solid #A0785033;color:#A07850;background:#A078500A;flex-shrink:0;">민감</span>
+        </div>
+        <div style="background:#1C1917;border:1px solid #3C3835;border-radius:9px;padding:10px 13px;cursor:default;display:flex;align-items:center;justify-content:space-between;gap:8px;opacity:.5;">
+          <span style="font-family:Cormorant Garamond,serif;font-weight:300;font-size:15px;color:#57534E;">욕망 / 성적 영역</span>
+          <span style="font-size:9px;padding:2px 8px;border-radius:99px;border:1px solid #3C3835;color:#3C3835;flex-shrink:0;">&#128274; 잠김</span>
+        </div>
+        <div style="background:#1C1917;border:1px solid #3C3835;border-radius:9px;padding:10px 13px;cursor:default;display:flex;align-items:center;justify-content:space-between;gap:8px;opacity:.5;">
+          <span style="font-family:Cormorant Garamond,serif;font-weight:300;font-size:15px;color:#57534E;">수치심 영역</span>
+          <span style="font-size:9px;padding:2px 8px;border-radius:99px;border:1px solid #3C3835;color:#3C3835;flex-shrink:0;">&#128274; 잠김</span>
+        </div>
+        <div onclick="enterLayer('secret_ambition','야망/욕심 영역')" style="background:#1C1917;border:1px solid #3C3835;border-radius:9px;padding:10px 13px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;">
+          <span style="font-family:Cormorant Garamond,serif;font-weight:300;font-size:15px;color:#A8A29E;">야망 / 욕심 영역</span>
+          <span style="font-size:9px;padding:2px 8px;border-radius:99px;border:1px solid #3C3835;color:#57534E;flex-shrink:0;">일반</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 레이어 질문 영역 -->
+    <div id="layer-q-wrap" style="display:none;flex:1;flex-direction:column;overflow:hidden;min-height:0;">
+      <div style="padding:10px 22px 0;flex-shrink:0;display:flex;align-items:center;gap:8px;">
+        <div onclick="backToGroups()" style="font-size:11px;font-weight:300;color:#57534E;cursor:pointer;">&#8592;</div>
+        <div id="lq-badge" style="font-size:10px;font-weight:400;letter-spacing:.07em;text-transform:uppercase;padding:3px 10px;border-radius:99px;border:1px solid #D4A57433;color:#D4A574;background:#D4A5740A;">레이어</div>
+      </div>
+      <div id="lq-list" style="flex:1;overflow-y:auto;padding:10px 22px;display:flex;flex-direction:column;gap:7px;min-height:0;scrollbar-width:none;padding-bottom:8px;">
+      </div>
+    </div>
+  </div>
+
+  <!-- 커뮤니티 뷰 -->
+  <div id="v-vent-community" style="display:none;flex:1;flex-direction:column;padding:14px 22px 0;overflow:hidden;min-height:0;">
+    <div style="font-size:10px;font-weight:400;letter-spacing:.1em;text-transform:uppercase;color:#D4A574;margin-bottom:8px;flex-shrink:0;">Vent · 커뮤니티</div>
+    <div style="font-size:10px;font-weight:300;color:#3C3835;margin-bottom:10px;flex-shrink:0;">지금 비슷한 감정인 사람들이에요.</div>
+    <div style="flex:1;overflow-y:auto;min-height:0;scrollbar-width:none;display:flex;flex-direction:column;gap:8px;">
+      <div style="background:#292524;border:1px solid #D4A57433;border-radius:11px;padding:12px 14px;background:#D4A57408;cursor:pointer;" onclick="this.classList.toggle('open')">
+        <div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:4px;"><span style="font-family:Cormorant Garamond,serif;font-weight:300;font-size:15px;color:#E7E5E4;">사람들 속에서 혼자인 사람들</span><span style="font-size:10px;color:#57534E;flex-shrink:0;">98명</span></div>
+        <div style="font-size:11px;font-weight:300;color:#78716C;">함께 있어도 연결이 안 되는 느낌</div>
+      </div>
+      <div style="background:#292524;border:1px solid #3C3835;border-radius:11px;padding:12px 14px;cursor:pointer;" onclick="this.classList.toggle('open')">
+        <div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:4px;"><span style="font-family:Cormorant Garamond,serif;font-weight:300;font-size:15px;color:#E7E5E4;">지금 이유없이 불안한 사람들</span><span style="font-size:10px;color:#57534E;flex-shrink:0;">142명</span></div>
+        <div style="font-size:11px;font-weight:300;color:#78716C;">뚜렷한 이유 없이 올라오는 불안 패턴</div>
+      </div>
+    </div>
+  </div>
+
+
+  <nav class="bottom-nav">
+    <button class="nav-btn on"><div class="nav-dot"></div><span class="nav-lbl">Vent</span></button>
+    <button class="nav-btn"><div class="nav-dot"></div><span class="nav-lbl">Dig</span></button>
+    <button class="nav-btn"><div class="nav-dot"></div><span class="nav-lbl">Get</span></button>
+    <button class="nav-btn"><div class="nav-dot"></div><span class="nav-lbl">Set</span></button>
+    <button class="nav-btn"><div class="nav-dot"></div><span class="nav-lbl">Me</span></button>
+  </nav>
+
+</div>
+
+<script>
+// 감정별 데이터
+const emoData = {
+  '불안해': {
+    count: 142,
+    questions: [
+      ["That anxious feeling — what's stirring it up 명 있어?", "부드럽게 · 여기 있어요"],
+      ["언제부터 그랬어요? 무슨 계기가 있었나요?", "천천히 함께해요"],
+      ["What does anxious feel like in your body 명 있어?", "궁금해요 · 가까이 있을게요"],
+      ["혹시 두려운 게 있어요?", "서두르지 않아도 돼요"],
+    ],
+    suggestions: "You've been carrying a lot of anxiety 명 있어. Taking slow breaths or writing down what you're afraid of can sometimes loosen its grip.",
+  },
+  '슬퍼': {
+    count: 98,
+    questions: [
+      ["마음이 무거운 것 같아요. 무슨 일이에요?", "조용히 · 듣고 있어요"],
+      ["얼마나 됐어요, 이 감정이?", "함께예요 · 서두르지 않아도 돼요"],
+      ["중심에 있는 사람이나 상황이 있어요?", "부드럽게 · 여기 있어요"],
+      ["이 슬픔이 말을 할 수 있다면 뭐라고 할 것 같아요?", "궁금해요 · 여기 있어요"],
+    ],
+    suggestions: "슬퍼ness visited you a lot today. Sometimes letting yourself feel it fully — even for a few minutes — helps it move through.",
+  },
+  '화가 나': {
+    count: 76,
+    questions: [
+      ["화가 나는 게 당연해요. 무슨 일이에요?", "함께예요 · 판단하지 않아요"],
+      ["누구 때문인지, 아니면 어떤 상황 때문인지 말해줄 수 있어요?", "직접적으로 · 듣고 있어요"],
+      ["필요했는데 받지 못한 게 뭐였어요?", "뿌리를 찾아가요"],
+      ["화 아래에 다른 감정이 있지 않을까요?", "조심스럽게 · 가까이 있을게요"],
+    ],
+    suggestions: "Anger was present for you today. It often protects something underneath — a hurt, a need that wasn't met.",
+  },
+  '혼란스러워': {
+    count: 54,
+    questions: [
+      ["혼란스러울 때, 가장 크게 맴도는 질문이 뭐예요?", "천천히 · 서두르지 않아도 돼요"],
+      ["상황 때문인지, 관계 때문인지, 아니면 나 자신 때문인지?", "서두르지 않아도 돼요 · 여기 있어요"],
+      ["기대했는데 일어나지 않은 게 뭐예요?", "같이 명확해져가요"],
+      ["What would help you feel less stuck 명 있어?", "궁금해요 · 함께예요"],
+    ],
+    suggestions: "혼란은 종종 변화 사이에 있다는 신호예요. 알던 나와 아직 만들어지고 있는 나 사이에 있는 거예요.",
+  },
+  '외로워': {
+    count: 218,
+    questions: [
+      ["외로움이 참 무겁죠. 어떤 종류의 외로움이에요?", "조용히 · 여기 있어요"],
+      ["특정 사람 때문인지, 아니면 그냥 전반적인 느낌인지?", "판단하지 않아요 · 여기 있어요"],
+      ["언제 가장 강하게 느껴요?", "부드럽게 궁금해요"],
+      ["What would 'not lonely' look like for you 명 있어?", "같이 상상해봐요"],
+    ],
+    suggestions: "Loneliness showed up a lot today. Sometimes just naming it — and knowing others feel it too — makes it a little lighter.",
+  },
+  '무감각해': {
+    count: 63,
+    questions: [
+      ["무감각함은 뭔가 더 깊은 게 있을 때 오기도 해요. 언제부터였어요?", "부드럽게 · 서두르지 않아도 돼요"],
+      ["밀어내고 있는 감정이 있어요?", "조심스럽게 · 여기 있어요"],
+      ["예전엔 살아있었는데 지금은 평평하게 느껴지는 게 뭐예요?", "궁금해요 · 천천히 볼게요"],
+      ["다시 뭔가를 느끼려면 뭐가 필요할 것 같아요?", "함께예요 · 가까이 있을게요"],
+    ],
+    suggestions: "무감각해ness often arrives after too much feeling. It's a kind of protection. You don't have to force your way out of it.",
+  },
+  '지쳐': {
+    count: 187,
+    questions: [
+      ["지쳐 can mean so many things. What kind of tired is this?", "따뜻하게 · 여기서 쉬어요"],
+      ["몸이 지친 건지, 마음이 지친 건지, 아니면 둘 다인지?", "궁금해요 · 부드럽게"],
+      ["요즘 가장 많이 에너지를 빼앗아가는 게 뭐예요?", "뿌리를 찾아가요"],
+      ["What would rest actually look like for you 명 있어?", "같이 상상해봐요"],
+    ],
+    suggestions: "You've been running on empty 명 있어. Rest isn't just about sleep — sometimes it's about putting something down.",
+  },
+  '상처받았어': {
+    count: 89,
+    questions: [
+      ["상처받은 게 느껴져요. 무슨 일이에요?", "조심스럽게 · 듣고 있어요"],
+      ["어떤 사람과 있었던 일이에요?", "No rush · stay here"],
+      ["예상했던 건지, 갑자기 온 건지?", "함께예요 · 부드럽게"],
+      ["What would you need to feel a little safer 명 있어?", "궁금해요 · 여기 있어요"],
+    ],
+    suggestions: "상처받았어 visited you today. Naming what happened — even just to yourself — is the first step toward not carrying it alone.",
+  },
+};
+
+let curEmo = null;
+let msgCount = 0;
+let qIdx = 0;
+
+function pickEmotion(emo, btn) {
+  document.querySelectorAll('.emo-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  curEmo = emo;
+  const data = emoData[emo];
+
+  // 커뮤니티 배너 표시 (view0)
+  const banner = document.getElementById('comm-banner');
+  document.getElementById('comm-text').textContent = `지금 비슷한 감정인 친구들이 ${emo.toLowerCase()} 명 있어`;
+  document.getElementById('comm-count').textContent = data.count;
+  banner.style.display = 'flex';
+
+  // 잠깐 후 대화 화면으로 전환
+  setTimeout(() => goToChat(emo), 500);
+}
+
+function goToChat(emo) {
+  closeAmber();
+  const data = emoData[emo];
+
+  // view1 세팅
+  document.getElementById('v1-title').textContent = emo;
+
+  // 커뮤니티 배너 v1
+  document.getElementById('comm-text2').textContent = `지금 비슷한 감정인 친구들이 ${emo.toLowerCase()} 명 있어`;
+  document.getElementById('comm-count2').textContent = data.count;
+
+  // 화면 전환
+  document.getElementById('v0').className = 'view left';
+  document.getElementById('v1').className = 'view active';
+
+  // 첫 AI 질문
+  const chat = document.getElementById('chat-main');
+  chat.innerHTML = '';
+  qIdx = 0;
+  msgCount = 0;
+  addAI(data.questions[0][0], data.questions[0][1]);
+  document.getElementById('main-msg').placeholder = 'Share what\'s on your mind...';
+}
+
+function sendMsg() {
+  const f = document.getElementById('main-msg');
+  const v = f.value.trim(); if (!v) return;
+  addUser(v);
+  f.value = '';
+  msgCount++;
+
+  const data = emoData[curEmo];
+  qIdx = Math.min(qIdx + 1, data.questions.length - 1);
+
+  setTimeout(() => {
+    addAI(data.questions[qIdx][0], data.questions[qIdx][1]);
+
+    // 4번 주고받으면 감정 요약 카드
+    if (msgCount >= 3 && pendingLayerQs.length === 0 && currentEmo) {
+      triggerLayerSignal(currentEmo);
+    }
+    if (msgCount >= 4) {
+      setTimeout(showSummary, 400);
+    }
+  }, 700);
+}
+
+function addAI(text, tone) {
+  const chat = document.getElementById('chat-main');
+  const d = document.createElement('div');
+  d.className = 'ai-b fade-in';
+  d.innerHTML = `<div class="ai-t">${text}</div><div class="ai-tone">${tone}</div>`;
+  chat.appendChild(d);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function addUser(text) {
+  const chat = document.getElementById('chat-main');
+  const d = document.createElement('div');
+  d.className = 'user-b fade-in';
+  d.innerHTML = `<div class="user-t">${text}</div>`;
+  chat.appendChild(d);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function showSummary() {
+  const data = emoData[curEmo];
+  const sc = document.getElementById('summary-card');
+
+  // 감정 칩
+  const emoRow = document.getElementById('sc-emotions');
+  emoRow.innerHTML = `<div class="sc-chip">${curEmo}</div>`;
+
+  // 제안 텍스트
+  document.getElementById('sc-suggest').textContent = data.suggestions + ' Would you like to keep talking?';
+
+  sc.style.display = 'block';
+
+  // 입력창 숨기기 — 요약 카드가 CTA 역할
+  document.getElementById('main-input').style.display = 'none';
+
+  const chat = document.getElementById('chat-main');
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function keepTalking() {
+  document.getElementById('summary-card').style.display = 'none';
+  document.getElementById('main-input').style.display = 'flex';
+  const data = emoData[curEmo];
+  addAI("물론이죠. 또 어떤 게 마음에 있어요?", "여기 있어요 · 천천히");
+  document.getElementById('main-msg').focus();
+}
+
+function goDigSuggest() {
+  alert('Moving to Dig — finding patterns in what you\'ve shared.');
+}
+
+
+const quickData = {
+  relationship: {
+    emo: '상처받았어',
+    firstQ: "가까운 사람과 무슨 일이 있었군요. 어떤 일이었는지 말해줄 수 있어요?",
+    tone: "부드럽게 · 듣고 있어요"
+  },
+  work: {
+    emo: '불안해',
+    firstQ: "Work or obligations can weigh heavily. What's sitting on you 명 있어?",
+    tone: "함께예요 · 서두르지 않아도 돼요"
+  },
+  self: {
+    emo: '무감각해',
+    firstQ: "딱히 이유도 모르겠는데 뭔가 이상할 때가 있죠. 언제부터 그랬어요?",
+    tone: "조용히 · 천천히"
+  },
+  body: {
+    emo: '지쳐',
+    firstQ: "Your body is telling you something. 얼마나 됐어요, 이 감정이?",
+    tone: "따뜻하게 · 여기서 쉬어요"
+  }
+};
+
+function quickPick(type) {
+  const d = quickData[type];
+  curEmo = d.emo;
+  document.getElementById('v0').className = 'view left';
+  document.getElementById('v1').className = 'view active';
+  document.getElementById('v1-title').textContent = d.emo;
+  const data = emoData[d.emo];
+  document.getElementById('comm-text2').textContent = `지금 비슷한 감정인 친구들이 ${d.emo.toLowerCase()} 명 있어`;
+  document.getElementById('comm-count2').textContent = data.count;
+  const chat = document.getElementById('chat-main');
+  chat.innerHTML = '';
+  qIdx = 0; msgCount = 0;
+  addAI(d.firstQ, d.tone);
+  document.getElementById('main-msg').placeholder = "지금 어떤 마음이에요?";
+}
+
+// 시간대별 첫 멘트
+function getTimeGreeting() {
+  const h = new Date().getHours();
+  if (h >= 5 && h < 9) return {
+    title: '좋은 아침이에요.',
+    sub: '지금 기분이 어때요?',
+    placeholder: '지금 어떤 마음이에요?'
+  };
+  if (h >= 9 && h < 12) return {
+    title: '오전이네요.',
+    sub: '지금 기분이 어때요?',
+    placeholder: '지금 어떤 마음이에요?'
+  };
+  if (h >= 12 && h < 14) return {
+    title: '점심 즈음이에요.',
+    sub: '지금 어때요?',
+    placeholder: '지금 기분이 어떤가요?'
+  };
+  if (h >= 14 && h < 18) return {
+    title: '오후예요.',
+    sub: '지금 기분이 어때요?',
+    placeholder: '지금 무슨 생각하고 있어요?'
+  };
+  if (h >= 18 && h < 21) return {
+    title: '저녁이에요.',
+    sub: '오늘 하루 어떠셨어요?',
+    placeholder: '지금 어떤 기분이에요?'
+  };
+  if (h >= 21 && h < 24) return {
+    title: '밤이 깊었네요.',
+    sub: '아직 깨어 있네요. 지금 어때요?',
+    placeholder: '지금 어떤 마음이에요?'
+  };
+  return {
+    title: '한밤중이에요.',
+    sub: '잠 못 자고 있네요. 무슨 일이에요?',
+    placeholder: '지금 무슨 생각을 하고 있어요?'
+  };
+}
+
+// 페이지 로드 시 시간대 적용
+(function() {
+  const g = getTimeGreeting();
+  const titleEl = document.getElementById('main-greeting');
+  const subEl = document.getElementById('main-sub');
+  const inputEl = document.getElementById('main-msg');
+  if (titleEl) titleEl.textContent = g.title;
+  if (subEl) subEl.textContent = g.sub;
+  if (inputEl) inputEl.placeholder = g.placeholder;
+})();
+
+// Amber 시트
+function openAmber(){
+  document.getElementById('amber-overlay').classList.add('show');
+  document.getElementById('amber-sheet').classList.add('show');
+  var f=document.getElementById('amber-field');
+  if(f&&!f._bound){
+    f._bound=true;
+    f.addEventListener('keydown',function(e){if(e.key==='Enter')sendAmber();});
+  }
+  setTimeout(function(){f&&f.focus();},350);
+}
+function closeAmber(){
+  document.getElementById('amber-overlay').classList.remove('show');
+  document.getElementById('amber-sheet').classList.remove('show');
+}
+var amberRs=['그 감정이 언제부터 있었던 것 같아요?','조금 더 말해줄 수 있어요?','그때 가장 필요했던 게 뭐였을까요?','여기 있어요. 천천히 얘기해도 돼요.','이 감정이 얼마나 됐어요?','혼자 들고 있기 힘들었겠어요.'];
+// keydown은 openLuna에서 동적으로 처리
+function sendAmber(){
+  var f=document.getElementById('amber-field');
+  var v=f.value.trim();if(!v)return;
+  var chat=document.getElementById('amber-chat');
+  var ud=document.createElement('div');ud.className='amber-user-b';
+  ud.innerHTML='<div class="amber-user-t">'+v+'</div>';
+  chat.appendChild(ud);f.value='';chat.scrollTop=chat.scrollHeight;
+  setTimeout(function(){
+    var r=amberRs[Math.floor(Math.random()*lunaRs.length)];
+    var ad=document.createElement('div');ad.className='amber-ai-b';
+    ad.innerHTML='<div class="amber-ai-t">'+r+'</div><div class="amber-ai-tone">여기 있어요</div>';
+    chat.appendChild(ad);chat.scrollTop=chat.scrollHeight;
+  },700);
+}
+
+// ── 3레이어 신호 수집 ──
+// Vent 대화 중 자연스럽게 던지는 레이어 질문
+const LAYER_SIGNALS = {
+  '불안해': [
+    {label:'사회적 상황에서는?', layer:'social_work',
+     q:'직장이나 학교에서 비슷한 불안이 올라올 때 어떻게 해요?',
+     opts:['속으로 삭이고 아무 말도 안 해요','그냥 하던 일을 계속 해요','잠깐 자리를 피해요','주변 사람에게 털어놔요']},
+    {label:'혼자 있을 때는?', layer:'general_alone',
+     q:'혼자 있을 때 이 불안이 오면 진짜로 어떻게 하고 싶어요?',
+     opts:['그냥 누군가에게 전화하고 싶어요','침대에 누워 있고 싶어요','뭔가 다른 걸 해서 잊고 싶어요','그냥 느끼고 싶어요']},
+  ],
+  '외로워': [
+    {label:'사람들 앞에서는?', layer:'social_stranger',
+     q:'여러 사람 속에 있을 때도 외로운 느낌이 와요?',
+     opts:['네, 오히려 더 심해요','아니요, 사람 있으면 괜찮아요','상황마다 달라요','잘 모르겠어요']},
+    {label:'가족 안에서는?', layer:'general_family',
+     q:'가족과 함께 있을 때는 어때요?',
+     opts:['가족이랑 있어도 외로워요','가족이랑 있으면 괜찮아요','가족이 오히려 더 힘들어요','가족 얘기는 하기 싫어요']},
+  ],
+  '화가 나': [
+    {label:'직장/학교에서는?', layer:'social_work',
+     q:'직장이나 학교에서 화가 날 때는 어떻게 해요?',
+     opts:['절대 표현 안 해요','조용히 참아요','나중에 혼자 풀어요','솔직하게 말해요']},
+    {label:'가장 가까운 사람에게는?', layer:'general_partner',
+     q:'가장 가까운 사람한테 화가 났을 때 진짜 어떻게 하고 싶어요?',
+     opts:['다 말하고 싶어요','그냥 사라지고 싶어요','울고 싶어요','모르겠어요']},
+  ],
+  '슬퍼': [
+    {label:'혼자 있을 때 진짜로는?', layer:'secret_emotion',
+     q:'아무도 없을 때 이 슬픔이 오면 솔직히 어떻게 하고 싶어요?',
+     opts:['마음껏 울고 싶어요','누군가 옆에 있어줬으면 해요','그냥 자고 싶어요','모르겠어요']},
+  ],
+  '상처받았어': [
+    {label:'그 사람에게 진짜로는?', layer:'secret_relation',
+     q:'그 사람한테 사실 어떻게 하고 싶었어요?',
+     opts:['다 말하고 싶었어요','그냥 사라지고 싶었어요','화내고 싶었어요','용서하고 싶었어요']},
+  ],
+};
+
+let pendingLayerQs = [];
+let currentLayerQ = null;
+let layerAnswered = 0;
+
+function triggerLayerSignal(emotion) {
+  const qs = LAYER_SIGNALS[emotion];
+  if(!qs || qs.length === 0) return;
+  // 아직 안 던진 질문만 큐에 넣기
+  pendingLayerQs = qs.filter(q => !q._answered);
+  if(pendingLayerQs.length > 0) {
+    // 3번 주고받은 후 첫 번째 질문 던지기
+    setTimeout(() => showLayerQ(), 800);
+  }
+}
+
+function showLayerQ() {
+  if(pendingLayerQs.length === 0) return;
+  currentLayerQ = pendingLayerQs[0];
+  const signal = document.getElementById('layer-signal');
+  document.getElementById('ls-label').textContent = currentLayerQ.label;
+  document.getElementById('ls-q').textContent = currentLayerQ.q;
+  const opts = document.getElementById('ls-opts');
+  opts.innerHTML = '';
+  currentLayerQ.opts.forEach((opt, i) => {
+    const d = document.createElement('div');
+    d.className = 'ls-opt';
+    d.textContent = opt;
+    d.onclick = () => selectLayerOpt(i, d);
+    opts.appendChild(d);
+  });
+  signal.classList.add('show');
+  // 채팅 영역 스크롤
+  const chat = document.getElementById('chat-main');
+  if(chat) setTimeout(() => chat.scrollTop = chat.scrollHeight, 100);
+}
+
+function selectLayerOpt(idx, el) {
+  document.querySelectorAll('.ls-opt').forEach(o => o.classList.remove('on'));
+  el.classList.add('on');
+  if(currentLayerQ) {
+    currentLayerQ._answered = true;
+    currentLayerQ._answer = idx;
+    // persona_instances에 get_signals 추가 예정 (Phase 2)
+    layerAnswered++;
+  }
+  // 2초 후 배너 닫고 다음 질문 준비
+  setTimeout(() => {
+    document.getElementById('layer-signal').classList.remove('show');
+    pendingLayerQs.shift();
+    // 다음 질문은 더 대화 나눈 후에
+  }, 1800);
+}
+
+function skipLayerQ() {
+  if(currentLayerQ) {
+    currentLayerQ._answered = true;
+    pendingLayerQs.shift();
+  }
+  document.getElementById('layer-signal').classList.remove('show');
+}
+
+// ── Vent 섹션 전환 ──
+var curVentTab = 'vent';
+function switchVentSection(id, el) {
+  document.querySelectorAll('.vstab').forEach(function(t){
+    t.style.color = '#57534E';
+    t.style.borderBottom = '2px solid transparent';
+    t.style.fontWeight = '300';
+  });
+  el.style.color = '#D4A574';
+  el.style.borderBottom = '2px solid #D4A574';
+  el.style.fontWeight = '400';
+  curVentTab = id;
+  var ls = document.getElementById('layer-signal');
+  if(ls) ls.classList.remove('show');
+  var mainContent = document.getElementById('vent-main-content');
+  var layerView = document.getElementById('v-layer');
+  var commView = document.getElementById('v-vent-community');
+  if(!mainContent || !layerView || !commView) return;
+  if(id === 'vent') {
+    mainContent.style.display = 'flex';
+    layerView.style.display = 'none';
+    commView.style.display = 'none';
+  } else if(id === 'layer') {
+    mainContent.style.display = 'none';
+    layerView.style.display = 'flex';
+    commView.style.display = 'none';
+  } else if(id === 'community') {
+    mainContent.style.display = 'none';
+    layerView.style.display = 'none';
+    commView.style.display = 'flex';
+  }
+}
+
+// ── 레이어 그룹 토글 ──
+function toggleLG(group, el) {
+  var sl = document.getElementById('sl-' + group);
+  if(!sl) return;
+  var isOpen = sl.style.display === 'flex';
+  ['social','general','secret'].forEach(function(g) {
+    var s = document.getElementById('sl-' + g);
+    var a = document.getElementById('arr-' + g);
+    if(s) s.style.display = 'none';
+    if(a) a.style.transform = '';
+  });
+  if(!isOpen) {
+    sl.style.display = 'flex';
+    var arr = document.getElementById('arr-' + group);
+    if(arr) arr.style.transform = 'rotate(90deg)';
+  }
+}
+
+// ── 레이어 질문 ──
+var LAYER_QUESTIONS = {
+  social_work: [
+    {q:'직장이나 학교에서 갈등이 생겼을 때, 주로 어떻게 해요?', opts:['속으로 삭이고 아무 말도 안 해요','솔직하게 말하고 해결하려 해요','거리를 두면서 냉각기를 가져요','분위기를 맞추면서 넘어가요']},
+    {q:'직장/학교에서 내가 숨기는 감정이 있어요?', opts:['있어요, 거의 매일','가끔 있어요','별로 없어요','모르겠어요']},
+    {q:'직장에서 나는 어떤 사람으로 보이고 싶어요?', opts:['능력 있는 사람','따뜻한 사람','조용한 사람','친근한 사람']},
+  ],
+  social_stranger: [
+    {q:'처음 만나는 사람 앞에서 나는 어떤 편이에요?', opts:['먼저 말을 거는 편이에요','상대가 말 걸면 대화해요','관찰하다 천천히 열어요','가능하면 조용히 있어요']},
+    {q:'첫 만남에서 내가 보여주는 나는 진짜 나인가요?', opts:['거의 맞아요','조금 다른 것 같아요','많이 다른 것 같아요','잘 모르겠어요']},
+  ],
+  social_sns: [
+    {q:'SNS에서 내가 올리는 것들은 진짜 내 모습인가요?', opts:['거의 그대로예요','좋은 면만 보여줘요','완전히 다른 모습이에요','SNS 안 해요']},
+    {q:'SNS에서 내가 숨기는 게 있어요?', opts:['감정이요','관계요','생각이나 의견이요','딱히 없어요']},
+  ],
+  social_formal: [
+    {q:'공식적인 자리에서 나는 어때요?', opts:['긴장하고 조심해요','자연스러운 편이에요','역할에 맞게 달라져요','불편해요']},
+    {q:'공식 자리에서 나는 진짜 나와 얼마나 달라요?', opts:['많이 달라요','조금 달라요','거의 같아요','상황마다 달라요']},
+  ],
+  general_family: [
+    {q:'가족 안에서 나는 어떤 역할이에요?', opts:['맞춰주는 사람','중재하는 사람','독립적인 사람','돌봄 받는 사람']},
+    {q:'가족에게 솔직하게 말하기 어려운 게 있어요?', opts:['감정이요','의견이나 생각이요','삶의 선택이요','거의 없어요']},
+    {q:'가족과 있을 때 가장 힘든 순간은?', opts:['기대에 맞춰야 할 때','이해받지 못할 때','내 공간이 없을 때','별로 없어요']},
+  ],
+  general_friend: [
+    {q:'가장 친한 친구 앞에서도 숨기는 게 있어요?', opts:['있어요','가끔 있어요','거의 없어요','없어요']},
+    {q:'친구들 앞에서 나는 진짜 나인가요?', opts:['거의 그래요','어느 정도 달라요','꽤 달라요','잘 모르겠어요']},
+  ],
+  general_partner: [
+    {q:'연인/파트너 앞에서 내가 숨기는 감정이 있어요?', opts:['있어요','가끔 있어요','별로 없어요','파트너가 없어요']},
+    {q:'가장 가까운 사람에게 가장 어려운 말이 뭐예요?', opts:['나 힘들어','화났어','필요해','사랑해']},
+  ],
+  general_alone: [
+    {q:'혼자 있을 때 진짜 나는 어떤 모습이에요?', opts:['겉으로 보이는 나와 달라요','비슷해요','더 감정적이에요','더 자유로워요']},
+    {q:'혼자 있을 때 자주 드는 생각이 있어요?', opts:['관계에 대한 생각','미래에 대한 걱정','아무 생각 안 해요','여러 가지요']},
+  ],
+  secret_emotion: [
+    {q:'아무에게도 말 못 한 감정이 있어요?', opts:['있어요','가끔 있어요','잘 모르겠어요','없어요']},
+    {q:'그 감정이 올라올 때 나는 어떻게 해요?', opts:['혼자 삭여요','다른 걸로 덮어요','글로 써요','그냥 느껴요']},
+  ],
+  secret_relation: [
+    {q:'특정 사람에 대해 말 못 하는 감정이 있어요?', opts:['있어요','가끔 있어요','잘 모르겠어요','없어요']},
+    {q:'그 감정을 말하지 못하는 이유는?', opts:['거절당할 것 같아서','관계가 달라질 것 같아서','부끄러워서','잘 모르겠어요']},
+  ],
+  secret_ambition: [
+    {q:'겉으로는 말 못 하지만 속으로 원하는 게 있어요?', opts:['있어요','가끔 있어요','잘 모르겠어요','없어요']},
+    {q:'그 욕심이나 야망을 숨기는 이유는?', opts:['욕심 많아 보일까봐','실패가 두려워서','현실적이지 않아서','잘 모르겠어요']},
+  ],
+};
+
+var LUNA_LQ_REPLIES = [
+  '그렇군요. 더 얘기해줄 수 있어요?',
+  '그 부분이 어떤 느낌인지 궁금해요.',
+  '이 상황에서 진짜 원하는 게 뭔지 알 것 같아요?',
+  '비슷한 상황이 또 있었나요?',
+];
+var lqAnsweredCount = 0;
+
+function enterLayer(layerKey, label) {
+  var groups = document.getElementById('layer-groups');
+  var qwrap = document.getElementById('layer-q-wrap');
+  var badge = document.getElementById('lq-badge');
+  if(!groups || !qwrap || !badge) return;
+  groups.style.display = 'none';
+  qwrap.style.display = 'flex';
+  badge.textContent = label;
+  lqAnsweredCount = 0;
+  renderLQ(layerKey);
+}
+
+function backToGroups() {
+  var groups = document.getElementById('layer-groups');
+  var qwrap = document.getElementById('layer-q-wrap');
+  if(!groups || !qwrap) return;
+  groups.style.display = 'flex';
+  groups.style.flexDirection = 'column';
+  qwrap.style.display = 'none';
+}
+
+function renderLQ(key) {
+  var qs = LAYER_QUESTIONS[key] || [];
+  var list = document.getElementById('lq-list');
+  if(!list) return;
+  list.innerHTML = '';
+  qs.forEach(function(q, idx) {
+    var d = document.createElement('div');
+    d.id = 'lqcard-' + idx;
+    d.style.cssText = 'background:#292524;border:1px solid #3C3835;border-radius:11px;overflow:hidden;flex-shrink:0;transition:border-color .2s;';
+    var optsHtml = q.opts.map(function(opt, i) {
+      return '<div onclick="selectLQ(' + idx + ',' + i + ',this)" style="background:#1C1917;border:1px solid #3C3835;border-radius:8px;padding:9px 12px;cursor:pointer;font-family:Cormorant Garamond,serif;font-weight:300;font-size:14px;color:#78716C;margin-bottom:5px;word-break:keep-all;transition:all .18s;">' + opt + '</div>';
+    }).join('');
+    d.innerHTML =
+      '<div onclick="toggleLQ(' + idx + ')" style="padding:11px 14px;cursor:pointer;display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">' +
+        '<div style="font-family:Cormorant Garamond,serif;font-weight:300;font-size:15px;color:#E7E5E4;line-height:1.4;word-break:keep-all;">' + q.q + '</div>' +
+        '<div id="lqarr-' + idx + '" style="font-size:12px;color:#3C3835;flex-shrink:0;margin-top:2px;transition:transform .2s,color .2s;">&#x203A;</div>' +
+      '</div>' +
+      '<div id="lqbody-' + idx + '" style="display:none;border-top:1px solid #2A2624;padding:10px 14px 12px;">' +
+        optsHtml +
+        '<button id="lqsend-' + idx + '" disabled onclick="sendLQ(' + idx + ')" style="width:100%;padding:9px 0;border-radius:9px;border:none;background:#D4A574;font-family:DM Sans,sans-serif;font-size:12px;font-weight:400;color:#1C1917;cursor:pointer;opacity:.3;margin-top:4px;">기록</button>' +
+      '</div>';
+    list.appendChild(d);
+  });
+  // 첫 카드 오픈
+  setTimeout(function() { toggleLQ(0); }, 200);
+}
+
+var lqSelected = {};
+function toggleLQ(idx) {
+  var body = document.getElementById('lqbody-' + idx);
+  var arr = document.getElementById('lqarr-' + idx);
+  if(!body) return;
+  var isOpen = body.style.display === 'block';
+  // 전체 닫기
+  var allBodies = document.querySelectorAll('[id^="lqbody-"]');
+  allBodies.forEach(function(b){ b.style.display = 'none'; });
+  document.querySelectorAll('[id^="lqarr-"]').forEach(function(a){ a.style.transform = ''; a.style.color = '#3C3835'; });
+  if(!isOpen) {
+    body.style.display = 'block';
+    if(arr) { arr.style.transform = 'rotate(90deg)'; arr.style.color = '#D4A574'; }
+  }
+}
+
+function selectLQ(cardIdx, optIdx, el) {
+  var body = document.getElementById('lqbody-' + cardIdx);
+  if(!body) return;
+  body.querySelectorAll('div[onclick]').forEach(function(o){
+    o.style.borderColor = '#3C3835';
+    o.style.color = '#78716C';
+    o.style.background = '#1C1917';
+  });
+  el.style.borderColor = '#D4A57444';
+  el.style.color = '#E7E5E4';
+  el.style.background = '#D4A57408';
+  lqSelected[cardIdx] = optIdx;
+  var btn = document.getElementById('lqsend-' + cardIdx);
+  if(btn) { btn.disabled = false; btn.style.opacity = '1'; }
+}
+
+function sendLQ(idx) {
+  var body = document.getElementById('lqbody-' + idx);
+  var card = document.getElementById('lqcard-' + idx);
+  var selectedEl = body ? body.querySelector('div[style*="E7E5E4"]') : null;
+  var answer = selectedEl ? selectedEl.textContent : '';
+  if(!answer) return;
+  // 입력 영역 → 답변 + Amber 답변으로 교체
+  if(body) body.style.display = 'none';
+  var answered = document.createElement('div');
+  answered.style.cssText = 'background:#D4A57408;padding:8px 14px;border-top:1px solid #D4A57422;font-size:12px;font-weight:300;color:#78716C;word-break:keep-all;';
+  answered.textContent = answer;
+  if(card) card.appendChild(answered);
+  var lunaDiv = document.createElement('div');
+  var r = LUNA_LQ_REPLIES[lqAnsweredCount % LUNA_LQ_REPLIES.length];
+  lunaDiv.style.cssText = 'border-top:1px solid #2A2624;padding:10px 14px;';
+  lunaDiv.innerHTML = '<div style="font-size:9px;font-weight:400;letter-spacing:.07em;text-transform:uppercase;color:#D4A574;margin-bottom:4px;">Amber</div><div style="font-family:Cormorant Garamond,serif;font-weight:300;font-size:14px;color:#A8A29E;line-height:1.55;word-break:keep-all;">' + r + '</div>';
+  if(card) card.appendChild(lunaDiv);
+  lqAnsweredCount++;
+  // 다음 카드 오픈
+  setTimeout(function() { toggleLQ(idx + 1); }, 400);
+}
+
+
+
+// Amber 어텐션 — 랜덤 인터벌 번쩍임
+(function startAmberAttention(){
+  function flash(){
+    var btn = document.getElementById('amber-avatar-btn');
+    if(btn){
+      btn.classList.remove('flashing');
+      void btn.offsetWidth;
+      btn.classList.add('flashing');
+      btn.addEventListener('animationend', function(){ btn.classList.remove('flashing'); }, {once:true});
+    }
+    setTimeout(flash, 9000 + Math.random()*13000);
+  }
+  setTimeout(flash, 5000 + Math.random()*4000);
+})();
+</script>
+</body>
+</html>

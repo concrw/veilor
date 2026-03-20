@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Veilrum — Get v5</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=DM+Sans:wght@300;400&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#111;display:flex;justify-content:center;align-items:center;min-height:100vh;font-family:'DM Sans',sans-serif;padding:20px;}
+.phone{width:340px;height:720px;background:#1C1917;border-radius:40px;border:1px solid #44403C;display:flex;flex-direction:column;overflow:hidden;position:relative;}
+
+.status-bar{padding:14px 26px 8px;display:flex;justify-content:space-between;flex-shrink:0;}
+.s-time{font-size:12px;color:#78716C;}
+.s-icons{display:flex;gap:5px;}
+.s-dot{width:4px;height:4px;border-radius:50%;background:#57534E;}
+
+/* 글로벌 헤더 */
+.char-bar{flex-shrink:0;padding:8px 20px 9px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #2A2624;}
+.global-tab-name{display:flex;flex-direction:column;gap:2px;flex-shrink:0;}
+.global-tab-title{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:22px;color:#E7E5E4;letter-spacing:.01em;line-height:1;}
+.global-tab-desc{font-size:10px;font-weight:300;color:#57534E;letter-spacing:.02em;}
+.amber-avatar-btn{width:30px;height:30px;border-radius:50%;background:#D4A57415;border:1px solid #D4A57444;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;cursor:pointer;margin-left:auto;}
+.char-av-inner{width:19px;height:19px;border-radius:50%;background:#D4A574;}
+.char-pulse-get{position:absolute;inset:-3px;border-radius:50%;border:1px solid #8C706018;animation:get-pulse 3s ease-in-out infinite;}
+@keyframes get-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0;transform:scale(1.4)}}
+
+/* 섹션 탭 */
+.section-tabs{flex-shrink:0;display:flex;border-bottom:1px solid #2A2624;padding:0 22px;}
+.stab{font-size:11px;font-weight:300;color:#57534E;padding:10px 0;margin-right:20px;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;user-select:none;}
+.stab.on{color:#8C7060;border-bottom-color:#8C7060;font-weight:400;}
+
+.screen{flex:1;overflow:hidden;display:flex;flex-direction:column;}
+
+/* ── 결산 뷰 ── */
+.summary-view{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0;}
+
+/* Amber 인트로 */
+.amber-intro{flex-shrink:0;padding:14px 22px 10px;border-bottom:1px solid #2A2624;}
+.li-avatar-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.li-av{width:24px;height:24px;border-radius:50%;background:#D4A57415;border:1px solid #D4A57444;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.li-av-inner{width:14px;height:14px;border-radius:50%;background:#D4A574;}
+.li-name{font-size:10px;font-weight:400;color:#D4A574;}
+.li-pulse{width:5px;height:5px;border-radius:50%;background:#D4A574;animation:lipulse 2s ease-in-out infinite;margin-left:auto;}
+@keyframes lipulse{0%,100%{opacity:1}50%{opacity:.3}}
+.li-text{font-family:'Cormorant Garamond',serif;font-weight:300;font-size:16px;color:#E7E5E4;line-height:1.6;word-break:keep-all;}
+.li-sub{font-size:10px;font-weight:300;color:#57534E;margin-top:4px;}
+
+/* 결산 스크롤 */
+.summary-scroll{flex:1;overflow-y:auto;padding:12px 22px;display:flex;flex-direction:column;gap:10px;min-height:0;scrollbar-width:none;padding-bottom:80px;}
+.summary-scroll::-webkit-scrollbar{display:none;}
+
+/* 결산 카드 */
+.sum-card{background:#292524;border:1px solid #3C3835;border-radius:12px;overflow:hidden;flex-shrink:0;}
+.sum-card-head{padding:12px 14px;display:flex;align-items:flex-start;justify-content:space-between;gap:8px;cursor:pointer;transition:background .15s;}
+.sum-card-head:hover{background:#2F2D2B;}
+.sum-card.open .sum-card-head{background:#8C70600A;border-bottom:1px solid #2A2624;}
+.sc-left{flex:1;}
+.sc-label{font-size:9px;font-weight:400;letter-spacing:.08em;text-transform:uppercase;color:#8C7060;margin-bottom:3px;}
+.sc-title{font-family:'Cormorant Garamond',serif;font-weight:300;font-size:16px;color:#E7E5E4;line-height:1.4;word-break:keep-all;}
+.sc-arr{font-size:13px;color:#3C3835;flex-shrink:0;transition:transform .2s,color .2s;margin-top:2px;}
+.sum-card.open .sc-arr{transform:rotate(90deg);color:#8C7060;}
+.sum-card-body{display:none;padding:12px 14px;}
+.sum-card.open .sum-card-body{display:block;}
+
+/* 가면 카드 인라인 */
+.mask-inline{margin-bottom:10px;}
+.mask-name{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:22px;color:#E7E5E4;margin-bottom:2px;}
+.mask-arch{font-size:10px;font-weight:300;color:#57534E;margin-bottom:8px;}
+.mask-desc{font-family:'Cormorant Garamond',serif;font-weight:300;font-size:14px;color:#A8A29E;line-height:1.6;word-break:keep-all;margin-bottom:10px;}
+.mask-rows{display:flex;flex-direction:column;gap:5px;}
+.mask-row{display:flex;gap:8px;}
+.mask-row-lbl{font-size:9px;font-weight:400;letter-spacing:.05em;text-transform:uppercase;color:#57534E;flex-shrink:0;min-width:34px;margin-top:1px;}
+.mask-row-val{font-size:12px;font-weight:300;color:#78716C;line-height:1.5;word-break:keep-all;}
+
+/* V프로필 인라인 */
+.vp-type{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:22px;color:#E7E5E4;line-height:1.2;margin-bottom:5px;}
+.vp-sub{font-family:'Cormorant Garamond',serif;font-weight:300;font-size:13px;color:#A8A29E;line-height:1.55;margin-bottom:12px;word-break:keep-all;}
+.vp-axes{display:flex;flex-direction:column;gap:6px;margin-bottom:12px;}
+.ax-row{display:flex;align-items:center;gap:8px;}
+.ax-lbl{font-size:10px;font-weight:300;color:#57534E;width:48px;flex-shrink:0;}
+.ax-bg{flex:1;height:3px;background:#3C3835;border-radius:99px;overflow:hidden;}
+.ax-fill{height:3px;border-radius:99px;background:#8C7060;width:0%;transition:width .9s ease .1s;}
+.ax-val{font-size:10px;font-weight:300;color:#8C7060;width:24px;text-align:right;flex-shrink:0;}
+
+/* 멀티페르소나 인라인 */
+.mp-personas{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
+.mp-p{display:flex;flex-direction:column;align-items:center;gap:4px;}
+.mp-av{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:1.5px solid;}
+.mp-av-a{background:#8C706015;border-color:#8C706055;}
+.mp-av-b{background:#A0785015;border-color:#A0785055;}
+.mp-av-c{background:#C2956C15;border-color:#C2956C55;}
+.mp-av-x{background:#2A2624;border-color:#3C3835;border-style:dashed;}
+.mp-av-inner{width:22px;height:22px;border-radius:50%;}
+.mp-av-a .mp-av-inner{background:#8C7060;}
+.mp-av-b .mp-av-inner{background:#A07850;}
+.mp-av-c .mp-av-inner{background:#C2956C;}
+.mp-av-x .mp-av-inner{width:14px;height:14px;background:transparent;border:1.5px dashed #3C3835;border-radius:50%;}
+.mp-lbl{font-size:9px;font-weight:300;color:#57534E;white-space:nowrap;}
+.mp-lbl.hi{color:#8C7060;}
+.mp-contradictions{border-top:1px solid #2A2624;padding-top:8px;}
+.mp-ct-title{font-size:9px;font-weight:400;letter-spacing:.06em;text-transform:uppercase;color:#57534E;margin-bottom:6px;}
+.mp-ct-item{font-family:'Cormorant Garamond',serif;font-weight:300;font-size:13px;color:#A8A29E;line-height:1.5;padding:4px 0;border-bottom:1px solid #2A2624;word-break:keep-all;display:flex;align-items:flex-start;justify-content:space-between;gap:6px;}
+.mp-ct-item:last-child{border-bottom:none;}
+.mp-ct-tag{font-size:9px;padding:2px 8px;border-radius:99px;border:1px solid #C2956C33;color:#C2956C;background:#C2956C0A;flex-shrink:0;}
+
+/* 교정 패널 — 카드 아래 */
+.correction-panel{background:#1C1917;border-top:1px solid #2A2624;padding:10px 14px;}
+.cp-label{font-size:9px;font-weight:400;letter-spacing:.07em;text-transform:uppercase;color:#8C7060;margin-bottom:8px;}
+.cp-btns{display:flex;gap:6px;flex-wrap:wrap;}
+.cp-btn{padding:7px 13px;border-radius:99px;border:1px solid #3C3835;background:transparent;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:300;color:#57534E;cursor:pointer;transition:all .18s;white-space:nowrap;}
+.cp-btn:hover{border-color:#8C706033;color:#A8A29E;}
+.cp-btn.selected{border-color:#8C706055;color:#8C7060;background:#8C70600A;}
+.cp-feedback{margin-top:8px;display:none;}
+.cp-feedback.show{display:block;}
+.cp-feedback-text{font-family:'Cormorant Garamond',serif;font-weight:300;font-size:14px;color:#A8A29E;line-height:1.55;word-break:keep-all;}
+
+/* 하단 고정 교정 버튼 */
+.correction-bar{position:absolute;bottom:60px;left:22px;right:22px;z-index:5;}
+.cb-inner{background:#292524;border:1px solid #3C3835;border-radius:12px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.cb-luna{font-family:'Cormorant Garamond',serif;font-weight:300;font-size:14px;color:#E7E5E4;line-height:1.4;word-break:keep-all;flex:1;}
+.cb-btns{display:flex;gap:5px;flex-shrink:0;}
+.cb-yes{padding:6px 13px;border-radius:99px;border:none;background:#8C7060;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:400;color:#1C1917;cursor:pointer;}
+.cb-no{padding:6px 13px;border-radius:99px;border:1px solid #3C3835;background:transparent;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:300;color:#57534E;cursor:pointer;}
+
+/* 커뮤니티 */
+.comm-view{flex:1;display:none;flex-direction:column;padding:14px 22px 0;overflow:hidden;min-height:0;}
+.comm-view.active{display:flex;}
+.comm-note{font-size:10px;font-weight:300;color:#3C3835;margin-bottom:10px;flex-shrink:0;}
+.group-list{flex:1;display:flex;flex-direction:column;gap:8px;overflow-y:auto;min-height:0;scrollbar-width:none;padding-bottom:8px;}
+.group-list::-webkit-scrollbar{display:none;}
+.group-card{background:#292524;border:1px solid #3C3835;border-radius:11px;padding:12px 14px;flex-shrink:0;cursor:pointer;transition:border-color .2s;}
+.group-card:hover{border-color:#8C706033;}
+.group-card.matched{border-color:#8C706055;background:#8C706008;}
+.gc-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:4px;}
+.gc-name{font-family:'Cormorant Garamond',serif;font-weight:300;font-size:15px;color:#E7E5E4;line-height:1.3;word-break:keep-all;}
+.gc-count{font-size:10px;font-weight:300;color:#57534E;flex-shrink:0;}
+.gc-desc{font-size:11px;font-weight:300;color:#78716C;line-height:1.5;word-break:keep-all;}
+.gc-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px;}
+.gc-tag{font-size:9px;padding:2px 8px;border-radius:99px;border:1px solid #3C3835;color:#57534E;}
+.gc-badge{font-size:9px;padding:2px 8px;border-radius:99px;border:1px solid #8C706033;color:#8C7060;background:#8C70600A;}
+.gc-entries{border-top:1px solid #2A2624;margin-top:9px;padding-top:8px;display:none;}
+.group-card.open .gc-entries{display:block;}
+.gc-entry{font-family:'Cormorant Garamond',serif;font-weight:300;font-size:13px;color:#78716C;line-height:1.55;padding:5px 0;border-bottom:1px solid #2A2624;word-break:keep-all;}
+.gc-entry:last-child{border-bottom:none;}
+
+/* Amber 시트 */
+.amber-sheet-overlay{position:absolute;inset:0;background:rgba(0,0,0,.5);z-index:30;opacity:0;pointer-events:none;transition:opacity .3s;border-radius:40px;}
+.amber-sheet-overlay.show{opacity:1;pointer-events:all;}
+.amber-sheet{position:absolute;bottom:0;left:0;right:0;background:#1C1917;border-radius:20px 20px 40px 40px;border:1px solid #44403C;border-bottom:none;z-index:31;display:flex;flex-direction:column;transform:translateY(100%);transition:transform .35s cubic-bezier(.4,0,.2,1);max-height:78%;}
+.amber-sheet.show{transform:translateY(0);}
+.amber-sheet-handle{width:32px;height:3px;border-radius:99px;background:#3C3835;margin:10px auto 0;}
+.amber-sheet-header{padding:10px 20px 8px;display:flex;align-items:center;gap:9px;border-bottom:1px solid #2A2624;flex-shrink:0;}
+.amber-sheet-av{width:28px;height:28px;border-radius:50%;background:#8C706015;border:1px solid #8C706033;display:flex;align-items:center;justify-content:center;}
+.amber-sheet-av-inner{width:17px;height:17px;border-radius:50%;background:#8C7060;}
+.amber-sheet-name{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:15px;color:#E7E5E4;flex:1;}
+.amber-sheet-close{width:26px;height:26px;border-radius:50%;border:1px solid #3C3835;background:transparent;cursor:pointer;color:#57534E;font-size:13px;display:flex;align-items:center;justify-content:center;}
+.amber-chat-area{flex:1;overflow-y:auto;padding:12px 18px;display:flex;flex-direction:column;gap:8px;min-height:0;scrollbar-width:none;}
+.amber-chat-area::-webkit-scrollbar{display:none;}
+.amber-ai-b{background:#292524;border:1px solid #3C3835;border-radius:11px 11px 11px 3px;padding:10px 13px;flex-shrink:0;}
+.amber-ai-t{font-family:'Cormorant Garamond',serif;font-weight:300;font-size:15px;color:#E7E5E4;line-height:1.55;word-break:keep-all;}
+.amber-ai-tone{font-size:9px;font-weight:300;color:#8C706077;margin-top:2px;}
+.amber-user-b{background:#8C70600D;border:1px solid #8C706022;border-radius:11px 11px 3px 11px;padding:9px 13px;align-self:flex-end;max-width:85%;flex-shrink:0;}
+.amber-user-t{font-size:12px;font-weight:300;color:#A8A29E;line-height:1.6;word-break:keep-all;}
+.amber-input-bar{flex-shrink:0;padding:8px 14px 14px;border-top:1px solid #2A2624;display:flex;align-items:center;gap:7px;}
+.amber-field{flex:1;background:#292524;border:1px solid #3C3835;border-radius:20px;padding:7px 13px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:300;color:#A8A29E;outline:none;}
+.amber-field::placeholder{color:#57534E;}
+.amber-send-btn{width:28px;height:28px;border-radius:50%;border:none;background:#8C7060;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
+
+/* nav */
+.bottom-nav{flex-shrink:0;background:#1C1917;border-top:1px solid #2A2624;padding:9px 10px 16px;display:flex;justify-content:space-around;}
+.nav-btn{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;padding:4px 12px;border-radius:9px;border:none;background:transparent;}
+.nav-dot{width:5px;height:5px;border-radius:50%;background:#3C3835;transition:background .2s,transform .2s;}
+.nav-lbl{font-size:11px;font-weight:300;color:#57534E;transition:color .2s;}
+.nav-btn.on .nav-dot{background:#8C7060;transform:scale(1.3);}
+.nav-btn.on .nav-lbl{color:#8C7060;font-weight:400;}
+.nav-btn.on{background:#8C70600A;}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.fade-in{animation:fadeUp .3s ease both;}
+
+/* Amber 어텐션 */
+@keyframes amber-flash{
+  0%{box-shadow:0 0 0 0 rgba(212,165,116,0);transform:scale(1);}
+  20%{box-shadow:0 0 0 7px rgba(212,165,116,0.4);transform:scale(1.12);}
+  40%{box-shadow:0 0 0 3px rgba(212,165,116,0.15);transform:scale(1.05);}
+  60%{box-shadow:0 0 0 9px rgba(212,165,116,0.25);transform:scale(1.08);}
+  100%{box-shadow:0 0 0 0 rgba(212,165,116,0);transform:scale(1);}
+}
+@keyframes fpulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0;transform:scale(1.4)}}
+.amber-avatar-btn.flashing{animation:amber-flash 1.4s ease-out forwards;}
+</style>
+</head>
+<body>
+<div class="phone">
+
+  <div class="status-bar">
+    <span class="s-time">9:41</span>
+    <div class="s-icons"><div class="s-dot"></div><div class="s-dot"></div><div class="s-dot"></div></div>
+  </div>
+
+  <div class="char-bar">
+    <div class="global-tab-name">
+      <div class="global-tab-title">GET</div>
+      <div class="global-tab-desc">지금까지 발견된 나예요</div>
+    </div>
+    <div style="display:flex;gap:6px;align-items:center;margin-left:auto;">
+      <div class="amber-avatar-btn" id="amber-avatar-btn" onclick="openAmber()">
+        <div class="char-pulse-get"></div>
+        <div class="char-av-inner"></div>
+      </div>
+      <div id="frost-avatar-btn" onclick="openFrost()" style="width:30px;height:30px;border-radius:50%;background:#7BA8C415;border:1px solid #7BA8C444;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;cursor:pointer;">
+        <div style="position:absolute;inset:-3px;border-radius:50%;border:1px solid #7BA8C418;animation:fpulse 3.4s ease-in-out infinite .4s;"></div>
+        <div style="width:19px;height:19px;border-radius:50%;background:#7BA8C4;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Amber 시트 -->
+  <div class="amber-sheet-overlay" id="amber-overlay" onclick="closeAmber()"></div>
+  <div class="amber-sheet" id="amber-sheet">
+    <div class="amber-sheet-handle"></div>
+    <div class="amber-sheet-header">
+      <div class="amber-sheet-av"><div class="amber-sheet-av-inner"></div></div>
+      <div class="amber-sheet-name">엠버</div>
+      <button class="amber-sheet-close" onclick="closeAmber()">&#x2715;</button>
+    </div>
+    <div class="amber-chat-area" id="amber-chat">
+      <div class="amber-ai-b">
+        <div class="amber-ai-t">지금까지 나눈 것들을 정리해봤어요. 같이 확인해봐요.</div>
+        <div class="amber-ai-tone">발견하는 중이에요</div>
+      </div>
+    </div>
+    <div class="amber-input-bar">
+      <input class="amber-field" id="amber-field" placeholder="Amber에게 말해요..."/>
+      <button class="amber-send-btn" onclick="sendAmber()">
+        <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M6 11V1M1 6l5-5 5 5" stroke="#1C1917" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- 섹션 탭 -->
+  <div class="section-tabs">
+    <div class="stab on" onclick="switchSection('summary',this)">결산</div>
+    <div class="stab" onclick="switchSection('community',this)">커뮤니티</div>
+  </div>
+
+  <div class="screen">
+
+    <!-- 결산 뷰 -->
+    <div class="summary-view" id="v-summary">
+
+      <!-- Amber 인트로 -->
+      <div class="amber-intro">
+        <div class="li-avatar-row">
+          <div class="li-av"><div class="li-av-inner"></div></div>
+          <div class="li-name">Amber</div>
+          <div class="li-pulse"></div>
+        </div>
+        <div class="li-text">Vent와 Dig에서 나눈 것들을 보니 — 이런 모습이 보여요. 맞는지 같이 확인해봐요.</div>
+        <div class="li-sub">틀린 부분이 있으면 바로 말해줘요.</div>
+      </div>
+
+      <!-- 결산 카드들 -->
+      <div class="summary-scroll" id="summary-scroll">
+
+        <!-- 가면 카드 -->
+        <div class="sum-card fade-in" id="sc-0" style="animation-delay:.05s">
+          <div class="sum-card-head" onclick="toggleSC(0)">
+            <div class="sc-left">
+              <div class="sc-label">쓰고 있는 것</div>
+              <div class="sc-title">관찰자 가면을 쓰고 있는 것 같아요</div>
+            </div>
+            <div class="sc-arr">›</div>
+          </div>
+          <div class="sum-card-body">
+            <div class="mask-inline">
+              <div class="mask-name">관찰자</div>
+              <div class="mask-arch">The Watcher</div>
+              <div class="mask-desc">연결을 원하면서도 먼저 다가가지 않고 바라보는 사람. 거리를 두는 것이 안전하다는 걸 일찍 배웠어요.</div>
+              <div class="mask-rows">
+                <div class="mask-row"><div class="mask-row-lbl">상처</div><div class="mask-row-val">연결하려 했을 때 거절당한 경험</div></div>
+                <div class="mask-row"><div class="mask-row-lbl">두려움</div><div class="mask-row-val">다가갔다가 또 혼자가 되는 것</div></div>
+                <div class="mask-row"><div class="mask-row-lbl">필요</div><div class="mask-row-val">먼저 다가와 주는 사람</div></div>
+              </div>
+            </div>
+            <div class="correction-panel">
+              <div class="cp-label">이게 맞아요?</div>
+              <div class="cp-btns">
+                <button class="cp-btn" onclick="selectCorrection(0,'yes',this)">맞아요</button>
+                <button class="cp-btn" onclick="selectCorrection(0,'partial',this)">일부만 맞아요</button>
+                <button class="cp-btn" onclick="selectCorrection(0,'no',this)">달라요</button>
+              </div>
+              <div class="cp-feedback" id="cf-0">
+                <div class="cp-feedback-text" id="cf-text-0"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- V프로필 카드 -->
+        <div class="sum-card fade-in" id="sc-1" style="animation-delay:.1s">
+          <div class="sum-card-head" onclick="toggleSC(1)">
+            <div class="sc-left">
+              <div class="sc-label">나의 형태</div>
+              <div class="sc-title">연결을 갈망하는 관찰자형</div>
+            </div>
+            <div class="sc-arr">›</div>
+          </div>
+          <div class="sum-card-body">
+            <div class="vp-type">연결을 갈망하는<br>관찰자형</div>
+            <div class="vp-sub">연결을 원하지만 먼저 다가가지 못해요. 관계에서 안전한 거리를 유지하는 것이 익숙해요.</div>
+            <div class="vp-axes" id="vp-axes">
+              <div class="ax-row"><div class="ax-lbl">애착</div><div class="ax-bg"><div class="ax-fill" data-val="72"></div></div><div class="ax-val">72</div></div>
+              <div class="ax-row"><div class="ax-lbl">표현</div><div class="ax-bg"><div class="ax-fill" data-val="34"></div></div><div class="ax-val">34</div></div>
+              <div class="ax-row"><div class="ax-lbl">직면</div><div class="ax-bg"><div class="ax-fill" data-val="28"></div></div><div class="ax-val">28</div></div>
+              <div class="ax-row"><div class="ax-lbl">자율</div><div class="ax-bg"><div class="ax-fill" data-val="65"></div></div><div class="ax-val">65</div></div>
+            </div>
+            <div class="correction-panel">
+              <div class="cp-label">이게 맞아요?</div>
+              <div class="cp-btns">
+                <button class="cp-btn" onclick="selectCorrection(1,'yes',this)">맞아요</button>
+                <button class="cp-btn" onclick="selectCorrection(1,'partial',this)">일부만 맞아요</button>
+                <button class="cp-btn" onclick="selectCorrection(1,'no',this)">달라요</button>
+                <button class="cp-btn" onclick="selectCorrection(1,'more',this)">더 얘기하고 싶어요</button>
+              </div>
+              <div class="cp-feedback" id="cf-1">
+                <div class="cp-feedback-text" id="cf-text-1"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 멀티페르소나 카드 -->
+        <div class="sum-card fade-in" id="sc-2" style="animation-delay:.15s">
+          <div class="sum-card-head" onclick="toggleSC(2)">
+            <div class="sc-left">
+              <div class="sc-label">나의 여러 면</div>
+              <div class="sc-title">3개의 나가 발견됐어요</div>
+            </div>
+            <div class="sc-arr">›</div>
+          </div>
+          <div class="sum-card-body">
+            <div class="mp-personas">
+              <div class="mp-p">
+                <div class="mp-av mp-av-a"><div class="mp-av-inner"></div></div>
+                <div class="mp-lbl hi">사회적 나</div>
+              </div>
+              <div class="mp-p">
+                <div class="mp-av mp-av-b"><div class="mp-av-inner"></div></div>
+                <div class="mp-lbl">일반적 나</div>
+              </div>
+              <div class="mp-p">
+                <div class="mp-av mp-av-c"><div class="mp-av-inner"></div></div>
+                <div class="mp-lbl">비밀스러운 나</div>
+              </div>
+              <div class="mp-p">
+                <div class="mp-av mp-av-x"><div class="mp-av-inner"></div></div>
+                <div class="mp-lbl">+ 발견 중</div>
+              </div>
+            </div>
+            <div class="mp-contradictions">
+              <div class="mp-ct-title">발견된 모순</div>
+              <div class="mp-ct-item">
+                갈등 상황에서의 반응이 달라요
+                <span class="mp-ct-tag">사회 vs 비밀</span>
+              </div>
+              <div class="mp-ct-item">
+                혼자일 때와 함께일 때 원하는 것이 달라요
+                <span class="mp-ct-tag">일반 vs 비밀</span>
+              </div>
+            </div>
+            <div class="correction-panel" style="margin-top:10px;">
+              <div class="cp-label">더 발견하고 싶은 게 있어요?</div>
+              <div class="cp-btns">
+                <button class="cp-btn" onclick="selectCorrection(2,'dig',this)">Dig에서 더 파고들어요</button>
+                <button class="cp-btn" onclick="selectCorrection(2,'secret',this)">비밀스러운 나 더 알고 싶어요</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Amber의 추가 질문 카드 -->
+        <div class="sum-card fade-in" id="sc-3" style="animation-delay:.2s">
+          <div class="sum-card-head" onclick="toggleSC(3)">
+            <div class="sc-left">
+              <div class="sc-label">아직 불분명한 것</div>
+              <div class="sc-title">이 부분은 더 얘기해봐야 해요</div>
+            </div>
+            <div class="sc-arr">›</div>
+          </div>
+          <div class="sum-card-body">
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <div style="font-family:'Cormorant Garamond',serif;font-weight:300;font-size:15px;color:#A8A29E;line-height:1.6;word-break:keep-all;">
+                연인/파트너 앞에서의 나에 대해서는 아직 잘 모르겠어요. 이 부분을 Dig에서 좀 더 얘기해볼 수 있어요.
+              </div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                <button class="cp-btn" onclick="goToDig()" style="border-color:#8C706033;color:#8C7060;">Dig로 가서 더 얘기할게요</button>
+                <button class="cp-btn">지금은 괜찮아요</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 하단 교정 바 (초기 상태) -->
+      <div class="correction-bar" id="correction-bar">
+        <div class="cb-inner">
+          <div class="cb-luna" id="cb-luna">이게 전반적으로 맞아요?</div>
+          <div class="cb-btns">
+            <button class="cb-yes" onclick="confirmSummary()">맞아요</button>
+            <button class="cb-no" onclick="rejectSummary()">달라요</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 커뮤니티 -->
+    <div class="comm-view" id="v-community">
+      <div style="font-size:10px;font-weight:400;letter-spacing:.1em;text-transform:uppercase;color:#8C7060;margin-bottom:8px;flex-shrink:0;">Get · 커뮤니티</div>
+      <div class="comm-note">같은 모순 패턴을 가진 사람들이에요. 댓글이 아니에요. 읽는 거예요.</div>
+      <div class="group-list" id="group-list"></div>
+    </div>
+
+  </div>
+
+  <nav class="bottom-nav">
+    <button class="nav-btn"><div class="nav-dot"></div><span class="nav-lbl">Vent</span></button>
+    <button class="nav-btn"><div class="nav-dot"></div><span class="nav-lbl">Dig</span></button>
+    <button class="nav-btn on"><div class="nav-dot"></div><span class="nav-lbl">Get</span></button>
+    <button class="nav-btn"><div class="nav-dot"></div><span class="nav-lbl">Set</span></button>
+    <button class="nav-btn"><div class="nav-dot"></div><span class="nav-lbl">Me</span></button>
+  </nav>
+
+</div>
+
+<script>
+// ── 섹션 전환 ──
+function switchSection(id, el) {
+  document.querySelectorAll('.stab').forEach(t => t.classList.remove('on'));
+  el.classList.add('on');
+  var summary = document.getElementById('v-summary');
+  var community = document.getElementById('v-community');
+  if(summary) summary.style.display = id === 'summary' ? 'flex' : 'none';
+  if(community) community.classList.toggle('active', id === 'community');
+  if(id === 'community') renderGroups();
+}
+
+// ── 결산 카드 ──
+function toggleSC(idx) {
+  const card = document.getElementById('sc-' + idx);
+  if(!card) return;
+  const isOpen = card.classList.contains('open');
+  document.querySelectorAll('.sum-card').forEach(c => c.classList.remove('open'));
+  const bar = document.getElementById('correction-bar');
+  if(!isOpen) {
+    card.classList.add('open');
+    if(idx === 1) {
+      setTimeout(() => {
+        document.querySelectorAll('.ax-fill').forEach(el => {
+          el.style.width = el.dataset.val + '%';
+        });
+      }, 100);
+    }
+    if(bar) bar.style.display = 'none';
+  } else {
+    if(bar) bar.style.display = 'block';
+  }
+}
+
+// ── 교정 인터랙션 ──
+const CORRECTION_REPLIES = {
+  yes:     '좋아요. 이 부분은 확정할게요.',
+  partial: '어떤 부분이 다른지 더 얘기해줄 수 있어요?',
+  no:      '그렇군요. 어떻게 다르게 느껴지는지 말해줘요. Amber와 대화해봐요.',
+  more:    'Amber 대화창에서 더 얘기해봐요.',
+  dig:     'Dig에서 더 파고들어봐요.',
+  secret:  '비밀스러운 나의 레이어를 더 탐색해봐요. Dig로 가볼게요.',
+};
+
+function selectCorrection(cardIdx, type, el) {
+  const parent = el.closest('.cp-btns');
+  parent.querySelectorAll('.cp-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  const feedback = document.getElementById('cf-' + cardIdx);
+  const feedbackText = document.getElementById('cf-text-' + cardIdx);
+  if(feedback && feedbackText) {
+    feedbackText.textContent = CORRECTION_REPLIES[type] || '';
+    feedback.classList.add('show');
+  }
+  if(type === 'more' || type === 'no') {
+    setTimeout(() => openLuna(), 600);
+  }
+}
+
+// ── 하단 교정 바 ──
+function confirmSummary() {
+  const bar = document.getElementById('correction-bar');
+  document.getElementById('cb-luna').textContent = '확인됐어요. Set으로 넘어가볼까요?';
+  bar.querySelector('.cb-yes').textContent = 'Set으로';
+  bar.querySelector('.cb-no').style.display = 'none';
+}
+
+function rejectSummary() {
+  document.getElementById('cb-luna').textContent = '어떤 부분이 다른지 말해줘요.';
+  openLuna();
+}
+
+function goToDig() {
+  // 실제로는 Dig 탭으로 이동
+  alert('Dig 탭으로 이동해요.');
+}
+
+// ── 커뮤니티 ──
+const GET_GROUPS = [
+  {name:'사회적 나와 비밀스러운 나가 다른 사람들', desc:'밖에선 괜찮아 보이지만 안에선 다른 패턴', count:234, matched:true, tags:['모순','사회적','비밀'],
+   entries:['회사에서는 갈등을 피하는데 혼자 있을 때 화가 많이 나요.','겉으로는 독립적인 척하는데 사실 혼자인 게 너무 힘들어요.']},
+  {name:'연결을 원하지만 먼저 다가가지 못하는 사람들', desc:'관찰자형 — 거리를 두는 것이 안전하다고 학습한 패턴', count:187, matched:true, tags:['관찰자','회피','연결'],
+   entries:['연락하고 싶은데 먼저 보내는 게 너무 어려워요.','다가갔다가 거절당할까봐 기다려요.']},
+  {name:'일반적 나와 비밀스러운 나가 다른 사람들', desc:'평소엔 괜찮은데 아무도 모르는 다른 면이 있는 패턴', count:143, matched:false, tags:['모순','일반','비밀'],
+   entries:['보통 때는 괜찮은데 아무도 모르는 두려움이 있어요.']},
+];
+
+function renderGroups() {
+  const list = document.getElementById('group-list');
+  list.innerHTML = '';
+  GET_GROUPS.forEach((g, i) => {
+    const d = document.createElement('div');
+    d.className = 'group-card fade-in' + (g.matched ? ' matched' : '');
+    d.style.animationDelay = (i * 0.06) + 's';
+    d.innerHTML =
+      `<div class="gc-top"><div class="gc-name">${g.name}</div><div class="gc-count">${g.count}명</div></div>` +
+      `<div class="gc-desc">${g.desc}</div>` +
+      `<div class="gc-tags">${g.matched?'<span class="gc-badge">내 패턴</span>':''}${g.tags.map(t=>`<span class="gc-tag">${t}</span>`).join('')}</div>` +
+      `<div class="gc-entries"><div style="font-size:9px;color:#3C3835;margin-bottom:6px;">댓글이 아니에요. 읽는 거예요.</div>${g.entries.map(e=>`<div class="gc-entry">${e}</div>`).join('')}</div>`;
+    d.onclick = () => d.classList.toggle('open');
+    list.appendChild(d);
+  });
+}
+
+// ── Amber 시트 ──
+function openAmber() {
+  document.getElementById('amber-overlay').classList.add('show');
+  document.getElementById('amber-sheet').classList.add('show');
+  var f = document.getElementById('amber-field');
+  if(f && !f._bound) {
+    f._bound = true;
+    f.addEventListener('keydown', function(e){ if(e.key==='Enter') sendAmber(); });
+  }
+  setTimeout(function(){ f && f.focus(); }, 350);
+}
+function closeAmber() {
+  document.getElementById('amber-overlay').classList.remove('show');
+  document.getElementById('amber-sheet').classList.remove('show');
+}
+var lunaGetReplies = [
+  '어떤 부분이 다르게 느껴지는지 말해줘요.',
+  '그 부분을 좀 더 얘기해볼 수 있어요?',
+  '어떻게 바꾸고 싶어요?',
+  '그 느낌이 더 정확한 것 같아요?',
+];
+function sendAmber() {
+  var f = document.getElementById('amber-field');
+  var v = f.value.trim(); if(!v) return;
+  var chat = document.getElementById('amber-chat');
+  var ud = document.createElement('div'); ud.className = 'amber-user-b';
+  ud.innerHTML = '<div class="amber-user-t">' + v + '</div>';
+  chat.appendChild(ud); f.value = ''; chat.scrollTop = chat.scrollHeight;
+  setTimeout(function() {
+    var r = lunaGetReplies[Math.floor(Math.random() * lunaGetReplies.length)];
+    var ad = document.createElement('div'); ad.className = 'amber-ai-b';
+    ad.innerHTML = '<div class="amber-ai-t">' + r + '</div><div class="amber-ai-tone">같이 확인해요</div>';
+    chat.appendChild(ad); chat.scrollTop = chat.scrollHeight;
+  }, 700);
+}
+
+function openFrost(){
+  var nm=document.querySelector('.amber-sheet-name'); if(nm) nm.textContent='프로스트';
+  var avin=document.querySelector('.amber-sheet-av-inner'); if(avin) avin.style.background='#7BA8C4';
+  var av=document.querySelector('.amber-sheet-av'); if(av){av.style.background='#7BA8C415';av.style.borderColor='#7BA8C444';}
+  var send=document.querySelector('.amber-send-btn'); if(send) send.style.background='#7BA8C4';
+  var field=document.getElementById('amber-field'); if(field) field.placeholder='프로스트에게 말해요...';
+  openAmber();
+}
+(function(){
+  function flash(){
+    var btn=document.getElementById('amber-avatar-btn');
+    if(btn){btn.classList.remove('flashing');void btn.offsetWidth;btn.classList.add('flashing');
+    btn.addEventListener('animationend',function(){btn.classList.remove('flashing');},{once:true});}
+    setTimeout(flash,9000+Math.random()*13000);
+  }
+  setTimeout(flash,5000+Math.random()*4000);
+})();
+</script>
+</body>
+</html>
