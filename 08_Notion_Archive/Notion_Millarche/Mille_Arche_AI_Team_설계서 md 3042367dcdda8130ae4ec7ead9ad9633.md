@@ -1,1 +1,0 @@
-# Mille_Arche_AI_Team_설계서.md
