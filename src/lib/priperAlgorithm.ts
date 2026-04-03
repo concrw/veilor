@@ -212,7 +212,7 @@ export function generateInsights(
   ];
 }
 
-// ── 전체 진단 실행 ───────────────────────────────────────────────────
+// ── 전체 분석 실행 ───────────────────────────────────────────────────
 export interface DiagnosisResult {
   scores: AxisScores;
   primary: MaskProfile;

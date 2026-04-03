@@ -2,6 +2,10 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import Stripe from "https://esm.sh/stripe@13.10.0";
 
+// VS-16: 구조화 JSON 로깅
+const log = (level: "info" | "warn" | "error", msg: string, data?: Record<string, unknown>) =>
+  console[level](JSON.stringify({ ts: new Date().toISOString(), level, msg, ...data }));
+
 serve(async (req) => {
   const STRIPE_SECRET_KEY = Deno.env.get("STRIPE_SECRET_KEY");
   const STRIPE_WEBHOOK_SECRET = Deno.env.get("STRIPE_WEBHOOK_SECRET");
@@ -41,7 +45,26 @@ serve(async (req) => {
     );
   }
 
-  console.log("Received event:", event.type);
+  console.log("Received event:", event.type, event.id);
+
+  // VS-08-9: 중복 이벤트 방어 — event.id 기준 idempotency 체크
+  const { data: existing } = await supabase
+    .from("stripe_webhook_events")
+    .select("id")
+    .eq("stripe_event_id", event.id)
+    .maybeSingle();
+
+  if (existing) {
+    console.log("Duplicate event, skipping:", event.id);
+    return new Response(JSON.stringify({ received: true, duplicate: true }), { status: 200 });
+  }
+
+  // 처리 전에 이벤트 기록 (중복 방지)
+  await supabase.from("stripe_webhook_events").insert({
+    stripe_event_id: event.id,
+    event_type: event.type,
+    processed_at: new Date().toISOString(),
+  });
 
   try {
     switch (event.type) {
@@ -177,7 +200,7 @@ serve(async (req) => {
   } catch (error) {
     console.error("Error handling webhook:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: "Internal server error" }),
       { status: 500 }
     );
   }

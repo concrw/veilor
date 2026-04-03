@@ -34,7 +34,7 @@ const Define = () => {
     const load = async () => {
       setLoading(true);
       // 1) latest completed session
-      const { data: session, error: sErr } = await (supabase as any)
+      const { data: session, error: sErr } = await supabase
         .from("brainstorm_sessions")
         .select("id, ended_at")
         .eq("status", "completed")
@@ -50,7 +50,7 @@ const Define = () => {
       setSessionId(session.id);
 
       // 2) related job entries
-      const { data: entries, error: eErr } = await (supabase as any)
+      const { data: entries, error: eErr } = await supabase
         .from("job_entries")
         .select("id, job_name, definition, first_memory, created_at")
         .eq("session_id", session.id)
@@ -77,7 +77,7 @@ const Define = () => {
   const saveCurrent = useCallback(async () => {
     if (!current) return true;
     const payload = { definition: definition.trim() || null, first_memory: firstMemory.trim() || null };
-    const { error } = await (supabase as any)
+    const { error } = await supabase
       .from("job_entries")
       .update(payload)
       .eq("id", current.id);

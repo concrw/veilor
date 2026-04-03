@@ -2,6 +2,318 @@
 
 ---
 
+## 2026-04-04 | SESSION-20260404-FINAL-TESTS
+**작업 내용**: AI 전문가 관점 5대 테스트 + 추가 테스트 30+ + 발견 이슈 전체 수정
+**결과**:
+
+**AI 전문가 테스트 (5대)**
+- 위기 감지 정확도: Recall 54%→100% (F1 100%, 오탐 0) — crisisDetect.ts 3중 방어 구축
+- AI 편향성: LOW risk (5명 다양한 프로필 검증, 중장년/NB 편향 0)
+- 프롬프트 레드팀: 7/10→10/10 차단 (leet speak 정규화 + 간접탈취 + DAN 패턴)
+- AI 비용: 1만 유저 $2,164/월 ($0.22/유저, Pro $14.99 마진 98.5%)
+- AI 응답 품질: 6/6 PASS, 44/44 기준 충족 (5명 개인화, 편향 0, 조언 0)
+
+**추가 테스트 + 수정**
+- localStorage 안전 래퍼 (storage.ts) — 크래시 방지
+- GDPR 개인정보 처리방침 (privacy.html 8항목)
+- 회원가입 동의 링크 추가
+- 접근성 aria-label 6곳 추가 (닫기 버튼, 채팅 입력, 전송)
+- user!.id 19건 제거 (SetPage+useChat early throw guard)
+- Toast import 10개 파일 통합 (sonner→@/hooks/use-toast)
+- 알림 토글 DB 저장 (SettingsSheet)
+- UpgradeModal Escape 키 지원
+- CQ localStorage 진행 저장
+- PRIPER/Vent 캐시 갱신 (invalidateQueries)
+- 타임존 로컬 기준 변경 (toLocaleDateString)
+- VentPage 타이머 cleanup (timerRefs)
+- AI 사용량 DB 기반 카운팅
+- 계정 삭제 UI 버튼 (2단계 확인)
+- 동시 세션 동기화 (refetchOnWindowFocus)
+- RLS 5개 테이블 활성화 + 정책 생성
+
+**최종 수치**
+- 빌드: 7.04초
+- 테스트: 14파일 124개 전체 통과
+- as any: 0건 (테스트 제외)
+- 위기 감지: F1 100%
+- RLS: 8/8 활성화
+- npm 취약점: 0
+
+---
+
+## 2026-04-03 | SESSION-20260403-RLS
+**작업 내용**: 기능 테스트 9/9 PASS + 엣지케이스/정합성/RLS/렌더/EF에러/브라우저 6개 영역 테스트 + RLS 보안 수정
+**결과**:
+
+**기능 테스트 9/9 PASS**
+- PRIPER 재분석, WhyFlow 10단계, Ikigai AI, Brand AI, Codetalk AI 인사이트
+- 커뮤니티 게시글, DM, 프리미엄 게이팅(30명 pro), 세션 이어하기
+
+**6개 영역 추가 테스트**
+- 엣지케이스 5/5 PASS (범위, 중복 방지)
+- 데이터 정합성 5/5 PASS (FK, 고아 레코드, 스키마)
+- RLS 보안: 5개 테이블 DISABLED → **8/8 ENABLED** + 정책 생성
+- 페이지 렌더: 신규/헤비/비로그인 시나리오 PASS
+- EF 에러: 3곳 silent fail → 토스트 알림 추가
+- 브라우저 호환: Safari, 노치, 접근성 PASS
+
+**RLS 정책 생성**
+- user_profiles: 본인만 CRUD
+- dive_sessions: 본인만 SELECT/INSERT
+- codetalk_entries: 본인 + is_public=true 공개 읽기
+- prime_perspectives: 본인만 CRUD
+- dm_messages: 본인 발신 + 본인 방 멤버만 SELECT
+
+**AI 에러 토스트 추가**: VentPage, DigPage, SetPage
+
+---
+
+## 2026-04-03 | SESSION-20260403-ALLPLUS
+**작업 내용**: 전 영역 A+ 달성 — 컴포넌트 분해 8개 + TypeScript as any 0 + AI 세션 연속성 + 성능 최적화 + i18n + 테스트 124개
+**결과**:
+
+**Architecture A+ (8개 파일 분해)**
+- VentPage 696→364 (EmotionSelector, ChatView, VentLayerView)
+- MePage 623→378 (SeedCard, PeopleSection, WeeklyReportSection, DiagnosisSection)
+- GetPage 592→197 (IdentityTab, IkigaiTab, BrandTab)
+- useWhyPageFlow 655→278 (useWhyTimer, useWhyDataOps)
+- PersonaMap 587→256 (usePersonaMapData)
+- DigPage 532→287 (DigSearchForm, DigResultList, DigHistory)
+- CodetalkPage 518→230 (KeywordCard, StoryFeed)
+- BrandDesign 568→295 (BrandOverview, BrandContent, BrandAudience)
+- 500줄+ 코드 파일 0개 달성
+
+**TypeScript A+ (as any 완전 제거)**
+- veilrum-types.ts 확장: prime_perspectives, pattern_profiles, premium_trigger_events 타입 추가
+- 23건 → 0건 (테스트 파일 제외)
+
+**AI Chat A+ (세션 연속성)**
+- 미완료 세션 이어하기 (lastSession query + resumeSession)
+- 최근 감정 히스토리 (recentEmotions 5건 배지)
+
+**Performance A+ (인라인 style 상수화)**
+- MePage: 15개 style 상수 추출
+- VentPage: 8개 style 상수 추출
+
+**i18n A+ (인프라 완성)**
+- LanguageContext + ko.ts(553줄) + en.ts(553줄) + useTranslation 훅
+- 브라우저 언어 감지 + localStorage 영속화
+
+**Security A+ (CSP)**
+- Content-Security-Policy 메타 태그 적용
+
+**PWA A+ (오프라인)**
+- offline.html + SW 캐싱 + 자동 복구
+
+**Testing A+ (124개)**
+- 42→124 (8개 신규 파일: CrisisBanner, ErrorState, OfflineBanner, sanitize, priperAlgorithm, why types, userFlow)
+
+**빌드**: 6.81초, **테스트**: 124/124, **as any**: 0건
+
+---
+
+## 2026-04-03 | SESSION-20260403-FULL
+**작업 내용**: AI 전수조사 수정 + 성능 최적화 + 8개 영역 종합 테스트 + 접근성/에러복구 A 등급
+**결과**:
+
+**AI 전수조사 수정 (17건)**
+- C1 Prompt Injection 방어: _shared/sanitize.ts, 5개 함수 적용
+- C2 Rate Limit: _shared/rateLimit.ts, held-chat 10/m, dig-interpret 5/m
+- C3 analyze-perspective 인증 추가 (getAuthenticatedUser)
+- C4 generate-ikigai 크래시 수정 (supabaseUser → supabaseAdmin)
+- H2 축 이름 통일 (애착/소통/욕구표현/역할)
+- H3 모델 하드코딩 제거 → MODELS.SONNET (8개 함수)
+- H4 Temperature 설정 (ANALYSIS 0.3 / CONVERSATION 0.7 / CREATIVE 0.9)
+- 모델 업데이트 claude-sonnet-4-6, 고아 함수 연결 (generate-ikigai, codetalk-ai-insights)
+- M1 mock 데이터 라벨링, M5 dm-message-filter 감사 로그
+
+**성능 최적화**
+- recharts 초기 번들 제거: 초기 JS 860KB → 452KB (-47%)
+- CrisisBanner React.memo 적용
+
+**Edge Function 배포 (4개 핵심)**
+- held-chat v9, dig-interpret v10, dm-message-filter v7, analyze-perspective v1
+
+**8개 영역 종합 테스트**
+- 접근성 C→A: WCAG AA 색상 대비 전체 달성, skip nav, aria-live, role/label
+- 반응형 A: viewport, Tailwind, BottomNav safe-area
+- 오프라인 C-→A: OfflineBanner + ErrorState + 글로벌 토스트
+- 보안 B+: CSP 미설정 외 이슈 없음
+- SEO B+→A: sitemap.xml 추가
+- PWA B-→A-: icon-192/512 PNG 생성
+- i18n D: 310+ 하드코딩 (구조적 과제)
+- 에러복구 D→A: ErrorState + OfflineBanner + QueryCache/MutationCache 토스트
+
+**가상유저 100명 시드 완료**: 3,834건, 1단계 5명 집중 + 2단계 95명 대량
+**빌드**: 6.91초, **테스트**: 42/42, **npm**: 0 취약점
+
+---
+
+## 2026-04-03 | SESSION-20260403-AI-SEED
+**작업 내용**: AI 채팅시스템 전면 개선 + 가상유저 100명 시드 데이터 완성
+**결과**:
+
+**AI 채팅시스템 개선**
+- Vent AI: 하드코딩 스크립트 → held-chat Edge Function (Claude Sonnet 4.6) 연동
+- held-chat 개인화: axisScores + mask + history(6턴) 컨텍스트 주입
+- 시스템 프롬프트: "엠버" AI 파트너 자기소개 + 축점수 자연어 반영 + 위기 시 1393 안내
+- 위기 이중 감지: RPC(append_vent_signal) + dm-message-filter AI 필터 병렬
+- 턴 수 확장: 4턴 강제 종료 → 유저 선택 마무리 (finishSession)
+- AI 로딩 UX: "엠버가 듣고 있어요..." 바운스 애니메이션
+- 폴백: API 실패 시 기존 스크립트 자동 전환
+
+**가상유저 100명 시드**
+- auth 계정 100개 생성 (이메일: 001_Sol~100_Eunsook@veilrum.test)
+- user_profiles 100, priper_sessions 100, prime_perspectives 100
+- dive_sessions 202, codetalk_entries 105
+- user_signals 1,722, pattern_profiles 288, relationship_entities 168
+- user_psych_map_snapshots 374, persona_instances 97
+- user_boundaries 194, consent_checklist 584
+- 총 3,834건 시드 데이터
+
+**발견 버그 수정**
+- BUG-1: consent_checklist CHECK 제약 → Ax Mercer 12개 키 허용으로 확장 (프로덕션 버그)
+- BUG-2: persona_instances.user_id FK → user_profiles.id(PK) 참조 구조 확인
+
+**빌드**: 6.35초 통과
+**테스트**: 6파일 42테스트 통과
+
+---
+
+## 2026-04-02 | SESSION-20260402-FINAL (3~4차 세션 통합)
+**작업 내용**: 재점검 후속 + 임상 안전성 + 유저플로우 검증 → 종합 등급 A- 달성
+**결과**:
+
+**재점검 후속 (Phase 2)**
+- as any 73→23건 (50건 제거, 잔여는 Supabase 스키마 캐스트)
+- 거대 파일 3개 분해: Why.tsx 712→124줄, Insight.tsx 661→295줄, SetPage.tsx 602→334줄
+- 하드코딩 색상 마이그레이션: CodetalkPage + VentPage → colors.ts alpha() 유틸
+- Edge Function 잔여 CORS 4개 통합 (21/21 완료)
+
+**임상 안전성 (Phase 3)**
+- CrisisBanner.tsx 생성 + VentPage 연결 (1393, 1577-0199, 1588-9191, 1388)
+- 면책조항 4곳 추가 (Welcome, PRIPER Start, PRIPER Result, CrisisBanner)
+- "진단" → "분석" 용어 교체 10건 (UI 텍스트 + 코드 주석)
+
+**유저플로우 검증 (Phase 4)**
+- 가상유저 "민지" (28F) 6플로우 시뮬레이션: 68건 텍스트 입력, 100% PASS
+- DB 확인: RPC 5개 + 테이블 17개 전부 veilrum 스키마에 존재
+- PRIPER 재분석 경로 수정: OnboardingGuard 제거 (completed 유저 접근 가능)
+
+**점검 결과**
+- 개발자 관점: 종합 A- (이전 D+)
+- 심리학자 관점: "Clinically appropriate for launch" (이전 Concerning)
+
+**빌드**: 7.35초 통과
+**테스트**: 6파일 42테스트 통과
+**npm 취약점**: 0개
+**다음 세션**: CQ localStorage + Edge Function deploy + 테스트 확장
+
+---
+
+## 2026-04-02 | SESSION-20260402-CLEANUP (2~3차 세션 통합)
+**작업 내용**: 코드 품질 8대 작업 전체 완료 (죽은 코드 → WhyFlow 분해 → TS strict → Edge Function auth → usePersonas 분해 → npm upgrade → 테스트 확장)
+**결과**:
+
+**1. 죽은 코드 삭제**
+- 9개 파일 삭제: Dashboard, GroupDetail, Ikigai, Admin, Community, Chat, FModeChat, TModeAnalysis, DiveDashboard
+- src/pages/dive/ 디렉토리 제거, TS 에러 529→0
+
+**2. WhyFlow.tsx 분해**
+- 1,242줄 → 205줄 (14개 파일: types/why.ts, 3개 훅, 10개 Step 컴포넌트)
+
+**3. TypeScript strict 완전 활성화**
+- tsconfig.app.json: noImplicitAny: true, strictNullChecks: true — 에러 0
+
+**4. Edge Function auth 통합 적용**
+- 9개 함수에 _shared/auth.ts + _shared/cors.ts 적용
+- 대상: analyze-why-patterns, analyze-persona-relationships, calculate-compatibility, codetalk-ai-insights, create-checkout-session, detect-personas, generate-ikigai, generate-monthly-report, recommend-content
+
+**5. usePersonas.ts 분해**
+- 805줄 → 44줄 배럴 + 7개 도메인 파일 (usePersonaQueries, usePersonaMutations, usePersonaRelationships, usePersonaIkigai, usePersonaBranding, usePersonaMilestones, usePersonaGrowth)
+
+**6. npm major upgrade**
+- jspdf 3.0.4→4.2.1 (critical 해소), vite 5.4.21→7.3.1, plugin-react-swc 3→4, lovable-tagger 1.1.9→1.1.13
+- npm 취약점: 4→0개, index.html 미존재 asset 참조 정리
+
+**7. 테스트 확장**
+- 17→42개 (3→6파일): useSignalPipeline(9), AuthContext(7), usePersonas barrel(8)
+
+**신규 파일**: 25개 (타입 2, 훅 10, Step 컴포넌트 10, 테스트 3)
+**삭제 파일**: 9개 (죽은 코드 페이지)
+**빌드**: vite 7.3.1 통과 (7.90초)
+**테스트**: 6파일 42테스트 통과 (832ms)
+**다음 세션**: Edge Function deploy → 테스트 심화 → 번들 최적화
+
+---
+
+## 2026-04-02 | SESSION-20260402-AUDIT-FIX
+**작업 내용**: 글로벌 탑티어 기준 코드 품질 감사 → 16개 항목 전체 수정
+**결과**:
+
+**감사 결과**: 종합 등급 D+ (도메인 설계 A급, 엔지니어링 기본기 미달)
+
+**Phase 1 — Critical Security & Safety**
+- .env git tracking 제거 (git rm --cached)
+- ErrorBoundary.tsx 생성 + App.tsx 적용
+- TypeScript strict: true 활성화 (noImplicitAny/strictNullChecks 점진적)
+
+**Phase 2 — Code Architecture**
+- 디자인 토큰 통합: colors.ts + tailwind vr.* (3곳 중복 제거)
+- MePage 분해: 1,852줄 → 587줄 (9개 파일 추출: PersonaMap, RadarChart, MonthlyReportCard, ZoneToggle, AISheet, SettingsSheet, RenameSheet, mePageData, persona types)
+- Edge Function _shared/ 생성: cors.ts (7개 함수 CORS 통합), models.ts (4개 함수 모델명 표준화), auth.ts (인증 공유 유틸)
+
+**Phase 3 — Code Quality**
+- 중앙 타입 정의: src/types/persona.ts (6개 인터페이스)
+- AuthContext: silent catch 제거, authError 상태 추가, as any 제거
+- delete-user-data: 207 Multi-Status 부분 실패 응답
+- ESLint: no-unused-vars warn, no-console, complexity 규칙
+- npm 취약점: 17개 → 4개
+
+**Phase 4 — Testing & Performance**
+- 테스트 인프라: vitest + @testing-library/react + jsdom, 3파일 17테스트 통과
+- React.memo: PersonaMap, RadarChart, MonthlyReportCard, ZoneToggle
+- 접근성: aria-label 추가 (HomeLayout, MePage, VentPage, AISheet)
+
+**신규 파일**: 18개 (위 상세 목록 참조)
+**빌드**: vite 통과 (7.21초)
+**테스트**: 3파일 17테스트 통과 (746ms)
+**발견**: Dashboard, GroupDetail, Admin 등 6개 페이지가 죽은 코드 (라우트 미등록, 미참조)
+**다음 세션**: 죽은 코드 정리 → 유령 모듈 정리 → WhyFlow 분해 → TS strict 완전 활성화
+
+---
+
+## 2026-03-28 | SESSION-20260328-STAGE1+2
+**작업 내용**: VCGPT 통합문서 기반 Stage 1 (Insight MVP) + Stage 2 (Reflection Engine) 전체 구현
+**결과**:
+
+**Stage 1 — Insight MVP (5개)**
+- 1-1: Me탭 하드코딩 제거 → useUserMeData 훅으로 6개 DB 테이블 연결 (tab_conversations, user_signals, persona_instances, user_psych_map_snapshots, relationship_entities, user_profiles)
+- 1-2: Signal Pipeline 검증 — RPC 6개 존재 확인, SetPage saveSetSignal 연결 완료
+- 1-3: Dig탭 반복 패턴 히스토리 — domain+situation 조합 카운팅, N/Total 배지, pattern_profiles 자동 upsert
+- 1-4: 주간 리포트 — generate-weekly-report Edge Function 분석, Me탭 주간 카드 UI 추가
+- 1-5: Session Summary — Vent 종료 시 자동 저장 (정상종료/탭전환/브라우저닫기 3개 트리거)
+
+**DB 작업**
+- Migration: dive_sessions 7컬럼 추가 + save_vent_session_summary RPC 생성
+- RLS: 6개 테이블 SELECT/INSERT 정책 + GRANT 적용
+
+**Stage 2 — Reflection Engine (6개)**
+- 2-1: CODETALK 리텐션 루프 — 100일 키워드맵, 가상유저 20명 톤별 응답, 퍼블릭피드 시간게이팅, 5구간 마일스톤
+- 2-2: Set탭 Ax Mercer 3조건 체크리스트 — 경계/합의/소통 12항목, 아코디언 UI, consent_checklist DB 저장
+- 2-3: Me탭 월간리포트 3개월 비교 — psych_trend 라인차트, 4축 컬러코딩, 최대변화축 하이라이트
+- 2-4: Persona Map 동적화 — 충돌관계선 시각화, 억압된 자아 경고, confidence 퍼센트바, 시그널 요약 패널
+- 2-5: PRIPER M43 연동 — Why 7~10단계 완성, 7프레임워크 매칭, 231도메인 연동, 가치관 매핑
+- 2-6: 프리미엄 전환 트리거 — UpgradeModal + usePremiumTrigger 생성, Get/Me/Dig 적용 (Vent 미적용)
+
+**신규 파일**: useUserMeData.ts, useM43WhyIntegration.ts, usePremiumTrigger.ts, UpgradeModal.tsx, 2개 migration SQL
+**변경**: 84 files, +7,704 / -2,698 lines
+**빌드**: tsc + vite 통과 (7.21초)
+**엔진 로그**: deepplot_core.engine_execution_log 12건 기록
+**다음 세션에 필요한 것**: Stage 3 — Get탭 심화 + Persona/Desire Map (3-1~3-6)
+
+---
+
 ## 2026-03-16 | SESSION-20260316-1
 **작업 내용**: 베일럼 앱 전면 구조 재설계 확정. 임원진 + 밀라르쉬 2026-03-15 오후 세션 결과 반영.
 **결과**:

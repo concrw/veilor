@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
-import { toast } from "sonner";
+import { toast } from "@/hooks/use-toast";
 
 export interface ConnectionMessage {
   id: string;
@@ -72,7 +72,7 @@ export const useConnectionMessages = (connectionId: string) => {
     },
     onError: (error) => {
       console.error('Error sending message:', error);
-      toast.error('메시지 전송에 실패했습니다');
+      toast({ title: '메시지 전송에 실패했습니다', variant: 'destructive' });
     },
   });
 

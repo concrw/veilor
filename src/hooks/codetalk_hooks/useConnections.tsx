@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
-import { toast } from "sonner";
+import { toast } from "@/hooks/use-toast";
 
 export interface Connection {
   id: string;
@@ -102,7 +102,7 @@ export const useConnections = () => {
     }) => {
       if (!user?.id) throw new Error('User not authenticated');
 
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as unknown as { from: (t: string) => ReturnType<typeof supabase.from> })
         .from('connections')
         .insert({
           requester_id: user.id,
@@ -112,7 +112,7 @@ export const useConnections = () => {
           status: 'pending',
           custom_relationship_name: newConnection.custom_relationship_name,
           requester_notes: newConnection.requester_notes,
-        } as any)
+        })
         .select();
 
       if (error) throw error;
@@ -120,11 +120,11 @@ export const useConnections = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['connections', user?.id] });
-      toast.success('연결 요청이 발송되었습니다');
+      toast({ title: '연결 요청이 발송되었습니다' });
     },
     onError: (error) => {
       console.error('Error creating connection:', error);
-      toast.error('연결 요청 발송에 실패했습니다');
+      toast({ title: '연결 요청 발송에 실패했습니다', variant: 'destructive' });
     },
   });
 
@@ -157,14 +157,14 @@ export const useConnections = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['connections', user?.id] });
-      toast.success('연결이 업데이트되었습니다');
+      toast({ title: '연결이 업데이트되었습니다' });
     },
     onError: (error, variables, context) => {
       if (context?.previousConnections) {
         queryClient.setQueryData(['connections', user?.id], context.previousConnections);
       }
       console.error('Error updating connection:', error);
-      toast.error('연결 업데이트에 실패했습니다');
+      toast({ title: '연결 업데이트에 실패했습니다', variant: 'destructive' });
     },
   });
 
@@ -193,14 +193,14 @@ export const useConnections = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['connections', user?.id] });
-      toast.success('연결이 삭제되었습니다');
+      toast({ title: '연결이 삭제되었습니다' });
     },
     onError: (error, variables, context) => {
       if (context?.previousConnections) {
         queryClient.setQueryData(['connections', user?.id], context.previousConnections);
       }
       console.error('Error deleting connection:', error);
-      toast.error('연결 삭제에 실패했습니다');
+      toast({ title: '연결 삭제에 실패했습니다', variant: 'destructive' });
     },
   });
 

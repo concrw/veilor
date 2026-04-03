@@ -14,6 +14,7 @@ export function AmberBtn({ onClick, flash }: { onClick: () => void; flash?: bool
   return (
     <button
       onClick={onClick}
+      aria-label="Amber AI 상담 열기"
       className={`relative w-[30px] h-[30px] rounded-full flex items-center justify-center flex-shrink-0 cursor-pointer ${flash ? 'amber-flash' : ''}`}
       style={{ background: '#D4A57415', border: '1px solid #D4A57444' }}
     >
@@ -31,6 +32,7 @@ export function FrostBtn({ onClick }: { onClick: () => void }) {
   return (
     <button
       onClick={onClick}
+      aria-label="Frost AI 분석 열기"
       className="relative w-[30px] h-[30px] rounded-full flex items-center justify-center flex-shrink-0 cursor-pointer"
       style={{ background: '#7BA8C415', border: '1px solid #7BA8C444' }}
     >
@@ -50,12 +52,13 @@ export default function HomeLayout() {
       style={{ minHeight: '100dvh', background: '#1C1917', fontFamily: "'DM Sans', sans-serif" }}
     >
       {/* 콘텐츠 */}
-      <main className="flex-1 overflow-y-auto" style={{ paddingBottom: '64px' }}>
+      <main id="main-content" className="flex-1 overflow-y-auto" style={{ paddingBottom: '64px' }}>
         <Outlet />
       </main>
 
       {/* 하단 탭 nav */}
       <nav
+        aria-label="메인 탭 네비게이션"
         className="fixed bottom-0 inset-x-0 z-20 flex justify-around"
         style={{
           background: '#1C1917',

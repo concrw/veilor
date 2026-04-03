@@ -1,27 +1,38 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { getCorsHeaders } from "../_shared/cors.ts";
+import { MODELS, TEMPERATURES } from "../_shared/models.ts";
+import { sanitizeUserInput } from "../_shared/sanitize.ts";
 
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: getCorsHeaders(req) });
   }
 
   try {
     if (!ANTHROPIC_API_KEY) {
       return new Response(JSON.stringify({ error: "Missing ANTHROPIC_API_KEY" }), {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       });
     }
 
-    const { ikigai, whyAnalysis, user } = await req.json();
+    const body = await req.json();
+    // 유저 입력 살균
+    const ikigai = body.ikigai ? {
+      love_elements: (body.ikigai.love_elements ?? []).map((s: string) => sanitizeUserInput(s, 200)),
+      good_at_elements: (body.ikigai.good_at_elements ?? []).map((s: string) => sanitizeUserInput(s, 200)),
+      world_needs_elements: (body.ikigai.world_needs_elements ?? []).map((s: string) => sanitizeUserInput(s, 200)),
+      paid_for_elements: (body.ikigai.paid_for_elements ?? []).map((s: string) => sanitizeUserInput(s, 200)),
+      final_ikigai_text: sanitizeUserInput(body.ikigai.final_ikigai_text ?? '', 500),
+    } : null;
+    const whyAnalysis = body.whyAnalysis ? {
+      ...body.whyAnalysis,
+      prime_perspective: sanitizeUserInput(body.whyAnalysis.prime_perspective ?? '', 500),
+    } : null;
+    const user = body.user;
 
     // Build context from Ikigai data
     const ikigaiContext = ikigai ? `
@@ -112,8 +123,9 @@ ${whyContext}
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "claude-3-5-sonnet-20241022",
+        model: MODELS.SONNET,
         max_tokens: 2048,
+        temperature: TEMPERATURES.CREATIVE,
         system: "당신은 한국어로 응답하는 브랜드 전략 전문가입니다. 반드시 유효한 JSON 형식으로만 응답하세요. JSON 외의 다른 텍스트는 포함하지 마세요.",
         messages: [
           { role: "user", content: prompt },
@@ -189,13 +201,13 @@ ${whyContext}
     };
 
     return new Response(JSON.stringify(safe), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
     });
   } catch (error: any) {
     console.error("generate-brand-strategy error", error);
     return new Response(JSON.stringify({ error: error?.message || "Unknown error" }), {
       status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
     });
   }
 });

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
-import { toast } from "sonner";
+import { toast } from "@/hooks/use-toast";
 import { PortOneClient, generatePaymentId } from "@/integrations/portone/client";
 import { SUBSCRIPTION_PLANS, type SubscriptionData } from "@/integrations/portone/types";
 
@@ -56,12 +56,12 @@ export const useSubscription = () => {
     billingInterval: 'month' | 'year' = 'month'
   ) => {
     if (!session?.access_token || !session.user) {
-      toast.error("로그인이 필요합니다");
+      toast({ title: "로그인이 필요합니다", variant: "destructive" });
       return;
     }
 
     if (!PORTONE_STORE_ID || !PORTONE_CHANNEL_KEY) {
-      toast.error("결제 설정이 완료되지 않았습니다");
+      toast({ title: "결제 설정이 완료되지 않았습니다", variant: "destructive" });
       console.error("PortOne credentials not configured");
       return;
     }
@@ -93,24 +93,24 @@ export const useSubscription = () => {
 
       // Payment successful - webhook will handle subscription activation
       if (response.code === '0' || response.txId) {
-        toast.success("결제가 완료되었습니다");
+        toast({ title: "결제가 완료되었습니다" });
         await checkSubscription(); // Refresh subscription status
       }
     } catch (error: any) {
       console.error('Error creating checkout:', error);
-      toast.error(error.message || "결제 페이지 생성에 실패했습니다");
+      toast({ title: error.message || "결제 페이지 생성에 실패했습니다", variant: "destructive" });
     }
   };
 
   const openCustomerPortal = async () => {
     if (!session?.access_token) {
-      toast.error("로그인이 필요합니다");
+      toast({ title: "로그인이 필요합니다", variant: "destructive" });
       return;
     }
 
     // PortOne doesn't have a built-in customer portal
     // Users can manage subscriptions through admin panel or customer support
-    toast.info("구독 관리는 관리자에게 문의해주세요");
+    toast({ title: "구독 관리는 관리자에게 문의해주세요" });
   };
 
   useEffect(() => {

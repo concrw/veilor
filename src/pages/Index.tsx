@@ -23,7 +23,7 @@ const Index = () => {
       }
       const {
         data
-      } = await (supabase as any).from('brainstorm_sessions').select('id, ended_at').eq('user_id', user.id).not('ended_at', 'is', null).limit(1).maybeSingle();
+      } = await supabase.from('brainstorm_sessions').select('id, ended_at').eq('user_id', user.id).not('ended_at', 'is', null).limit(1).maybeSingle();
       if (active) setHasCompleted(!!data);
     };
     check();

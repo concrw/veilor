@@ -3,18 +3,20 @@
 // Amber 단독 (Frost 없음)
 
 import { useState, useRef, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, veilrumDb } from '@/integrations/supabase/client';
+import { saveVentMessage, saveVentSummary, saveVentSessionSummary, saveVentPartialSession } from '@/hooks/useSignalPipeline';
 import { AmberBtn } from '../../layouts/HomeLayout';
 import { useAmberAttention } from '../../hooks/useAmberAttention';
-
-/* ── 색상 팔레트 ── */
-const C = {
-  bg: '#1C1917', bg2: '#292524', bg3: '#242120',
-  border: '#3C3835', border2: '#2A2624',
-  text: '#E7E5E4', text2: '#A8A29E', text3: '#78716C', text4: '#57534E', text5: '#3C3835',
-  amber: '#D4A574', amberDim: '#A07850',
-};
+import { C, alpha } from '@/lib/colors';
+import { CrisisBanner } from '@/components/CrisisBanner';
+import type { CrisisSeverity } from '@/hooks/useSignalPipeline';
+import { toast } from '@/hooks/use-toast';
+import { detectCrisisLevel } from '@/lib/crisisDetect';
+import EmotionSelector from '@/components/vent/EmotionSelector';
+import ChatView from '@/components/vent/ChatView';
+import VentLayerView from '@/components/vent/VentLayerView';
 
 /* ── 감정 데이터 ── */
 const EMOTIONS = [
@@ -87,28 +89,10 @@ function getTimeGreeting() {
   return { title: '한밤중이에요.', placeholder: '지금 무슨 생각을 하고 있어요?' };
 }
 
-/* ── 이모지 SVG (간단 버전) ── */
-function EmoIcon({ label, active }: { label: string; active: boolean }) {
-  const stroke = active ? C.amber : C.text3;
-  const icons: Record<string, JSX.Element> = {
-    '불안해':    <><circle cx="12" cy="12" r="10"/><path d="M8 15s1-2 4-2 4 2 4 2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/><path d="M8.5 8.5c.5-1 1.5-1.5 2.5-1.5"/><path d="M15.5 8.5c-.5-1-1.5-1.5-2.5-1.5"/></>,
-    '슬퍼':     <><circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></>,
-    '화가 나':  <><circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><path d="M8.5 8.5l2 1.5"/><path d="M15.5 8.5l-2 1.5"/></>,
-    '혼란스러워':<><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,
-    '외로워':   <><circle cx="12" cy="12" r="10"/><path d="M8 15h.01M12 15h.01M16 15h.01"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></>,
-    '무감각해': <><circle cx="12" cy="12" r="10"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></>,
-    '지쳐':     <><circle cx="12" cy="12" r="10"/><path d="M8 13s1 2 4 2 4-2 4-2"/><path d="M8 9l2 1"/><path d="M16 9l-2 1"/></>,
-    '상처받았어':<><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/><line x1="12" y1="10" x2="12" y2="14"/></>,
-  };
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
-      stroke={stroke} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
-      {icons[label]}
-    </svg>
-  );
-}
-
 /* ── Amber 대화 시트 ── */
+const SHEET_AI_MSG_STYLE = { background: C.bg2, border: `1px solid ${C.border}`, borderRadius: '11px 11px 11px 3px', padding: '10px 13px' } as const;
+const SHEET_USER_MSG_STYLE = { background: alpha(C.amber, 0.05), border: `1px solid ${alpha(C.amber, 0.13)}`, borderRadius: '11px 11px 3px 11px', padding: '9px 13px' } as const;
+
 function AmberSheet({
   open, onClose, aiName,
 }: { open: boolean; onClose: () => void; aiName: string }) {
@@ -124,11 +108,7 @@ function AmberSheet({
     setMsgs(m => [...m, { role: 'user', text: txt }]);
     setVal('');
     setTimeout(() => {
-      setMsgs(m => [...m, {
-        role: 'ai',
-        text: '그 감정, 언제부터 있었던 것 같아요?',
-        tone: '같이 파고들어요',
-      }]);
+      setMsgs(m => [...m, { role: 'ai', text: '그 감정, 언제부터 있었던 것 같아요?', tone: '같이 파고들어요' }]);
     }, 700);
   };
 
@@ -138,61 +118,35 @@ function AmberSheet({
 
   return (
     <>
-      <div
-        onClick={onClose}
-        className="absolute inset-0 z-30 rounded-[40px] transition-opacity duration-300"
-        style={{
-          background: 'rgba(0,0,0,.5)',
-          opacity: open ? 1 : 0,
-          pointerEvents: open ? 'all' : 'none',
-        }}
-      />
-      <div
-        className="absolute bottom-0 left-0 right-0 z-31 flex flex-col"
-        style={{
-          background: C.bg,
-          borderRadius: '20px 20px 40px 40px',
-          border: `1px solid #44403C`,
-          borderBottom: 'none',
-          maxHeight: '78%',
-          transform: open ? 'translateY(0)' : 'translateY(100%)',
-          transition: 'transform .35s cubic-bezier(.4,0,.2,1)',
-          zIndex: 31,
-        }}
-      >
+      <div onClick={onClose} className="absolute inset-0 z-30 rounded-[40px] transition-opacity duration-300"
+        style={{ background: 'rgba(0,0,0,.5)', opacity: open ? 1 : 0, pointerEvents: open ? 'all' : 'none' }} />
+      <div className="absolute bottom-0 left-0 right-0 z-31 flex flex-col"
+        style={{ background: C.bg, borderRadius: '20px 20px 40px 40px', border: `1px solid ${C.border}`, borderBottom: 'none', maxHeight: '78%', transform: open ? 'translateY(0)' : 'translateY(100%)', transition: 'transform .35s cubic-bezier(.4,0,.2,1)', zIndex: 31 }}>
         <div className="w-8 h-[3px] rounded-full mx-auto mt-2.5" style={{ background: C.border }} />
-        {/* 헤더 */}
         <div className="flex items-center gap-[9px] px-5 py-2.5 flex-shrink-0" style={{ borderBottom: `1px solid ${C.border2}` }}>
-          <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: '#D4A57415', border: '1px solid #D4A57433' }}>
+          <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: alpha(C.amber, 0.08), border: `1px solid ${alpha(C.amber, 0.2)}` }}>
             <div className="w-[17px] h-[17px] rounded-full" style={{ background: C.amber }} />
           </div>
           <span className="flex-1 text-[15px]" style={{ fontFamily: "'Cormorant Garamond', serif", color: C.text }}>{aiName}</span>
-          <button onClick={onClose} className="w-[26px] h-[26px] rounded-full flex items-center justify-center text-[13px]" style={{ border: `1px solid ${C.border}`, color: C.text4 }}>✕</button>
+          <button aria-label="닫기" onClick={onClose} className="w-[26px] h-[26px] rounded-full flex items-center justify-center text-[13px]" style={{ border: `1px solid ${C.border}`, color: C.text4 }}>✕</button>
         </div>
-        {/* 채팅 */}
         <div ref={chatRef} className="flex-1 overflow-y-auto flex flex-col gap-2 min-h-0" style={{ padding: '12px 18px', scrollbarWidth: 'none' }}>
           {msgs.map((m, i) => m.role === 'ai' ? (
-            <div key={i} className="vr-fade-in flex-shrink-0" style={{ background: C.bg2, border: `1px solid ${C.border}`, borderRadius: '11px 11px 11px 3px', padding: '10px 13px' }}>
+            <div key={i} className="vr-fade-in flex-shrink-0" style={SHEET_AI_MSG_STYLE}>
               <p className="text-[15px] font-light leading-[1.55]" style={{ fontFamily: "'Cormorant Garamond', serif", color: C.text }}>{m.text}</p>
-              {m.tone && <p className="text-[9px] font-light mt-[2px]" style={{ color: '#D4A57477' }}>{m.tone}</p>}
+              {m.tone && <p className="text-[9px] font-light mt-[2px]" style={{ color: alpha(C.amber, 0.47) }}>{m.tone}</p>}
             </div>
           ) : (
-            <div key={i} className="vr-fade-in self-end max-w-[85%] flex-shrink-0" style={{ background: '#D4A5740D', border: '1px solid #D4A57422', borderRadius: '11px 11px 3px 11px', padding: '9px 13px' }}>
+            <div key={i} className="vr-fade-in self-end max-w-[85%] flex-shrink-0" style={SHEET_USER_MSG_STYLE}>
               <p className="text-[12px] font-light leading-[1.6]" style={{ color: C.text2 }}>{m.text}</p>
             </div>
           ))}
         </div>
-        {/* 입력 */}
         <div className="flex-shrink-0 flex items-center gap-[7px]" style={{ padding: '8px 14px 14px', borderTop: `1px solid ${C.border2}` }}>
-          <input
-            className="flex-1 text-[12px] font-light rounded-full outline-none"
+          <input aria-label="메시지 입력" className="flex-1 text-[12px] font-light rounded-full outline-none"
             style={{ background: C.bg2, border: `1px solid ${C.border}`, padding: '7px 13px', color: C.text2, fontFamily: "'DM Sans', sans-serif" }}
-            placeholder={`${aiName}에게 말해요...`}
-            value={val}
-            onChange={e => setVal(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && send()}
-          />
-          <button onClick={send} className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: C.amber, border: 'none' }}>
+            placeholder={`${aiName}에게 말해요...`} value={val} onChange={e => setVal(e.target.value)} onKeyDown={e => e.key === 'Enter' && send()} />
+          <button aria-label="전송" onClick={send} className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: C.amber, border: 'none' }}>
             <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M6 11V1M1 6l5-5 5 5" stroke="#1C1917" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
           </button>
         </div>
@@ -203,7 +157,8 @@ function AmberSheet({
 
 /* ── 메인 컴포넌트 ── */
 export default function VentPage() {
-  const { user } = useAuth();
+  const { user, axisScores, primaryMask } = useAuth();
+  const qc = useQueryClient();
   const [section, setSection] = useState<'vent' | 'layer' | 'community'>('vent');
   const [phase, setPhase] = useState<'select' | 'chat'>('select');
   const [curEmo, setCurEmo] = useState('');
@@ -211,54 +166,17 @@ export default function VentPage() {
   const [msgCount, setMsgCount] = useState(0);
   const [qIdx, setQIdx] = useState(0);
   const [msgVal, setMsgVal] = useState('');
+  const [crisisLevel, setCrisisLevel] = useState<'high' | 'critical' | null>(null);
+  const [aiThinking, setAiThinking] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
   const [amberOpen, setAmberOpen] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const [layerActive, setLayerActive] = useState('');
-  const chatRef = useRef<HTMLDivElement>(null);
+  const sessionSavedRef = useRef(false);
+  const timerRefs = useRef<number[]>([]);
   const greeting = getTimeGreeting();
-
-  // AI 이름 — 추후 user_profiles.ai_companion_name 에서 로드
   const aiName = '엠버';
   const amberFlash = useAmberAttention();
-
-  useEffect(() => {
-    if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight;
-  }, [msgs, showSummary]);
-
-  function pickEmotion(emo: string) {
-    setCurEmo(emo);
-    const data = EMO_DATA[emo];
-    setTimeout(() => {
-      setPhase('chat');
-      setMsgs([{ role: 'ai', text: data.questions[0][0], tone: data.questions[0][1] }]);
-      setMsgCount(0);
-      setQIdx(0);
-      setShowSummary(false);
-    }, 300);
-  }
-
-  function sendMsg() {
-    if (!msgVal.trim() || !curEmo) return;
-    const txt = msgVal.trim();
-    setMsgVal('');
-    const newCount = msgCount + 1;
-    const data = EMO_DATA[curEmo];
-    const nextQIdx = Math.min(qIdx + 1, data.questions.length - 1);
-    setMsgs(m => [...m, { role: 'user', text: txt }]);
-    setMsgCount(newCount);
-    setQIdx(nextQIdx);
-    setTimeout(() => {
-      setMsgs(m => [...m, { role: 'ai', text: data.questions[nextQIdx][0], tone: data.questions[nextQIdx][1] }]);
-      if (newCount >= 4) {
-        setTimeout(() => setShowSummary(true), 400);
-      }
-    }, 700);
-  }
-
-  function toggleGroup(id: string) {
-    setExpandedGroups(g => ({ ...g, [id]: !g[id] }));
-  }
 
   const COMM_GROUPS = [
     { title: '사람들 속에서 혼자인 사람들', count: 98, desc: '함께 있어도 연결이 안 되는 느낌' },
@@ -266,21 +184,150 @@ export default function VentPage() {
     { title: '잘 지내야 한다고 느끼는 사람들', count: 67, desc: '감정을 숨기고 버티는 패턴' },
   ];
 
+  /* ── 세션 연속성: 마지막 미완료 세션 로드 ── */
+  const { data: lastSession } = useQuery({
+    queryKey: ['last-vent-session', user?.id],
+    queryFn: async () => {
+      const { data } = await veilrumDb.from('dive_sessions')
+        .select('id, emotion, messages, turn_count, created_at')
+        .eq('user_id', user!.id).eq('mode', 'F').eq('session_completed', false)
+        .order('created_at', { ascending: false }).limit(1).maybeSingle();
+      return data;
+    },
+    enabled: !!user, staleTime: 1000 * 60,
+  });
+
+  const { data: recentEmotions } = useQuery({
+    queryKey: ['recent-emotions', user?.id],
+    queryFn: async () => {
+      const { data } = await veilrumDb.from('dive_sessions')
+        .select('emotion, created_at')
+        .eq('user_id', user!.id).eq('mode', 'F').eq('session_completed', true)
+        .order('created_at', { ascending: false }).limit(5);
+      return data ?? [];
+    },
+    enabled: !!user,
+  });
+
+  function resumeSession(session: NonNullable<typeof lastSession>) {
+    setCurEmo(session.emotion);
+    setMsgs(session.messages || []);
+    setMsgCount(session.turn_count || 0);
+    setPhase('chat');
+  }
+
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (user && phase === 'chat' && msgCount > 0 && msgCount < 4 && !sessionSavedRef.current) {
+        saveVentPartialSession(user.id, curEmo, msgs, msgCount);
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      // 타이머 정리
+      timerRefs.current.forEach(t => window.clearTimeout(t));
+      timerRefs.current = [];
+      if (user && phase === 'chat' && msgCount > 0 && msgCount < 4 && !sessionSavedRef.current) {
+        saveVentPartialSession(user.id, curEmo, msgs, msgCount);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, phase, curEmo, msgs, msgCount]);
+
+  function pickEmotion(emo: string) {
+    setCurEmo(emo);
+    sessionSavedRef.current = false;
+    const data = EMO_DATA[emo];
+    timerRefs.current.push(window.setTimeout(() => {
+      setPhase('chat');
+      setMsgs([
+        { role: 'ai', text: '저는 엠버예요. AI 감정 수용 파트너이고, 전문 상담사는 아니에요. 판단 없이 들을게요.', tone: '함께예요' },
+        { role: 'ai', text: data.questions[0][0], tone: data.questions[0][1] },
+      ]);
+      setMsgCount(0); setQIdx(0); setShowSummary(false);
+    }, 300));
+  }
+
+  function finishSession() {
+    if (!user || !curEmo || sessionSavedRef.current) return;
+    const data = EMO_DATA[curEmo];
+    sessionSavedRef.current = true;
+    saveVentSummary(user.id, curEmo, data.suggestion);
+    saveVentSessionSummary(user.id, curEmo, msgs, data.suggestion, msgCount);
+    setShowSummary(true);
+    // Me탭 + 히스토리 캐시 갱신
+    qc.invalidateQueries({ queryKey: ['me-stats'] });
+    qc.invalidateQueries({ queryKey: ['me-radar'] });
+    qc.invalidateQueries({ queryKey: ['recent-emotions'] });
+    qc.invalidateQueries({ queryKey: ['last-vent-session'] });
+  }
+
+  async function sendMsg() {
+    if (!msgVal.trim() || !curEmo || aiThinking) return;
+    const txt = msgVal.trim();
+    setMsgVal('');
+    const newCount = msgCount + 1;
+    const data = EMO_DATA[curEmo];
+    const nextQIdx = Math.min(qIdx + 1, data.questions.length - 1);
+    setMsgs(m => [...m, { role: 'user', text: txt }]);
+    setMsgCount(newCount); setQIdx(nextQIdx);
+
+    // 위기 감지 3중 방어: 클라이언트 즉시 → RPC → AI 필터
+    const clientCrisis = detectCrisisLevel(txt);
+    if (clientCrisis === 'critical' || clientCrisis === 'high') {
+      setCrisisLevel(clientCrisis);
+    }
+
+    if (user) {
+      saveVentMessage(user.id, curEmo, txt, newCount).then(({ crisisSeverity }) => {
+        if (crisisSeverity === 'critical' || crisisSeverity === 'high') setCrisisLevel(crisisSeverity);
+      });
+      supabase.functions.invoke('dm-message-filter', {
+        body: { message: txt, userId: user.id },
+      }).then(({ data: filterData }) => {
+        if (filterData?.verdict === 'CRISIS' && !crisisLevel) setCrisisLevel('critical');
+      }).catch(() => {});
+    }
+
+    setAiThinking(true);
+    let aiText = data.questions[nextQIdx][0];
+    let aiTone = data.questions[nextQIdx][1];
+
+    try {
+      const { data: aiData, error } = await supabase.functions.invoke('held-chat', {
+        body: { emotion: curEmo, text: txt, userId: user?.id, axisScores: axisScores ?? null, mask: primaryMask ?? null, history: msgs.slice(-6) },
+      });
+      if (!error && aiData?.response) { aiText = aiData.response; aiTone = '엠버가 듣고 있어요'; }
+    } catch {
+      toast({ title: 'AI 응답을 받지 못했어요', description: '기본 응답으로 대체합니다.', variant: 'destructive' });
+    }
+
+    setAiThinking(false);
+    setMsgs(m => [...m, { role: 'ai', text: aiText, tone: aiTone }]);
+
+    if (newCount >= 4 && newCount % 4 === 0 && !sessionSavedRef.current) {
+      timerRefs.current.push(window.setTimeout(() => {
+        setMsgs(m => [...m, { role: 'ai', text: `${newCount}번의 이야기를 나눴어요. 더 이야기하고 싶으면 계속해도 돼요. 마무리하고 싶으면 아래 버튼을 눌러주세요.`, tone: '당신의 속도로' }]);
+      }, 500));
+    }
+  }
+
   return (
     <div className="flex flex-col" style={{ background: C.bg, minHeight: '100%', position: 'relative', overflow: 'hidden' }}>
+      {crisisLevel && <CrisisBanner severity={crisisLevel} onDismiss={() => setCrisisLevel(null)} />}
 
-      {/* ── 글로벌 헤더 ── */}
+      {/* 글로벌 헤더 */}
       <div className="flex-shrink-0 flex items-center gap-[10px] px-5 py-2" style={{ borderBottom: `1px solid ${C.border2}` }}>
         <div className="flex flex-col gap-[2px] flex-shrink-0">
           <span className="text-[22px] leading-none tracking-[.01em]" style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 400, color: C.text }}>VENT</span>
           <span className="text-[10px] font-light tracking-[.02em]" style={{ color: C.text4 }}>지금 다 쏟아내도 돼요</span>
         </div>
         <div className="flex-1" />
-        {/* Amber 아바타 버튼 */}
         <AmberBtn onClick={() => setAmberOpen(true)} flash={amberFlash} />
       </div>
 
-      {/* ── 섹션 탭 ── */}
+      {/* 섹션 탭 */}
       <div className="flex-shrink-0 flex px-[22px]" style={{ borderBottom: `1px solid ${C.border2}` }}>
         {(['vent', 'layer', 'community'] as const).map((s, i) => {
           const labels = ['지금 기분', '나의 레이어', '커뮤니티'];
@@ -288,215 +335,49 @@ export default function VentPage() {
           return (
             <button key={s} onClick={() => setSection(s)}
               className="text-[11px] font-light py-[9px] mr-[18px] border-none bg-transparent cursor-pointer transition-colors"
-              style={{
-                color: active ? C.amber : C.text4,
-                fontWeight: active ? 400 : 300,
-                borderBottom: active ? `2px solid ${C.amber}` : '2px solid transparent',
-                fontFamily: "'DM Sans', sans-serif",
-              }}>
+              style={{ color: active ? C.amber : C.text4, fontWeight: active ? 400 : 300, borderBottom: active ? `2px solid ${C.amber}` : '2px solid transparent', fontFamily: "'DM Sans', sans-serif" }}>
               {labels[i]}
             </button>
           );
         })}
       </div>
 
-      {/* ── VENT 섹션 ── */}
+      {/* VENT 섹션 */}
       {section === 'vent' && (
         <div className="flex flex-col flex-1 overflow-hidden min-h-0" style={{ position: 'relative' }}>
           {phase === 'select' ? (
-            <div className="flex flex-col overflow-y-auto flex-1" style={{ padding: '18px 22px 12px', scrollbarWidth: 'none' }}>
-              <h2 className="text-[26px] font-light leading-[1.2] mb-1 flex-shrink-0" style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, color: C.text }}>{greeting.title}</h2>
-              <p className="text-[11px] font-light mb-3 flex-shrink-0" style={{ color: C.text4 }}>지금 기분이 어때요?</p>
-
-              {/* 감정 그리드 */}
-              <div className="grid grid-cols-4 gap-2 flex-shrink-0 mb-3">
-                {EMOTIONS.map(({ label }) => {
-                  const active = curEmo === label;
-                  return (
-                    <button key={label} onClick={() => pickEmotion(label)}
-                      className="flex flex-col items-center gap-[5px] rounded-[10px] cursor-pointer transition-all"
-                      style={{
-                        padding: '10px 6px',
-                        background: active ? '#D4A5740F' : C.bg2,
-                        border: `1px solid ${active ? '#D4A57466' : C.border}`,
-                      }}>
-                      <EmoIcon label={label} active={active} />
-                      <span className="text-[10px] font-light text-center leading-[1.3] break-keep transition-colors"
-                        style={{ color: active ? C.amber : C.text3 }}>
-                        {label}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* 일상 질문 카드 */}
-              <div className="flex flex-col gap-[7px] flex-shrink-0">
-                <p className="text-[10px] font-light mb-[2px]" style={{ color: C.text5, letterSpacing: '.08em', textTransform: 'uppercase' }}>아니면 이런 건 어때요?</p>
-                {QUICK_CARDS.map(({ key, text, emo }) => (
-                  <button key={key} onClick={() => pickEmotion(emo)}
-                    className="rounded-[10px] flex items-center justify-between gap-2 cursor-pointer transition-all text-left"
-                    style={{ padding: '11px 14px', background: C.bg2, border: `1px solid ${C.border}` }}>
-                    <span className="text-[14px] font-light leading-[1.5] flex-1 break-keep" style={{ fontFamily: "'Cormorant Garamond', serif", color: C.text3 }}>{text}</span>
-                    <span className="text-[12px] flex-shrink-0" style={{ color: C.text5 }}>→</span>
-                  </button>
-                ))}
-              </div>
-            </div>
+            <EmotionSelector
+              greeting={greeting} curEmo={curEmo}
+              lastSession={lastSession ? { emotion: lastSession.emotion, turn_count: lastSession.turn_count } : null}
+              recentEmotions={recentEmotions ?? null}
+              emotions={EMOTIONS} quickCards={QUICK_CARDS}
+              onPickEmotion={pickEmotion}
+              onResumeSession={() => lastSession && resumeSession(lastSession)}
+            />
           ) : (
-            /* 대화 화면 */
-            <div className="flex flex-col flex-1 overflow-hidden min-h-0">
-              <div className="flex-shrink-0 px-[22px] pt-3 pb-1">
-                <h3 className="text-[26px] font-light" style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, color: C.text }}>{curEmo}</h3>
-                {/* 커뮤니티 배너 */}
-                {curEmo && EMO_DATA[curEmo] && (
-                  <div className="flex items-center gap-[9px] rounded-[10px] mt-2" style={{ padding: '10px 13px', background: C.bg2, border: `1px solid ${C.border}` }}>
-                    <span className="w-[7px] h-[7px] rounded-full flex-shrink-0" style={{ background: C.amber, animation: 'ai-pulse 2.5s ease-in-out infinite' }} />
-                    <span className="text-[14px] font-light flex-1 break-keep" style={{ fontFamily: "'Cormorant Garamond', serif", color: C.text2 }}>
-                      지금 비슷한 감정인 친구들이 {curEmo.toLowerCase()} 명 있어
-                    </span>
-                    <span className="text-[16px]" style={{ fontFamily: "'Cormorant Garamond', serif", color: C.amber }}>{EMO_DATA[curEmo].count}</span>
-                  </div>
-                )}
-              </div>
-
-              <div ref={chatRef} className="flex flex-col gap-2 overflow-y-auto flex-1 min-h-0" style={{ padding: '8px 22px', scrollbarWidth: 'none' }}>
-                {msgs.map((m, i) => m.role === 'ai' ? (
-                  <div key={i} className="vr-fade-in flex-shrink-0" style={{ background: C.bg2, border: `1px solid ${C.border}`, borderRadius: '12px 12px 12px 3px', padding: '12px 14px' }}>
-                    <p className="text-[16px] font-light leading-[1.6] break-keep" style={{ fontFamily: "'Cormorant Garamond', serif", color: C.text }}>{m.text}</p>
-                    {m.tone && <p className="text-[10px] font-light mt-[3px]" style={{ color: '#D4A57466' }}>{m.tone}</p>}
-                  </div>
-                ) : (
-                  <div key={i} className="vr-fade-in self-end max-w-[84%] flex-shrink-0" style={{ background: '#D4A5740D', border: '1px solid #D4A57422', borderRadius: '12px 12px 3px 12px', padding: '10px 14px' }}>
-                    <p className="text-[13px] font-light leading-[1.6] break-keep" style={{ color: C.text2 }}>{m.text}</p>
-                  </div>
-                ))}
-
-                {/* 감정 요약 카드 */}
-                {showSummary && curEmo && (
-                  <div className="vr-fade-in flex-shrink-0 rounded-[11px] mt-2" style={{ background: C.bg2, border: `1px solid #D4A57422`, padding: '14px 15px' }}>
-                    <p className="text-[10px] font-semibold tracking-[.08em] uppercase mb-[6px]" style={{ color: C.amber }}>지금 감정</p>
-                    <div className="flex gap-[6px] flex-wrap mb-[10px]">
-                      <span className="text-[11px] font-light px-[10px] py-[3px] rounded-full" style={{ border: `1px solid #D4A57433`, color: C.amber, background: '#D4A5740A' }}>{curEmo}</span>
-                    </div>
-                    <p className="text-[14px] font-light leading-[1.65] mb-[10px] break-keep" style={{ fontFamily: "'Cormorant Garamond', serif", color: C.text2 }}>{EMO_DATA[curEmo].suggestion}</p>
-                    <div className="flex gap-[7px]">
-                      <button onClick={() => { setShowSummary(false); setMsgs(m => [...m, { role: 'ai', text: '물론이죠. 또 어떤 게 마음에 있어요?', tone: '여기 있어요 · 천천히' }]); }}
-                        className="flex-1 py-[9px] rounded-[9px] text-[11px] font-light cursor-pointer transition-all"
-                        style={{ border: `1px solid #D4A57444`, background: '#D4A5740A', color: C.amber }}>
-                        더 이야기할게요
-                      </button>
-                      <button onClick={() => {}}
-                        className="flex-1 py-[9px] rounded-[9px] text-[11px] font-light cursor-pointer transition-all"
-                        style={{ border: `1px solid ${C.border}`, background: 'transparent', color: C.text4 }}>
-                        이걸 해볼게요 →
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* 입력창 */}
-              {!showSummary && (
-                <div className="flex-shrink-0 flex items-center gap-2" style={{ padding: '8px 16px 14px', borderTop: `1px solid ${C.border2}` }}>
-                  <button className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ border: `1px solid ${C.border}`, background: 'transparent' }}>
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="5" y="1" width="6" height="9" rx="3" stroke="#78716C" strokeWidth="1.2"/><path d="M2 7.5C2 10.538 4.686 13 8 13s6-2.462 6-5.5" stroke="#78716C" strokeWidth="1.2" strokeLinecap="round" fill="none"/><line x1="8" y1="13" x2="8" y2="15" stroke="#78716C" strokeWidth="1.2" strokeLinecap="round"/></svg>
-                  </button>
-                  <input
-                    className="flex-1 rounded-full text-[12px] font-light outline-none"
-                    style={{ background: C.bg2, border: `1px solid ${C.border}`, padding: '8px 14px', color: C.text2, fontFamily: "'DM Sans', sans-serif" }}
-                    placeholder={greeting.placeholder}
-                    value={msgVal}
-                    onChange={e => setMsgVal(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && sendMsg()}
-                  />
-                  <button onClick={sendMsg} className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-transform active:scale-[.92]" style={{ background: C.amber, border: 'none' }}>
-                    <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M6 11V1M1 6l5-5 5 5" stroke="#1C1917" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                  </button>
-                </div>
-              )}
-            </div>
+            <ChatView
+              curEmo={curEmo} msgs={msgs} msgCount={msgCount} msgVal={msgVal}
+              aiThinking={aiThinking} showSummary={showSummary}
+              sessionSaved={sessionSavedRef.current}
+              emoData={EMO_DATA[curEmo]} greeting={greeting}
+              onMsgValChange={setMsgVal} onSendMsg={sendMsg}
+              onFinishSession={finishSession}
+              onContinueChat={() => { setShowSummary(false); setMsgs(m => [...m, { role: 'ai', text: '물론이죠. 또 어떤 게 마음에 있어요?', tone: '여기 있어요 · 천천히' }]); }}
+            />
           )}
         </div>
       )}
 
-      {/* ── 나의 레이어 ── */}
-      {section === 'layer' && (
-        <div className="flex-1 overflow-y-auto flex flex-col gap-2 min-h-0" style={{ padding: '14px 22px', scrollbarWidth: 'none' }}>
-          <p className="text-[11px] font-light mb-1 flex-shrink-0" style={{ color: C.text4 }}>어떤 상황에서의 나를 살펴볼까요?</p>
-
-          {layerActive ? (
-            /* 레이어 질문 영역 */
-            <div className="flex flex-col gap-[7px]">
-              <button onClick={() => setLayerActive('')} className="text-[11px] font-light text-left mb-1" style={{ color: C.text4, background: 'none', border: 'none', cursor: 'pointer' }}>← 돌아가기</button>
-              <div className="inline-flex items-center px-[10px] py-[3px] rounded-full mb-2" style={{ border: `1px solid #D4A57433`, color: C.amber, background: '#D4A5740A', fontSize: 10, letterSpacing: '.07em', textTransform: 'uppercase' }}>레이어</div>
-              <p className="text-[14px] font-light break-keep" style={{ fontFamily: "'Cormorant Garamond', serif", color: C.text2 }}>이 상황에서의 나는 어떤가요? 자유롭게 털어놔요.</p>
-              <div className="rounded-[11px] mt-2" style={{ background: C.bg2, border: `1px solid ${C.border}` }}>
-                <textarea className="w-full bg-transparent border-none outline-none resize-none text-[15px] font-light leading-[1.6] break-keep p-4"
-                  style={{ fontFamily: "'Cormorant Garamond', serif", color: C.text, minHeight: 100 }}
-                  placeholder="떠오르는 것을 써요..." />
-              </div>
-            </div>
-          ) : (
-            LAYER_GROUPS.map(group => (
-              <div key={group.id} className="flex flex-col gap-[5px] flex-shrink-0">
-                <button onClick={() => toggleGroup(group.id)}
-                  className="rounded-[11px] flex items-center justify-between gap-2 text-left cursor-pointer transition-all"
-                  style={{ background: C.bg2, border: `1px solid ${C.border}`, padding: '13px 15px' }}>
-                  <div>
-                    <p className="text-[17px] font-light mb-[2px]" style={{ fontFamily: "'Cormorant Garamond', serif", color: C.text }}>{group.label}</p>
-                    <p className="text-[10px] font-light" style={{ color: C.text4 }}>{group.sub}</p>
-                  </div>
-                  <span className="text-[11px] flex-shrink-0 transition-transform" style={{ color: C.text5, transform: expandedGroups[group.id] ? 'rotate(90deg)' : 'none' }}>›</span>
-                </button>
-
-                {expandedGroups[group.id] && (
-                  <div className="flex flex-col gap-[5px] pl-2">
-                    {group.items.map(item => (
-                      <button key={item.id} onClick={() => !item.locked && setLayerActive(item.id)}
-                        className="rounded-[9px] flex items-center justify-between gap-2 text-left"
-                        style={{
-                          background: C.bg,
-                          border: `1px solid ${C.border}`,
-                          padding: '10px 13px',
-                          cursor: item.locked ? 'default' : 'pointer',
-                          opacity: item.locked ? 0.5 : 1,
-                        }}>
-                        <span className="text-[15px] font-light" style={{ fontFamily: "'Cormorant Garamond', serif", color: item.locked ? C.text4 : C.text2 }}>{item.label}</span>
-                        {item.locked ? (
-                          <span className="text-[9px] px-2 py-[2px] rounded-full flex-shrink-0" style={{ border: `1px solid ${C.border}`, color: C.text5 }}>🔒 잠김</span>
-                        ) : item.sensitive ? (
-                          <span className="text-[9px] px-2 py-[2px] rounded-full flex-shrink-0" style={{ border: '1px solid #A0785033', color: '#A07850', background: '#A078500A' }}>민감</span>
-                        ) : (
-                          <span className="text-[9px] px-2 py-[2px] rounded-full flex-shrink-0" style={{ border: `1px solid ${C.border}`, color: C.text4 }}>일반</span>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))
-          )}
-        </div>
+      {/* 나의 레이어 / 커뮤니티 */}
+      {(section === 'layer' || section === 'community') && (
+        <VentLayerView
+          section={section} layerGroups={LAYER_GROUPS} commGroups={COMM_GROUPS}
+          expandedGroups={expandedGroups} layerActive={layerActive}
+          onToggleGroup={(id) => setExpandedGroups(g => ({ ...g, [id]: !g[id] }))}
+          onSetLayerActive={setLayerActive}
+        />
       )}
 
-      {/* ── 커뮤니티 ── */}
-      {section === 'community' && (
-        <div className="flex-1 overflow-y-auto flex flex-col gap-2 min-h-0" style={{ padding: '14px 22px', scrollbarWidth: 'none' }}>
-          <p className="text-[10px] font-light mb-2 flex-shrink-0" style={{ color: C.text5 }}>지금 비슷한 감정인 사람들이에요.</p>
-          {COMM_GROUPS.map((g, i) => (
-            <div key={i} className="rounded-[11px] flex-shrink-0" style={{ background: i === 0 ? '#D4A57408' : C.bg2, border: `1px solid ${i === 0 ? '#D4A57433' : C.border}`, padding: '12px 14px' }}>
-              <div className="flex items-start justify-between gap-2 mb-1">
-                <span className="text-[15px] font-light break-keep" style={{ fontFamily: "'Cormorant Garamond', serif", color: C.text }}>{g.title}</span>
-                <span className="text-[10px] flex-shrink-0" style={{ color: C.text4 }}>{g.count}명</span>
-              </div>
-              <p className="text-[11px] font-light" style={{ color: C.text3 }}>{g.desc}</p>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* ── Amber 대화 시트 ── */}
       <AmberSheet open={amberOpen} onClose={() => setAmberOpen(false)} aiName={aiName} />
     </div>
   );

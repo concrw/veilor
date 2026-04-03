@@ -37,7 +37,7 @@ const Classify = () => {
     const load = async () => {
       setLoading(true);
       // 1) 최신 completed 세션 찾기
-      const { data: session, error: sErr } = await (supabase as any)
+      const { data: session, error: sErr } = await supabase
         .from("brainstorm_sessions")
         .select("id, ended_at")
         .eq("status", "completed")
@@ -51,7 +51,7 @@ const Classify = () => {
       }
 
       // 2) 해당 세션의 직업들 로드
-      const { data: jobs, error: jErr } = await (supabase as any)
+      const { data: jobs, error: jErr } = await supabase
         .from("job_entries")
         .select("id, job_name, definition, first_memory, category, reason, created_at")
         .eq("session_id", session.id)
@@ -77,7 +77,7 @@ const Classify = () => {
   const classify = async (id: string, category: Entry["category"]) => {
     const reason = (reasonDrafts[id] || "").trim() || null;
     setSavingId(id);
-    const { error } = await (supabase as any)
+    const { error } = await supabase
       .from("job_entries")
       .update({ category, reason })
       .eq("id", id);

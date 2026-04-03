@@ -1,41 +1,144 @@
 // Get — 뿌리가 궁금하다
-// 기능: PRIPER 기반 자기 구조 탐색, 가면/욕망/두려움 요약, 멀티페르소나 맵
-// 현재: PRIPER 결과 표시 + 멀티페르소나 맵 (프리미엄 예정)
+// 기능: PRIPER 기반 자기 구조 탐색 + Ikigai / 브랜드 정체성 / 멀티페르소나 (프리미엄)
 
+import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase, veilrumDb } from '@/integrations/supabase/client';
+import { ErrorState } from '@/components/ErrorState';
+import { toast } from '@/hooks/use-toast';
+import { usePremiumTrigger } from '@/hooks/usePremiumTrigger';
+import UpgradeModal from '@/components/premium/UpgradeModal';
+import WhyFlow from '@/components/why/WhyFlow';
+import IdentityTab from '@/components/get/IdentityTab';
+import IkigaiTab from '@/components/get/IkigaiTab';
+import BrandTab from '@/components/get/BrandTab';
 
-const MASK_LABELS: Record<string, string> = {
-  NRC: '나르시시스트', MKV: '마키아벨리', SCP: '소시오패스', PSP: '사이코패스',
-  MNY: '머니', PWR: '파워', EMP: '엠패스', APV: '어프루벌',
-  SAV: '세이버', AVD: '어보이던트', DEP: '디펜던트', GVR: '기버',
-};
-
-const AXIS_LABELS: Record<string, string> = {
-  A: '자기인식', B: '감정조절', C: '욕구표현', D: '관계유지',
-};
+type Tab = 'identity' | 'why' | 'ikigai' | 'brand';
 
 export default function GetPage() {
   const { user, primaryMask, axisScores } = useAuth();
-  const navigate = useNavigate();
+  const qc = useQueryClient();
+  const { isPro, modalOpen, activeTrigger, tryAccess, closeModal } = usePremiumTrigger();
+  const [tab, setTab] = useState<Tab>('identity');
 
-  const { data: perspective } = useQuery({
+  // prime_perspectives 최신 레코드
+  const { data: pp, isError: ppError, refetch: refetchPp } = useQuery({
     queryKey: ['prime-perspective', user?.id],
     queryFn: async () => {
-      const { data } = await (supabase as any)
-        .schema('veilrum').from('prime_perspectives')
-        .select('perspective, summary')
-        .eq('user_id', user!.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
+      const { data } = await veilrumDb.from('prime_perspectives')
+        .select('*').eq('user_id', user!.id)
+        .order('created_at', { ascending: false }).limit(1).single();
       return data;
     },
     enabled: !!user,
   });
+
+  // 누적 패턴 집계
+  const { data: patternSummary } = useQuery({
+    queryKey: ['pattern-summary', user?.id],
+    queryFn: async () => {
+      const { data } = await veilrumDb.rpc('get_user_pattern_summary', { p_user_id: user!.id });
+      return data as {
+        top_emotions: { emotion: string; cnt: number }[];
+        top_domains: { domain: string; cnt: number }[];
+        keywords: string[];
+        vent_count: number; dig_count: number; set_count: number; signal_total: number;
+      } | null;
+    },
+    enabled: !!user,
+  });
+
+  const ventCount = patternSummary?.vent_count ?? 0;
+  const digCount = patternSummary?.dig_count ?? 0;
+  const setCount = patternSummary?.set_count ?? 0;
+  const totalSessions = ventCount + digCount + setCount;
+  const topEmotions = (patternSummary?.top_emotions ?? []).slice(0, 3).map(e => [e.emotion, e.cnt] as [string, number]);
+  const topDomain = (patternSummary?.top_domains ?? [])[0];
+  const recentKeywords = (patternSummary?.keywords ?? []).slice(0, 5) as string[];
+
+  // Ikigai state
+  const [ikigaiEdit, setIkigaiEdit] = useState(false);
+  const [ikigaiForm, setIkigaiForm] = useState({ love: '', good_at: '', world_needs: '', paid_for: '' });
+  const [ikigaiAiLoading, setIkigaiAiLoading] = useState(false);
+  const [ikigaiAiInsight, setIkigaiAiInsight] = useState('');
+
+  const ikigaiSave = useMutation({
+    mutationFn: async () => {
+      const ikigai = {
+        love: ikigaiForm.love.split('\n').filter(Boolean),
+        good_at: ikigaiForm.good_at.split('\n').filter(Boolean),
+        world_needs: ikigaiForm.world_needs.split('\n').filter(Boolean),
+        paid_for: ikigaiForm.paid_for.split('\n').filter(Boolean),
+        updated_at: new Date().toISOString(),
+      };
+      await veilrumDb.from('prime_perspectives').upsert({ user_id: user!.id, ikigai }, { onConflict: 'user_id' });
+    },
+    onSuccess: () => {
+      toast({ title: 'Ikigai 저장 완료' });
+      setIkigaiEdit(false);
+      qc.invalidateQueries({ queryKey: ['prime-perspective', user?.id] });
+    },
+  });
+
+  const handleIkigaiAiInsight = async () => {
+    if (!ikigai) { toast({ title: 'Ikigai를 먼저 작성해 주세요.', variant: 'destructive' }); return; }
+    setIkigaiAiLoading(true); setIkigaiAiInsight('');
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-ikigai', { body: {} });
+      if (error) throw error;
+      if (data?.final_ikigai) setIkigaiAiInsight(data.final_ikigai);
+      else if (data?.ikigai_intersections) setIkigaiAiInsight(`${data.ikigai_intersections.Passion?.join(', ') ?? ''} — 열정과 사명이 만나는 지점`);
+      toast({ title: 'AI 인사이트 생성 완료' });
+    } catch { toast({ title: 'AI 생성 실패', description: '잠시 후 다시 시도해 주세요.', variant: 'destructive' }); }
+    finally { setIkigaiAiLoading(false); }
+  };
+
+  // Brand state
+  const [brandEdit, setBrandEdit] = useState(false);
+  const [brandForm, setBrandForm] = useState({ name: '', tagline: '', core_value: '', target: '', tone: '' });
+  const [brandAiLoading, setBrandAiLoading] = useState(false);
+
+  const brandSave = useMutation({
+    mutationFn: async () => {
+      const brand_identity = { ...brandForm, updated_at: new Date().toISOString() };
+      await veilrumDb.from('prime_perspectives').upsert({ user_id: user!.id, brand_identity }, { onConflict: 'user_id' });
+    },
+    onSuccess: () => {
+      toast({ title: '브랜드 정체성 저장 완료' });
+      setBrandEdit(false);
+      qc.invalidateQueries({ queryKey: ['prime-perspective', user?.id] });
+    },
+  });
+
+  const handleBrandAiGenerate = async () => {
+    setBrandAiLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-brand-strategy', {
+        body: { ikigai: pp?.ikigai ?? null, whyAnalysis: pp?.perspective_text ? { prime_perspective: pp.perspective_text } : null, user: { email: user?.email } },
+      });
+      if (error) throw error;
+      if (data?.brand_direction) {
+        setBrandForm(prev => ({
+          ...prev,
+          tagline: data.brand_direction.positioning ?? prev.tagline,
+          core_value: data.brand_direction.core_message ?? prev.core_value,
+          target: data.target_audience?.age_range ?? prev.target,
+          tone: data.brand_direction.field ?? prev.tone,
+        }));
+        setBrandEdit(true);
+      }
+      toast({ title: 'AI 브랜드 전략 생성 완료', description: '결과를 검토하고 저장하세요.' });
+    } catch { toast({ title: 'AI 생성 실패', description: '잠시 후 다시 시도해 주세요.', variant: 'destructive' }); }
+    finally { setBrandAiLoading(false); }
+  };
+
+  const ikigai = pp?.ikigai as Record<string, unknown> | null;
+  const brand = pp?.brand_identity as Record<string, unknown> | null;
+
+  const tabs: [Tab, string][] = [['identity', '정체성'], ['why', 'Why'], ['ikigai', 'Ikigai'], ['brand', '브랜드']];
+
+  if (ppError) return <ErrorState title="Get 데이터를 불러오지 못했습니다" onRetry={() => refetchPp()} />;
 
   return (
     <div className="px-4 py-6 max-w-sm mx-auto space-y-5">
@@ -44,58 +147,51 @@ export default function GetPage() {
         <p className="text-sm text-muted-foreground mt-1">나를 이루는 구조를 봐요.</p>
       </div>
 
-      {/* 가면 */}
-      <div className="bg-card border rounded-2xl p-5 space-y-3">
-        <p className="text-xs text-muted-foreground">나의 가면</p>
-        <p className="text-2xl font-bold">
-          {primaryMask ? (MASK_LABELS[primaryMask] ?? primaryMask) : '—'}
-        </p>
-        {primaryMask && (
-          <p className="text-xs text-muted-foreground">코드: {primaryMask}</p>
-        )}
+      {/* 탭 */}
+      <div className="bg-card border rounded-2xl p-1 flex">
+        {tabs.map(([t, label]) => (
+          <button key={t} onClick={() => setTab(t)}
+            className={`flex-1 py-2 rounded-xl text-xs font-medium transition-colors
+              ${tab === t ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}>
+            {label}
+          </button>
+        ))}
       </div>
 
-      {/* 축 점수 */}
-      {axisScores && (
-        <div className="bg-card border rounded-2xl p-5 space-y-3">
-          <p className="text-xs text-muted-foreground">관계 역량 4축</p>
-          <div className="space-y-2">
-            {(Object.entries(axisScores) as [string, number][]).map(([axis, score]) => (
-              <div key={axis} className="flex items-center gap-3">
-                <span className="text-xs w-20 text-muted-foreground">{AXIS_LABELS[axis] ?? axis}</span>
-                <div className="flex-1 h-1.5 bg-muted rounded-full">
-                  <div className="h-1.5 bg-primary rounded-full transition-all" style={{ width: `${score}%` }} />
-                </div>
-                <span className="text-xs font-medium w-8 text-right">{score}</span>
-              </div>
-            ))}
-          </div>
-        </div>
+      {tab === 'identity' && (
+        <IdentityTab
+          primaryMask={primaryMask} axisScores={axisScores} pp={pp}
+          isPro={isPro} tryAccess={tryAccess}
+          totalSessions={totalSessions} ventCount={ventCount} digCount={digCount} setCount={setCount}
+          topEmotions={topEmotions} topDomain={topDomain} recentKeywords={recentKeywords}
+          signalTotal={patternSummary?.signal_total ?? 0}
+        />
       )}
 
-      {/* Prime Perspective */}
-      {perspective && (
-        <div className="bg-card border rounded-2xl p-5 space-y-2">
-          <p className="text-xs text-muted-foreground">Prime Perspective</p>
-          <p className="font-semibold">{perspective.perspective}</p>
-          {perspective.summary && (
-            <p className="text-xs text-muted-foreground leading-relaxed">{perspective.summary}</p>
-          )}
-        </div>
+      {tab === 'why' && <WhyFlow />}
+
+      {tab === 'ikigai' && (
+        <IkigaiTab
+          isPro={isPro} tryAccess={tryAccess} ikigai={ikigai}
+          ikigaiEdit={ikigaiEdit} ikigaiForm={ikigaiForm}
+          ikigaiAiLoading={ikigaiAiLoading} ikigaiAiInsight={ikigaiAiInsight}
+          ikigaiSavePending={ikigaiSave.isPending}
+          onSetIkigaiEdit={setIkigaiEdit} onSetIkigaiForm={setIkigaiForm}
+          onIkigaiSave={() => ikigaiSave.mutate()} onIkigaiAiInsight={handleIkigaiAiInsight}
+        />
       )}
 
-      {/* 멀티페르소나 맵 — 프리미엄 */}
-      <div className="bg-card border rounded-2xl p-5 space-y-3 opacity-60">
-        <div className="flex items-center justify-between">
-          <p className="text-sm font-medium">멀티페르소나 맵</p>
-          <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">프리미엄</span>
-        </div>
-        <p className="text-xs text-muted-foreground">각 페르소나의 자원 배분과 시간축 변화를 시각화합니다.</p>
-      </div>
+      {tab === 'brand' && (
+        <BrandTab
+          isPro={isPro} tryAccess={tryAccess} brand={brand}
+          brandEdit={brandEdit} brandForm={brandForm}
+          brandAiLoading={brandAiLoading} brandSavePending={brandSave.isPending}
+          onSetBrandEdit={setBrandEdit} onSetBrandForm={setBrandForm}
+          onBrandSave={() => brandSave.mutate()} onBrandAiGenerate={handleBrandAiGenerate}
+        />
+      )}
 
-      <Button variant="outline" className="w-full" onClick={() => navigate('/onboarding/priper/start')}>
-        PRIPER 재진단
-      </Button>
+      <UpgradeModal open={modalOpen} onClose={closeModal} trigger={activeTrigger} />
     </div>
   );
 }

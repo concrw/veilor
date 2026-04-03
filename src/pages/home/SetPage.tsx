@@ -1,17 +1,27 @@
 // Set — 이제 바꾸고 싶다
-// 기능: CODETALK 100일 키워드 기록 + 경계 설정 / 합의 체크리스트
-// 현재: CODETALK 완전 구현 + 퍼블릭스토리 피드 예정
+// 기능: CODETALK 100일 키워드 기록 + 경계 설정 / Ax Mercer 3조건 합의 체크리스트
+// Stage 2-2: Ax Mercer 3조건 (경계, 합의, 소통) 아코디언 체크리스트 추가
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
+import { veilrumDb, supabase } from '@/integrations/supabase/client';
+import type { VeilrumUserBoundary, VeilrumConsentChecklist } from '@/integrations/supabase/veilrum-types';
 import { toast } from '@/hooks/use-toast';
+import { saveSetSignal } from '@/hooks/useSignalPipeline';
+import CodetalkTab from '@/components/set/CodetalkTab';
+import BoundaryTab, { ALL_AX_MERCER_KEYS, AX_MERCER_SECTIONS, type BoundaryCategory } from '@/components/set/BoundaryTab';
+import AxMercerTab from '@/components/set/AxMercerTab';
 
-type Tab = 'codetalk' | 'feed';
+type Tab = 'codetalk' | 'boundary' | 'feed';
+
+const CONSENT_CONDITIONS = [
+  { key: 'no_cross_boundary', label: '상대의 동의 없이 나의 경계를 넘지 않겠다' },
+  { key: 'safe_to_speak', label: '불편함을 느낄 때 말할 수 있는 환경을 만들겠다' },
+  { key: 'can_withdraw', label: '합의는 언제든 철회할 수 있다' },
+] as const;
+
+type ConditionKey = typeof CONSENT_CONDITIONS[number]['key'];
 
 export default function SetPage() {
   const { user } = useAuth();
@@ -19,16 +29,38 @@ export default function SetPage() {
   const [tab, setTab] = useState<Tab>('codetalk');
   const [entry, setEntry] = useState('');
   const [isPublic, setIsPublic] = useState(false);
+  const [aiInsight, setAiInsight] = useState<string | null>(null);
+  const [aiInsightLoading, setAiInsightLoading] = useState(false);
 
+  // --- 경계 설정 로컬 상태 ---
+  const [boundaryTexts, setBoundaryTexts] = useState<Record<string, string>>({
+    emotional: '', physical: '', time: '', digital: '',
+  });
+  const [checkedConditions, setCheckedConditions] = useState<Record<string, boolean>>({
+    no_cross_boundary: false, safe_to_speak: false, can_withdraw: false,
+  });
+
+  // --- Ax Mercer 3조건 체크리스트 상태 ---
+  const [axMercerChecks, setAxMercerChecks] = useState<Record<string, boolean>>(() => {
+    const init: Record<string, boolean> = {};
+    ALL_AX_MERCER_KEYS.forEach(k => { init[k] = false; });
+    return init;
+  });
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
+    boundary: true, consent: false, communication: false,
+  });
+
+  // ========== CODETALK 쿼리 ==========
   const { data: keyword, isLoading } = useQuery({
     queryKey: ['codetalk-today', user?.id],
     queryFn: async () => {
-      const { data: profile } = await (supabase as any)
-        .schema('veilrum').from('user_profiles')
-        .select('codetalk_day').eq('id', user!.id).single();
+      if (!user) throw new Error('Not authenticated');
+      const { data: profile } = await veilrumDb
+        .from('user_profiles')
+        .select('codetalk_day').eq('user_id', user.id).single();
       const day = profile?.codetalk_day ?? 1;
-      const { data } = await (supabase as any)
-        .schema('veilrum').from('codetalk_keywords')
+      const { data } = await veilrumDb
+        .from('codetalk_keywords')
         .select('*').eq('day_number', day).single();
       return data;
     },
@@ -38,23 +70,42 @@ export default function SetPage() {
   const { data: todayEntry } = useQuery({
     queryKey: ['codetalk-entry-today', user?.id, keyword?.id],
     queryFn: async () => {
-      const today = new Date().toISOString().split('T')[0];
-      const { data } = await (supabase as any)
-        .schema('veilrum').from('codetalk_entries')
-        .select('*').eq('user_id', user!.id).eq('keyword_id', keyword.id)
+      if (!user) throw new Error('Not authenticated');
+      const today = new Date().toLocaleDateString('sv-SE');
+      const { data } = await veilrumDb
+        .from('codetalk_entries')
+        .select('*').eq('user_id', user.id).eq('keyword_id', keyword.id)
         .eq('entry_date', today).single();
       return data;
     },
     enabled: !!user && !!keyword,
   });
 
+  const requestCodetalkInsight = async () => {
+    if (!user || !todayEntry) return;
+    setAiInsightLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('codetalk-ai-insights', {
+        body: { entry_id: todayEntry.id, user_id: user.id },
+      });
+      if (!error && data?.insight) {
+        setAiInsight(data.insight);
+      }
+    } catch {
+      toast({ title: 'AI 인사이트를 생성하지 못했어요', variant: 'destructive' });
+    } finally {
+      setAiInsightLoading(false);
+    }
+  };
+
   const { data: pastEntries } = useQuery({
     queryKey: ['codetalk-history', user?.id],
     queryFn: async () => {
-      const { data } = await (supabase as any)
-        .schema('veilrum').from('codetalk_entries')
+      if (!user) throw new Error('Not authenticated');
+      const { data } = await veilrumDb
+        .from('codetalk_entries')
         .select('*, codetalk_keywords(keyword, day_number)')
-        .eq('user_id', user!.id)
+        .eq('user_id', user.id)
         .order('entry_date', { ascending: false })
         .limit(10);
       return data ?? [];
@@ -62,13 +113,12 @@ export default function SetPage() {
     enabled: !!user,
   });
 
-  // 퍼블릭 스토리 피드
   const { data: publicFeed } = useQuery({
     queryKey: ['codetalk-public', keyword?.id],
     queryFn: async () => {
-      const today = new Date().toISOString().split('T')[0];
-      const { data } = await (supabase as any)
-        .schema('veilrum').from('codetalk_entries')
+      const today = new Date().toLocaleDateString('sv-SE');
+      const { data } = await veilrumDb
+        .from('codetalk_entries')
         .select('id, content, created_at, user_id')
         .eq('keyword_id', keyword.id)
         .eq('is_public', true)
@@ -80,24 +130,89 @@ export default function SetPage() {
     enabled: !!keyword && tab === 'feed',
   });
 
+  // ========== 경계 설정 쿼리 ==========
+  const { data: savedBoundaries } = useQuery({
+    queryKey: ['user-boundaries', user?.id],
+    queryFn: async () => {
+      if (!user) throw new Error('Not authenticated');
+      const { data } = await veilrumDb
+        .from('user_boundaries')
+        .select('*').eq('user_id', user.id);
+      return data ?? [];
+    },
+    enabled: !!user,
+  });
+
+  const { data: savedChecklist } = useQuery({
+    queryKey: ['consent-checklist', user?.id],
+    queryFn: async () => {
+      if (!user) throw new Error('Not authenticated');
+      const { data } = await veilrumDb
+        .from('consent_checklist')
+        .select('*').eq('user_id', user.id);
+      return data ?? [];
+    },
+    enabled: !!user,
+  });
+
+  // DB 데이터 → 로컬 상태 동기화
+  useEffect(() => {
+    if (savedBoundaries) {
+      const texts: Record<string, string> = { emotional: '', physical: '', time: '', digital: '' };
+      savedBoundaries.forEach((b: VeilrumUserBoundary) => { texts[b.category] = b.boundary_text ?? ''; });
+      setBoundaryTexts(texts);
+    }
+  }, [savedBoundaries]);
+
+  useEffect(() => {
+    if (savedChecklist) {
+      const checks: Record<string, boolean> = { no_cross_boundary: false, safe_to_speak: false, can_withdraw: false };
+      const axChecks: Record<string, boolean> = {};
+      ALL_AX_MERCER_KEYS.forEach(k => { axChecks[k] = false; });
+
+      savedChecklist.forEach((c: VeilrumConsentChecklist) => {
+        const key = c.condition_key;
+        if (key in checks) {
+          checks[key] = c.is_checked ?? false;
+        }
+        if (key in axChecks) {
+          axChecks[key] = c.is_checked ?? false;
+        }
+      });
+      setCheckedConditions(checks);
+      setAxMercerChecks(axChecks);
+    }
+  }, [savedChecklist]);
+
+  // ========== 뮤테이션 ==========
   const saveMutation = useMutation({
     mutationFn: async () => {
-      const today = new Date().toISOString().split('T')[0];
-      await (supabase as any).schema('veilrum').from('codetalk_entries').upsert({
-        user_id: user!.id,
+      if (!user) throw new Error('Not authenticated');
+      const today = new Date().toLocaleDateString('sv-SE');
+      await veilrumDb.from('codetalk_entries').upsert({
+        user_id: user.id,
         keyword_id: keyword.id,
         entry_date: today,
         content: entry,
         is_public: isPublic,
       });
-      const { data: profile } = await (supabase as any)
-        .schema('veilrum').from('user_profiles')
-        .select('codetalk_day').eq('id', user!.id).single();
+      const { data: profile } = await veilrumDb
+        .from('user_profiles')
+        .select('codetalk_day').eq('user_id', user.id).single();
       const nextDay = Math.min((profile?.codetalk_day ?? 1) + 1, 100);
-      await (supabase as any).schema('veilrum').from('user_profiles')
-        .update({ codetalk_day: nextDay }).eq('id', user!.id);
+      await veilrumDb.from('user_profiles')
+        .update({ codetalk_day: nextDay }).eq('user_id', user.id);
     },
     onSuccess: () => {
+      // user_signals 테이블에 Set 시그널 저장
+      if (user && keyword) {
+        saveSetSignal(user.id, {
+          keyword: keyword.keyword ?? '',
+          dayNumber: keyword.day_number ?? 1,
+          definition: entry,
+        }).catch(err => console.error('[SetPage] saveSetSignal failed:', err));
+      }
+
       toast({ title: '기록 저장 완료 ✓' });
       setEntry('');
       qc.invalidateQueries({ queryKey: ['codetalk-today'] });
@@ -105,6 +220,89 @@ export default function SetPage() {
       qc.invalidateQueries({ queryKey: ['codetalk-public'] });
     },
   });
+
+  const saveBoundaryMutation = useMutation({
+    mutationFn: async (category: BoundaryCategory) => {
+      if (!user) throw new Error('Not authenticated');
+      await veilrumDb.from('user_boundaries').upsert(
+        {
+          user_id: user.id,
+          category,
+          boundary_text: boundaryTexts[category],
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'user_id,category' }
+      );
+    },
+    onSuccess: () => {
+      toast({ title: '경계 저장 완료 ✓' });
+      qc.invalidateQueries({ queryKey: ['user-boundaries'] });
+    },
+  });
+
+  const toggleConsentMutation = useMutation({
+    mutationFn: async (conditionKey: ConditionKey) => {
+      if (!user) throw new Error('Not authenticated');
+      const newChecked = !checkedConditions[conditionKey];
+      await veilrumDb.from('consent_checklist').upsert(
+        {
+          user_id: user.id,
+          condition_key: conditionKey,
+          is_checked: newChecked,
+          checked_at: newChecked ? new Date().toISOString() : null,
+        },
+        { onConflict: 'user_id,condition_key' }
+      );
+      return { conditionKey, newChecked };
+    },
+    onSuccess: ({ conditionKey, newChecked }) => {
+      setCheckedConditions(prev => ({ ...prev, [conditionKey]: newChecked }));
+      toast({ title: newChecked ? '약속을 확인했어요 ✓' : '약속을 해제했어요' });
+      qc.invalidateQueries({ queryKey: ['consent-checklist'] });
+    },
+  });
+
+  // Ax Mercer 체크리스트 토글 (consent_checklist 테이블 재활용)
+  const toggleAxMercerMutation = useMutation({
+    mutationFn: async (itemKey: string) => {
+      if (!user) throw new Error('Not authenticated');
+      const newChecked = !axMercerChecks[itemKey];
+      await veilrumDb.from('consent_checklist').upsert(
+        {
+          user_id: user.id,
+          condition_key: itemKey,
+          is_checked: newChecked,
+          checked_at: newChecked ? new Date().toISOString() : null,
+        },
+        { onConflict: 'user_id,condition_key' }
+      );
+      return { itemKey, newChecked };
+    },
+    onSuccess: ({ itemKey, newChecked }) => {
+      setAxMercerChecks(prev => ({ ...prev, [itemKey]: newChecked }));
+      qc.invalidateQueries({ queryKey: ['consent-checklist'] });
+    },
+  });
+
+  // 섹션 토글
+  const toggleSection = (sectionId: string) => {
+    setOpenSections(prev => ({ ...prev, [sectionId]: !prev[sectionId] }));
+  };
+
+  // Ax Mercer 완료율 계산
+  const getAxMercerProgress = (sectionId: string) => {
+    const section = AX_MERCER_SECTIONS.find(s => s.id === sectionId);
+    if (!section) return { checked: 0, total: 0, pct: 0 };
+    const total = section.items.length;
+    const checked = section.items.filter(i => axMercerChecks[i.key]).length;
+    return { checked, total, pct: total > 0 ? Math.round((checked / total) * 100) : 0 };
+  };
+
+  const totalAxProgress = (() => {
+    const total = ALL_AX_MERCER_KEYS.length;
+    const checked = ALL_AX_MERCER_KEYS.filter(k => axMercerChecks[k]).length;
+    return { checked, total, pct: total > 0 ? Math.round((checked / total) * 100) : 0 };
+  })();
 
   if (isLoading) return (
     <div className="flex items-center justify-center h-64">
@@ -121,7 +319,7 @@ export default function SetPage() {
 
       {/* 탭 */}
       <div className="bg-card border rounded-2xl p-1 flex">
-        {([['codetalk', '오늘의 키워드'], ['feed', '퍼블릭 스토리']] as [Tab, string][]).map(([t, label]) => (
+        {([['codetalk', '키워드'], ['boundary', '경계 설정'], ['feed', '스토리']] as [Tab, string][]).map(([t, label]) => (
           <button key={t} onClick={() => setTab(t)}
             className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors
               ${tab === t ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}>
@@ -131,93 +329,36 @@ export default function SetPage() {
       </div>
 
       {tab === 'codetalk' ? (
-        <>
-          {/* 오늘의 키워드 카드 */}
-          <div className="bg-card border rounded-2xl p-5 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">DAY {keyword?.day_number ?? 1} / 100</span>
-              <div className="h-1.5 w-24 bg-muted rounded-full">
-                <div className="h-1.5 bg-primary rounded-full"
-                  style={{ width: `${((keyword?.day_number ?? 1) / 100) * 100}%` }} />
-              </div>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground mb-1">오늘의 키워드</p>
-              <h3 className="text-2xl font-bold">{keyword?.keyword ?? '—'}</h3>
-              {keyword?.description && (
-                <p className="text-sm text-muted-foreground mt-1">{keyword.description}</p>
-              )}
-            </div>
-          </div>
-
-          {/* 기록 입력 */}
-          {!todayEntry ? (
-            <div className="bg-card border rounded-2xl p-5 space-y-4">
-              <p className="text-sm font-medium">오늘 이 키워드가 내 관계에서 어떻게 나타났나요?</p>
-              <Textarea
-                placeholder="자유롭게 기록해 보세요 (최대 500자)"
-                maxLength={500}
-                value={entry}
-                onChange={e => setEntry(e.target.value)}
-                className="h-28 resize-none"
-              />
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Switch checked={isPublic} onCheckedChange={setIsPublic} />
-                  <span>{isPublic ? '스토리 공개' : '비공개'}</span>
-                </div>
-                <Button size="sm" onClick={() => saveMutation.mutate()}
-                  disabled={!entry.trim() || saveMutation.isPending}>
-                  저장
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div className="bg-card border rounded-2xl p-5">
-              <p className="text-xs text-muted-foreground mb-2">오늘의 기록 ✓</p>
-              <p className="text-sm leading-relaxed">{todayEntry.content}</p>
-            </div>
-          )}
-
-          {/* 과거 기록 */}
-          {pastEntries && pastEntries.length > 0 && (
-            <div className="space-y-3">
-              <p className="text-sm font-medium text-muted-foreground">지난 기록</p>
-              {pastEntries.map((e: any) => (
-                <div key={e.id} className="bg-card border rounded-xl p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-medium">DAY {e.codetalk_keywords?.day_number} · {e.codetalk_keywords?.keyword}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {new Date(e.entry_date).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted-foreground line-clamp-2">{e.content}</p>
-                </div>
-              ))}
-            </div>
-          )}
-        </>
+        <CodetalkTab
+          keyword={keyword}
+          todayEntry={todayEntry}
+          pastEntries={pastEntries}
+          entry={entry}
+          setEntry={setEntry}
+          isPublic={isPublic}
+          setIsPublic={setIsPublic}
+          saveMutation={saveMutation}
+          aiInsight={aiInsight}
+          aiInsightLoading={aiInsightLoading}
+          onRequestInsight={requestCodetalkInsight}
+        />
+      ) : tab === 'boundary' ? (
+        <BoundaryTab
+          boundaryTexts={boundaryTexts}
+          setBoundaryTexts={setBoundaryTexts}
+          saveBoundaryMutation={saveBoundaryMutation}
+          axMercerChecks={axMercerChecks}
+          toggleAxMercerMutation={toggleAxMercerMutation}
+          openSections={openSections}
+          toggleSection={toggleSection}
+          totalAxProgress={totalAxProgress}
+          getAxMercerProgress={getAxMercerProgress}
+        />
       ) : (
-        /* 퍼블릭 스토리 피드 */
-        <div className="space-y-3">
-          <p className="text-xs text-muted-foreground">
-            오늘 키워드 <span className="font-medium text-foreground">"{keyword?.keyword}"</span>에 대한 이야기들
-          </p>
-          {publicFeed && publicFeed.length > 0 ? (
-            publicFeed.map((item: any) => (
-              <div key={item.id} className="bg-card border rounded-xl p-4 space-y-2">
-                <p className="text-sm leading-relaxed">{item.content}</p>
-                <p className="text-xs text-muted-foreground">
-                  {new Date(item.created_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
-                </p>
-              </div>
-            ))
-          ) : (
-            <div className="text-center py-12 text-muted-foreground text-sm">
-              아직 오늘의 스토리가 없어요.<br />첫 번째로 공유해보세요.
-            </div>
-          )}
-        </div>
+        <AxMercerTab
+          keyword={keyword}
+          publicFeed={publicFeed}
+        />
       )}
     </div>
   );

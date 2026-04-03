@@ -1,0 +1,15 @@
+export const INSIGHT_CONSTANTS = {
+  DISPLAY_LIMITS: {
+    KEYWORDS_MOBILE: 10,
+    KEYWORDS_DESKTOP: 20,
+  },
+  DIVERSITY_THRESHOLDS: {
+    CONSENSUS: 70,
+    DIVERSE: 85,
+  },
+} as const;
+
+export const PREMIUM_MODAL_CONFIG = {
+  PRICE: 10,
+  ORIGINAL_PRICE: 15,
+} as const;

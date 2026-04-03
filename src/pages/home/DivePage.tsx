@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useMutation } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, veilrumDb } from '@/integrations/supabase/client';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 
@@ -38,7 +38,7 @@ export default function DivePage() {
       // 1. m43_domain_questions에서 키워드 매칭
       const tokens = query.toLowerCase().split(/\s+/).filter(t => t.length > 1);
 
-      const { data: questions } = await (supabase as any)
+      const { data: questions } = await supabase
         .from('m43_domain_questions')
         .select(`
           id, question, keywords, category,
@@ -73,7 +73,7 @@ export default function DivePage() {
 
       // 로그 저장
       if (user && scored.length > 0) {
-        await (supabase as any).from('m43_user_question_logs').insert({
+        await supabase.from('m43_user_question_logs').insert({
           user_id: user.id,
           user_question: query,
           matched_question_id: scored[0].q.id,
@@ -90,9 +90,26 @@ export default function DivePage() {
         score,
       }));
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       setResults(data);
-      if (data.length > 0) setSelectedResult(data[0]);
+      if (data.length > 0) {
+        setSelectedResult(data[0]);
+        // dive_sessions 저장 (3지표 초기값 포함)
+        if (user) {
+          await veilrumDb.from('dive_sessions').insert({
+            user_id: user.id,
+            mode,
+            messages: [
+              { role: 'user', content: `${mode === 'F' ? selectedEmotion : selectedSituation} ${userInput}`.trim(), ts: new Date().toISOString() },
+              { role: 'assistant', content: data[0].answer, domain: data[0].domain, researcher: data[0].researcher, ts: new Date().toISOString() },
+            ],
+            conflict_summary: data[0].question,
+            emotional_stability: mode === 'F' ? 50 : null,
+            conflict_frequency: null,
+            recovery_speed_minutes: null,
+          });
+        }
+      }
     },
   });
 

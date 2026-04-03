@@ -1,15 +1,9 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.54.0";
+import { getCorsHeaders } from "../_shared/cors.ts";
+import { MODELS, TEMPERATURES } from "../_shared/models.ts";
+import { getAuthenticatedUser, createServiceClient } from "../_shared/auth.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
-
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
 
 function toTokens(input: any): string[] {
@@ -39,30 +33,19 @@ function intersect(a: string[], b: string[]): string[] {
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: getCorsHeaders(req) });
   }
 
   try {
     if (!ANTHROPIC_API_KEY) {
       return new Response(JSON.stringify({ error: "Missing ANTHROPIC_API_KEY" }), {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       });
     }
 
-    const supabaseUser = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      global: { headers: { Authorization: req.headers.get("Authorization") ?? "" } },
-    });
-    const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-
-    const { data: userRes } = await supabaseUser.auth.getUser();
-    const user = userRes?.user;
-    if (!user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    const { user } = await getAuthenticatedUser(req);
+    const supabaseAdmin = createServiceClient();
 
     // 1) Load user data
     const { data: brand } = await supabaseAdmin
@@ -146,8 +129,9 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "claude-3-5-sonnet-20241022",
+        model: MODELS.SONNET,
         max_tokens: 256,
+        temperature: TEMPERATURES.CREATIVE,
         system: "You are a concise Korean career coach. Output one short sentence only.",
         messages: [
           { role: "user", content: `아래 4원소와 교집합을 바탕으로 최종 IKIGAI(한 문장)를 한국어로 제시하세요. 간결하게, 200자 이내.\n\nLOVE:${LOVE.join(", ")}\nGOOD_AT:${GOOD_AT.join(", ")}\nWORLD_NEEDS:${WORLD_NEEDS.join(", ")}\nPAID_FOR:${PAID_FOR.join(", ")}\n\nPassion:${Passion.join(", ")}\nMission:${Mission.join(", ")}\nProfession:${Profession.join(", ")}\nVocation:${Vocation.join(", ")}` },
@@ -168,7 +152,7 @@ serve(async (req) => {
     };
 
     // 6) Store via user client (respect RLS)
-    const { data: inserted, error: insErr } = await supabaseUser
+    const { data: inserted, error: insErr } = await supabaseAdmin
       .from("ikigai_assessments")
       .insert(record)
       .select("*")
@@ -176,7 +160,7 @@ serve(async (req) => {
 
     if (insErr) {
       // If duplicate or other issue, try update last
-      const { data: latest } = await supabaseUser
+      const { data: latest } = await supabaseAdmin
         .from("ikigai_assessments")
         .select("id")
         .order("created_at", { ascending: false })
@@ -184,26 +168,26 @@ serve(async (req) => {
         .maybeSingle();
 
       if (latest?.id) {
-        const { data: updated } = await supabaseUser
+        const { data: updated } = await supabaseAdmin
           .from("ikigai_assessments")
           .update(record)
           .eq("id", latest.id)
           .select("*")
           .single();
         return new Response(JSON.stringify({ assessment: updated, upserted: true }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
         });
       }
     }
 
     return new Response(JSON.stringify({ assessment: inserted }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
     });
   } catch (e: any) {
     console.error("generate-ikigai error", e);
     return new Response(JSON.stringify({ error: e?.message || String(e) }), {
       status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
     });
   }
 });
