@@ -1,3 +1,17 @@
+# Research / Notion archives
+01_*/
+02_*/
+03_*/
+04_*/
+05_*/
+06_*/
+07_*/
+08_*/
+M43/
+app/
+*.md
+!README.md
+
 # Node
 node_modules/
 dist/
