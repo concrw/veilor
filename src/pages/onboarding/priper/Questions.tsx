@@ -16,7 +16,7 @@ export default function PriperQuestions() {
         const { responses: r, current: c } = JSON.parse(saved);
         return r ?? {};
       }
-    } catch {}
+    } catch (e) { console.warn("localStorage parse failed:", e); }
     return {};
   });
   const [sliderVal, setSliderVal] = useState(50);
@@ -29,7 +29,7 @@ export default function PriperQuestions() {
         const { current: c } = JSON.parse(saved);
         if (c) setCurrent(c);
       }
-    } catch {}
+    } catch (e) { console.warn("localStorage parse failed:", e); }
   }, []);
 
   const q = PRIPER_QUESTIONS[current];

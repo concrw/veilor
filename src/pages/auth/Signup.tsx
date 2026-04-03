@@ -226,7 +226,7 @@ const Signup = () => {
                 htmlFor="terms"
                 className="text-xs text-muted-foreground cursor-pointer leading-relaxed"
               >
-                서비스 이용약관 및 개인정보 처리방침에 동의합니다
+                서비스 이용약관 및 <a href="/privacy.html" target="_blank" className="text-primary underline">개인정보 처리방침</a>에 동의합니다
               </label>
             </div>
             

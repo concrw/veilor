@@ -1,16 +1,16 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { getCorsHeaders } from "../_shared/cors.ts";
+import { MODELS, TEMPERATURES } from "../_shared/models.ts";
+import { getAuthenticatedUser } from "../_shared/auth.ts";
+import { sanitizeUserInput } from "../_shared/sanitize.ts";
 
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
 
 interface JobItem { name: string; reason?: string }
 
 serve(async (req: Request) => {
+  const corsHeaders = getCorsHeaders(req);
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -23,7 +23,21 @@ serve(async (req: Request) => {
       });
     }
 
-    const { happyJobs = [], painJobs = [], firstMemories = [] } = await req.json();
+    // C3 수정: 인증 추가
+    await getAuthenticatedUser(req);
+
+    const body = await req.json();
+    const happyJobs: JobItem[] = (body.happyJobs ?? []).map((j: JobItem) => ({
+      name: sanitizeUserInput(j.name ?? '', 200),
+      reason: j.reason ? sanitizeUserInput(j.reason, 500) : undefined,
+    }));
+    const painJobs: JobItem[] = (body.painJobs ?? []).map((j: JobItem) => ({
+      name: sanitizeUserInput(j.name ?? '', 200),
+      reason: j.reason ? sanitizeUserInput(j.reason, 500) : undefined,
+    }));
+    const firstMemories: string[] = (body.firstMemories ?? []).map((m: unknown) =>
+      sanitizeUserInput(String(m ?? ''), 500)
+    );
 
     const formatJobs = (items: JobItem[]) =>
       (Array.isArray(items) ? items : []).map(j => `- ${j.name}${j.reason ? `: ${j.reason}` : ''}`).join('\n');
@@ -53,8 +67,9 @@ serve(async (req: Request) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'claude-3-5-sonnet-20241022',
+        model: MODELS.SONNET,
         max_tokens: 1024,
+        temperature: TEMPERATURES.ANALYSIS,
         system: '너는 커리어 분석가다. 입력 데이터를 간결히 통합하여 2-3문장으로 Prime Perspective를 한국어로 작성한다. 불필요한 서론, 헤더, 목록 없이 자연스러운 단락으로만 작성한다.',
         messages: [
           { role: 'user', content: userPrompt },

@@ -40,7 +40,7 @@ const Results = () => {
     const load = async () => {
       setLoading(true);
       // 최신 completed 세션 찾기
-      const { data: session, error: sErr } = await (supabase as any)
+      const { data: session, error: sErr } = await supabase
         .from("brainstorm_sessions")
         .select("id, ended_at")
         .eq("status", "completed")
@@ -54,7 +54,7 @@ const Results = () => {
       }
 
       // 해당 세션의 분류 완료된 직업 로드
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("job_entries")
         .select("id, job_name, category, reason, definition, first_memory, created_at")
         .eq("session_id", session.id)
@@ -241,7 +241,7 @@ const Results = () => {
           return;
         }
 
-        const { data, error } = await (supabase as any).functions.invoke('analyze-perspective', {
+        const { data, error } = await supabase.functions.invoke('analyze-perspective', {
           body: { happyJobs, painJobs, firstMemories },
         });
         if (error) throw error;

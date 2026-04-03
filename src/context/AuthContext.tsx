@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import type { Session, User } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
+import type { AuthError, Session, User } from "@supabase/supabase-js";
+import { supabase, veilrumDb } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
 export type OnboardingStep = 'welcome' | 'cq' | 'priper' | 'completed';
@@ -16,6 +16,7 @@ interface AuthContextValue {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  authError: string | null;
   // 온보딩
   onboardingStep: OnboardingStep;
   priperCompleted: boolean;
@@ -25,9 +26,9 @@ interface AuthContextValue {
   setOnboardingStep: (step: OnboardingStep) => Promise<void>;
   completePriper: (primary: string, secondary: string, scores: AxisScores) => Promise<void>;
   // Auth
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string, nickname?: string) => Promise<{ error: any }>;
-  signInWithGoogle: () => Promise<{ error: any }>;
+  signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
+  signUp: (email: string, password: string, nickname?: string) => Promise<{ error: AuthError | null }>;
+  signInWithGoogle: () => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
 }
 
@@ -42,29 +43,53 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [primaryMask, setPrimaryMask] = useState<string | null>(null);
   const [secondaryMask, setSecondaryMask] = useState<string | null>(null);
   const [axisScores, setAxisScores] = useState<AxisScores | null>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   const syncOnboarding = async (userId: string) => {
-    try {
-      const { data } = await (supabase as any)
-        .schema('veilrum')
-        .from('user_profiles')
-        .select('onboarding_step, priper_completed, primary_mask, secondary_mask, axis_scores')
-        .eq('id', userId)
-        .single();
-      if (data) {
-        setOnboardingStepState((data.onboarding_step as OnboardingStep) ?? 'welcome');
-        setPriperCompleted(data.priper_completed ?? false);
-        setPrimaryMask(data.primary_mask ?? null);
-        setSecondaryMask(data.secondary_mask ?? null);
-        setAxisScores(data.axis_scores ?? null);
+    const { data, error } = await veilrumDb
+      .from('user_profiles')
+      .select('onboarding_step, priper_completed, primary_mask, secondary_mask, axis_scores')
+      .eq('user_id', userId)
+      .single();
+
+    if (error) {
+      // PGRST116 = "no rows returned" — 신규 유저, 정상 케이스
+      if (error.code !== 'PGRST116') {
+        console.error('[AuthContext] syncOnboarding failed:', error.message);
+        setAuthError(`프로필 동기화 실패: ${error.message}`);
       }
-    } catch {
-      // 프로필 없으면 welcome 유지
+      return;
+    }
+
+    if (data) {
+      setOnboardingStepState((data.onboarding_step as OnboardingStep) ?? 'welcome');
+      setPriperCompleted(data.priper_completed ?? false);
+      setPrimaryMask(data.primary_mask ?? null);
+      setSecondaryMask(data.secondary_mask ?? null);
+      setAxisScores(data.axis_scores ?? null);
     }
   };
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, sess) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, sess) => {
+      // VS-06-1: TOKEN_REFRESH_FAILED / 강제 로그아웃 이벤트 처리
+      if (event === 'TOKEN_REFRESHED' && !sess) {
+        console.warn('Token refresh returned no session — signing out');
+        await supabase.auth.signOut();
+        toast({ title: '세션 만료', description: '다시 로그인해 주세요.', variant: 'destructive' });
+        setSession(null);
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+
+      if (event === 'SIGNED_OUT' || (!sess && event !== 'INITIAL_SESSION')) {
+        setSession(null);
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+
       setSession(sess);
       setUser(sess?.user ?? null);
       if (sess?.user) await syncOnboarding(sess.user.id);
@@ -84,9 +109,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const setOnboardingStep = async (step: OnboardingStep) => {
     setOnboardingStepState(step);
     if (!user) return;
-    await (supabase as any).schema('veilrum').from('user_profiles').upsert({
-      id: user.id, onboarding_step: step, updated_at: new Date().toISOString(),
-    });
+    await veilrumDb.from('user_profiles').upsert({
+      user_id: user.id, onboarding_step: step, updated_at: new Date().toISOString(),
+    }, { onConflict: 'user_id' });
   };
 
   const completePriper = async (primary: string, secondary: string, scores: AxisScores) => {
@@ -96,15 +121,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setAxisScores(scores);
     setOnboardingStepState('completed');
     if (!user) return;
-    await (supabase as any).schema('veilrum').from('user_profiles').upsert({
-      id: user.id,
+    await veilrumDb.from('user_profiles').upsert({
+      user_id: user.id,
       onboarding_step: 'completed',
       priper_completed: true,
       primary_mask: primary,
       secondary_mask: secondary,
       axis_scores: scores,
       updated_at: new Date().toISOString(),
-    });
+    }, { onConflict: 'user_id' });
+
+    // 커뮤니티 자동 배치 — Prime Mask 기반
+    // AVD(회피형) → 회피형 그룹 / APV·DEP(불안형) → 불안형 그룹 / 기본 → 소통 그룹
+    const MASK_COMMUNITY_MAP: Record<string, string> = {
+      AVD: '614dd0d9-ae3d-4622-bc81-08138ca7341c', // 회피형 애착 극복 모임
+      APV: '4865c84c-9772-4f69-9acf-5f9a02ac4fed', // 불안형 애착 — 집착과 거리두기
+      DEP: '4865c84c-9772-4f69-9acf-5f9a02ac4fed', // 불안형 동일
+    };
+    const DEFAULT_GROUP_ID = '651bca71-b44c-425d-ba05-db0e48e21fe2'; // 소통 & 갈등 해결
+    const groupId = MASK_COMMUNITY_MAP[primary] ?? DEFAULT_GROUP_ID;
+    // 이미 가입된 경우 무시 (upsert 대신 insert + onConflict ignore)
+    await veilrumDb.from('community_memberships').upsert({
+      user_id: user.id,
+      group_id: groupId,
+      role: 'member',
+      joined_at: new Date().toISOString(),
+    }, { onConflict: 'user_id,group_id', ignoreDuplicates: true });
   };
 
   const signIn = async (email: string, password: string) => {
@@ -121,14 +163,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (error) {
       toast({ title: '회원가입 실패', description: error.message, variant: 'destructive' });
     } else if (data.user) {
-      await (supabase as any).schema('veilrum').from('user_profiles').upsert({
-        id: data.user.id,
+      await veilrumDb.from('user_profiles').upsert({
+        user_id: data.user.id,
         nickname: nickname ?? email.split('@')[0],
         onboarding_step: 'welcome',
         priper_completed: false,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-      });
+      }, { onConflict: 'user_id' });
       toast({ title: '회원가입 완료', description: '이메일을 확인해 주세요.' });
     }
     return { error };
@@ -137,7 +179,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signInWithGoogle = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/` } as any,
+      options: { redirectTo: `${window.location.origin}/` },
     });
     if (error) toast({ title: 'Google 로그인 실패', description: error.message, variant: 'destructive' });
     return { error };
@@ -154,11 +196,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const value = useMemo<AuthContextValue>(() => ({
-    user, session, loading,
+    user, session, loading, authError,
     onboardingStep, priperCompleted, primaryMask, secondaryMask, axisScores,
     setOnboardingStep, completePriper,
     signIn, signUp, signInWithGoogle, signOut,
-  }), [user, session, loading, onboardingStep, priperCompleted, primaryMask, secondaryMask, axisScores]);
+  }), [user, session, loading, authError, onboardingStep, priperCompleted, primaryMask, secondaryMask, axisScores]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

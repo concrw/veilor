@@ -71,7 +71,7 @@ const BottomNav = () => {
         return;
       }
       try {
-        const { data } = await (supabase as any)
+        const { data } = await supabase
           .from('brainstorm_sessions')
           .select('id, ended_at')
           .eq('user_id', user.id)

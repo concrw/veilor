@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
 import { runDiagnosis } from '@/lib/priperAlgorithm';
 import type { DiagnosisResult } from '@/lib/priperAlgorithm';
 import { Button } from '@/components/ui/button';
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer } from 'recharts';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, veilrumDb } from '@/integrations/supabase/client';
 
 export default function PriperResult() {
   const navigate = useNavigate();
@@ -15,15 +16,15 @@ export default function PriperResult() {
   const [revealed, setRevealed] = useState(false);
 
   useEffect(() => {
-    const responses = (location.state as any)?.responses;
-    if (!responses) { navigate('/onboarding/priper/questions'); return; }
+    const responses = (location.state as { responses?: Record<string, string> } | null)?.responses;
+    if (!responses) { navigate('/onboarding/priper/questions', { replace: true }); return; }
 
     const r = runDiagnosis(responses);
     setResult(r);
 
     // DB 저장
     if (user) {
-      (supabase as any).schema('veilrum').from('priper_sessions').insert({
+      veilrumDb.from('priper_sessions').insert({
         user_id: user.id,
         responses,
         axis_scores: r.scores,
@@ -33,15 +34,32 @@ export default function PriperResult() {
         is_completed: true,
         completed_at: new Date().toISOString(),
       });
+      // prime_perspectives 초기 레코드 생성 (첫 분석 기준)
+      veilrumDb.from('prime_perspectives').upsert({
+        user_id: user.id,
+        version: 1,
+        attachment_type: r.primary.id,
+        persona_type: r.primary.nameKo,
+        confidence_score: Math.round(100 - (r.primary.scores.A - r.scores.A) ** 2 / 100),
+        data_source: 'priper',
+        is_complete: false,
+        signal_count: 0,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'user_id' });
     }
 
     // 가면 공개 애니메이션 딜레이
     setTimeout(() => setRevealed(true), 800);
   }, []);
 
+  const qc = useQueryClient();
   const handleEnter = async () => {
     if (!result) return;
     await completePriper(result.primary.nameKo, result.secondary.nameKo, result.scores);
+    // PRIPER 완료 후 관련 캐시 갱신
+    qc.invalidateQueries({ queryKey: ['prime-perspective'] });
+    qc.invalidateQueries({ queryKey: ['me-diagnosis'] });
+    qc.invalidateQueries({ queryKey: ['me-radar'] });
     navigate('/home');
   };
 
@@ -110,6 +128,11 @@ export default function PriperResult() {
         <Button className="w-full h-12 text-base" onClick={handleEnter}>
           내 관계 언어 탐색 시작 →
         </Button>
+
+        <p className="text-[10px] text-muted-foreground/50 leading-relaxed text-center px-2">
+          이 결과는 자기탐색을 위한 참고 자료이며, 심리 진단이 아닙니다.
+          정확한 평가를 원하시면 전문 심리상담사와 상담해 주세요.
+        </p>
       </div>
     </div>
   );

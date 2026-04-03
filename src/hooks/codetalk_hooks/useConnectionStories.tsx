@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
-import { toast } from "sonner";
+import { toast } from "@/hooks/use-toast";
 
 export interface ConnectionStory {
   id: string;
@@ -73,11 +73,11 @@ export const useConnectionStories = (connectionId: string) => {
         if (!old) return [newStory];
         return [newStory, ...old];
       });
-      toast.success('스토리가 추가되었습니다');
+      toast({ title: '스토리가 추가되었습니다' });
     },
     onError: (error) => {
       console.error('Error creating story:', error);
-      toast.error('스토리 추가에 실패했습니다');
+      toast({ title: '스토리 추가에 실패했습니다', variant: 'destructive' });
     },
   });
 
@@ -104,7 +104,7 @@ export const useConnectionStories = (connectionId: string) => {
     },
     onError: (error) => {
       console.error('Error updating story:', error);
-      toast.error('스토리 업데이트에 실패했습니다');
+      toast({ title: '스토리 업데이트에 실패했습니다', variant: 'destructive' });
     },
   });
 

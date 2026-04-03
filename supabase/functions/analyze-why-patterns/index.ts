@@ -2,13 +2,9 @@
 // Analyzes user's happy/pain jobs to extract patterns and generate Prime Perspective
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
+import { getCorsHeaders } from "../_shared/cors.ts";
+import { MODELS, TEMPERATURES } from "../_shared/models.ts";
+import { getAuthenticatedUser } from "../_shared/auth.ts";
 
 interface JobEntry {
   id: string;
@@ -52,40 +48,15 @@ interface AnalysisResult {
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response("ok", { headers: getCorsHeaders(req) });
   }
 
   try {
-    // Get authorization header
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      throw new Error("Missing authorization header");
-    }
+    const { user, client: supabaseClient } = await getAuthenticatedUser(req);
 
-    // Create Supabase client
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-      {
-        global: {
-          headers: { Authorization: authHeader },
-        },
-      }
-    );
-
-    // Get authenticated user
-    const {
-      data: { user },
-      error: authError,
-    } = await supabaseClient.auth.getUser();
-
-    if (authError || !user) {
-      throw new Error("User not authenticated");
-    }
-
-    // Parse request body
-    const { userId, sessionId } = await req.json();
-    const targetUserId = userId || user.id;
+    // Parse request body — userId 파라미터는 무시하고 항상 인증된 user.id만 사용 (VS-01-2 BOLA 방지)
+    const { sessionId } = await req.json();
+    const targetUserId = user.id;
 
     console.log("Analyzing Why patterns for user:", targetUserId);
 
@@ -113,7 +84,7 @@ serve(async (req) => {
         }),
         {
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
         }
       );
     }
@@ -185,18 +156,18 @@ serve(async (req) => {
       }),
       {
         status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       }
     );
   } catch (error) {
     console.error("Error in analyze-why-patterns:", error);
     return new Response(
       JSON.stringify({
-        error: error.message || "Internal server error",
+        error: "Internal server error",
       }),
       {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       }
     );
   }
@@ -376,8 +347,9 @@ Prime Perspective는 다음 형식으로 작성해주세요:
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "claude-3-5-sonnet-20241022",
+        model: MODELS.SONNET,
         max_tokens: 256,
+        temperature: TEMPERATURES.ANALYSIS,
         system: "당신은 개인의 행복과 고통 패턴을 분석하여 핵심 정체성을 도출하는 심리 분석 전문가입니다. 간결하게 한 문장으로 답변하세요.",
         messages: [
           { role: "user", content: prompt },

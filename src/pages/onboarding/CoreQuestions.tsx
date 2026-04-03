@@ -1,9 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, veilrumDb } from '@/integrations/supabase/client';
+import { safeGetItem, safeSetItem, safeRemoveItem } from '@/lib/storage';
+
+const CQ_STORAGE_KEY = 'veilrum:cq-progress';
 
 const QUESTIONS = [
   {
@@ -35,8 +38,16 @@ const QUESTIONS = [
 export default function CoreQuestions() {
   const navigate = useNavigate();
   const { user, setOnboardingStep } = useAuth();
-  const [current, setCurrent] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [current, setCurrent] = useState(() => {
+    try { return JSON.parse(safeGetItem(CQ_STORAGE_KEY) ?? '{}').current ?? 0; } catch { return 0; }
+  });
+  const [answers, setAnswers] = useState<Record<string, string>>(() => {
+    try { return JSON.parse(safeGetItem(CQ_STORAGE_KEY) ?? '{}').answers ?? {}; } catch { return {}; }
+  });
+
+  useEffect(() => {
+    safeSetItem(CQ_STORAGE_KEY, JSON.stringify({ current, answers }));
+  }, [current, answers]);
 
   const q = QUESTIONS[current];
   const isLast = current === QUESTIONS.length - 1;
@@ -67,8 +78,9 @@ export default function CoreQuestions() {
       const rows = Object.entries(data).map(([k, v]) => ({
         user_id: user.id, question_key: k, response_value: v,
       }));
-      await (supabase as any).schema('veilrum').from('cq_responses').upsert(rows);
+      await veilrumDb.from('cq_responses').upsert(rows);
     }
+    safeRemoveItem(CQ_STORAGE_KEY);
     await setOnboardingStep('priper');
     navigate('/onboarding/priper/start');
   };
@@ -111,7 +123,7 @@ export default function CoreQuestions() {
               className="h-32 resize-none"
             />
             <Button className="w-full" onClick={handleTextNext}>
-              {isLast ? '진단 시작하기' : '다음'}
+              {isLast ? '분석 시작하기' : '다음'}
             </Button>
           </div>
         )}

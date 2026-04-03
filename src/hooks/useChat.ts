@@ -33,11 +33,12 @@ export function useChatRooms() {
   return useQuery<ChatRoom[]>({
     queryKey: ["chat-rooms", user?.id],
     queryFn: async () => {
+      if (!user) throw new Error('Not authenticated');
       // Get all rooms where user is a participant
       const { data: rooms, error } = await supabase
         .from("chat_rooms")
         .select("*")
-        .or(`participant_1.eq.${user!.id},participant_2.eq.${user!.id}`)
+        .or(`participant_1.eq.${user.id},participant_2.eq.${user.id}`)
         .order("last_message_at", { ascending: false, nullsFirst: false });
 
       if (error) throw error;
@@ -45,7 +46,7 @@ export function useChatRooms() {
 
       // Get other participants' profiles
       const otherUserIds = rooms.map((room) =>
-        room.participant_1 === user!.id ? room.participant_2 : room.participant_1
+        room.participant_1 === user.id ? room.participant_2 : room.participant_1
       );
 
       const { data: profiles } = await supabase
@@ -75,7 +76,7 @@ export function useChatRooms() {
         .from("chat_messages")
         .select("room_id")
         .in("room_id", roomIds)
-        .neq("sender_id", user!.id)
+        .neq("sender_id", user.id)
         .eq("is_read", false);
 
       const unreadMap = new Map<string, number>();
@@ -85,7 +86,7 @@ export function useChatRooms() {
 
       return rooms.map((room) => {
         const otherUserId =
-          room.participant_1 === user!.id ? room.participant_2 : room.participant_1;
+          room.participant_1 === user.id ? room.participant_2 : room.participant_1;
         return {
           ...room,
           other_user: profileMap.get(otherUserId),
@@ -152,11 +153,12 @@ export function useSendMessage() {
 
   return useMutation({
     mutationFn: async ({ roomId, content }: { roomId: string; content: string }) => {
+      if (!user) throw new Error('Not authenticated');
       const { data, error } = await supabase
         .from("chat_messages")
         .insert({
           room_id: roomId,
-          sender_id: user!.id,
+          sender_id: user.id,
           content: content.trim(),
         })
         .select()
@@ -177,11 +179,12 @@ export function useMarkMessagesAsRead() {
 
   return useMutation({
     mutationFn: async (roomId: string) => {
+      if (!user) throw new Error('Not authenticated');
       const { error } = await supabase
         .from("chat_messages")
         .update({ is_read: true })
         .eq("room_id", roomId)
-        .neq("sender_id", user!.id)
+        .neq("sender_id", user.id)
         .eq("is_read", false);
 
       if (error) throw error;
@@ -198,8 +201,9 @@ export function useGetOrCreateChatRoom() {
 
   return useMutation({
     mutationFn: async (otherUserId: string) => {
+      if (!user) throw new Error('Not authenticated');
       const { data, error } = await supabase.rpc("get_or_create_chat_room", {
-        p_user_1: user!.id,
+        p_user_1: user.id,
         p_user_2: otherUserId,
       });
 
@@ -218,10 +222,11 @@ export function useUnreadMessagesCount() {
   return useQuery<number>({
     queryKey: ["unread-messages-count", user?.id],
     queryFn: async () => {
+      if (!user) throw new Error('Not authenticated');
       const { count, error } = await supabase
         .from("chat_messages")
         .select("*", { count: "exact", head: true })
-        .neq("sender_id", user!.id)
+        .neq("sender_id", user.id)
         .eq("is_read", false);
 
       if (error) throw error;

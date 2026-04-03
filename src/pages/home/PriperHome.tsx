@@ -50,13 +50,13 @@ export default function PriperHome() {
           </div>
 
           <Button variant="outline" className="w-full" onClick={() => navigate('/onboarding/priper/start')}>
-            재진단하기
+            재분석하기
           </Button>
         </>
       ) : (
         <div className="text-center py-16 space-y-4">
-          <p className="text-muted-foreground">아직 진단을 완료하지 않았어요</p>
-          <Button onClick={() => navigate('/onboarding/priper/start')}>진단 시작</Button>
+          <p className="text-muted-foreground">아직 분석을 완료하지 않았어요</p>
+          <Button onClick={() => navigate('/onboarding/priper/start')}>분석 시작</Button>
         </div>
       )}
     </div>

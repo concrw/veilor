@@ -2,11 +2,14 @@ import { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, QueryCache, MutationCache } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import type { OnboardingStep } from "./context/AuthContext";
+import { LanguageProvider } from "./context/LanguageContext";
+import { ErrorBoundary } from "./components/ErrorBoundary";
+import { OfflineBanner } from "./components/OfflineBanner";
 
 // ── Auth ─────────────────────────────────────────────────────────
 const Login    = lazy(() => import("./pages/auth/Login"));
@@ -26,9 +29,32 @@ const DigPage     = lazy(() => import("./pages/home/DigPage"));
 const GetPage     = lazy(() => import("./pages/home/GetPage"));
 const SetPage     = lazy(() => import("./pages/home/SetPage"));
 const MePage      = lazy(() => import("./pages/home/MePage"));
+const DmPage      = lazy(() => import("./pages/home/DmPage"));
 const NotFound    = lazy(() => import("./pages/NotFound"));
 
-const queryClient = new QueryClient();
+import { toast as sonnerToast } from "sonner";
+
+const queryClient = new QueryClient({
+  queryCache: new QueryCache({
+    onError: (error) => {
+      const msg = error instanceof Error ? error.message : '데이터를 불러오지 못했습니다';
+      sonnerToast.error('연결 오류', { description: msg, duration: 4000 });
+    },
+  }),
+  mutationCache: new MutationCache({
+    onError: (error) => {
+      const msg = error instanceof Error ? error.message : '요청 처리 중 오류가 발생했습니다';
+      sonnerToast.error('저장 오류', { description: msg, duration: 4000 });
+    },
+  }),
+  defaultOptions: {
+    queries: {
+      retry: 2,
+      staleTime: 1000 * 60,
+      refetchOnWindowFocus: true, // 탭/기기 전환 후 복귀 시 자동 갱신
+    },
+  },
+});
 
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center bg-background">
@@ -74,11 +100,18 @@ const RootRedirect = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <HelmetProvider>
+      <LanguageProvider>
       <TooltipProvider>
         <Toaster />
         <Sonner />
         <AuthProvider>
           <BrowserRouter>
+            <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:bg-background focus:text-foreground focus:px-4 focus:py-2 focus:rounded">
+              본문으로 건너뛰기
+            </a>
+            <div aria-live="polite" aria-atomic="true" className="sr-only" id="route-announcer" />
+            <OfflineBanner />
+            <ErrorBoundary>
             <Suspense fallback={<PageLoader />}>
               <Routes>
                 <Route path="/" element={<RootRedirect />} />
@@ -95,10 +128,10 @@ const App = () => (
                   <RequireAuth><OnboardingGuard><CoreQuestions /></OnboardingGuard></RequireAuth>
                 } />
                 <Route path="/onboarding/priper/start" element={
-                  <RequireAuth><OnboardingGuard><PriperStart /></OnboardingGuard></RequireAuth>
+                  <RequireAuth><PriperStart /></RequireAuth>
                 } />
                 <Route path="/onboarding/priper/questions" element={
-                  <RequireAuth><OnboardingGuard><PriperQuestions /></OnboardingGuard></RequireAuth>
+                  <RequireAuth><PriperQuestions /></RequireAuth>
                 } />
                 <Route path="/onboarding/priper/result" element={
                   <RequireAuth><PriperResult /></RequireAuth>
@@ -114,14 +147,17 @@ const App = () => (
                   <Route path="get"   element={<GetPage />} />
                   <Route path="set"   element={<SetPage />} />
                   <Route path="me"    element={<MePage />} />
+                  <Route path="dm"    element={<DmPage />} />
                 </Route>
 
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
+            </ErrorBoundary>
           </BrowserRouter>
         </AuthProvider>
       </TooltipProvider>
+      </LanguageProvider>
     </HelmetProvider>
   </QueryClientProvider>
 );

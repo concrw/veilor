@@ -1,11 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
+import { getCorsHeaders } from "../_shared/cors.ts";
+import { MODELS, TEMPERATURES } from "../_shared/models.ts";
+import { getAuthenticatedUser } from "../_shared/auth.ts";
 
 interface PersonaProfile {
   id: string;
@@ -27,24 +23,11 @@ interface RelationshipAnalysis {
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response("ok", { headers: getCorsHeaders(req) });
   }
 
   try {
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-      {
-        global: {
-          headers: { Authorization: req.headers.get("Authorization")! },
-        },
-      }
-    );
-
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    if (!user) {
-      throw new Error("Not authenticated");
-    }
+    const { user, client: supabaseClient } = await getAuthenticatedUser(req);
 
     const { userId } = await req.json();
     if (userId !== user.id) {
@@ -65,7 +48,7 @@ serve(async (req) => {
           message: "Need at least 2 personas to analyze relationships",
           count: 0,
         }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -115,15 +98,15 @@ serve(async (req) => {
         count: relationships.length,
         relationships,
       }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
     );
   } catch (error) {
     console.error("Error analyzing persona relationships:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: "Internal server error" }),
       {
         status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       }
     );
   }
@@ -190,8 +173,9 @@ Respond in JSON format:
           "anthropic-version": "2023-06-01",
         },
         body: JSON.stringify({
-          model: "claude-3-5-sonnet-20241022",
+          model: MODELS.SONNET,
           max_tokens: 1024,
+          temperature: TEMPERATURES.ANALYSIS,
           system: "You are an expert in personal branding and multi-persona analysis. Provide concise, actionable insights in Korean. Always respond with valid JSON only.",
           messages: [
             { role: "user", content: prompt },

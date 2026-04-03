@@ -46,7 +46,7 @@ const Brainstorm = () => {
     sessionCreatedRef.current = true;
 
 const createSession = async () => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("brainstorm_sessions")
         .insert({ timer_duration: DURATION_SECONDS, status: "active", user_id: user?.id ?? null })
         .select("id, started_at")
@@ -89,7 +89,7 @@ setSessionId(data.id);
     if (secondsLeft !== 0 || !sessionId) return;
 
     const finalize = async () => {
-      await (supabase as any)
+      await supabase
         .from("brainstorm_sessions")
         .update({
           ended_at: new Date().toISOString(),
@@ -113,7 +113,7 @@ setSessionId(data.id);
     setJobs((prev) => [{ id: tempId, job_name: trimmed }, ...prev]);
     setInput("");
 
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from("job_entries")
       .insert({ job_name: trimmed, session_id: sessionId })
       .select("id, job_name, created_at")

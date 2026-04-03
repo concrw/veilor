@@ -5,6 +5,7 @@ const STATIC_CACHE_URLS = [
   '/',
   '/index.html',
   '/manifest.json',
+  '/offline.html',
 ];
 
 // Install event - cache static assets

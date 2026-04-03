@@ -44,6 +44,10 @@ export default function Welcome() {
         <Button className="w-full h-12 text-base" onClick={handleStart}>
           시작하기
         </Button>
+
+        <p className="text-[10px] text-muted-foreground/50 leading-relaxed">
+          VEILRUM은 자기탐색 도구이며, 전문 심리상담 또는 치료를 대체하지 않습니다.
+        </p>
       </div>
     </div>
   );

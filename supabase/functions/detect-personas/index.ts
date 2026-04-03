@@ -1,12 +1,8 @@
 // deno-lint-ignore-file no-explicit-any
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
+import { getCorsHeaders } from "../_shared/cors.ts";
+import { getAuthenticatedUser } from "../_shared/auth.ts";
+import { MODELS, TEMPERATURES } from "../_shared/models.ts";
 
 interface JobEntry {
   id: string;
@@ -39,31 +35,15 @@ const ARCHETYPE_CONFIG: Record<string, { color: string; icon: string }> = {
 serve(async (req) => {
   // Handle CORS
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response("ok", { headers: getCorsHeaders(req) });
   }
 
   try {
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-      {
-        global: {
-          headers: { Authorization: req.headers.get("Authorization")! },
-        },
-      }
-    );
+    const { user, client: supabaseClient } = await getAuthenticatedUser(req);
 
-    // Get user from auth token
-    const {
-      data: { user },
-    } = await supabaseClient.auth.getUser();
-
-    if (!user) {
-      throw new Error("Not authenticated");
-    }
-
-    const { userId } = await req.json();
-    const targetUserId = userId || user.id;
+    // userId 파라미터는 무시하고 항상 인증된 user.id만 사용 (VS-01-2 BOLA 방지)
+    await req.json().catch(() => ({})); // body consume (사용 안 함)
+    const targetUserId = user.id;
 
     console.log(`Detecting personas for user: ${targetUserId}`);
 
@@ -138,8 +118,9 @@ ${jobDescriptions}
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "claude-3-5-sonnet-20241022",
+        model: MODELS.SONNET,
         max_tokens: 2048,
+        temperature: TEMPERATURES.ANALYSIS,
         system: "당신은 커리어 분석 전문가입니다. 직업들의 공통 테마를 분석하여 페르소나를 도출합니다. 반드시 유효한 JSON 배열만 응답하세요.",
         messages: [
           { role: "user", content: clusterPrompt },
@@ -295,16 +276,16 @@ ${jobDescriptions}
         count: personas.length,
       }),
       {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       }
     );
   } catch (error) {
     console.error("Error:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: "Internal server error" }),
       {
         status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       }
     );
   }

@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, veilrumDb } from '@/integrations/supabase/client';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -11,12 +11,10 @@ export default function Dashboard() {
   const { data: todayKeyword } = useQuery({
     queryKey: ['today-keyword', user?.id],
     queryFn: async () => {
-      const { data: profile } = await (supabase as any)
-        .schema('veilrum').from('user_profiles')
+      const { data: profile } = await veilrumDb.from('user_profiles')
         .select('codetalk_day').eq('id', user!.id).single();
       const day = profile?.codetalk_day ?? 1;
-      const { data } = await (supabase as any)
-        .schema('veilrum').from('codetalk_keywords')
+      const { data } = await veilrumDb.from('codetalk_keywords')
         .select('*').eq('day_number', day).single();
       return data;
     },

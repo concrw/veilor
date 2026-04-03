@@ -34,8 +34,14 @@ export default function PriperStart() {
         </div>
 
         <Button className="w-full h-12 text-base" onClick={() => navigate('/onboarding/priper/questions')}>
-          진단 시작
+          분석 시작
         </Button>
+
+        <p className="text-[10px] text-muted-foreground/60 leading-relaxed px-2">
+          PRIPER는 자기탐색 도구이며, 전문 심리상담 또는 의료 진단을 대체하지 않습니다.
+          결과는 탐색적 참고 자료로 활용해 주세요.
+          정신건강 관련 어려움이 있으시면 전문가 상담을 권장합니다.
+        </p>
       </div>
     </div>
   );

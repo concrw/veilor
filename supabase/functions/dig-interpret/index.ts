@@ -1,14 +1,14 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { getCorsHeaders } from "../_shared/cors.ts";
+import { MODELS, TEMPERATURES } from "../_shared/models.ts";
+import { sanitizeUserInput } from "../_shared/sanitize.ts";
+import { checkRateLimit, rateLimitResponse } from "../_shared/rateLimit.ts";
 
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
 serve(async (req: Request) => {
+  const corsHeaders = getCorsHeaders(req);
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -21,11 +21,25 @@ serve(async (req: Request) => {
       });
     }
 
-    const { situation, text, matchedQuestion, matchedAnswer, researcher, domain, axisScores } = await req.json();
+    const body = await req.json();
+
+    // Rate limit: 유저당 분당 5회
+    const rateLimitKey = body.userId ?? req.headers.get('x-forwarded-for') ?? 'anon';
+    if (!checkRateLimit(rateLimitKey, 5, 60_000)) {
+      return rateLimitResponse(corsHeaders);
+    }
+
+    const situation = sanitizeUserInput(body.situation ?? '', 100);
+    const text = sanitizeUserInput(body.text ?? '', 2000);
+    const matchedQuestion = sanitizeUserInput(body.matchedQuestion ?? '', 500);
+    const matchedAnswer = sanitizeUserInput(body.matchedAnswer ?? '', 1000);
+    const researcher = sanitizeUserInput(body.researcher ?? '', 200);
+    const domain = sanitizeUserInput(body.domain ?? '', 100);
+    const axisScores = body.axisScores;
 
     // 축 점수 컨텍스트 구성
     const axisContext = axisScores
-      ? `\n사용자 관계 역량 축 점수:\n- 자기인식(A): ${axisScores.A}/100\n- 감정조절(B): ${axisScores.B}/100\n- 욕구표현(C): ${axisScores.C}/100\n- 관계유지(D): ${axisScores.D}/100`
+      ? `\n사용자 관계 역량 축 점수:\n- 애착(A): ${axisScores.A}/100\n- 소통(B): ${axisScores.B}/100\n- 욕구표현(C): ${axisScores.C}/100\n- 역할(D): ${axisScores.D}/100`
       : '';
 
     const userPrompt =
@@ -44,8 +58,9 @@ serve(async (req: Request) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
+        model: MODELS.SONNET,
         max_tokens: 400,
+        temperature: TEMPERATURES.ANALYSIS,
         system: `너는 관계 패턴 해석 전문가야. M43 연구소의 연구 결과를 토대로, 사용자가 입력한 관계 상황의 반복 구조를 심리적으로 해석한다.
 
 원칙:
