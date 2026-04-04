@@ -17,6 +17,7 @@ import ConcernRouter from '@/components/set/ConcernRouter';
 import PersonaBranding from '@/components/set/PersonaBranding';
 import RelationshipSimulation from '@/components/set/RelationshipSimulation';
 import RelationshipCoaching from '@/components/set/RelationshipCoaching';
+import ExperientialContent from '@/components/content/ExperientialContent';
 
 type Tab = 'codetalk' | 'boundary' | 'feed' | 'tools' | 'practice';
 
@@ -369,6 +370,7 @@ export default function SetPage() {
         <div className="space-y-4">
           <RelationshipSimulation />
           <RelationshipCoaching />
+          <ExperientialContent />
         </div>
       ) : (
         <AxMercerTab
