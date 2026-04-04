@@ -27,7 +27,7 @@ export default function ShareCard() {
     if (navigator.share) {
       try {
         await navigator.share({ title: 'VEILRUM V-File', text: shareText });
-      } catch {}
+      } catch { /* share cancelled by user */ }
     } else {
       handleCopy();
     }
@@ -61,11 +61,11 @@ export default function ShareCard() {
         <p className="text-[9px] text-muted-foreground text-right">VEILRUM · veilor.ai</p>
       </div>
       {/* 공유 버튼 */}
-      <div className="flex border-t">
-        <button onClick={handleCopy} className="flex-1 py-3 text-xs text-muted-foreground hover:text-foreground transition-colors border-r">
+      <div className="flex border-t" role="group" aria-label="공유 옵션">
+        <button onClick={handleCopy} aria-label="V-File 결과 텍스트 복사" className="flex-1 py-3 text-xs text-muted-foreground hover:text-foreground transition-colors border-r">
           {copied ? '복사됨!' : '텍스트 복사'}
         </button>
-        <button onClick={handleShare} className="flex-1 py-3 text-xs text-primary font-medium hover:bg-primary/5 transition-colors">
+        <button onClick={handleShare} aria-label="V-File 결과 공유하기" className="flex-1 py-3 text-xs text-primary font-medium hover:bg-primary/5 transition-colors">
           공유하기
         </button>
       </div>

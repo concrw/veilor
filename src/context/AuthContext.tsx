@@ -206,6 +206,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     onboardingStep, priperCompleted, primaryMask, secondaryMask, axisScores, personaContextsCompleted,
     setOnboardingStep, completePriper,
     signIn, signUp, signInWithGoogle, signOut,
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- stable function refs
   }), [user, session, loading, authError, onboardingStep, priperCompleted, primaryMask, secondaryMask, axisScores, personaContextsCompleted]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

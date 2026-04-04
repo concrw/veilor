@@ -5,8 +5,11 @@ import {
   findMasks,
   generateInsights,
   runDiagnosis,
+  classifyVProfile,
+  VFILE_CONTEXT_LABELS,
+  ATTRACTION_PAIRS,
 } from '@/lib/vfileAlgorithm';
-import type { MaskProfile, DiagnosisResult } from '@/lib/vfileAlgorithm';
+import type { MaskProfile, DiagnosisResult, VFileContext, VProfileType } from '@/lib/vfileAlgorithm';
 import type { AxisScores } from '@/context/AuthContext';
 
 describe('vfileAlgorithm (V-File)', () => {
@@ -165,6 +168,121 @@ describe('vfileAlgorithm (V-File)', () => {
       const combined = insights.join(' ');
       expect(combined).toContain(primary.nameKo);
       expect(combined).toContain(secondary.nameKo);
+    });
+  });
+
+  describe('classifyVProfile (16유형)', () => {
+    it('returns correct code for all-high scores', () => {
+      const vp = classifyVProfile({ A: 80, B: 70, C: 60, D: 90 });
+      expect(vp.code).toBe('AOEP');
+      expect(vp.axes.A).toBe('high');
+      expect(vp.axes.B).toBe('high');
+      expect(vp.axes.C).toBe('high');
+      expect(vp.axes.D).toBe('high');
+    });
+
+    it('returns correct code for all-low scores', () => {
+      const vp = classifyVProfile({ A: 20, B: 30, C: 10, D: 40 });
+      expect(vp.code).toBe('VCSR');
+      expect(vp.axes.A).toBe('low');
+      expect(vp.axes.B).toBe('low');
+      expect(vp.axes.C).toBe('low');
+      expect(vp.axes.D).toBe('low');
+    });
+
+    it('threshold is 50 — exact 50 counts as high', () => {
+      const vp = classifyVProfile({ A: 50, B: 49, C: 50, D: 49 });
+      expect(vp.axes.A).toBe('high');
+      expect(vp.axes.B).toBe('low');
+      expect(vp.axes.C).toBe('high');
+      expect(vp.axes.D).toBe('low');
+    });
+
+    it('returns 4-character code', () => {
+      const vp = classifyVProfile({ A: 60, B: 40, C: 70, D: 30 });
+      expect(vp.code).toHaveLength(4);
+    });
+
+    it('description is non-empty', () => {
+      const vp = classifyVProfile({ A: 60, B: 40, C: 70, D: 30 });
+      expect(vp.description.length).toBeGreaterThan(10);
+    });
+
+    it('nameKo contains axis labels', () => {
+      const vp = classifyVProfile({ A: 80, B: 20, C: 80, D: 20 });
+      expect(vp.nameKo).toContain('불안');
+      expect(vp.nameKo).toContain('폐쇄');
+      expect(vp.nameKo).toContain('표현');
+      expect(vp.nameKo).toContain('수용');
+    });
+  });
+
+  describe('VFileContext', () => {
+    it('VFILE_CONTEXT_LABELS has 3 contexts', () => {
+      expect(Object.keys(VFILE_CONTEXT_LABELS)).toHaveLength(3);
+      expect(VFILE_CONTEXT_LABELS.general).toBeDefined();
+      expect(VFILE_CONTEXT_LABELS.social).toBeDefined();
+      expect(VFILE_CONTEXT_LABELS.secret).toBeDefined();
+    });
+
+    it('each context has ko, desc, icon', () => {
+      for (const ctx of Object.values(VFILE_CONTEXT_LABELS)) {
+        expect(ctx.ko).toBeTruthy();
+        expect(ctx.desc).toBeTruthy();
+        expect(ctx.icon).toBeTruthy();
+      }
+    });
+  });
+
+  describe('runDiagnosis with context', () => {
+    it('default context is general', () => {
+      const mockResponses: Record<string, number> = {};
+      for (let i = 1; i <= 40; i++) {
+        mockResponses[`Q${String(i).padStart(2, '0')}`] = 50;
+      }
+      const result = runDiagnosis(mockResponses);
+      expect(result.context).toBe('general');
+    });
+
+    it('respects provided context', () => {
+      const mockResponses: Record<string, number> = {};
+      for (let i = 1; i <= 40; i++) {
+        mockResponses[`Q${String(i).padStart(2, '0')}`] = 50;
+      }
+      const result = runDiagnosis(mockResponses, 'secret');
+      expect(result.context).toBe('secret');
+    });
+
+    it('includes vProfile in result', () => {
+      const mockResponses: Record<string, number> = {};
+      for (let i = 1; i <= 40; i++) {
+        mockResponses[`Q${String(i).padStart(2, '0')}`] = 70;
+      }
+      const result = runDiagnosis(mockResponses);
+      expect(result.vProfile).toBeDefined();
+      expect(result.vProfile.code).toHaveLength(4);
+    });
+  });
+
+  describe('ATTRACTION_PAIRS', () => {
+    it('has 6 pairs', () => {
+      expect(ATTRACTION_PAIRS).toHaveLength(6);
+    });
+
+    it('each pair has predatory and prey codes', () => {
+      for (const pair of ATTRACTION_PAIRS) {
+        expect(pair.predatory).toBeTruthy();
+        expect(pair.prey).toBeTruthy();
+        expect(pair.dynamic).toBeTruthy();
+        expect(pair.longTerm).toBeTruthy();
+      }
+    });
+
+    it('predatory codes match predatory masks', () => {
+      const predatoryCodes = MASK_PROFILES.filter(m => m.category === 'predatory').map(m => m.mskCode);
+      for (const pair of ATTRACTION_PAIRS) {
+        expect(predatoryCodes).toContain(pair.predatory);
+      }
     });
   });
 });

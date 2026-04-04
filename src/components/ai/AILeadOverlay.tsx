@@ -108,7 +108,8 @@ export default function AILeadOverlay({ open, onClose, aiName = '엠버', curren
     } finally {
       setAiThinking(false);
     }
-  }, [aiThinking, history, primaryMask, axisScores, tts]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- tts is not stable ref
+  }, [aiThinking, history, primaryMask, axisScores, currentTab, user?.id]);
 
   // STT — 음성 인식 완료 시 자동 전송
   const stt = useSpeechRecognition({
@@ -155,6 +156,7 @@ export default function AILeadOverlay({ open, onClose, aiName = '엠버', curren
       stt.abort();
       tts.stop();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- only run on open/close toggle
   }, [open]);
 
   // 새 메시지 오면 스크롤

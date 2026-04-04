@@ -2,7 +2,8 @@
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { MASK_PROFILES } from '@/lib/vfileAlgorithm';
+// MASK_PROFILES may be used for scenario personalization in future
+
 
 const SCENARIOS = [
   { id: 'boundary', title: '경계 설정 연습', desc: '상대에게 NO라고 말하기', prompt: '사용자가 관계에서 경계를 설정하는 연습을 하고 있어. 상대 역할을 맡아서 자연스러운 대화 상황을 만들어줘. 사용자가 경계를 말하면 현실적으로 반응해.' },
@@ -17,8 +18,6 @@ export default function RelationshipSimulation() {
   const [messages, setMessages] = useState<{ role: 'user' | 'ai'; text: string }[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-
-  const profile = MASK_PROFILES.find(m => m.nameKo === primaryMask || m.mskCode === primaryMask);
 
   const startScenario = (s: typeof SCENARIOS[0]) => {
     setScenario(s);

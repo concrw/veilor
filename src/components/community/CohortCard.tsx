@@ -85,7 +85,7 @@ export default function CohortCard() {
     <div className="bg-card border rounded-2xl p-5 space-y-3">
       <p className="text-sm font-medium">100일 코호트 참여하기</p>
       <p className="text-xs text-muted-foreground">같은 목표를 가진 사람들과 100일간 함께해요</p>
-      {availableCohorts.map((c: any) => (
+      {availableCohorts.map((c: { id: string; name: string; member_count: number | null; max_members: number | null }) => (
         <div key={c.id} className="flex items-center justify-between bg-muted/30 rounded-xl p-3">
           <div>
             <p className="text-xs font-medium">{c.name}</p>

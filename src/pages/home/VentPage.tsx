@@ -240,7 +240,7 @@ export default function VentPage() {
         saveVentPartialSession(user.id, curEmo, msgs, msgCount);
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [user, phase, curEmo, msgs, msgCount]);
 
   function pickEmotion(emo: string) {

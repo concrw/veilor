@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase, veilrumDb } from '@/integrations/supabase/client';
+import { veilrumDb } from '@/integrations/supabase/client';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -24,14 +24,15 @@ export default function CommunityPage() {
   const { user, primaryMask } = useAuth();
   const qc = useQueryClient();
   const [view, setView] = useState<View>('groups');
-  const [selectedGroup, setSelectedGroup] = useState<any>(null);
-  const [selectedPost, setSelectedPost] = useState<any>(null);
+  const [selectedGroup, setSelectedGroup] = useState<Record<string, unknown> | null>(null);
+  const [selectedPost, setSelectedPost] = useState<Record<string, unknown> | null>(null);
   const [newPostTitle, setNewPostTitle] = useState('');
   const [newPostContent, setNewPostContent] = useState('');
   const [newPostAnon, setNewPostAnon] = useState(true);
   const [showNewPost, setShowNewPost] = useState(false);
   const [newComment, setNewComment] = useState('');
   const [commentAnon, setCommentAnon] = useState(true);
+  const [communityTab, setCommunityTab] = useState<'groups' | 'discuss' | 'connect' | 'content'>('groups');
 
   // 그룹 목록
   const { data: groups } = useQuery({
@@ -49,7 +50,7 @@ export default function CommunityPage() {
     queryFn: async () => {
       const { data } = await veilrumDb.from('community_posts')
         .select('*')
-        .eq('group_id', selectedGroup.id)
+        .eq('group_id', selectedGroup!.id as string)
         .eq('is_deleted', false)
         .order('created_at', { ascending: false })
         .limit(30);
@@ -64,7 +65,7 @@ export default function CommunityPage() {
     queryFn: async () => {
       const { data } = await veilrumDb.from('community_comments')
         .select('*')
-        .eq('post_id', selectedPost.id)
+        .eq('post_id', selectedPost!.id as string)
         .eq('is_deleted', false)
         .order('created_at', { ascending: true });
       return data ?? [];
@@ -77,7 +78,7 @@ export default function CommunityPage() {
     mutationFn: async () => {
       await veilrumDb.from('community_posts').insert({
         user_id: user!.id,
-        group_id: selectedGroup.id,
+        group_id: selectedGroup!.id as string,
         title: newPostTitle,
         content: newPostContent,
         is_anonymous: newPostAnon,
@@ -97,7 +98,7 @@ export default function CommunityPage() {
   const commentMutation = useMutation({
     mutationFn: async () => {
       await veilrumDb.from('community_comments').insert({
-        post_id: selectedPost.id,
+        post_id: selectedPost!.id as string,
         user_id: user!.id,
         content: newComment,
         is_anonymous: commentAnon,
@@ -113,10 +114,10 @@ export default function CommunityPage() {
   const displayName = (isAnon: boolean) => isAnon ? '익명' : (primaryMask ?? '나');
 
   // 카테고리별 그룹 묶기
-  const grouped = groups?.reduce((acc: any, g: any) => {
-    const cat = g.category ?? 'general';
+  const grouped = groups?.reduce<Record<string, Record<string, unknown>[]>>((acc, g) => {
+    const cat = (g as Record<string, unknown>).category as string ?? 'general';
     if (!acc[cat]) acc[cat] = [];
-    acc[cat].push(g);
+    acc[cat].push(g as Record<string, unknown>);
     return acc;
   }, {}) ?? {};
 
@@ -143,7 +144,7 @@ export default function CommunityPage() {
         {/* 댓글 목록 */}
         <div className="space-y-3">
           <p className="text-sm font-medium">댓글 {comments?.length ?? 0}개</p>
-          {comments?.map((c: any) => (
+          {comments?.map((c: Record<string, unknown>) => (
             <div key={c.id} className="bg-card border rounded-xl p-4 space-y-1.5">
               <span className="text-xs text-muted-foreground">{displayName(c.is_anonymous)}</span>
               <p className="text-sm leading-relaxed">{c.content}</p>
@@ -221,7 +222,7 @@ export default function CommunityPage() {
           );
           return allPosts.length > 0 ? (
             <div className="space-y-3">
-              {allPosts.map((p: any) => (
+              {allPosts.map((p: Record<string, unknown>) => (
               <button key={p.id}
                 onClick={() => p.is_virtual ? null : (() => { setSelectedPost(p); setView('post'); })()}
                 className={`w-full text-left bg-card border rounded-xl p-4 space-y-1.5 transition-colors ${!p.is_virtual ? 'hover:border-primary/50 cursor-pointer' : 'cursor-default'}`}>
@@ -247,8 +248,6 @@ export default function CommunityPage() {
   }
 
   /* ── 그룹 목록 뷰 ── */
-  const [communityTab, setCommunityTab] = useState<'groups' | 'discuss' | 'connect' | 'content'>('groups');
-
   return (
     <div className="px-4 py-6 max-w-sm mx-auto space-y-6">
       <div>
@@ -289,13 +288,13 @@ export default function CommunityPage() {
       {communityTab === 'content' && <ExternalContentFeed />}
 
       {/* 그룹 탭 (기존) */}
-      {communityTab === 'groups' && Object.entries(grouped).map(([cat, gs]: [string, any]) => (
+      {communityTab === 'groups' && Object.entries(grouped).map(([cat, gs]) => (
         <div key={cat} className="space-y-2">
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider px-1">
             {CATEGORY_LABEL[cat] ?? cat}
           </p>
           <div className="space-y-2">
-            {gs.map((g: any) => (
+            {gs.map((g) => (
               <button key={g.id}
                 onClick={() => { setSelectedGroup(g); setView('posts'); }}
                 className="w-full text-left bg-card border rounded-xl p-4 hover:border-primary/50 transition-colors">

@@ -1,5 +1,4 @@
 // IdentityTab — V-File mask display, MSK codes, axis scores, persona map, pattern analysis
-import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -53,23 +52,10 @@ const ATTACHMENT_LABELS: Record<string, string> = {
   secure: '안정형', anxious: '불안형', avoidant: '회피형', disorganized: '혼란형',
 };
 
-function PremiumLock({ label, onUnlock }: { label: string; onUnlock?: () => void }) {
-  return (
-    <div
-      className="bg-card border border-dashed rounded-2xl p-6 text-center space-y-2 opacity-70 cursor-pointer hover:opacity-90 transition-opacity"
-      onClick={onUnlock}
-    >
-      <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">프리미엄</span>
-      <p className="text-sm text-muted-foreground mt-2">{label}</p>
-      <p className="text-xs text-muted-foreground">탭하면 Pro 플랜을 확인할 수 있어요</p>
-    </div>
-  );
-}
-
 interface IdentityTabProps {
   primaryMask: string | null;
   axisScores: Record<string, number> | null;
-  pp: any;
+  pp: Record<string, unknown> | null;
   isPro: boolean;
   tryAccess: (feature: string) => void;
   totalSessions: number;
@@ -156,12 +142,12 @@ function ReanalysisHistory({ userId, currentScores, currentMask }: {
 }
 
 export default function IdentityTab({
-  primaryMask, axisScores, pp, isPro, tryAccess,
+  primaryMask, axisScores, pp,
   totalSessions, ventCount, digCount, setCount,
   topEmotions, topDomain, recentKeywords, signalTotal,
 }: IdentityTabProps) {
   const navigate = useNavigate();
-  const { user, personaContextsCompleted } = useAuth();
+  const { user } = useAuth();
 
   // 맥락별 페르소나 프로필 조회
   const { data: personas } = useQuery({
@@ -179,7 +165,6 @@ export default function IdentityTab({
   });
 
   const contexts: VFileContext[] = ['general', 'social', 'secret'];
-  const completedSet = new Set(personaContextsCompleted);
 
   const startDiagnosis = (ctx: VFileContext) => {
     navigate('/onboarding/vfile/questions', { state: { context: ctx, fromGet: true } });
@@ -272,7 +257,7 @@ export default function IdentityTab({
         <div className="bg-card border rounded-2xl p-5 space-y-2">
           <p className="text-xs text-muted-foreground">V프로필 유형</p>
           {(() => {
-            const vp = classifyVProfile(axisScores as any);
+            const vp = classifyVProfile(axisScores as Record<string, number>);
             return (
               <>
                 <div className="flex items-center gap-2">
@@ -328,7 +313,7 @@ export default function IdentityTab({
         <div className="space-y-2.5">
           {contexts.map((ctx) => {
             const ctxLabel = VFILE_CONTEXT_LABELS[ctx];
-            const persona = personas?.find((p: any) => p.vfile_context === ctx);
+            const persona = personas?.find((p: Record<string, unknown>) => p.vfile_context === ctx);
             const resolved = persona ? resolveMask(persona.primary_mask ?? persona.msk_code) : null;
 
             return (

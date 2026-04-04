@@ -87,7 +87,7 @@ export default function DiscussionBoard() {
 
       {/* 글 목록 */}
       <div className="space-y-2">
-        {posts.map((post: any) => (
+        {posts.map((post: { id: string; content: string; created_at: string }) => (
           <div key={post.id} className="bg-card border rounded-xl p-4 space-y-1">
             <p className="text-sm leading-relaxed">{post.content}</p>
             <p className="text-[10px] text-muted-foreground">
