@@ -11,6 +11,10 @@ import { ZONES, TOTAL_ZONES, RADAR_DATA, PERSONAS, FRIENDS, SEED_STAGES } from '
 import PersonaMap from '@/components/persona/PersonaMap';
 import RadarChart from '@/components/me/RadarChart';
 import MonthlyReportCard from '@/components/me/MonthlyReportCard';
+import CommunicationPatternCard from '@/components/me/CommunicationPatternCard';
+import PatternDeviationCard from '@/components/me/PatternDeviationCard';
+import ShareCard from '@/components/me/ShareCard';
+import FeedEvolutionBanner from '@/components/me/FeedEvolutionBanner';
 import ZoneToggle from '@/components/me/ZoneToggle';
 import AISheet from '@/components/me/AISheet';
 import SettingsSheet from '@/components/me/SettingsSheet';
@@ -158,6 +162,21 @@ export default function MePage() {
         <div style={{ flex: 1, overflowY: 'auto', padding: '14px 20px 80px', display: 'flex', flexDirection: 'column', gap: 11 }}>
           <SeedCard pct={pct} seedTitle={seedTitle} stats={meData.stats} stageStatus={stageStatus} />
 
+          {/* #59 피드 진화 알림 */}
+          <FeedEvolutionBanner />
+
+          {/* #28 패턴 이탈 감지 */}
+          <PatternDeviationCard />
+
+          {/* #26 소통 패턴 분석 */}
+          <CommunicationPatternCard />
+
+          {/* #57 월간 리포트 */}
+          <MonthlyReportCard />
+
+          {/* #58 공유 카드 */}
+          <ShareCard />
+
           {/* Frost bar */}
           {closedCount > 0 && (
             <div className="vr-fade-in" style={{ background: `${C.frost}08`, border: `1px solid ${C.frost}22`, borderRadius: 10, padding: '9px 12px', display: 'flex', gap: 8, alignItems: 'flex-start' }}>
@@ -254,7 +273,7 @@ export default function MePage() {
 
           <WeeklyReportSection weeklyReport={meData.weeklyReport} weeklyReportLoading={meData.weeklyReportLoading} />
 
-          {user && <MonthlyReportCard userId={user.id} onTriggerUpgrade={isPro ? undefined : () => tryAccess('monthly_report_detail')} />}
+          {/* MonthlyReportCard는 growth 탭 상단으로 이동됨 */}
 
           <DiagnosisSection diagnosis={meData.diagnosis} />
 

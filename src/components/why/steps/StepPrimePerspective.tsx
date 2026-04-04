@@ -1,5 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { useAuth } from '@/context/AuthContext';
+import { MASK_PROFILES } from '@/lib/vfileAlgorithm';
 import type { WhySession, AnalysisResult } from '@/types/why';
 import type { WhyM43Analysis } from '@/hooks/useM43WhyIntegration';
 
@@ -17,8 +19,33 @@ interface StepPrimePerspectiveProps {
 export function StepPrimePerspective({
   session, analysisResult, m43Analysis, ppText, setPpText, ppSaving, onSave, onViewAnalysis,
 }: StepPrimePerspectiveProps) {
+  const { primaryMask, axisScores: userAxisScores } = useAuth();
+  const maskProfile = primaryMask ? MASK_PROFILES.find(m => m.nameKo === primaryMask || m.mskCode === primaryMask) : null;
+
   return (
     <div className="space-y-4">
+      {/* V-File 가면 연결 */}
+      {maskProfile && (
+        <div className="bg-card border rounded-2xl p-4 space-y-2">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center text-lg" style={{ backgroundColor: maskProfile.color + '20' }}>
+              🎭
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">V-File 가면과의 연결</p>
+              <p className="text-sm font-semibold" style={{ color: maskProfile.color }}>{maskProfile.nameKo}</p>
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            당신의 가면 "{maskProfile.nameKo}"의 핵심 상처는 "{maskProfile.coreWound}"입니다.
+            이 Why 분석이 그 상처가 어떤 선택 패턴으로 이어졌는지 보여줍니다.
+          </p>
+          <p className="text-xs text-muted-foreground">
+            핵심 필요: <span className="text-foreground font-medium">{maskProfile.coreNeed}</span>
+          </p>
+        </div>
+      )}
+
       {/* M43 분석 요약 카드 */}
       {m43Analysis && (
         <div className="bg-primary/3 border border-primary/10 rounded-2xl p-4 space-y-3">

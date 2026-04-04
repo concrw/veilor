@@ -7,6 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { toast } from '@/hooks/use-toast';
 import { getVirtualPostsForCategory } from '@/lib/virtualUsers';
+import LearningMateCard from '@/components/community/LearningMateCard';
+import DiscussionBoard from '@/components/community/DiscussionBoard';
+import CohortCard from '@/components/community/CohortCard';
+import PartnerCodetalk from '@/components/community/PartnerCodetalk';
+import ExternalContentFeed from '@/components/community/ExternalContentFeed';
 
 const CATEGORY_LABEL: Record<string, string> = {
   communication: '소통', crisis: '위기·회복', culture: '문화',
@@ -242,6 +247,8 @@ export default function CommunityPage() {
   }
 
   /* ── 그룹 목록 뷰 ── */
+  const [communityTab, setCommunityTab] = useState<'groups' | 'discuss' | 'connect' | 'content'>('groups');
+
   return (
     <div className="px-4 py-6 max-w-sm mx-auto space-y-6">
       <div>
@@ -249,7 +256,40 @@ export default function CommunityPage() {
         <p className="text-sm text-muted-foreground mt-1">관계 패턴별 익명 공간</p>
       </div>
 
-      {Object.entries(grouped).map(([cat, gs]: [string, any]) => (
+      {/* 커뮤니티 탭 네비 */}
+      <div className="flex gap-1 bg-muted rounded-lg p-0.5">
+        {([
+          { key: 'groups', label: '그룹' },
+          { key: 'discuss', label: '토론' },
+          { key: 'connect', label: '연결' },
+          { key: 'content', label: '콘텐츠' },
+        ] as const).map(t => (
+          <button key={t.key} onClick={() => setCommunityTab(t.key)}
+            className={`flex-1 text-xs py-2 rounded-md transition-colors ${
+              communityTab === t.key ? 'bg-background text-foreground shadow-sm font-medium' : 'text-muted-foreground'
+            }`}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* 토론 탭 (#47) */}
+      {communityTab === 'discuss' && <DiscussionBoard />}
+
+      {/* 연결 탭 (#43 러닝메이트, #51 코호트, #53 파트너 코드토크) */}
+      {communityTab === 'connect' && (
+        <div className="space-y-4">
+          <LearningMateCard />
+          <CohortCard />
+          <PartnerCodetalk />
+        </div>
+      )}
+
+      {/* 콘텐츠 탭 (#69 외부 콘텐츠) */}
+      {communityTab === 'content' && <ExternalContentFeed />}
+
+      {/* 그룹 탭 (기존) */}
+      {communityTab === 'groups' && Object.entries(grouped).map(([cat, gs]: [string, any]) => (
         <div key={cat} className="space-y-2">
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider px-1">
             {CATEGORY_LABEL[cat] ?? cat}
@@ -274,3 +314,5 @@ export default function CommunityPage() {
     </div>
   );
 }
+
+export { default as TabCommunityFeed } from '@/components/community/TabCommunityFeed';
