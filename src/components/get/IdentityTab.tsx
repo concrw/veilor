@@ -3,10 +3,11 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { MASK_PROFILES, VFILE_CONTEXT_LABELS } from '@/lib/vfileAlgorithm';
+import { MASK_PROFILES, VFILE_CONTEXT_LABELS, classifyVProfile } from '@/lib/vfileAlgorithm';
 import type { VFileContext } from '@/lib/vfileAlgorithm';
 import { useAuth } from '@/context/AuthContext';
 import { veilrumDb } from '@/integrations/supabase/client';
+import RadarTimeCompare from './RadarTimeCompare';
 
 // M43 확정 12종 + MSK 코드 매핑
 const MSK_LABELS: Record<string, { nameKo: string; category: string }> = {
@@ -79,6 +80,79 @@ interface IdentityTabProps {
   topDomain: { domain: string; cnt: number } | undefined;
   recentKeywords: string[];
   signalTotal: number;
+}
+
+function ReanalysisHistory({ userId, currentScores, currentMask }: {
+  userId: string | undefined;
+  currentScores: Record<string, number> | null;
+  currentMask: string | null;
+}) {
+  const { data: sessions } = useQuery({
+    queryKey: ['priper-history', userId],
+    queryFn: async () => {
+      const { data } = await veilrumDb
+        .from('priper_sessions')
+        .select('axis_scores, primary_mask, msk_code, completed_at, context')
+        .eq('user_id', userId!)
+        .eq('is_completed', true)
+        .eq('context', 'general')
+        .order('completed_at', { ascending: false })
+        .limit(5);
+      return data ?? [];
+    },
+    enabled: !!userId,
+  });
+
+  if (!sessions || sessions.length < 2 || !currentScores) return null;
+
+  const prev = sessions[1]; // 이전 세션 (현재는 [0])
+  const prevScores = prev.axis_scores as Record<string, number> | null;
+  if (!prevScores) return null;
+
+  const diff = (key: string) => {
+    const cur = currentScores[key] ?? 0;
+    const old = prevScores[key] ?? 0;
+    return cur - old;
+  };
+
+  return (
+    <div className="bg-card border rounded-2xl p-5 space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-muted-foreground">재진단 비교</p>
+        <span className="text-[10px] text-muted-foreground">
+          {sessions.length}회 진단 기록
+        </span>
+      </div>
+      {prev.primary_mask && currentMask && prev.primary_mask !== currentMask && (
+        <p className="text-sm">
+          <span className="text-muted-foreground">{prev.primary_mask}</span>
+          <span className="mx-2">→</span>
+          <span className="font-semibold">{currentMask}</span>
+        </p>
+      )}
+      <div className="space-y-1.5">
+        {(['A', 'B', 'C', 'D'] as const).map(k => {
+          const d = diff(k);
+          return (
+            <div key={k} className="flex items-center gap-2 text-xs">
+              <span className="w-16 text-muted-foreground">{AXIS_LABELS[k]}</span>
+              <span className="w-6 text-right text-muted-foreground">{prevScores[k]}</span>
+              <span className="mx-1">→</span>
+              <span className="w-6 font-medium">{currentScores[k]}</span>
+              <span className={`ml-auto font-medium ${d > 0 ? 'text-emerald-500' : d < 0 ? 'text-red-400' : 'text-muted-foreground'}`}>
+                {d > 0 ? `+${d}` : d === 0 ? '±0' : d}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+      {prev.completed_at && (
+        <p className="text-[10px] text-muted-foreground">
+          이전 진단: {new Date(prev.completed_at).toLocaleDateString('ko-KR')}
+        </p>
+      )}
+    </div>
+  );
 }
 
 export default function IdentityTab({
@@ -192,6 +266,37 @@ export default function IdentityTab({
           </div>
         </div>
       )}
+
+      {/* V프로필 16유형 */}
+      {axisScores && (
+        <div className="bg-card border rounded-2xl p-5 space-y-2">
+          <p className="text-xs text-muted-foreground">V프로필 유형</p>
+          {(() => {
+            const vp = classifyVProfile(axisScores as any);
+            return (
+              <>
+                <div className="flex items-center gap-2">
+                  <span className="text-xl font-bold font-mono tracking-wider">{vp.code}</span>
+                  <span className="text-xs text-muted-foreground">{vp.nameKo}</span>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">{vp.description}</p>
+                <div className="flex gap-1.5 pt-1">
+                  {(['A', 'B', 'C', 'D'] as const).map(k => (
+                    <span key={k} className={`text-[10px] px-2 py-0.5 rounded-full ${
+                      vp.axes[k] === 'high' ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
+                    }`}>
+                      {vp.axes[k] === 'high' ? AXIS_LABELS[k] + '↑' : AXIS_LABELS[k] + '↓'}
+                    </span>
+                  ))}
+                </div>
+              </>
+            );
+          })()}
+        </div>
+      )}
+
+      {/* #56 레이더 차트 시간 비교 + #60 페르소나 변화 추적 */}
+      <RadarTimeCompare />
 
       {/* 애착 유형 */}
       {pp?.attachment_type && (
@@ -343,6 +448,9 @@ export default function IdentityTab({
           )}
         </div>
       )}
+
+      {/* #8 재진단 시간 비교 */}
+      <ReanalysisHistory userId={user?.id} currentScores={axisScores} currentMask={primaryMask} />
 
       <Button variant="outline" className="w-full" onClick={() => startDiagnosis('general')}>
         V-File 재분석

@@ -282,6 +282,50 @@ export function generateInsights(
   ];
 }
 
+// ── V프로필 16유형 (4축 이분법) ──────────────────────────────────────
+export interface VProfileType {
+  code: string;       // 예: "AOEP" (불안-개방-표현-주도)
+  nameKo: string;
+  description: string;
+  axes: { A: 'high' | 'low'; B: 'high' | 'low'; C: 'high' | 'low'; D: 'high' | 'low' };
+}
+
+const AXIS_LABEL_HIGH: Record<string, string> = { A: '불안', B: '개방', C: '표현', D: '주도' };
+const AXIS_LABEL_LOW: Record<string, string> = { A: '회피', B: '폐쇄', C: '억압', D: '수용' };
+const AXIS_CODE_HIGH: Record<string, string> = { A: 'A', B: 'O', C: 'E', D: 'P' };
+const AXIS_CODE_LOW: Record<string, string> = { A: 'V', B: 'C', C: 'S', D: 'R' };
+
+export function classifyVProfile(scores: AxisScores): VProfileType {
+  const threshold = 50;
+  const axes = {
+    A: scores.A >= threshold ? 'high' as const : 'low' as const,
+    B: scores.B >= threshold ? 'high' as const : 'low' as const,
+    C: scores.C >= threshold ? 'high' as const : 'low' as const,
+    D: scores.D >= threshold ? 'high' as const : 'low' as const,
+  };
+
+  const code = (['A', 'B', 'C', 'D'] as const).map(k =>
+    axes[k] === 'high' ? AXIS_CODE_HIGH[k] : AXIS_CODE_LOW[k]
+  ).join('');
+
+  const nameKo = (['A', 'B', 'C', 'D'] as const).map(k =>
+    axes[k] === 'high' ? AXIS_LABEL_HIGH[k] : AXIS_LABEL_LOW[k]
+  ).join('-');
+
+  // 간략한 유형 설명 생성
+  const traits: string[] = [];
+  if (axes.A === 'high') traits.push('관계에서 상대의 반응에 민감');
+  else traits.push('독립적이고 거리를 유지');
+  if (axes.B === 'high') traits.push('감정 표현에 개방적');
+  else traits.push('내면을 쉽게 드러내지 않음');
+  if (axes.C === 'high') traits.push('욕구를 직접적으로 표현');
+  else traits.push('필요를 억누르는 경향');
+  if (axes.D === 'high') traits.push('관계를 주도하려는 성향');
+  else traits.push('상대에 맞추는 성향');
+
+  return { code, nameKo, description: traits.join('. ') + '.', axes };
+}
+
 // ── 전체 분석 실행 ───────────────────────────────────────────────────
 export interface DiagnosisResult {
   scores: AxisScores;
@@ -291,6 +335,7 @@ export interface DiagnosisResult {
   insights: string[];
   dataSource: 'priper';
   context: VFileContext;
+  vProfile: VProfileType;
 }
 
 export function runDiagnosis(
@@ -300,5 +345,6 @@ export function runDiagnosis(
   const scores = calculateAxisScores(responses);
   const { primary, secondary, isComplex } = findMasks(scores);
   const insights = generateInsights(scores, primary, secondary, isComplex);
-  return { scores, primary, secondary, isComplex, insights, dataSource: 'priper', context };
+  const vProfile = classifyVProfile(scores);
+  return { scores, primary, secondary, isComplex, insights, dataSource: 'priper', context, vProfile };
 }
