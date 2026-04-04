@@ -21,13 +21,7 @@ import ExperientialContent from '@/components/content/ExperientialContent';
 
 type Tab = 'codetalk' | 'boundary' | 'feed' | 'tools' | 'practice';
 
-const CONSENT_CONDITIONS = [
-  { key: 'no_cross_boundary', label: '상대의 동의 없이 나의 경계를 넘지 않겠다' },
-  { key: 'safe_to_speak', label: '불편함을 느낄 때 말할 수 있는 환경을 만들겠다' },
-  { key: 'can_withdraw', label: '합의는 언제든 철회할 수 있다' },
-] as const;
-
-type ConditionKey = typeof CONSENT_CONDITIONS[number]['key'];
+type ConditionKey = 'no_cross_boundary' | 'safe_to_speak' | 'can_withdraw';
 
 export default function SetPage() {
   const { user } = useAuth();
@@ -246,7 +240,8 @@ export default function SetPage() {
     },
   });
 
-  const toggleConsentMutation = useMutation({
+  // Used by BoundaryTab component
+  const toggleConsentMutation = useMutation({ // eslint-disable-line @typescript-eslint/no-unused-vars
     mutationFn: async (conditionKey: ConditionKey) => {
       if (!user) throw new Error('Not authenticated');
       const newChecked = !checkedConditions[conditionKey];

@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useQuery } from '@tanstack/react-query';
-import { supabase, veilrumDb } from '@/integrations/supabase/client';
+import { veilrumDb } from '@/integrations/supabase/client';
 import { MASK_PROFILES } from '@/lib/vfileAlgorithm';
 
 // #24 동적 질문 카드 — V-File 결과 기반 매일 다른 질문

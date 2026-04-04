@@ -41,7 +41,7 @@ export default function PeopleSection({ people: externalPeople, peopleLoading }:
     queryFn: async () => {
       const { data } = await veilrumDb.from('relationship_entities')
         .select('*').eq('user_id', user!.id).order('created_at', { ascending: true });
-      return (data ?? []).map((d: any) => ({
+      return (data ?? []).map((d: Record<string, unknown>) => ({
         id: d.id, name: d.name, relationship: d.relationship, color: d.color ?? REL_COLORS[0],
         pattern: d.pattern ?? '', conflict: d.conflict ?? '',
         tags: d.tags ?? [], notes: d.notes ?? '',

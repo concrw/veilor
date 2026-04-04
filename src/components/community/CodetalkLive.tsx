@@ -65,7 +65,7 @@ export default function CodetalkLive({ keyword }: CodetalkLiveProps) {
 
       {liveComments.length > 0 ? (
         <div className="space-y-1.5 max-h-40 overflow-y-auto">
-          {liveComments.slice(0, 8).map((c: any) => (
+          {liveComments.slice(0, 8).map((c: { id: string; content: string; created_at: string }) => (
             <div key={c.id} className="bg-muted/30 rounded-lg px-3 py-1.5">
               <p className="text-xs leading-relaxed">{c.content}</p>
               <p className="text-[9px] text-muted-foreground mt-0.5">

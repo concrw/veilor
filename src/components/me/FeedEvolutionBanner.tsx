@@ -60,7 +60,7 @@ export default function FeedEvolutionBanner() {
           <span className="text-lg">{latest.icon}</span>
           <p className="text-sm font-medium">{latest.title}</p>
         </div>
-        <button onClick={() => setDismissed(d => [...d, dismissKey])} className="text-xs text-muted-foreground">✕</button>
+        <button onClick={() => setDismissed(d => [...d, dismissKey])} aria-label="마일스톤 알림 닫기" className="text-xs text-muted-foreground">✕</button>
       </div>
       <p className="text-xs text-muted-foreground pl-7">{latest.desc}</p>
     </div>

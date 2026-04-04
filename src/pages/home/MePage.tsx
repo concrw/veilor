@@ -43,7 +43,7 @@ export default function MePage() {
   type Tab = 'growth' | 'people' | 'zone';
   const { user } = useAuth();
   const meData = useUserMeData();
-  const { isPro, modalOpen, activeTrigger, tryAccess, closeModal } = usePremiumTrigger();
+  const { modalOpen, activeTrigger, closeModal } = usePremiumTrigger();
   const [tab, setTab] = useState<Tab>('growth');
 
   // Zone state
@@ -52,7 +52,7 @@ export default function MePage() {
     ZONES.forEach(g => g.items.forEach(item => { init[item.id] = item.defaultOn; }));
     return init;
   });
-  const [zonesLoaded, setZonesLoaded] = useState(false);
+  const [, setZonesLoaded] = useState(false);
 
   useEffect(() => {
     if (!user) return;

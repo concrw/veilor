@@ -21,6 +21,7 @@ function AISheet({
         : '데이터를 분석할 준비가 됐어요. 어떤 패턴을 살펴볼까요?';
       setMsgs([{ role: 'ai', text: greeting }]);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- only reset on open/close
   }, [open]);
 
   useEffect(() => {

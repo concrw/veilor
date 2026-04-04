@@ -63,7 +63,7 @@ export default function TabCommunityFeed({ tab }: TabCommunityFeedProps) {
 
       {posts.length > 0 ? (
         <div className="space-y-2 max-h-48 overflow-y-auto">
-          {posts.slice(0, 5).map((post: any) => (
+          {posts.slice(0, 5).map((post: { id: string; content: string; created_at: string }) => (
             <div key={post.id} className="bg-muted/30 rounded-lg px-3 py-2">
               <p className="text-xs leading-relaxed line-clamp-2">{post.content}</p>
               <p className="text-[10px] text-muted-foreground mt-1">

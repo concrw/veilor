@@ -3,6 +3,7 @@ import { C } from '@/lib/colors';
 import { supabase, veilrumDb } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import ZoneToggle from './ZoneToggle';
+import AppCustomization from '@/components/settings/AppCustomization';
 import { LANG_LABELS } from '@/data/mePageData';
 
 export interface AiSettings {
@@ -248,6 +249,10 @@ function SettingsSheet({
               <ZoneToggle on={row.on} onToggle={() => toggleNotif(row.key, row.setter)} />
             </div>
           ))}
+
+          {/* 앱 커스터마이징 (#66 + #72) */}
+          <p style={{ fontSize: 9, fontWeight: 400, letterSpacing: '.09em', textTransform: 'uppercase', color: C.text5, padding: '8px 0 4px' }}>앱 설정</p>
+          <AppCustomization />
 
           {/* 구독 */}
           <p style={{ fontSize: 9, fontWeight: 400, letterSpacing: '.09em', textTransform: 'uppercase', color: C.text5, padding: '8px 0 4px' }}>구독</p>

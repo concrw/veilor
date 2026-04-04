@@ -7,9 +7,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase, veilrumDb } from '@/integrations/supabase/client';
 import { saveDigSignal } from '@/hooks/useSignalPipeline';
 import { ErrorState } from '@/components/ErrorState';
-import { usePremiumTrigger } from '@/hooks/usePremiumTrigger';
-import { useAiUsageCount } from '@/hooks/useAiUsageCount';
-import UpgradeModal from '@/components/premium/UpgradeModal';
 import { DigSearchForm } from '@/components/dig/DigSearchForm';
 import { DigResultList } from '@/components/dig/DigResultList';
 import { DigHistory } from '@/components/dig/DigHistory';
@@ -92,7 +89,7 @@ export default function DigPage() {
         .eq('signal_type', 'dig')
         .order('created_at', { ascending: false })
         .limit(20);
-      return (data ?? []).map((d: any) => ({
+      return (data ?? []).map((d: Record<string, unknown>) => ({
         id: d.id, domain: d.domain ?? '', content: d.content ?? '',
         score: d.score ?? 0, situation: d.meta?.situation ?? '',
         emotion: d.meta?.emotion ?? '', created_at: d.created_at,
@@ -172,7 +169,7 @@ export default function DigPage() {
       if (divisionId) {
         const { data: domainRows } = await veilrumDb
           .from('m43_domains').select('id').eq('division_id', divisionId);
-        domainFilter = (domainRows ?? []).map((d: any) => d.id);
+        domainFilter = (domainRows ?? []).map((d: { id: string }) => d.id);
       }
 
       let questionQuery = veilrumDb

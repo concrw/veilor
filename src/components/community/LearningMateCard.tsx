@@ -37,7 +37,7 @@ export default function LearningMateCard() {
         "{primaryMask}" 가면을 가진 다른 분들이에요. 함께 탐색하면 더 깊어져요.
       </p>
       <div className="space-y-2">
-        {mates.map((mate: any) => (
+        {mates.map((mate: { user_id: string; nickname: string | null; msk_code: string | null }) => (
           <div key={mate.user_id} className="flex items-center gap-3 bg-muted/30 rounded-xl p-3">
             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
               {(mate.nickname ?? '?')[0]}

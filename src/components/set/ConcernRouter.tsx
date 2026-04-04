@@ -24,10 +24,12 @@ export default function ConcernRouter() {
       <div className="grid grid-cols-3 gap-2">
         {CONCERNS.map(c => (
           <button key={c.id} onClick={() => setSelected(c.id)}
+            aria-label={`고민 유형: ${c.label}`}
+            aria-pressed={selected === c.id}
             className={`rounded-xl p-2.5 text-center transition-all ${
               selected === c.id ? 'bg-primary/10 border border-primary/30' : 'bg-muted/50 border border-transparent'
             }`}>
-            <span className="text-lg block">{c.icon}</span>
+            <span className="text-lg block" aria-hidden="true">{c.icon}</span>
             <p className="text-[10px] mt-1">{c.label}</p>
           </button>
         ))}

@@ -61,7 +61,7 @@ export default function PartnerCodetalk() {
 
       {partnerEntries.length > 0 ? (
         <div className="space-y-2">
-          {partnerEntries.slice(0, 3).map((entry: any) => (
+          {partnerEntries.slice(0, 3).map((entry: { id: string; keyword: string; user_definition?: string; partner_definition?: string; comparison_insight?: string }) => (
             <div key={entry.id} className="bg-muted/30 rounded-xl p-3 space-y-1">
               <p className="text-xs font-medium text-primary">{entry.keyword}</p>
               {entry.user_definition && (
