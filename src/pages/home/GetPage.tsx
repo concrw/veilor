@@ -13,8 +13,9 @@ import WhyFlow from '@/components/why/WhyFlow';
 import IdentityTab from '@/components/get/IdentityTab';
 import IkigaiTab from '@/components/get/IkigaiTab';
 import BrandTab from '@/components/get/BrandTab';
+import CoupleAnalysis from '@/components/couple/CoupleAnalysis';
 
-type Tab = 'identity' | 'why' | 'ikigai' | 'brand';
+type Tab = 'identity' | 'why' | 'ikigai' | 'brand' | 'couple';
 
 export default function GetPage() {
   const { user, primaryMask, axisScores } = useAuth();
@@ -136,7 +137,7 @@ export default function GetPage() {
   const ikigai = pp?.ikigai as Record<string, unknown> | null;
   const brand = pp?.brand_identity as Record<string, unknown> | null;
 
-  const tabs: [Tab, string][] = [['identity', '정체성'], ['why', 'Why'], ['ikigai', 'Ikigai'], ['brand', '브랜드']];
+  const tabs: [Tab, string][] = [['identity', '정체성'], ['why', 'Why'], ['ikigai', 'Ikigai'], ['brand', '브랜드'], ['couple', '관계']];
 
   if (ppError) return <ErrorState title="Get 데이터를 불러오지 못했습니다" onRetry={() => refetchPp()} />;
 
@@ -190,6 +191,8 @@ export default function GetPage() {
           onBrandSave={() => brandSave.mutate()} onBrandAiGenerate={handleBrandAiGenerate}
         />
       )}
+
+      {tab === 'couple' && <CoupleAnalysis />}
 
       <UpgradeModal open={modalOpen} onClose={closeModal} trigger={activeTrigger} />
     </div>
