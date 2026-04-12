@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { veilrumDb } from '@/integrations/supabase/client';
+import { veilorDb } from '@/integrations/supabase/client';
 
 interface TabCommunityFeedProps {
   tab: 'vent' | 'dig' | 'get' | 'set';
@@ -24,7 +24,7 @@ export default function TabCommunityFeed({ tab }: TabCommunityFeedProps) {
   const { data: posts = [] } = useQuery({
     queryKey: ['tab-community', tab, user?.id],
     queryFn: async () => {
-      const { data } = await veilrumDb
+      const { data } = await veilorDb
         .from('community_posts')
         .select('id, content, author_id, created_at, tab_context')
         .eq('tab_context', tab)
@@ -39,7 +39,7 @@ export default function TabCommunityFeed({ tab }: TabCommunityFeedProps) {
   const postMutation = useMutation({
     mutationFn: async () => {
       if (!user || !text.trim()) return;
-      await veilrumDb.from('community_posts').insert({
+      await veilorDb.from('community_posts').insert({
         author_id: user.id,
         content: text.trim(),
         tab_context: tab,

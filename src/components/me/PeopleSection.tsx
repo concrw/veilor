@@ -1,7 +1,7 @@
 // PeopleSection — relationship entities list + add/edit
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { veilrumDb } from '@/integrations/supabase/client';
+import { veilorDb } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { C } from '@/lib/colors';
 import { PEOPLE } from '@/data/mePageData';
@@ -39,7 +39,7 @@ export default function PeopleSection({ people: externalPeople, peopleLoading }:
   const { data: dbPeople = [] } = useQuery({
     queryKey: ['relationship-entities', user?.id],
     queryFn: async () => {
-      const { data } = await veilrumDb.from('relationship_entities')
+      const { data } = await veilorDb.from('relationship_entities')
         .select('*').eq('user_id', user!.id).order('created_at', { ascending: true });
       return (data ?? []).map((d: Record<string, unknown>) => ({
         id: d.id, name: d.name, relationship: d.relationship, color: d.color ?? REL_COLORS[0],
@@ -53,7 +53,7 @@ export default function PeopleSection({ people: externalPeople, peopleLoading }:
   const saveMutation = useMutation({
     mutationFn: async () => {
       if (!user || !editForm.name.trim()) return;
-      await veilrumDb.from('relationship_entities').insert({
+      await veilorDb.from('relationship_entities').insert({
         user_id: user.id,
         name: editForm.name.trim(),
         relationship: editForm.relationship,
@@ -70,7 +70,7 @@ export default function PeopleSection({ people: externalPeople, peopleLoading }:
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await veilrumDb.from('relationship_entities').delete().eq('id', id);
+      await veilorDb.from('relationship_entities').delete().eq('id', id);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['relationship-entities'] }),
   });

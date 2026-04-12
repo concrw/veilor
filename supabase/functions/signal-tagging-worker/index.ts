@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 // Signal Tagging Worker
-// 역할: veilrum.signal_tagging_jobs의 pending 잡을 배치 처리
+// 역할: veilor.signal_tagging_jobs의 pending 잡을 배치 처리
 //       process_pending_keyword_tags() RPC 호출 → signal_m43_tags 태깅 실행
 // 호출: cron(5분 간격) 또는 수동 POST
 
@@ -18,8 +18,8 @@ async function callRpc(funcName: string, params: Record<string, unknown>): Promi
       'apikey': SUPABASE_SERVICE_ROLE_KEY,
       'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
       'Content-Type': 'application/json',
-      'Accept-Profile': 'veilrum',
-      'Content-Profile': 'veilrum',
+      'Accept-Profile': 'veilor',
+      'Content-Profile': 'veilor',
     },
     body: JSON.stringify(params),
   });

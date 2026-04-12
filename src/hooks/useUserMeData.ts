@@ -3,7 +3,7 @@
 // user_psych_map_snapshots, relationship_entities, user_profiles 연결
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
-import { veilrumDb } from '@/integrations/supabase/client';
+import { veilorDb } from '@/integrations/supabase/client';
 
 // ── 타입 ──────────────────────────────────────────────────────────────────────
 
@@ -116,11 +116,11 @@ export function useUserMeData() {
     queryKey: ['me-stats', uid],
     queryFn: async () => {
       const [convRes, signalRes] = await Promise.all([
-        veilrumDb
+        veilorDb
           .from('tab_conversations')
           .select('session_count')
           .eq('user_id', uid!),
-        veilrumDb
+        veilorDb
           .from('user_signals')
           .select('id, emotion, severity')
           .eq('user_id', uid!),
@@ -147,7 +147,7 @@ export function useUserMeData() {
   const personasQuery = useQuery<PersonaData[]>({
     queryKey: ['me-personas', uid],
     queryFn: async () => {
-      const { data } = await veilrumDb
+      const { data } = await veilorDb
         .from('persona_instances')
         .select('id, persona_label, persona_layer, vent_signals, dig_signals, insights, contradictions, is_primary, confidence_score, layer_group')
         .eq('user_id', uid!)
@@ -197,7 +197,7 @@ export function useUserMeData() {
   const radarQuery = useQuery<{ now: RadarSnapshot; prev: RadarSnapshot | null }>({
     queryKey: ['me-radar', uid],
     queryFn: async () => {
-      const { data } = await veilrumDb
+      const { data } = await veilorDb
         .from('user_psych_map_snapshots')
         .select('snapshot_date, affect_regulation_score, attachment_security_score, communication_style_score, boundary_power_score')
         .eq('user_id', uid!)
@@ -219,7 +219,7 @@ export function useUserMeData() {
 
       if (!data || data.length === 0) {
         // 스냅샷 없으면 user_profiles.axis_scores 폴백
-        const { data: profile } = await veilrumDb
+        const { data: profile } = await veilorDb
           .from('user_profiles')
           .select('axis_scores')
           .eq('user_id', uid!)
@@ -257,7 +257,7 @@ export function useUserMeData() {
   const reportQuery = useQuery<MonthlyReport | null>({
     queryKey: ['me-report', uid],
     queryFn: async () => {
-      const { data } = await veilrumDb
+      const { data } = await veilorDb
         .from('user_psych_map_snapshots')
         .select('snapshot_date, snapshot_type, affect_regulation_score, attachment_security_score, communication_style_score, boundary_power_score, top_patterns, unresolved_conflicts')
         .eq('user_id', uid!)
@@ -319,7 +319,7 @@ export function useUserMeData() {
   const peopleQuery = useQuery<PersonData[]>({
     queryKey: ['me-people', uid],
     queryFn: async () => {
-      const { data } = await veilrumDb
+      const { data } = await veilorDb
         .from('relationship_entities')
         .select('id, label, relationship, affect_valence, dominant_pattern, recent_event_summary, mention_count')
         .eq('user_id', uid!)
@@ -359,7 +359,7 @@ export function useUserMeData() {
   const diagnosisQuery = useQuery<DiagnosisResult>({
     queryKey: ['me-diagnosis', uid],
     queryFn: async () => {
-      const { data } = await veilrumDb
+      const { data } = await veilorDb
         .from('user_profiles')
         .select('primary_mask, secondary_mask, axis_scores, priper_completed')
         .eq('user_id', uid!)
@@ -394,7 +394,7 @@ export function useUserMeData() {
   const weeklyQuery = useQuery({
     queryKey: ['me-weekly-report', uid],
     queryFn: async () => {
-      const { data } = await veilrumDb
+      const { data } = await veilorDb
         .from('user_psych_map_snapshots')
         .select('snapshot_date, top_patterns, unresolved_conflicts, top_entities, current_goals, confidence_bands')
         .eq('user_id', uid!)

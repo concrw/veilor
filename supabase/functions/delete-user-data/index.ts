@@ -44,8 +44,8 @@ serve(async (req) => {
 
     const errors: { schema: string; table: string; message: string }[] = [];
 
-    // 1. veilrum schema tables
-    const veilrumTables = [
+    // 1. veilor schema tables
+    const veilorTables = [
       "tab_conversations",
       "codetalk_entries",
       "cq_responses",
@@ -55,15 +55,15 @@ serve(async (req) => {
       "user_profiles",
     ];
 
-    for (const table of veilrumTables) {
+    for (const table of veilorTables) {
       const { error } = await serviceClient
-        .schema("veilrum")
+        .schema("veilor")
         .from(table)
         .delete()
         .eq("user_id", userId);
       if (error) {
-        console.error(`Error deleting from veilrum.${table}:`, error);
-        errors.push({ schema: "veilrum", table, message: error.message });
+        console.error(`Error deleting from veilor.${table}:`, error);
+        errors.push({ schema: "veilor", table, message: error.message });
       }
     }
 

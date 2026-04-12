@@ -1,9 +1,9 @@
 // 하루 AI 사용 횟수 추적 훅 — DB 기반 (localStorage는 UX 캐시)
 import { useState, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { veilrumDb } from '@/integrations/supabase/client';
+import { veilorDb } from '@/integrations/supabase/client';
 
-const STORAGE_KEY_PREFIX = 'veilrum_ai_usage_';
+const STORAGE_KEY_PREFIX = 'veilor_ai_usage_';
 
 function getTodayKey(): string {
   const now = new Date();
@@ -32,7 +32,7 @@ export function useAiUsageCount() {
   const syncFromDb = useCallback(async () => {
     if (!user) return;
     const today = new Date().toISOString().split('T')[0];
-    const { count: dbCount } = await veilrumDb
+    const { count: dbCount } = await veilorDb
       .from('user_signals')
       .select('id', { count: 'exact', head: true })
       .eq('user_id', user.id)

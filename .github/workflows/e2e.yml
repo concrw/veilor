@@ -5,12 +5,15 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  schedule:
+    # 매일 오전 9시 (KST = UTC+9) 자동 실행
+    - cron: '0 0 * * *'
 
 jobs:
   e2e:
-    name: Playwright E2E
+    name: Playwright E2E (Mobile 375px)
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
 
     steps:
       - uses: actions/checkout@v4
@@ -20,46 +23,82 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: app/package-lock.json
 
-      - name: Install dependencies
-        working-directory: app
+      # 루트 의존성 설치 (playwright, e2e 스펙)
+      - name: Install root dependencies
         run: npm ci
 
       - name: Install Playwright browsers
-        working-directory: app
         run: npx playwright install chromium --with-deps
 
-      - name: Build app
-        working-directory: app
+      # Supabase 프로덕션에 직접 연결하는 E2E (별도 서버 불필요)
+      - name: Run E2E tests (production)
         env:
+          E2E_BASE_URL: ${{ secrets.E2E_BASE_URL }}
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-        run: npm run build
-
-      - name: Start preview server & run E2E tests
-        working-directory: app
-        env:
-          E2E_BASE_URL: http://localhost:4173
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-        run: |
-          npx vite preview --port 4173 &
-          sleep 3
-          npx playwright test --project="Mobile Chrome (375px)"
+          E2E_USER_FRESH_EMAIL: ${{ secrets.E2E_USER_FRESH_EMAIL }}
+          E2E_USER_FRESH_PW: ${{ secrets.E2E_USER_FRESH_PW }}
+          E2E_USER_DONE_EMAIL: ${{ secrets.E2E_USER_DONE_EMAIL }}
+          E2E_USER_DONE_PW: ${{ secrets.E2E_USER_DONE_PW }}
+        run: npx playwright test --project="Mobile Chrome"
 
       - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
-          path: app/playwright-report/
+          path: playwright-report/
           retention-days: 7
 
-      - name: Upload test results
+      - name: Upload test results (failure only)
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: playwright-results
-          path: app/test-results/
+          path: test-results/
           retention-days: 3
+
+  # ── 가상유저 데이터 파이프라인 검증 ────────────────────────────────
+  virtual-users:
+    name: Virtual User Pipeline Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # E2E 통과 후에만 실행
+    needs: [e2e]
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install chromium --with-deps
+
+      - name: Run virtual user scenarios
+        env:
+          E2E_BASE_URL: ${{ secrets.E2E_BASE_URL }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          E2E_USER_DONE_EMAIL: ${{ secrets.E2E_USER_DONE_EMAIL }}
+          E2E_USER_DONE_PW: ${{ secrets.E2E_USER_DONE_PW }}
+        run: |
+          cd veilor_automation
+          npm ci
+          npx tsx virtual-user-runner.ts 2>&1 | tail -50
+
+      - name: Upload virtual user report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: virtual-user-report
+          path: veilor_automation/reports/
+          retention-days: 7

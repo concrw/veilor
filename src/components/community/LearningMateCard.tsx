@@ -1,7 +1,7 @@
 // #43 러닝메이트 — 비슷한 V-File 유형의 유저 매칭 제안
 import { useAuth } from '@/context/AuthContext';
 import { useQuery } from '@tanstack/react-query';
-import { veilrumDb } from '@/integrations/supabase/client';
+import { veilorDb } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 
 export default function LearningMateCard() {
@@ -13,7 +13,7 @@ export default function LearningMateCard() {
     queryFn: async () => {
       if (!primaryMask) return [];
       // 같은 가면 유형의 다른 유저 찾기 (최대 3명)
-      const { data } = await veilrumDb
+      const { data } = await veilorDb
         .from('user_profiles')
         .select('user_id, nickname, primary_mask, msk_code')
         .eq('primary_mask', primaryMask)

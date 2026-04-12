@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* VEILRUM Design System — all colors are HSL */
+/* VEILOR Design System — all colors are HSL */
 
 @layer base {
   :root {
@@ -92,7 +92,7 @@
   }
 }
 
-/* ── Veilrum Design Tokens ── */
+/* ── Veilor Design Tokens ── */
 :root {
   --vr-bg:       #1C1917;
   --vr-bg2:      #242120;
@@ -112,7 +112,7 @@
   --frost:       #7BA8C4;
 }
 
-/* Veilrum 전용 타이포 */
+/* Veilor 전용 타이포 */
 .font-cg {
   font-family: 'Cormorant Garamond', serif;
 }

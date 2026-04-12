@@ -1,6 +1,6 @@
 // WhyFlow 직업 CRUD 로직 (Step 1~6)
 import { useState, useEffect } from 'react';
-import { veilrumDb } from '@/integrations/supabase/client';
+import { veilorDb } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import type { WhySession, JobEntry } from '@/types/why';
 
@@ -111,7 +111,7 @@ export function useWhyJobs(props: UseWhyJobsProps) {
       sort_order: i,
     }));
 
-    const { data: inserted, error } = await veilrumDb
+    const { data: inserted, error } = await veilorDb
       .from('why_job_entries')
       .insert(payload)
       .select();
@@ -124,7 +124,7 @@ export function useWhyJobs(props: UseWhyJobsProps) {
     setJobs(inserted as JobEntry[]);
     setJobIdx(0);
 
-    await veilrumDb
+    await veilorDb
       .from('why_sessions')
       .update({ current_step: 2, timer_ended_at: new Date().toISOString(), updated_at: new Date().toISOString() })
       .eq('id', sess.id);
@@ -139,7 +139,7 @@ export function useWhyJobs(props: UseWhyJobsProps) {
       toast({ title: '나만의 정의를 입력해 주세요.', variant: 'destructive' });
       return false;
     }
-    const { error } = await veilrumDb
+    const { error } = await veilorDb
       .from('why_job_entries')
       .update({ definition: defText.trim(), updated_at: new Date().toISOString() })
       .eq('id', currentJobForDef.id);
@@ -168,7 +168,7 @@ export function useWhyJobs(props: UseWhyJobsProps) {
       toast({ title: '각인 순간을 입력해 주세요.', variant: 'destructive' });
       return false;
     }
-    const { error } = await veilrumDb
+    const { error } = await veilorDb
       .from('why_job_entries')
       .update({ first_memory: memText.trim(), updated_at: new Date().toISOString() })
       .eq('id', currentJobForMem.id);
@@ -209,7 +209,7 @@ export function useWhyJobs(props: UseWhyJobsProps) {
       category: happySet.has(j.id) ? 'happy' : painSet.has(j.id) ? 'pain' : 'neutral',
     }));
     for (const u of updates) {
-      await veilrumDb.from('why_job_entries').update({ category: u.category, updated_at: new Date().toISOString() }).eq('id', u.id);
+      await veilorDb.from('why_job_entries').update({ category: u.category, updated_at: new Date().toISOString() }).eq('id', u.id);
     }
     setJobs(prev => prev.map(j => {
       const category: JobEntry['category'] = happySet.has(j.id) ? 'happy' : painSet.has(j.id) ? 'pain' : 'neutral';
@@ -226,7 +226,7 @@ export function useWhyJobs(props: UseWhyJobsProps) {
       toast({ title: '이유를 입력해 주세요.', variant: 'destructive' });
       return false;
     }
-    const { error } = await veilrumDb
+    const { error } = await veilorDb
       .from('why_job_entries')
       .update({ reason: reasonText.trim(), updated_at: new Date().toISOString() })
       .eq('id', currentJobForReason.id);
@@ -249,7 +249,7 @@ export function useWhyJobs(props: UseWhyJobsProps) {
 
   // ── Step 6: 경험 ──
   const saveExp = async () => {
-    const { error } = await veilrumDb
+    const { error } = await veilorDb
       .from('why_job_entries')
       .update({ has_experience: hasExp, experience_note: expNote.trim() || null, updated_at: new Date().toISOString() })
       .eq('id', currentJobForExp.id);

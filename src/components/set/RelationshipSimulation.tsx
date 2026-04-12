@@ -1,7 +1,7 @@
 // #33 관계 시뮬레이션 — AI 역할극 + #34 CodeTalk 연습
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { invokeHeldChat } from '@/lib/heldChatClient';
 // MASK_PROFILES may be used for scenario personalization in future
 
 
@@ -32,17 +32,14 @@ export default function RelationshipSimulation() {
     setLoading(true);
 
     try {
-      const { data } = await supabase.functions.invoke('held-chat', {
-        body: {
-          text: input.trim(),
-          emotion: '',
-          mask: primaryMask ?? '',
-          axisScores: axisScores ?? undefined,
-          history: [...messages, userMsg].slice(-6),
-          tab: 'set',
-          userId: user?.id,
-          aiSettings: { name: '시뮬레이션 파트너', tone: 'calm', personality: 'direct' },
-        },
+      const data = await invokeHeldChat({
+        text: input.trim(),
+        emotion: '',
+        mask: primaryMask ?? '',
+        axisScores: axisScores ?? undefined,
+        history: [...messages, userMsg].slice(-6),
+        tab: 'set',
+        aiSettings: { name: '시뮬레이션 파트너', tone: 'calm', personality: 'direct' },
       });
       setMessages(m => [...m, { role: 'ai', text: data?.response ?? '...' }]);
     } catch {

@@ -1,5 +1,5 @@
-const CACHE_NAME = 'priper-v1';
-const RUNTIME_CACHE = 'priper-runtime';
+const CACHE_NAME = 'veilor-v1';
+const RUNTIME_CACHE = 'veilor-runtime';
 
 const STATIC_CACHE_URLS = [
   '/',

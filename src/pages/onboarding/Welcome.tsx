@@ -30,7 +30,7 @@ export default function Welcome() {
       <div className="max-w-sm w-full mx-auto flex-1 flex flex-col">
         {/* 로고 */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold tracking-tight">VEILRUM</h1>
+          <h1 className="text-3xl font-bold tracking-tight">VEILOR</h1>
           <p className="text-muted-foreground text-xs mt-1">관계의 가면을 발견하는 여정</p>
         </div>
 
@@ -106,7 +106,7 @@ export default function Welcome() {
             바로 V-File 진단으로 →
           </button>
           <p className="text-[10px] text-muted-foreground/50 leading-relaxed text-center">
-            VEILRUM은 자기탐색 도구이며, 전문 심리상담 또는 치료를 대체하지 않습니다.
+            VEILOR은 자기탐색 도구이며, 전문 심리상담 또는 치료를 대체하지 않습니다.
           </p>
         </div>
       </div>

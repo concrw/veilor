@@ -104,7 +104,7 @@ const Login = () => {
   return (
     <main className="min-h-screen bg-background px-4 py-6">
       <header className="mb-8 text-center">
-        <h1 className="text-3xl font-bold tracking-tight mx-auto mt-5">VEILRUM</h1>
+        <h1 className="text-3xl font-bold tracking-tight mx-auto mt-5">VEILOR</h1>
       </header>
 
       <Card className="bg-card/60 max-w-sm mx-auto">

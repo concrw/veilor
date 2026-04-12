@@ -1,5 +1,8 @@
 // #37 RelationSHIP 12 코칭 + #40 관계 결론 착지 + #41 대화법/질문법 학습
 import { useState } from 'react';
+import { useAuth } from '@/context/AuthContext';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { veilorDb } from '@/integrations/supabase/client';
 
 const COACHING_WEEKS = [
   { week: 1, title: '나를 알기', topic: '나의 관계 패턴 인식', exercise: 'V-File 결과를 되돌아보고, 가장 놀라웠던 점 1가지 적기' },
@@ -36,8 +39,34 @@ const CLOSURE_STEPS = [
 type Section = 'coaching' | 'skills' | 'closure';
 
 export default function RelationshipCoaching() {
+  const { user } = useAuth();
+  const qc = useQueryClient();
   const [section, setSection] = useState<Section>('coaching');
-  const [currentWeek, setCurrentWeek] = useState(0);
+
+  const { data: profile } = useQuery({
+    queryKey: ['coaching-week', user?.id],
+    queryFn: async () => {
+      const { data } = await veilorDb
+        .from('user_profiles')
+        .select('coaching_week')
+        .eq('user_id', user!.id)
+        .single();
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  const currentWeek = profile?.coaching_week ?? 0;
+
+  const weekMutation = useMutation({
+    mutationFn: async (week: number) => {
+      await veilorDb
+        .from('user_profiles')
+        .update({ coaching_week: week })
+        .eq('user_id', user!.id);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['coaching-week', user?.id] }),
+  });
 
   return (
     <div className="space-y-4">
@@ -76,9 +105,9 @@ export default function RelationshipCoaching() {
             <div className="h-1.5 bg-primary rounded-full" style={{ width: `${((currentWeek + 1) / 12) * 100}%` }} />
           </div>
           <div className="flex gap-2">
-            <button onClick={() => setCurrentWeek(w => Math.max(0, w - 1))} disabled={currentWeek === 0}
+            <button onClick={() => weekMutation.mutate(Math.max(0, currentWeek - 1))} disabled={currentWeek === 0 || weekMutation.isPending}
               className="flex-1 text-xs py-2 border rounded-lg disabled:opacity-30">이전 주</button>
-            <button onClick={() => setCurrentWeek(w => Math.min(11, w + 1))} disabled={currentWeek === 11}
+            <button onClick={() => weekMutation.mutate(Math.min(11, currentWeek + 1))} disabled={currentWeek === 11 || weekMutation.isPending}
               className="flex-1 text-xs py-2 bg-primary text-white rounded-lg disabled:opacity-30">다음 주</button>
           </div>
         </div>

@@ -28,7 +28,7 @@ const CURATED_CONTENT: ContentItem[] = [
     category: '욕구표현', summary: '상대에게 원하는 것을 전달하는 것과 사랑의 언어의 관계',
   },
   {
-    id: '5', title: '재진단이 보여주는 것: 변하지 않는 나 vs 성장하는 나', source: 'VEILRUM',
+    id: '5', title: '재진단이 보여주는 것: 변하지 않는 나 vs 성장하는 나', source: 'VEILOR',
     category: '성장', summary: 'V-File 재진단 결과가 달라졌다면, 그것이 의미하는 것',
   },
 ];

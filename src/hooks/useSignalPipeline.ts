@@ -1,7 +1,7 @@
 // 신호 파이프라인 — Vent/Dig/Set 입력을 Postgres RPC로 트랜잭션 보장 저장
 // 설계 원칙: 단일 RPC 호출로 tab_conversations + prime_perspectives + user_signals 동시 write
 //           append_vent_signal은 위기 감지 결과(crisis_severity)를 함께 반환
-import { supabase, veilrumDb } from '@/integrations/supabase/client';
+import { supabase, veilorDb } from '@/integrations/supabase/client';
 
 export type CrisisSeverity = 'none' | 'medium' | 'high' | 'critical';
 
@@ -14,8 +14,8 @@ export async function saveVentMessage(
   emotion: string,
   userMessage: string,
   turnIndex: number,
-): Promise<{ signalId: string | null; crisisSeverity: CrisisSeverity }> {
-  const { data, error } = await veilrumDb.rpc('append_vent_signal', {
+): Promise<{ signalId: string | null; crisisSeverity: CrisisSeverity; saved: boolean }> {
+  const { data, error } = await veilorDb.rpc('append_vent_signal', {
     p_user_id:    userId,
     p_emotion:    emotion,
     p_message:    userMessage,
@@ -25,6 +25,7 @@ export async function saveVentMessage(
   return {
     signalId:       data?.signal_id       ?? null,
     crisisSeverity: data?.crisis_severity ?? 'none',
+    saved:          !error,
   };
 }
 
@@ -34,7 +35,7 @@ export async function saveVentSummary(
   emotion: string,
   suggestion: string,
 ) {
-  await veilrumDb.rpc('append_vent_summary', {
+  await veilorDb.rpc('append_vent_summary', {
     p_user_id:    userId,
     p_emotion:    emotion,
     p_suggestion: suggestion,
@@ -56,7 +57,7 @@ export async function saveDigSignal(
 ) {
   const { situation, text, matchedQuestion, domain, score } = signal;
 
-  await veilrumDb.rpc('append_dig_signal', {
+  await veilorDb.rpc('append_dig_signal', {
     p_user_id:          userId,
     p_situation:        situation,
     p_text:             text,
@@ -78,7 +79,7 @@ export async function saveVentSessionSummary(
   turnCount: number,
 ): Promise<string | null> {
   // 1차: RPC 호출 시도
-  const { data, error } = await veilrumDb.rpc('save_vent_session_summary', {
+  const { data, error } = await veilorDb.rpc('save_vent_session_summary', {
     p_user_id:    userId,
     p_emotion:    emotion,
     p_messages:   messages,
@@ -92,11 +93,11 @@ export async function saveVentSessionSummary(
   // 2차: direct insert 폴백
   const userMsgs = messages.filter(m => m.role === 'user').map(m => m.text);
   const contextSummary = `${emotion} | ${userMsgs[0] || ''} → ${suggestion}`;
-  const { data: inserted, error: insertErr } = await veilrumDb
+  const { data: inserted, error: insertErr } = await veilorDb
     .from('dive_sessions')
     .insert({
       user_id: userId,
-      mode: 'vent',
+      mode: 'F',
       emotion,
       messages,
       context_summary: contextSummary,
@@ -112,11 +113,12 @@ export async function saveVentSessionSummary(
 
   if (insertErr) {
     console.error('[saveVentSessionSummary] direct insert also failed:', insertErr);
+    // C9: 저장 완전 실패 — 호출자가 사용자에게 알릴 수 있도록 null 반환
     return null;
   }
 
   // user_profiles.held_last_emotion 업데이트
-  await veilrumDb
+  await veilorDb
     .from('user_profiles')
     .update({ held_last_emotion: emotion })
     .eq('user_id', userId);
@@ -139,11 +141,11 @@ export async function saveVentPartialSession(
   const userMsgs = messages.filter(m => m.role === 'user').map(m => m.text);
   const contextSummary = `${emotion} | 미완료(${turnCount}턴) | ${userMsgs[0] || ''}`;
 
-  const { data, error } = await veilrumDb
+  const { data, error } = await veilorDb
     .from('dive_sessions')
     .insert({
       user_id: userId,
-      mode: 'vent',
+      mode: 'F',
       emotion,
       messages,
       context_summary: contextSummary,
@@ -176,7 +178,7 @@ export async function saveSetSignal(
 ) {
   const { keyword, dayNumber, definition } = signal;
 
-  await veilrumDb.rpc('append_set_signal', {
+  await veilorDb.rpc('append_set_signal', {
     p_user_id:    userId,
     p_keyword:    keyword,
     p_day_number: dayNumber,

@@ -15,7 +15,7 @@ interface LanguageContextValue {
   isLoading: boolean;
 }
 
-const STORAGE_KEY = 'veilrum_lang';
+const STORAGE_KEY = 'veilor_lang';
 
 const LanguageContext = createContext<LanguageContextValue | undefined>(
   undefined,

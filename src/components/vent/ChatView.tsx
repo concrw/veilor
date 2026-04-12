@@ -1,6 +1,7 @@
 // ChatView — message list + AI thinking indicator + finish button + summary card
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { C, alpha } from '@/lib/colors';
+import { veilorDb } from '@/integrations/supabase/client';
 
 const CHAT_AI_MSG_STYLE = { background: C.bg2, border: `1px solid ${C.border}`, borderRadius: '12px 12px 12px 3px', padding: '12px 14px' } as const;
 const CHAT_USER_MSG_STYLE = { background: alpha(C.amber, 0.05), border: `1px solid ${alpha(C.amber, 0.13)}`, borderRadius: '12px 12px 3px 12px', padding: '10px 14px' } as const;
@@ -15,8 +16,11 @@ interface ChatViewProps {
   aiThinking: boolean;
   showSummary: boolean;
   sessionSaved: boolean;
+  /** critical 위기 감지 시 true — 입력창 비활성화 + 안내 메시지 표시 */
+  crisisLocked?: boolean;
   emoData: { count: number; suggestion: string };
   greeting: { title: string; placeholder: string };
+  userId?: string;
   onMsgValChange: (val: string) => void;
   onSendMsg: () => void;
   onFinishSession: () => void;
@@ -25,9 +29,25 @@ interface ChatViewProps {
 
 export default function ChatView({
   curEmo, msgs, msgCount, msgVal, aiThinking, showSummary, sessionSaved,
-  emoData, greeting, onMsgValChange, onSendMsg, onFinishSession, onContinueChat,
+  crisisLocked = false,
+  emoData, greeting, userId,
+  onMsgValChange, onSendMsg, onFinishSession, onContinueChat,
 }: ChatViewProps) {
   const chatRef = useRef<HTMLDivElement>(null);
+  // C6: 응답별 피드백 상태 (msgIndex → 'up'|'down')
+  const [feedbacks, setFeedbacks] = useState<Record<number, 'up' | 'down'>>({});
+
+  async function handleFeedback(msgIdx: number, value: 'up' | 'down', msgText: string) {
+    setFeedbacks(prev => ({ ...prev, [msgIdx]: value }));
+    if (!userId) return;
+    await veilorDb.from('ai_response_feedback').insert({
+      user_id: userId,
+      response_text: msgText.slice(0, 500),
+      feedback: value,
+      context: curEmo,
+      created_at: new Date().toISOString(),
+    }).then(() => {}).catch(() => {});
+  }
 
   useEffect(() => {
     if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight;
@@ -54,6 +74,37 @@ export default function ChatView({
           <div key={i} className="vr-fade-in flex-shrink-0" style={CHAT_AI_MSG_STYLE}>
             <p className="text-[16px] font-light leading-[1.6] break-keep" style={{ fontFamily: "'Cormorant Garamond', serif", color: C.text }}>{m.text}</p>
             {m.tone && <p className="text-[10px] font-light mt-[3px]" style={{ color: alpha(C.amber, 0.4) }}>{m.tone}</p>}
+            {/* C6: AI 응답 피드백 버튼 (초기 AI 메시지 2개 제외) */}
+            {i > 1 && !aiThinking && (
+              <div className="flex gap-2 mt-2">
+                <button
+                  aria-label="도움이 됐어요"
+                  onClick={() => handleFeedback(i, 'up', m.text)}
+                  style={{
+                    background: feedbacks[i] === 'up' ? alpha(C.amber, 0.2) : 'transparent',
+                    border: `1px solid ${feedbacks[i] === 'up' ? C.amber : alpha(C.amber, 0.2)}`,
+                    borderRadius: 6, padding: '2px 8px', fontSize: 11,
+                    color: feedbacks[i] === 'up' ? C.amber : C.text5, cursor: 'pointer',
+                    transition: 'all .15s',
+                  }}
+                >
+                  {feedbacks[i] === 'up' ? '👍' : '↑'}
+                </button>
+                <button
+                  aria-label="도움이 안 됐어요"
+                  onClick={() => handleFeedback(i, 'down', m.text)}
+                  style={{
+                    background: feedbacks[i] === 'down' ? 'rgba(220,38,38,0.1)' : 'transparent',
+                    border: `1px solid ${feedbacks[i] === 'down' ? '#DC2626' : alpha(C.amber, 0.2)}`,
+                    borderRadius: 6, padding: '2px 8px', fontSize: 11,
+                    color: feedbacks[i] === 'down' ? '#DC2626' : C.text5, cursor: 'pointer',
+                    transition: 'all .15s',
+                  }}
+                >
+                  {feedbacks[i] === 'down' ? '👎' : '↓'}
+                </button>
+              </div>
+            )}
           </div>
         ) : (
           <div key={i} className="vr-fade-in self-end max-w-[84%] flex-shrink-0" style={CHAT_USER_MSG_STYLE}>
@@ -108,25 +159,38 @@ export default function ChatView({
         )}
       </div>
 
-      {/* 입력창 */}
+      {/* 입력창 — critical 위기 시 잠금 */}
       {!showSummary && (
-        <div className="flex-shrink-0 flex items-center gap-2" style={{ padding: '8px 16px 14px', borderTop: `1px solid ${C.border2}` }}>
-          <button aria-label="음성 입력" className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ border: `1px solid ${C.border}`, background: 'transparent' }}>
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="5" y="1" width="6" height="9" rx="3" stroke="#78716C" strokeWidth="1.2"/><path d="M2 7.5C2 10.538 4.686 13 8 13s6-2.462 6-5.5" stroke="#78716C" strokeWidth="1.2" strokeLinecap="round" fill="none"/><line x1="8" y1="13" x2="8" y2="15" stroke="#78716C" strokeWidth="1.2" strokeLinecap="round"/></svg>
-          </button>
-          <input
-            aria-label="메시지 입력"
-            className="flex-1 rounded-full text-[12px] font-light outline-none"
-            style={{ background: C.bg2, border: `1px solid ${C.border}`, padding: '8px 14px', color: C.text2, fontFamily: "'DM Sans', sans-serif" }}
-            placeholder={greeting.placeholder}
-            value={msgVal}
-            onChange={e => onMsgValChange(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && onSendMsg()}
-          />
-          <button aria-label="메시지 전송" onClick={onSendMsg} className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-transform active:scale-[.92]" style={{ background: C.amber, border: 'none' }}>
-            <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M6 11V1M1 6l5-5 5 5" stroke="#1C1917" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-          </button>
-        </div>
+        crisisLocked ? (
+          <div className="flex-shrink-0" style={{ padding: '10px 16px 14px', borderTop: `1px solid ${C.border2}` }}>
+            <div style={{ background: '#DC262615', border: '1px solid #DC262630', borderRadius: 10, padding: '10px 14px', textAlign: 'center' }}>
+              <p style={{ fontSize: 12, color: '#DC2626', fontWeight: 500, margin: 0 }}>
+                지금은 전문가의 도움이 필요한 상황이에요.
+              </p>
+              <p style={{ fontSize: 11, color: '#DC262699', marginTop: 4, margin: '4px 0 0' }}>
+                위의 전화번호로 연락해 주세요.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="flex-shrink-0 flex items-center gap-2" style={{ padding: '8px 16px 14px', borderTop: `1px solid ${C.border2}` }}>
+            <button aria-label="음성 입력" className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ border: `1px solid ${C.border}`, background: 'transparent' }}>
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="5" y="1" width="6" height="9" rx="3" stroke="#78716C" strokeWidth="1.2"/><path d="M2 7.5C2 10.538 4.686 13 8 13s6-2.462 6-5.5" stroke="#78716C" strokeWidth="1.2" strokeLinecap="round" fill="none"/><line x1="8" y1="13" x2="8" y2="15" stroke="#78716C" strokeWidth="1.2" strokeLinecap="round"/></svg>
+            </button>
+            <input
+              aria-label="메시지 입력"
+              className="flex-1 rounded-full text-[12px] font-light outline-none"
+              style={{ background: C.bg2, border: `1px solid ${C.border}`, padding: '8px 14px', color: C.text2, fontFamily: "'DM Sans', sans-serif" }}
+              placeholder={greeting.placeholder}
+              value={msgVal}
+              onChange={e => onMsgValChange(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && onSendMsg()}
+            />
+            <button aria-label="메시지 전송" onClick={onSendMsg} className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-transform active:scale-[.92]" style={{ background: C.amber, border: 'none' }}>
+              <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M6 11V1M1 6l5-5 5 5" stroke="#1C1917" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            </button>
+          </div>
+        )
       )}
     </div>
   );

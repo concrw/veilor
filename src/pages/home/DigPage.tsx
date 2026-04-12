@@ -2,14 +2,16 @@
 // 기능: 상황 입력 → Division 선택 → 반복 구조 탐지 → M43 매칭 + AI 패턴 해석
 
 import { useState, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase, veilrumDb } from '@/integrations/supabase/client';
+import { supabase, veilorDb } from '@/integrations/supabase/client';
 import { saveDigSignal } from '@/hooks/useSignalPipeline';
 import { ErrorState } from '@/components/ErrorState';
 import { DigSearchForm } from '@/components/dig/DigSearchForm';
 import { DigResultList } from '@/components/dig/DigResultList';
 import { DigHistory } from '@/components/dig/DigHistory';
+import PartnerPatternInference from '@/components/dig/PartnerPatternInference';
 
 interface Division {
   id: string;
@@ -46,8 +48,10 @@ interface PatternProfile {
 
 export default function DigPage() {
   const { user, axisScores } = useAuth();
+  const location = useLocation();
+  const prefillText = (location.state as { prefillText?: string } | null)?.prefillText ?? '';
   const qc = useQueryClient();
-  const [situation, setSituation] = useState('');
+  const [situation, setSituation] = useState(prefillText);
   const [divisionId, setDivisionId] = useState<string>('');
   const [text, setText] = useState('');
   const [results, setResults] = useState<MatchResult[]>([]);
@@ -59,7 +63,7 @@ export default function DigPage() {
   const { data: recentVent } = useQuery({
     queryKey: ['recent-vent-session', user?.id],
     queryFn: async () => {
-      const { data } = await veilrumDb
+      const { data } = await veilorDb
         .from('dive_sessions')
         .select('emotion, context_summary, held_keywords, created_at')
         .eq('user_id', user!.id)
@@ -82,7 +86,7 @@ export default function DigPage() {
   const { data: digHistory = [], isError: digHistoryError, refetch: refetchHistory } = useQuery<DigHistoryItem[]>({
     queryKey: ['dig-history', user?.id],
     queryFn: async () => {
-      const { data } = await veilrumDb
+      const { data } = await veilorDb
         .from('user_signals')
         .select('id, domain, content, score, meta, created_at')
         .eq('user_id', user!.id)
@@ -139,7 +143,7 @@ export default function DigPage() {
   const { data: patternProfiles = [] } = useQuery<PatternProfile[]>({
     queryKey: ['pattern-profiles', user?.id],
     queryFn: async () => {
-      const { data } = await veilrumDb
+      const { data } = await veilorDb
         .from('pattern_profiles')
         .select('id, pattern_axis, score, confidence, trend')
         .eq('user_id', user!.id);
@@ -152,7 +156,7 @@ export default function DigPage() {
   const { data: divisions = [] } = useQuery<Division[]>({
     queryKey: ['m43-divisions'],
     queryFn: async () => {
-      const { data } = await veilrumDb
+      const { data } = await veilorDb
         .from('m43_divisions')
         .select('id, code, name')
         .order('code');
@@ -167,22 +171,42 @@ export default function DigPage() {
 
       let domainFilter: string[] = [];
       if (divisionId) {
-        const { data: domainRows } = await veilrumDb
+        const { data: domainRows } = await veilorDb
           .from('m43_domains').select('id').eq('division_id', divisionId);
         domainFilter = (domainRows ?? []).map((d: { id: string }) => d.id);
       }
 
-      let questionQuery = veilrumDb
-        .from('m43_domain_questions')
-        .select(`id, question, keywords, category,
-          m43_domain_answers(answer, m43_researchers(name, specialty)),
-          m43_domains(id, name, code, division_id, m43_divisions(code))`)
-        .limit(300);
+      // 키워드 검색 + 시맨틱 검색 병렬 실행
+      const [questionResult, semanticResult] = await Promise.all([
+        (() => {
+          let q = veilorDb
+            .from('m43_domain_questions')
+            .select(`id, question, keywords, category,
+              m43_domain_answers(answer, m43_researchers(name, specialty)),
+              m43_domains(id, name, code, division_id, m43_divisions(code))`)
+            .limit(300);
+          if (domainFilter.length > 0) q = q.in('domain_id', domainFilter);
+          return q;
+        })(),
+        supabase.functions.invoke('dig-semantic-search', {
+          body: { query, divisionId: divisionId || null, limit: 5, userId: user?.id },
+        }).catch(() => ({ data: { results: [], fallback: true }, error: null })),
+      ]);
 
-      if (domainFilter.length > 0) questionQuery = questionQuery.in('domain_id', domainFilter);
-
-      const { data: questions } = await questionQuery;
+      const { data: questions } = questionResult;
       if (!questions) return [];
+
+      // 시맨틱 결과 맵 (question_id → similarity score)
+      const semanticScoreMap = new Map<string, number>();
+      const semanticFallback = (semanticResult as { data: { results: unknown[]; fallback?: boolean } }).data?.fallback !== false;
+      if (!semanticFallback) {
+        const semResults = (semanticResult as { data: { results: Array<{ question_id: string; similarity: number }> } }).data?.results ?? [];
+        for (const r of semResults) {
+          if (r.question_id && typeof r.similarity === 'number') {
+            semanticScoreMap.set(r.question_id, r.similarity);
+          }
+        }
+      }
 
       interface DomainQuestion {
         id: string; question: string | null; keywords: string[] | null; category: string | null;
@@ -197,12 +221,17 @@ export default function DigPage() {
           if (kws.some((k: string) => k.includes(t))) kwScore += 1;
           if (qText.includes(t)) textScore += 0.5;
         }
-        const score = tokens.length > 0 ? (kwScore / tokens.length) * 0.6 + (textScore / tokens.length) * 0.4 : 0;
+        const keywordScore = tokens.length > 0 ? (kwScore / tokens.length) * 0.6 + (textScore / tokens.length) * 0.4 : 0;
+        // 시맨틱 스코어가 있으면 가중 평균 (시맨틱 70%, 키워드 30%)
+        const semScore = semanticScoreMap.get(q.id);
+        const score = semScore !== undefined
+          ? semScore * 0.7 + keywordScore * 0.3
+          : keywordScore;
         return { q, score };
       }).filter(x => x.score >= 0.2).sort((a, b) => b.score - a.score).slice(0, 5);
 
       if (user && scored.length > 0) {
-        await veilrumDb.from('m43_user_question_logs').insert({
+        await veilorDb.from('m43_user_question_logs').insert({
           user_id: user.id, user_question: query,
           matched_question_id: scored[0].q.id, match_score: scored[0].score, mode: 'T',
         });
@@ -228,7 +257,7 @@ export default function DigPage() {
           const confidence = Math.min(100, top.score * 100);
           const trend = currentDomainCount >= 3 ? 'rising' : 'stable';
           try {
-            await veilrumDb.from('pattern_profiles').upsert({
+            await veilorDb.from('pattern_profiles').upsert({
               user_id: user.id, pattern_axis: top.domain, score: patternScore,
               confidence, trend, updated_at: new Date().toISOString(),
             }, { onConflict: 'user_id,pattern_axis' });
@@ -334,6 +363,13 @@ export default function DigPage() {
         onSubmit={handleSubmit}
         isPending={searchMutation.isPending}
       />
+
+      {/* #9 상대방 패턴 추론 */}
+      {(situation === '연인/파트너' || situation === '가족' || situation === '친구') && (
+        <PartnerPatternInference
+          onIntegrate={(inferredText) => setText(prev => prev ? `${prev}\n\n${inferredText}` : inferredText)}
+        />
+      )}
 
       <DigHistory
         digHistory={digHistory}

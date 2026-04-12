@@ -1,7 +1,7 @@
 // #66 유형별 앱 커스터마이징 + #72 푸시 알림/리텐션
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { veilrumDb } from '@/integrations/supabase/client';
+import { veilorDb } from '@/integrations/supabase/client';
 import { MASK_PROFILES } from '@/lib/vfileAlgorithm';
 
 const THEME_PRESETS: Record<string, { name: string; accent: string; bg: string }> = {
@@ -26,7 +26,7 @@ export default function AppCustomization() {
 
   useEffect(() => {
     if (!user) return;
-    veilrumDb.from('user_profiles')
+    veilorDb.from('user_profiles')
       .select('app_theme, push_enabled, reminder_time')
       .eq('user_id', user.id).single()
       .then(({ data }) => {
@@ -39,7 +39,7 @@ export default function AppCustomization() {
   const saveTheme = async (newTheme: string) => {
     setTheme(newTheme);
     if (user) {
-      await veilrumDb.from('user_profiles').update({
+      await veilorDb.from('user_profiles').update({
         app_theme: newTheme, updated_at: new Date().toISOString(),
       }).eq('user_id', user.id);
     }
@@ -49,7 +49,7 @@ export default function AppCustomization() {
     const next = !pushEnabled;
     setPushEnabled(next);
     if (user) {
-      await veilrumDb.from('user_profiles').update({
+      await veilorDb.from('user_profiles').update({
         push_enabled: next, updated_at: new Date().toISOString(),
       }).eq('user_id', user.id);
     }

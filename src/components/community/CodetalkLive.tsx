@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { veilrumDb } from '@/integrations/supabase/client';
+import { veilorDb } from '@/integrations/supabase/client';
 
 interface CodetalkLiveProps {
   keyword: { id: string; keyword: string; day_number?: number } | null | undefined;
@@ -17,7 +17,7 @@ export default function CodetalkLive({ keyword }: CodetalkLiveProps) {
     queryKey: ['codetalk-live', keyword?.id],
     queryFn: async () => {
       if (!keyword) return [];
-      const { data } = await veilrumDb
+      const { data } = await veilorDb
         .from('community_comments')
         .select('id, content, author_id, created_at')
         .eq('post_id', keyword.id)
@@ -32,7 +32,7 @@ export default function CodetalkLive({ keyword }: CodetalkLiveProps) {
   const sendComment = useMutation({
     mutationFn: async () => {
       if (!user || !keyword || !comment.trim()) return;
-      await veilrumDb.from('community_comments').insert({
+      await veilorDb.from('community_comments').insert({
         post_id: keyword.id,
         author_id: user.id,
         content: comment.trim(),

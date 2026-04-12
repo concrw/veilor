@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase, veilrumDb } from '@/integrations/supabase/client';
+import { supabase, veilorDb } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
@@ -59,7 +59,7 @@ export default function DmPage() {
   const { data: rooms } = useQuery({
     queryKey: ['dm-rooms', user?.id],
     queryFn: async () => {
-      const { data } = await veilrumDb.from('dm_rooms')
+      const { data } = await veilorDb.from('dm_rooms')
         .select('*')
         .or(`user_a_id.eq.${user!.id},user_b_id.eq.${user!.id}`)
         .eq('is_active', true)
@@ -75,7 +75,7 @@ export default function DmPage() {
   const { data: pendingRooms, refetch: refetchPending } = useQuery({
     queryKey: ['dm-pending', user?.id],
     queryFn: async () => {
-      const { data } = await veilrumDb.from('dm_rooms')
+      const { data } = await veilorDb.from('dm_rooms')
         .select('*')
         .eq('user_b_id', user!.id)
         .eq('consent_a', true)
@@ -90,9 +90,9 @@ export default function DmPage() {
   const consentMutation = useMutation({
     mutationFn: async ({ roomId, accept }: { roomId: string; accept: boolean }) => {
       if (accept) {
-        await veilrumDb.from('dm_rooms').update({ consent_b: true }).eq('id', roomId);
+        await veilorDb.from('dm_rooms').update({ consent_b: true }).eq('id', roomId);
       } else {
-        await veilrumDb.from('dm_rooms').update({ is_active: false }).eq('id', roomId);
+        await veilorDb.from('dm_rooms').update({ is_active: false }).eq('id', roomId);
       }
     },
     onSuccess: () => {
@@ -105,7 +105,7 @@ export default function DmPage() {
   const { data: messages } = useQuery({
     queryKey: ['dm-messages', selectedRoom?.id],
     queryFn: async () => {
-      const { data } = await veilrumDb.from('dm_messages')
+      const { data } = await veilorDb.from('dm_messages')
         .select('*')
         .eq('room_id', selectedRoom.id)
         .eq('is_deleted', false)
@@ -121,7 +121,7 @@ export default function DmPage() {
     if (!selectedRoom || !messages || !user) return;
     const unread = messages.filter((m: DmMessage) => m.sender_id !== user.id && !m.is_read);
     if (unread.length === 0) return;
-    veilrumDb.from('dm_messages')
+    veilorDb.from('dm_messages')
       .update({ is_read: true })
       .in('id', unread.map((m: DmMessage) => m.id));
   }, [messages, selectedRoom, user]);
@@ -137,7 +137,7 @@ export default function DmPage() {
       const { flagged, reason } = await checkMessageSafety(newMsg);
       if (flagged) {
         // 플래그된 메시지는 DB에 저장하되 is_flagged=true로 표시
-        await veilrumDb.from('dm_messages').insert({
+        await veilorDb.from('dm_messages').insert({
           room_id: selectedRoom.id,
           sender_id: user!.id,
           content: newMsg,
@@ -147,7 +147,7 @@ export default function DmPage() {
         });
         throw new Error(reason ?? '이 메시지는 커뮤니티 가이드라인에 맞지 않아 전송되지 않았습니다.');
       }
-      await veilrumDb.from('dm_messages').insert({
+      await veilorDb.from('dm_messages').insert({
         room_id: selectedRoom.id,
         sender_id: user!.id,
         content: newMsg,

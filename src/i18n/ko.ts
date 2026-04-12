@@ -3,7 +3,7 @@ import type { LocaleResource } from './types';
 export const ko: LocaleResource = {
   // ─── common ────────────────────────────────────────────────
   common: {
-    appName: 'VEILRUM',
+    appName: 'VEILOR',
     loading: '로딩 중...',
     retry: '다시 시도',
     save: '저장',
@@ -24,7 +24,7 @@ export const ko: LocaleResource = {
     premium: '프리미엄',
     active: '활성',
     preparing: '준비 중이에요 — 곧 만들 수 있어요',
-    disclaimer: 'VEILRUM은 자기탐색 도구이며, 전문 심리상담 또는 치료를 대체하지 않습니다.',
+    disclaimer: 'VEILOR은 자기탐색 도구이며, 전문 심리상담 또는 치료를 대체하지 않습니다.',
     skipToContent: '본문으로 건너뛰기',
   },
 
@@ -56,7 +56,7 @@ export const ko: LocaleResource = {
   // ─── onboarding ────────────────────────────────────────────
   onboarding: {
     welcome: {
-      title: 'VEILRUM',
+      title: 'VEILOR',
       subtitle: '당신의 관계 언어를 발견하세요',
       card1Title: '당신만의 가면(Mask)이 있습니다',
       card1Desc: '관계에서 무의식적으로 쓰는 패턴의 이름',
@@ -65,7 +65,7 @@ export const ko: LocaleResource = {
       card3Title: '4개 모듈이 당신에게 맞춰 열립니다',
       card3Desc: 'V-File · CODETALK · DIVE · Community',
       startButton: '시작하기',
-      disclaimer: 'VEILRUM은 자기탐색 도구이며, 전문 심리상담 또는 치료를 대체하지 않습니다.',
+      disclaimer: 'VEILOR은 자기탐색 도구이며, 전문 심리상담 또는 치료를 대체하지 않습니다.',
     },
     cq: {
       relationshipGoal: '지금 관계에서 가장 원하는 것은?',
@@ -211,7 +211,7 @@ export const ko: LocaleResource = {
       lateNight: { title: '한밤중이에요.', placeholder: '지금 무슨 생각을 하고 있어요?' },
     },
     chat: {
-      amberIntro: '저는 엠버예요. AI 감정 수용 파트너이고, 전문 상담사는 아니에요. 판단 없이 들을게요.',
+      amberIntro: '저는 엠버예요. AI 대화 파트너이고, 전문 심리상담사가 아니에요. 판단 없이 들을게요.',
       amberListening: '엠버가 듣고 있어요...',
       finishSuggestion: '{count}번의 이야기를 나눴어요. 더 이야기하고 싶으면 계속해도 돼요. 마무리하고 싶으면 아래 버튼을 눌러주세요.',
       finishButton: '대화 마무리하기',
@@ -532,7 +532,7 @@ export const ko: LocaleResource = {
       emergency: '응급 119',
     },
     disclaimerFull:
-      'VEILRUM은 자기탐색 도구이며, 전문 심리상담 또는 치료를 대체하지 않습니다. 위급한 상황에서는 반드시 전문가에게 연락해 주세요.',
+      'VEILOR은 자기탐색 도구이며, 전문 심리상담 또는 치료를 대체하지 않습니다. 위급한 상황에서는 반드시 전문가에게 연락해 주세요.',
   },
 
   // ─── errors ────────────────────────────────────────────────

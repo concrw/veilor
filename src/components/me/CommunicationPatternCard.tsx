@@ -1,7 +1,7 @@
 // #26 소통 패턴 분석 — CodeTalk 기반 소통 스타일 분석
 import { useAuth } from '@/context/AuthContext';
 import { useQuery } from '@tanstack/react-query';
-import { veilrumDb } from '@/integrations/supabase/client';
+import { veilorDb } from '@/integrations/supabase/client';
 
 export default function CommunicationPatternCard() {
   const { user } = useAuth();
@@ -9,7 +9,7 @@ export default function CommunicationPatternCard() {
   const { data } = useQuery({
     queryKey: ['communication-pattern', user?.id],
     queryFn: async () => {
-      const { data: entries } = await veilrumDb
+      const { data: entries } = await veilorDb
         .from('codetalk_entries')
         .select('keyword, definition, imprinting_moment, root_cause, created_at')
         .eq('user_id', user!.id)

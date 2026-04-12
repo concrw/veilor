@@ -23,6 +23,32 @@ import SeedCard from '@/components/me/SeedCard';
 import PeopleSection from '@/components/me/PeopleSection';
 import WeeklyReportSection from '@/components/me/WeeklyReportSection';
 import DiagnosisSection from '@/components/me/DiagnosisSection';
+import RelationshipTimeline from '@/components/me/RelationshipTimeline';
+import PersonaFragmentsSection from '@/components/me/PersonaFragmentsSection';
+
+/* ── Pure helpers (outside component) ── */
+function getSeedTitle(pct: number): string {
+  if (pct < 40) return '씨앗을 심었어요';
+  if (pct < 65) return '패턴이 보이기 시작했어요';
+  if (pct < 85) return '뿌리를 내리는 중';
+  return '꽃이 피어나고 있어요';
+}
+
+function getStageStatus(pct: number, i: number, stages: { threshold: number }[]): 'done' | 'active' | 'none' {
+  const next = stages[i + 1]?.threshold ?? 101;
+  if (pct >= next) return 'done';
+  if (pct >= stages[i].threshold) return 'active';
+  return 'none';
+}
+
+function calcPrecision(zoneState: Record<string, boolean>, stats: { sessionCount: number; signalCount: number; patternAreaCount: number } | null | undefined): number {
+  const zoneOn = Object.values(zoneState).filter(Boolean).length;
+  const zonePct = zoneOn / TOTAL_ZONES;
+  const sessionScore = Math.min((stats?.sessionCount ?? 0) / 20, 1);
+  const signalScore = Math.min((stats?.signalCount ?? 0) / 50, 1);
+  const patternScore = Math.min((stats?.patternAreaCount ?? 0) / 5, 1);
+  return Math.min(Math.round(zonePct * 40 + sessionScore * 25 + signalScore * 20 + patternScore * 15), 100);
+}
 
 /* ── Extracted static styles ── */
 const PERSONA_TAG_STYLE = { fontSize: 9, padding: '2px 7px', borderRadius: 99, border: `1px solid ${C.border}`, color: C.text4 } as const;
@@ -91,30 +117,13 @@ export default function MePage() {
   const [dmToast, setDmToast] = useState('');
   const [shareToast, setShareToast] = useState(false);
 
-  const calcPct = useCallback(() => {
-    // 정밀도% = Zone 토글(40%) + 실제 사용 데이터(60%)
-    const zoneOn = Object.values(zoneState).filter(Boolean).length;
-    const zonePct = zoneOn / TOTAL_ZONES; // 0~1
-
-    const stats = meData?.stats;
-    const sessionScore = Math.min((stats?.sessionCount ?? 0) / 20, 1);
-    const signalScore = Math.min((stats?.signalCount ?? 0) / 50, 1);
-    const patternScore = Math.min((stats?.patternAreaCount ?? 0) / 5, 1);
-
-    const raw = zonePct * 40 + sessionScore * 25 + signalScore * 20 + patternScore * 15;
-    return Math.min(Math.round(raw), 100);
-  }, [zoneState, meData?.stats]);
-
-  const pct = calcPct();
+  const pct = useCallback(
+    () => calcPrecision(zoneState, meData?.stats),
+    [zoneState, meData?.stats],
+  )();
   const closedCount = Object.values(zoneState).filter(v => !v).length;
-  const seedTitle = pct < 40 ? '씨앗을 심었어요' : pct < 65 ? '패턴이 보이기 시작했어요' : pct < 85 ? '뿌리를 내리는 중' : '꽃이 피어나고 있어요';
-
-  const stageStatus = (i: number) => {
-    const next = SEED_STAGES[i + 1]?.threshold ?? 101;
-    if (pct >= next) return 'done' as const;
-    if (pct >= SEED_STAGES[i].threshold) return 'active' as const;
-    return 'none' as const;
-  };
+  const seedTitle = getSeedTitle(pct);
+  const stageStatus = (i: number) => getStageStatus(pct, i, SEED_STAGES);
 
   const sendDM = (name: string) => {
     setDmToast(`${name}에게 대화 신청을 보냈어요 💬`);
@@ -191,6 +200,9 @@ export default function MePage() {
           )}
 
           {user && <PersonaMap userId={user.id} />}
+
+          {/* 발견된 나 — 모순 감지 엔진 결과 */}
+          <PersonaFragmentsSection />
 
           {/* Multi-persona */}
           <div className="vr-fade-in" style={{ background: C.bg2, border: `1px solid ${C.border}`, borderRadius: 14, padding: '15px 17px' }}>
@@ -270,6 +282,8 @@ export default function MePage() {
               </div>
             );
           })()}
+
+          <RelationshipTimeline />
 
           <WeeklyReportSection weeklyReport={meData.weeklyReport} weeklyReportLoading={meData.weeklyReportLoading} />
 

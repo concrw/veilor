@@ -7,7 +7,7 @@ import {
 } from 'recharts';
 import { C } from '@/lib/colors';
 import { supabase } from '@/integrations/supabase/client';
-import { MonthlyReportData, PsychTrendPoint } from '@/types/persona';
+import { MonthlyReportData, PsychTrendPoint, OutcomeMetrics } from '@/types/persona';
 
 const MonthlyReportCard = memo(function MonthlyReportCard({ userId, onTriggerUpgrade }: { userId: string; onTriggerUpgrade?: () => boolean }) {
   const [expanded, setExpanded] = useState(false);
@@ -37,6 +37,7 @@ const MonthlyReportCard = memo(function MonthlyReportCard({ userId, onTriggerUpg
   const chartData = data?.chart_data;
   const topPatterns = data?.top_patterns ?? [];
   const psychTrend = data?.psych_trend ?? [];
+  const outcome = data?.outcome_metrics;
 
   // 4축 중 가장 큰 변화가 있는 축 찾기
   const psychHighlight = (() => {
@@ -205,6 +206,37 @@ const MonthlyReportCard = memo(function MonthlyReportCard({ userId, onTriggerUpg
                 <p style={{ fontSize: 11, fontWeight: 300, color: C.text4, lineHeight: 1.5 }}>
                   아직 충분한 데이터가 없어요. Vent, Dig, Codetalk 탭을 사용하면 패턴이 나타나기 시작해요.
                 </p>
+              )}
+
+              {/* ── 아웃컴 측정: V-File 진단 변화 ── */}
+              {outcome && outcome.sessionCount >= 2 && outcome.axisChange && (
+                <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${C.border2}` }}>
+                  <p style={{ fontSize: 9, fontWeight: 400, letterSpacing: '.07em', textTransform: 'uppercase', color: C.text4, marginBottom: 8 }}>
+                    성장 측정 ({outcome.sessionCount}회 진단)
+                  </p>
+                  {outcome.maskChanged && outcome.firstMask && outcome.latestMask && (
+                    <p style={{ fontSize: 11, fontWeight: 300, color: C.text3, marginBottom: 8, lineHeight: 1.4 }}>
+                      <span style={{ color: C.text5 }}>{outcome.firstMask}</span>
+                      <span style={{ margin: '0 6px', color: C.text5 }}>→</span>
+                      <span style={{ color: C.amberGold, fontWeight: 500 }}>{outcome.latestMask}</span>
+                    </p>
+                  )}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                    {['A', 'B', 'C', 'D'].map(k => {
+                      const AXIS_KO: Record<string, string> = { A: '애착', B: '소통', C: '욕구표현', D: '역할' };
+                      const delta = outcome.axisChange![k] ?? 0;
+                      const color = delta > 0 ? C.amberGold : delta < 0 ? '#C08070' : C.text5;
+                      return (
+                        <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 6, background: C.bg, border: `1px solid ${C.border}`, borderRadius: 8, padding: '6px 10px' }}>
+                          <span style={{ fontSize: 10, color: C.text4, flex: 1 }}>{AXIS_KO[k]}</span>
+                          <span style={{ fontSize: 12, fontWeight: 500, color, fontFamily: "'Cormorant Garamond', serif" }}>
+                            {delta > 0 ? `+${delta}` : delta === 0 ? '±0' : delta}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               )}
             </div>
           )}

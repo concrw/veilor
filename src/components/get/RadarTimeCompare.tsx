@@ -1,7 +1,7 @@
 // #56 레이더 차트 시간 비교 + #60 페르소나 변화 추적
 import { useAuth } from '@/context/AuthContext';
 import { useQuery } from '@tanstack/react-query';
-import { veilrumDb } from '@/integrations/supabase/client';
+import { veilorDb } from '@/integrations/supabase/client';
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer, Legend } from 'recharts';
 
 const AXIS_LABELS: Record<string, string> = { A: '애착', B: '소통', C: '욕구표현', D: '역할' };
@@ -12,7 +12,7 @@ export default function RadarTimeCompare() {
   const { data: history } = useQuery({
     queryKey: ['vfile-history-radar', user?.id],
     queryFn: async () => {
-      const { data } = await veilrumDb
+      const { data } = await veilorDb
         .from('priper_sessions')
         .select('axis_scores, primary_mask, msk_code, completed_at')
         .eq('user_id', user!.id)

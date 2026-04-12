@@ -1,9 +1,9 @@
 // AxMercerTab — public story feed (Ax Mercer 3-condition context)
-import type { VeilrumCodetalkEntry, VeilrumCodetalkKeyword } from '@/integrations/supabase/veilrum-types';
+import type { VeilorCodetalkEntry, VeilorCodetalkKeyword } from '@/integrations/supabase/veilor-types';
 
 interface AxMercerTabProps {
-  keyword: VeilrumCodetalkKeyword | null | undefined;
-  publicFeed: Pick<VeilrumCodetalkEntry, 'id' | 'content' | 'created_at' | 'user_id'>[] | undefined;
+  keyword: VeilorCodetalkKeyword | null | undefined;
+  publicFeed: Pick<VeilorCodetalkEntry, 'id' | 'content' | 'created_at' | 'user_id'>[] | undefined;
 }
 
 export default function AxMercerTab({ keyword, publicFeed }: AxMercerTabProps) {
@@ -13,7 +13,7 @@ export default function AxMercerTab({ keyword, publicFeed }: AxMercerTabProps) {
         오늘 키워드 <span className="font-medium text-foreground">"{keyword?.keyword}"</span>에 대한 이야기들
       </p>
       {publicFeed && publicFeed.length > 0 ? (
-        publicFeed.map((item: Pick<VeilrumCodetalkEntry, 'id' | 'content' | 'created_at' | 'user_id'>) => (
+        publicFeed.map((item: Pick<VeilorCodetalkEntry, 'id' | 'content' | 'created_at' | 'user_id'>) => (
           <div key={item.id} className="bg-card border rounded-xl p-4 space-y-2">
             <p className="text-sm leading-relaxed">{item.content}</p>
             <p className="text-xs text-muted-foreground">

@@ -1,7 +1,7 @@
 // #28 패턴 이탈 감지 — 최근 감정/행동이 평소 패턴과 다를 때 알림
 import { useAuth } from '@/context/AuthContext';
 import { useQuery } from '@tanstack/react-query';
-import { veilrumDb } from '@/integrations/supabase/client';
+import { veilorDb } from '@/integrations/supabase/client';
 
 export default function PatternDeviationCard() {
   const { user } = useAuth();
@@ -14,13 +14,13 @@ export default function PatternDeviationCard() {
       const week = new Date(now.getTime() - 7 * 86400000).toISOString();
       const month = new Date(now.getTime() - 30 * 86400000).toISOString();
 
-      const { data: recent } = await veilrumDb
+      const { data: recent } = await veilorDb
         .from('dive_sessions')
         .select('emotion, emotional_stability')
         .eq('user_id', user!.id)
         .gte('created_at', week);
 
-      const { data: baseline } = await veilrumDb
+      const { data: baseline } = await veilorDb
         .from('dive_sessions')
         .select('emotion, emotional_stability')
         .eq('user_id', user!.id)

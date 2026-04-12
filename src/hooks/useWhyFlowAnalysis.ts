@@ -1,5 +1,5 @@
 // WhyFlow AI 분석 + M43 통합 + Prime Perspective 저장 (Step 7~10)
-import { veilrumDb, supabase } from '@/integrations/supabase/client';
+import { veilorDb, supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import type { WhySession, JobEntry, AnalysisResult } from '@/types/why';
 import type { WhyM43Analysis } from '@/hooks/useM43WhyIntegration';
@@ -94,7 +94,7 @@ export function useWhyFlowAnalysis(props: UseWhyFlowAnalysisProps) {
       await m43.runM43Analysis(session.id, user!.id, jobs);
 
       // 분석 결과 DB 저장
-      await veilrumDb
+      await veilorDb
         .from('why_sessions')
         .update({
           happy_patterns: localResult.happy_patterns,
@@ -111,7 +111,7 @@ export function useWhyFlowAnalysis(props: UseWhyFlowAnalysisProps) {
       console.error('analysis error:', e);
       const localResult = buildLocalAnalysis();
       setAnalysisResult(localResult);
-      await veilrumDb
+      await veilorDb
         .from('why_sessions')
         .update({ happy_patterns: localResult.happy_patterns, pain_patterns: localResult.pain_patterns, current_step: 7, updated_at: new Date().toISOString() })
         .eq('id', session!.id);
@@ -144,7 +144,7 @@ export function useWhyFlowAnalysis(props: UseWhyFlowAnalysisProps) {
     }
     setPpSaving(true);
     try {
-      await veilrumDb
+      await veilorDb
         .from('why_sessions')
         .update({
           prime_perspective: ppText.trim(),
@@ -154,7 +154,7 @@ export function useWhyFlowAnalysis(props: UseWhyFlowAnalysisProps) {
         })
         .eq('id', session!.id);
 
-      await veilrumDb.from('prime_perspectives').upsert({
+      await veilorDb.from('prime_perspectives').upsert({
         user_id: user!.id,
         perspective_text: ppText.trim(),
         m43_domain_codes: m43.analysis?.domainMatches?.slice(0, 5).map((d: { domain: { code: string } }) => d.domain.code) ?? [],

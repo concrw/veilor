@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { C } from '@/lib/colors';
 
-describe('Veilrum Color Tokens', () => {
+describe('Veilor Color Tokens', () => {
   it('exports all required color keys', () => {
     const requiredKeys = [
       'bg', 'bg2', 'bg3',

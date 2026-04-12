@@ -9,6 +9,7 @@ export const BOUNDARY_CATEGORIES = [
   { key: 'physical', label: '물리적 경계', placeholder: '예: 허락 없이 제 물건을 사용하지 않았으면 해요' },
   { key: 'time', label: '시간 경계', placeholder: '예: 밤 11시 이후에는 개인 시간을 보장받고 싶어요' },
   { key: 'digital', label: '디지털 경계', placeholder: '예: 제 핸드폰을 확인하지 않았으면 해요' },
+  { key: 'sexual', label: '성적 경계', placeholder: '예: 원하지 않을 때 "아니오"라고 말할 수 있어야 해요. 내가 편안한 속도와 방식이 있어요.' },
 ] as const;
 
 export type BoundaryCategory = typeof BOUNDARY_CATEGORIES[number]['key'];
@@ -209,29 +210,58 @@ export default function BoundaryTab({
           </p>
         </div>
 
-        {BOUNDARY_CATEGORIES.map(({ key, label, placeholder }) => (
-          <div key={key} className="bg-card border border-amber-500/10 rounded-2xl p-4 space-y-3">
-            <p className="text-sm font-medium text-amber-100">{label}</p>
-            <Textarea
-              placeholder={placeholder}
-              maxLength={300}
-              value={boundaryTexts[key]}
-              onChange={e => setBoundaryTexts(prev => ({ ...prev, [key]: e.target.value }))}
-              className="h-20 resize-none text-sm border-amber-500/20 focus:border-amber-500/40"
-            />
-            <div className="flex justify-end">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => saveBoundaryMutation.mutate(key)}
-                disabled={saveBoundaryMutation.isPending}
-                className="border-amber-500/30 text-amber-200 hover:bg-amber-500/10 hover:text-amber-100"
-              >
-                저장
-              </Button>
+        {BOUNDARY_CATEGORIES.map(({ key, label, placeholder }) => {
+          const isSexual = key === 'sexual';
+          return (
+            <div key={key}
+              className="bg-card rounded-2xl p-4 space-y-3"
+              style={{
+                border: isSexual ? '1px solid rgba(236,72,153,0.25)' : '1px solid rgba(245,158,11,0.1)',
+              }}
+            >
+              <div className="flex items-center gap-2">
+                <p className={`text-sm font-medium ${isSexual ? '' : 'text-amber-100'}`}
+                  style={{ color: isSexual ? '#ec4899' : undefined }}>
+                  {isSexual ? '🌸 ' : ''}{label}
+                </p>
+                {isSexual && (
+                  <span className="text-[10px] px-2 py-0.5 rounded-full"
+                    style={{ background: 'rgba(236,72,153,0.08)', color: '#ec4899', border: '1px solid rgba(236,72,153,0.2)' }}>
+                    나만 볼 수 있어요
+                  </span>
+                )}
+              </div>
+              {isSexual && (
+                <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(236,72,153,0.6)' }}>
+                  성적 경계는 파트너에게 전달해야 할 가장 중요한 경계 중 하나예요. 원하지 않는 것, 필요한 조건, 속도에 대해 써보세요.
+                </p>
+              )}
+              <Textarea
+                placeholder={placeholder}
+                maxLength={300}
+                value={boundaryTexts[key]}
+                onChange={e => setBoundaryTexts(prev => ({ ...prev, [key]: e.target.value }))}
+                className="h-20 resize-none text-sm"
+                style={{
+                  borderColor: isSexual ? 'rgba(236,72,153,0.2)' : undefined,
+                }}
+              />
+              <div className="flex justify-end">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => saveBoundaryMutation.mutate(key as BoundaryCategory)}
+                  disabled={saveBoundaryMutation.isPending}
+                  className={isSexual
+                    ? 'border-pink-500/30 text-pink-300 hover:bg-pink-500/10 hover:text-pink-200'
+                    : 'border-amber-500/30 text-amber-200 hover:bg-amber-500/10 hover:text-amber-100'}
+                >
+                  저장
+                </Button>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </>
   );

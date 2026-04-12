@@ -6,7 +6,7 @@ import type { VFileContext } from '@/lib/vfileAlgorithm';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 
-const STORAGE_KEY = 'veilrum:priper-progress';
+const STORAGE_KEY = 'veilor:priper-progress';
 
 export default function PriperQuestions() {
   const navigate = useNavigate();

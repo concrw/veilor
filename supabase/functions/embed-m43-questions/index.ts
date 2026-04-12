@@ -1,6 +1,6 @@
 // embed-m43-questions
 // 역할: 임베딩 없는 m43_domain_questions를 배치로 처리
-//       OpenAI text-embedding-3-small → veilrum.upsert_question_embedding() RPC
+//       OpenAI text-embedding-3-small → veilor.upsert_question_embedding() RPC
 // 호출 방법:
 //   1. Supabase Cron (pg_cron) — 매일 새벽 3시
 //   2. Admin 수동 호출 (Authorization: Bearer SERVICE_ROLE_KEY)
@@ -48,7 +48,7 @@ serve(async (req) => {
 
     // ── 1. 임베딩 없는 질문 목록 조회 ──────────────────────────
     const { data: questions, error: fetchErr } = await supabase
-      .schema("veilrum")
+      .schema("veilor")
       .rpc("get_questions_without_embedding", { p_limit: limit });
 
     if (fetchErr) throw fetchErr;
@@ -95,7 +95,7 @@ serve(async (req) => {
       // ── 3. 각 질문에 임베딩 저장 ────────────────────────────
       for (let j = 0; j < batch.length; j++) {
         const { error: upsertErr } = await supabase
-          .schema("veilrum")
+          .schema("veilor")
           .rpc("upsert_question_embedding", {
             p_question_id: batch[j].id,
             p_embedding:   embeddings[j],

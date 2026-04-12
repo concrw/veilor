@@ -3,7 +3,7 @@ import { C } from '@/lib/colors';
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
 import { useSpeechSynthesis } from '@/hooks/useSpeechSynthesis';
 import { useAuth } from '@/context/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { invokeHeldChat } from '@/lib/heldChatClient';
 
 const FOCUS_TRAP_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
@@ -81,19 +81,16 @@ export default function AILeadOverlay({ open, onClose, aiName = '엠버', curren
     setStatusText('생각하고 있어요...');
 
     try {
-      const { data, error } = await supabase.functions.invoke('held-chat', {
-        body: {
-          text: text.trim(),
-          emotion: '',
-          mask: primaryMask ?? '',
-          axisScores: axisScores ?? undefined,
-          history: [...history, userMsg].slice(-6),
-          tab: currentTab ?? 'vent',
-          userId: user?.id,
-        },
+      const data = await invokeHeldChat({
+        text: text.trim(),
+        emotion: '',
+        mask: primaryMask ?? '',
+        axisScores: axisScores ?? undefined,
+        history: [...history, userMsg].slice(-6),
+        tab: currentTab ?? 'vent',
       });
 
-      const aiText = error ? '지금은 연결이 어려워요. 잠시 후 다시 시도해주세요.' : (data?.reply ?? '...');
+      const aiText = data?.response ?? '...';
       const aiMsg: ChatMessage = { role: 'ai', text: aiText };
       setHistory(prev => [...prev, aiMsg]);
       setStatusText('');

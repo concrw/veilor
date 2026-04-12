@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { C } from '@/lib/colors';
-import { supabase, veilrumDb } from '@/integrations/supabase/client';
+import { supabase, veilorDb } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import ZoneToggle from './ZoneToggle';
 import AppCustomization from '@/components/settings/AppCustomization';
@@ -57,7 +57,7 @@ function SettingsSheet({
   // 알림 + AI 설정 DB 로드
   useEffect(() => {
     if (!user) return;
-    veilrumDb.from('user_profiles').select('notification_amber, notification_report, ai_settings').eq('user_id', user.id).single()
+    veilorDb.from('user_profiles').select('notification_amber, notification_report, ai_settings').eq('user_id', user.id).single()
       .then(({ data }) => {
         if (data) {
           if (data.notification_amber !== undefined) setNotifAmber(data.notification_amber);
@@ -73,7 +73,7 @@ function SettingsSheet({
     setAiSettings(next);
     onAiSettingsChange?.(next);
     if (user) {
-      veilrumDb.from('user_profiles').update({ ai_settings: next, updated_at: new Date().toISOString() }).eq('user_id', user.id);
+      veilorDb.from('user_profiles').update({ ai_settings: next, updated_at: new Date().toISOString() }).eq('user_id', user.id);
     }
   };
 
@@ -82,7 +82,7 @@ function SettingsSheet({
     setter((prev: boolean) => {
       const next = !prev;
       if (user) {
-        veilrumDb.from('user_profiles').update({ [key]: next, updated_at: new Date().toISOString() }).eq('user_id', user.id);
+        veilorDb.from('user_profiles').update({ [key]: next, updated_at: new Date().toISOString() }).eq('user_id', user.id);
       }
       return next;
     });
@@ -277,7 +277,7 @@ function SettingsSheet({
               <span style={{ fontSize: 11, color: C.text5 }}>›</span>
             </div>
           ))}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 13px', background: C.bg2, border: `1px solid #C0807033`, borderRadius: 11, cursor: 'pointer' }}>
+          <div onClick={signOut} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 13px', background: C.bg2, border: `1px solid #C0807033`, borderRadius: 11, cursor: 'pointer' }}>
             <div style={{ width: 30, height: 30, borderRadius: 8, background: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M10 11l3-3-3-3M13 8H6M6 3H3.5A1.5 1.5 0 0 0 2 4.5v7A1.5 1.5 0 0 0 3.5 13H6" stroke="#C08070" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
             </div>

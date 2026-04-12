@@ -1,4 +1,4 @@
-// i18n type definitions for VEILRUM
+// i18n type definitions for VEILOR
 
 export type SupportedLanguage = 'ko' | 'en';
 

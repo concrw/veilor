@@ -35,7 +35,7 @@ serve(async (req) => {
 
       // 1) Vent count: tab_conversations where tab='vent'
       const { count: ventCount } = await supabase
-        .schema('veilrum')
+        .schema('veilor')
         .from("tab_conversations")
         .select("id", { count: "exact", head: true })
         .eq("user_id", userId)
@@ -45,7 +45,7 @@ serve(async (req) => {
 
       // 2) Dig count: tab_conversations where tab='dig'
       const { count: digCount } = await supabase
-        .schema('veilrum')
+        .schema('veilor')
         .from("tab_conversations")
         .select("id", { count: "exact", head: true })
         .eq("user_id", userId)
@@ -55,7 +55,7 @@ serve(async (req) => {
 
       // 3) Codetalk: distinct entry_date count
       const { data: codetalkData } = await supabase
-        .schema('veilrum')
+        .schema('veilor')
         .from("codetalk_entries")
         .select("entry_date")
         .eq("user_id", userId)
@@ -66,7 +66,7 @@ serve(async (req) => {
 
       // 4) Top keywords from user_signals
       const { data: signalData } = await supabase
-        .schema('veilrum')
+        .schema('veilor')
         .from("user_signals")
         .select("keyword, emotion")
         .eq("user_id", userId)
@@ -122,7 +122,7 @@ serve(async (req) => {
     // Psych map snapshots: 최근 3개월 4축 추이
     const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 2, 1).toISOString();
     const { data: psychSnapshots } = await supabase
-      .schema('veilrum')
+      .schema('veilor')
       .from("user_psych_map_snapshots")
       .select("snapshot_date, attachment_security_score, communication_style_score, affect_regulation_score, boundary_power_score")
       .eq("user_id", userId)
@@ -154,6 +154,57 @@ serve(async (req) => {
       return `${d.getMonth() + 1}월`;
     };
 
+    // ── 아웃컴 측정: priper_sessions 축 점수 변화 (첫 진단 → 최신 진단) ──
+    const { data: allSessions } = await supabase
+      .schema('veilor')
+      .from('priper_sessions')
+      .select('axis_scores, primary_mask, completed_at')
+      .eq('user_id', userId)
+      .eq('is_completed', true)
+      .order('completed_at', { ascending: true });
+
+    let outcomeMetrics: {
+      firstDate: string | null;
+      latestDate: string | null;
+      sessionCount: number;
+      axisChange: Record<string, number> | null;
+      maskChanged: boolean;
+      firstMask: string | null;
+      latestMask: string | null;
+    } = {
+      firstDate: null, latestDate: null, sessionCount: 0,
+      axisChange: null, maskChanged: false, firstMask: null, latestMask: null,
+    };
+
+    if (allSessions && allSessions.length >= 2) {
+      const first = allSessions[0];
+      const latest = allSessions[allSessions.length - 1];
+      const firstScores = first.axis_scores as Record<string, number> | null;
+      const latestScores = latest.axis_scores as Record<string, number> | null;
+
+      let axisChange: Record<string, number> | null = null;
+      if (firstScores && latestScores) {
+        axisChange = {};
+        for (const k of ['A', 'B', 'C', 'D']) {
+          axisChange[k] = (latestScores[k] ?? 50) - (firstScores[k] ?? 50);
+        }
+      }
+
+      outcomeMetrics = {
+        firstDate: first.completed_at,
+        latestDate: latest.completed_at,
+        sessionCount: allSessions.length,
+        axisChange,
+        maskChanged: first.primary_mask !== latest.primary_mask,
+        firstMask: first.primary_mask,
+        latestMask: latest.primary_mask,
+      };
+    } else if (allSessions && allSessions.length === 1) {
+      outcomeMetrics.sessionCount = 1;
+      outcomeMetrics.latestDate = allSessions[0].completed_at;
+      outcomeMetrics.latestMask = allSessions[0].primary_mask;
+    }
+
     const response = {
       monthly_summary: {
         vent_count: current.vent_count,
@@ -170,6 +221,7 @@ serve(async (req) => {
         { month: monthLabel(0),  vent: current.vent_count, dig: current.dig_count, codetalk: current.codetalk_days },
       ],
       psych_trend: psychTrend,
+      outcome_metrics: outcomeMetrics,
     };
 
     return new Response(JSON.stringify(response), {

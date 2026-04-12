@@ -6,7 +6,7 @@
 // T5: 월간 리포트 상세 보기
 
 import { useState, useCallback } from 'react';
-import { useVeilrumSubscription } from '@/hooks/useVeilrumSubscription';
+import { useVeilorSubscription } from '@/hooks/useVeilorSubscription';
 import type { TriggerType } from '@/components/premium/UpgradeModal';
 
 // 무료 한도 상수 — 서버에서도 동일 값으로 검증해야 함
@@ -15,7 +15,7 @@ export const FREE_LIMITS = {
 } as const;
 
 export function usePremiumTrigger() {
-  const { isPro, isLoading } = useVeilrumSubscription();
+  const { isPro, isLoading } = useVeilorSubscription();
   const [modalOpen, setModalOpen] = useState(false);
   const [activeTrigger, setActiveTrigger] = useState<TriggerType>('codetalk_ai_limit');
 

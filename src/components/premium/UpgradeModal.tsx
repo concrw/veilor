@@ -2,7 +2,7 @@
 // 각 트리거 지점에서 호출되는 바텀시트 형태의 업그레이드 안내 UI
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, veilorDb } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { C } from '@/lib/colors';
 
@@ -11,7 +11,10 @@ export type TriggerType =
   | 'multi_persona_analysis'  // T2: 멀티페르소나 분석 요청
   | 'ikigai_design'           // T3: Ikigai 설계 접근
   | 'brand_identity'          // T4: 브랜드 정체성 설계 접근
-  | 'monthly_report_detail';  // T5: 월간 리포트 상세 보기
+  | 'monthly_report_detail'   // T5: 월간 리포트 상세 보기
+  | 'priper_result'           // T6: PRIPER 결과 페이지 (핵심 전환 모멘트)
+  | 'onboarding_complete'     // T7: 온보딩 완료 직후
+  | 'partner_analysis';       // T8: 파트너 교차 분석
 
 interface TriggerConfig {
   icon: string;
@@ -23,6 +26,30 @@ interface TriggerConfig {
 }
 
 const TRIGGER_CONFIG: Record<TriggerType, TriggerConfig> = {
+  priper_result: {
+    icon: '🔓',
+    title: '패턴의 전체를 보세요',
+    description: '지금 보신 건 빙산의 일각이에요. 숨겨진 패턴과 변화 가능성이 더 있습니다.',
+    benefit: 'Premium에서는 AI가 당신의 관계 패턴을 심층 분석하고, 실제 변화를 위한 맞춤 인사이트를 매주 제공해요.',
+    ctaText: 'Premium으로 전체 분석 보기',
+    accentColor: C.amberGold,
+  },
+  onboarding_complete: {
+    icon: '✨',
+    title: '베일러와 함께 더 깊이 탐색하세요',
+    description: 'V-File 완료를 축하해요. 이제 진짜 여정이 시작됩니다.',
+    benefit: 'Premium에서는 AI 상담, 파트너 교차 분석, 관계 변화 타임라인을 무제한으로 이용할 수 있어요.',
+    ctaText: 'Premium 시작하기',
+    accentColor: C.amber,
+  },
+  partner_analysis: {
+    icon: '💫',
+    title: '우리의 패턴 — 전체 분석',
+    description: '파트너와의 관계 역학을 표면적 유형 비교 너머로 분석해요.',
+    benefit: 'Premium에서는 두 사람의 충돌 지점, 성장 방향, 관계 변화 가능성을 AI가 깊이 분석해 드려요.',
+    ctaText: 'Premium으로 파트너 분석 보기',
+    accentColor: C.frost,
+  },
   codetalk_ai_limit: {
     icon: '🧠',
     title: 'AI 조언이 더 필요하신가요?',
@@ -80,7 +107,11 @@ export default function UpgradeModal({ open, onClose, trigger }: UpgradeModalPro
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [interestDone, setInterestDone] = useState(false);
   const config = TRIGGER_CONFIG[trigger];
+
+  // Stripe Price ID 미설정 여부로 폴백 모드 판단
+  const isStripeReady = !!STRIPE_PRICE_ID;
 
   // Escape 키로 닫기
   useEffect(() => {
@@ -90,33 +121,58 @@ export default function UpgradeModal({ open, onClose, trigger }: UpgradeModalPro
     return () => window.removeEventListener('keydown', handleEscape);
   }, [open, onClose]);
 
+  // 페이월 이벤트 로깅 (fire-and-forget)
+  const logEvent = (action: string) => {
+    if (!user) return;
+    veilorDb.from('paywall_events').insert({
+      user_id: user.id,
+      trigger_type: trigger,
+      action: action as 'shown' | 'dismissed' | 'interest_registered' | 'checkout_started' | 'converted',
+    }).then(() => {});
+  };
+
+  // Stripe 미연동 시 관심 등록 폴백
+  const handleInterestRegister = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      await veilorDb.from('interest_registrations').insert({
+        user_id: user?.id ?? null,
+        email: user?.email ?? null,
+        tier: 'premium',
+        trigger_type: trigger,
+      });
+      logEvent('interest_registered');
+      setInterestDone(true);
+    } catch {
+      setError('잠시 후 다시 시도해 주세요.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleUpgrade = async () => {
     if (!user) return;
     setLoading(true);
     setError(null);
 
+    // Stripe 미연동 — 관심 등록 폴백
+    if (!isStripeReady) {
+      await handleInterestRegister();
+      return;
+    }
+
     try {
       const { data, error: fnError } = await supabase.functions.invoke('create-checkout-session', {
-        body: {
-          priceId: STRIPE_PRICE_ID,
-          tier: PRO_TIER,
-        },
+        body: { priceId: STRIPE_PRICE_ID, tier: PRO_TIER },
       });
 
       if (fnError) throw fnError;
-
-      // 트리거 이벤트 로깅 (분석용)
-      await supabase.from('premium_trigger_events').insert({
-        user_id: user.id,
-        trigger_type: trigger,
-        action: 'checkout_initiated',
-        created_at: new Date().toISOString(),
-      }).then(() => {});  // fire-and-forget
+      logEvent('checkout_started');
 
       if (data?.url) {
         window.location.href = data.url;
       } else if (data?.sessionId) {
-        // Stripe.js redirect fallback
         window.location.href = `https://checkout.stripe.com/pay/${data.sessionId}`;
       }
     } catch (err: unknown) {
@@ -128,15 +184,7 @@ export default function UpgradeModal({ open, onClose, trigger }: UpgradeModalPro
   };
 
   const handleDismiss = async () => {
-    // 트리거 노출 이벤트 로깅 (분석용, fire-and-forget)
-    if (user) {
-      supabase.from('premium_trigger_events').insert({
-        user_id: user.id,
-        trigger_type: trigger,
-        action: 'dismissed',
-        created_at: new Date().toISOString(),
-      }).then(() => {});
-    }
+    logEvent('dismissed');
     onClose();
   };
 
@@ -253,28 +301,45 @@ export default function UpgradeModal({ open, onClose, trigger }: UpgradeModalPro
             </p>
           )}
 
-          {/* CTA Button */}
-          <button
-            onClick={handleUpgrade}
-            disabled={loading}
-            style={{
-              width: '100%',
-              padding: '14px 0',
-              borderRadius: 12,
-              border: 'none',
-              background: loading
-                ? `${C.amberGold}66`
-                : `linear-gradient(135deg, ${C.amberGold}, ${C.amber})`,
-              fontFamily: "'DM Sans', sans-serif",
-              fontSize: 14,
-              fontWeight: 500,
-              color: C.bg,
-              cursor: loading ? 'default' : 'pointer',
-              transition: 'opacity .2s',
-            }}
-          >
-            {loading ? '처리 중...' : config.ctaText}
-          </button>
+          {/* 관심 등록 완료 상태 */}
+          {interestDone ? (
+            <div style={{
+              background: `${C.amberGold}10`,
+              border: `1px solid ${C.amberGold}33`,
+              borderRadius: 12, padding: '16px',
+              textAlign: 'center',
+            }}>
+              <p style={{ fontSize: 14, color: C.amberGold, fontWeight: 500, marginBottom: 4 }}>
+                관심 등록 완료
+              </p>
+              <p style={{ fontSize: 12, color: C.text2, lineHeight: 1.6 }}>
+                Premium 출시 시 가장 먼저 알려드릴게요.
+              </p>
+            </div>
+          ) : (
+            /* CTA Button */
+            <button
+              onClick={handleUpgrade}
+              disabled={loading}
+              style={{
+                width: '100%',
+                padding: '14px 0',
+                borderRadius: 12,
+                border: 'none',
+                background: loading
+                  ? `${C.amberGold}66`
+                  : `linear-gradient(135deg, ${C.amberGold}, ${C.amber})`,
+                fontFamily: "'DM Sans', sans-serif",
+                fontSize: 14,
+                fontWeight: 500,
+                color: C.bg,
+                cursor: loading ? 'default' : 'pointer',
+                transition: 'opacity .2s',
+              }}
+            >
+              {loading ? '처리 중...' : isStripeReady ? config.ctaText : '출시 알림 받기'}
+            </button>
+          )}
 
           {/* Dismiss link */}
           <button

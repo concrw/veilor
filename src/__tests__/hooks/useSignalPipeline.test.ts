@@ -12,7 +12,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {},
-  veilrumDb: {
+  veilorDb: {
     rpc: mocks.rpc,
     from: mocks.from,
   },
@@ -46,14 +46,14 @@ describe('useSignalPipeline', () => {
         p_message: 'hello',
         p_turn_index: 0,
       });
-      expect(result).toEqual({ signalId: 'sig-1', crisisSeverity: 'none' });
+      expect(result).toMatchObject({ signalId: 'sig-1', crisisSeverity: 'none' });
     });
 
     it('returns defaults on RPC error', async () => {
       mocks.rpc.mockResolvedValue({ data: null, error: { message: 'rpc failed' } });
 
       const result = await saveVentMessage('user-1', 'sad', 'test', 1);
-      expect(result).toEqual({ signalId: null, crisisSeverity: 'none' });
+      expect(result).toMatchObject({ signalId: null, crisisSeverity: 'none' });
     });
 
     it('handles crisis severity', async () => {

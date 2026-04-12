@@ -1,4 +1,4 @@
-# Research / Notion archives
+# GD로 이관된 연구/문서 자료 (gdrive:VEILOR/연구_문서/)
 01_*/
 02_*/
 03_*/
@@ -8,9 +8,16 @@
 07_*/
 08_*/
 M43/
+VCGPT/
+briefing/
+html/
+docs/
+veilor_automation/
 app/
-*.md
-!README.md
+
+# GD로 이관된 빌드 아티팩트 (gdrive:VEILOR/빌드_아티팩트/)
+playwright-report/
+test-results/
 
 # Node
 node_modules/
@@ -35,6 +42,9 @@ lerna-debug.log*
 
 # OS
 .DS_Store
+
+# Claude Code
+.claude/
 
 # Editor
 .vscode/*

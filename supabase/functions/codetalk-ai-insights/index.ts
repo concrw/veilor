@@ -35,7 +35,7 @@ serve(async (req) => {
 
     // ── 3. 서버사이드 구독 검증 (핵심 보안 로직)
     const { data: profile } = await supabaseAdmin
-      .schema("veilrum")
+      .schema("veilor")
       .from("user_profiles")
       .select("subscription_tier, subscription_expires_at")
       .eq("user_id", authUser.id)
@@ -69,7 +69,7 @@ serve(async (req) => {
 
     // ── 4. 해당 entry 조회 (작성자 본인 것인지 확인)
     const { data: entry } = await supabaseAdmin
-      .schema("veilrum")
+      .schema("veilor")
       .from("codetalk_entries")
       .select("keyword, definition, created_at")
       .eq("id", entry_id)
@@ -85,7 +85,7 @@ serve(async (req) => {
 
     // ── 5. 과거 패턴 컨텍스트 로드
     const { data: pp } = await supabaseAdmin
-      .schema("veilrum")
+      .schema("veilor")
       .from("prime_perspectives")
       .select("held_signals, dig_signals, codetalk_signals")
       .eq("user_id", authUser.id)

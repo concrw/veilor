@@ -357,7 +357,7 @@ export const CrisisBanner = memo(function CrisisBanner({ severity, onDismiss }: 
           </button>
 
           <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', marginTop: 10, textAlign: 'center' }}>
-            VEILRUM은 자기탐색 도구이며, 전문 심리상담 또는 치료를 대체하지 않습니다.
+            VEILOR은 자기탐색 도구이며, 전문 심리상담 또는 치료를 대체하지 않습니다.
           </p>
         </>
       )}

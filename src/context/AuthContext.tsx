@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import type { AuthError, Session, User } from "@supabase/supabase-js";
-import { supabase, veilrumDb } from "@/integrations/supabase/client";
+import { supabase, veilorDb } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
 export type OnboardingStep = 'welcome' | 'cq' | 'priper' | 'completed';
@@ -48,7 +48,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [personaContextsCompleted, setPersonaContextsCompleted] = useState<string[]>([]);
 
   const syncOnboarding = async (userId: string) => {
-    const { data, error } = await veilrumDb
+    const { data, error } = await veilorDb
       .from('user_profiles')
       .select('onboarding_step, priper_completed, primary_mask, secondary_mask, axis_scores, persona_contexts_completed')
       .eq('user_id', userId)
@@ -99,20 +99,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setLoading(false);
     });
 
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) await syncOnboarding(session.user.id);
-      setLoading(false);
-    });
-
     return () => subscription.unsubscribe();
   }, []);
 
   const setOnboardingStep = async (step: OnboardingStep) => {
     setOnboardingStepState(step);
     if (!user) return;
-    await veilrumDb.from('user_profiles').upsert({
+    await veilorDb.from('user_profiles').upsert({
       user_id: user.id, onboarding_step: step, updated_at: new Date().toISOString(),
     }, { onConflict: 'user_id' });
   };
@@ -124,7 +117,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setAxisScores(scores);
     setOnboardingStepState('completed');
     if (!user) return;
-    await veilrumDb.from('user_profiles').upsert({
+    await veilorDb.from('user_profiles').upsert({
       user_id: user.id,
       onboarding_step: 'completed',
       priper_completed: true,
@@ -146,7 +139,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const DEFAULT_GROUP_ID = '651bca71-b44c-425d-ba05-db0e48e21fe2'; // 소통 & 갈등 해결
     const groupId = MASK_COMMUNITY_MAP[mskCode ?? ''] ?? DEFAULT_GROUP_ID;
     // 이미 가입된 경우 무시 (upsert 대신 insert + onConflict ignore)
-    await veilrumDb.from('community_memberships').upsert({
+    await veilorDb.from('community_memberships').upsert({
       user_id: user.id,
       group_id: groupId,
       role: 'member',
@@ -168,7 +161,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (error) {
       toast({ title: '회원가입 실패', description: error.message, variant: 'destructive' });
     } else if (data.user) {
-      await veilrumDb.from('user_profiles').upsert({
+      await veilorDb.from('user_profiles').upsert({
         user_id: data.user.id,
         nickname: nickname ?? email.split('@')[0],
         onboarding_step: 'welcome',

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useMutation } from '@tanstack/react-query';
-import { supabase, veilrumDb } from '@/integrations/supabase/client';
+import { supabase, veilorDb } from '@/integrations/supabase/client';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 
@@ -105,7 +105,7 @@ export default function DivePage() {
         setSelectedResult(data[0]);
         // dive_sessions 저장 (3지표 초기값 포함)
         if (user) {
-          await veilrumDb.from('dive_sessions').insert({
+          await veilorDb.from('dive_sessions').insert({
             user_id: user.id,
             mode,
             messages: [
@@ -213,7 +213,7 @@ export default function DivePage() {
 
       <Button className="w-full h-11" onClick={handleSubmit}
         disabled={searchMutation.isPending || (!selectedEmotion && !selectedSituation && !userInput.trim())}>
-        {searchMutation.isPending ? '탐색 중...' : mode === 'F' ? 'AI 상담사와 대화 시작' : '관계 패턴 분석 시작'}
+        {searchMutation.isPending ? '탐색 중...' : mode === 'F' ? 'AI 대화 파트너와 시작' : '관계 패턴 분석 시작'}
       </Button>
     </div>
   );

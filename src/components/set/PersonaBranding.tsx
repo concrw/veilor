@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { MASK_PROFILES } from '@/lib/vfileAlgorithm';
-import { veilrumDb } from '@/integrations/supabase/client';
+import { veilorDb } from '@/integrations/supabase/client';
 
 export default function PersonaBranding() {
   const { user, primaryMask } = useAuth();
@@ -29,7 +29,7 @@ export default function PersonaBranding() {
 
   const handleSave = async () => {
     if (!user || !declaration.trim()) return;
-    await veilrumDb.from('user_profiles').update({
+    await veilorDb.from('user_profiles').update({
       declaration: declaration.trim(),
       updated_at: new Date().toISOString(),
     }).eq('user_id', user.id);

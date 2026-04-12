@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useQuery } from '@tanstack/react-query';
-import { veilrumDb } from '@/integrations/supabase/client';
+import { veilorDb } from '@/integrations/supabase/client';
 import { MASK_PROFILES } from '@/lib/vfileAlgorithm';
 
 // #24 동적 질문 카드 — V-File 결과 기반 매일 다른 질문
@@ -53,8 +53,8 @@ export default function Dashboard() {
     queryKey: ['user-stage', user?.id],
     queryFn: async () => {
       const [sessionRes, signalRes] = await Promise.all([
-        veilrumDb.from('dive_sessions').select('id', { count: 'exact', head: true }).eq('user_id', user!.id),
-        veilrumDb.from('user_signals').select('id', { count: 'exact', head: true }).eq('user_id', user!.id),
+        veilorDb.from('dive_sessions').select('id', { count: 'exact', head: true }).eq('user_id', user!.id),
+        veilorDb.from('user_signals').select('id', { count: 'exact', head: true }).eq('user_id', user!.id),
       ]);
       const sessions = sessionRes.count ?? 0;
       const signals = signalRes.count ?? 0;
@@ -82,10 +82,10 @@ export default function Dashboard() {
   const { data: todayKeyword } = useQuery({
     queryKey: ['today-keyword', user?.id],
     queryFn: async () => {
-      const { data: profile } = await veilrumDb.from('user_profiles')
+      const { data: profile } = await veilorDb.from('user_profiles')
         .select('codetalk_day').eq('id', user!.id).single();
       const day = profile?.codetalk_day ?? 1;
-      const { data } = await veilrumDb.from('codetalk_keywords')
+      const { data } = await veilorDb.from('codetalk_keywords')
         .select('*').eq('day_number', day).single();
       return data;
     },

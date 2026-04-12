@@ -1,5 +1,8 @@
 // #63 체험형 콘텐츠 3종 + #64 성적 소통 콘텐츠 Lv.4~5
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext';
+import { veilorDb } from '@/integrations/supabase/client';
 
 const EXPERIENCES = [
   {
@@ -39,10 +42,43 @@ const EXPERIENCES = [
   },
 ];
 
+// content_items DB UUID 매핑 (veilor.content_items에 등록된 UUID)
+const CONTENT_DB_IDS: Record<string, string> = {
+  mirror:     'a1b2c3d4-0001-0000-0000-000000000001',
+  letter:     'a1b2c3d4-0002-0000-0000-000000000002',
+  timeline:   'a1b2c3d4-0003-0000-0000-000000000003',
+  boundaries: 'a1b2c3d4-0004-0000-0000-000000000004',
+  desire:     'a1b2c3d4-0005-0000-0000-000000000005',
+};
+
+// 콘텐츠별 연결 탭 매핑
+const CONTENT_TO_TAB: Record<string, { tab: string; prompt: string }> = {
+  mirror: { tab: 'dig', prompt: '거울 실험을 해봤어요. 상대의 입장에서 나를 바라봤을 때 느낀 점을 이야기하고 싶어요.' },
+  letter: { tab: 'vent', prompt: '보내지 않을 편지 쓰기를 해봤어요. 써놓고 나니 마음이 복잡해요.' },
+  timeline: { tab: 'dig', prompt: '관계 타임라인을 그려봤어요. 반복되는 패턴이 보이는 것 같은데 같이 탐색해보고 싶어요.' },
+  boundaries: { tab: 'set', prompt: '경계 대화 연습을 해봤어요. 실제로 어떻게 말해야 할지 도움이 필요해요.' },
+  desire: { tab: 'vent', prompt: '욕구 표현 연습을 해봤어요. 내가 원하는 게 뭔지 생각해보니 느끼는 게 있어요.' },
+};
+
 export default function ExperientialContent() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [selected, setSelected] = useState<typeof EXPERIENCES[0] | null>(null);
   const [currentStep, setCurrentStep] = useState(0);
   const [levelFilter, setLevelFilter] = useState<number | null>(null);
+  const [completed, setCompleted] = useState<string[]>([]);
+
+  function recordCompletion(contentId: string) {
+    if (!user) return;
+    const dbId = CONTENT_DB_IDS[contentId];
+    if (!dbId) return;
+    veilorDb.from('content_consumption').insert({
+      user_id: user.id,
+      content_id: dbId,
+      consumed_at: new Date().toISOString(),
+      completion_rate: 1.0,
+    }).then(({ error }) => { if (error) console.error('[content_consumption]', error); });
+  }
 
   const filtered = levelFilter ? EXPERIENCES.filter(e => e.level <= levelFilter) : EXPERIENCES;
 
@@ -72,12 +108,44 @@ export default function ExperientialContent() {
         <div className="flex gap-2">
           <button onClick={() => setCurrentStep(s => Math.max(0, s - 1))} disabled={currentStep === 0}
             className="flex-1 text-xs py-2 border rounded-lg disabled:opacity-30">이전</button>
-          <button onClick={() => setCurrentStep(s => Math.min(selected.steps.length - 1, s + 1))}
-            disabled={currentStep === selected.steps.length - 1}
-            className="flex-1 text-xs py-2 bg-primary text-white rounded-lg disabled:opacity-30">
+          <button
+            onClick={() => {
+              if (currentStep === selected.steps.length - 1) {
+                setCompleted(prev => [...prev, selected.id]);
+                recordCompletion(selected.id);
+              } else {
+                setCurrentStep(s => Math.min(selected.steps.length - 1, s + 1));
+              }
+            }}
+            className="flex-1 text-xs py-2 bg-primary text-white rounded-lg">
             {currentStep === selected.steps.length - 1 ? '완료' : '다음'}
           </button>
         </div>
+
+        {/* #6 콘텐츠→대화 연결 CTA */}
+        {(currentStep === selected.steps.length - 1 || completed.includes(selected.id)) && (() => {
+          const link = CONTENT_TO_TAB[selected.id];
+          if (!link) return null;
+          const tabRoutes: Record<string, string> = {
+            vent: '/vent', dig: '/dig', set: '/set',
+          };
+          const route = tabRoutes[link.tab];
+          if (!route) return null;
+          return (
+            <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 space-y-2">
+              <p className="text-xs font-medium text-primary">이 경험, 대화로 이어갈까요?</p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                방금 한 체험에서 느낀 점을 AI와 함께 탐색해보세요.
+              </p>
+              <button
+                onClick={() => navigate(route, { state: { prefillText: link.prompt } })}
+                className="w-full h-8 rounded-lg bg-primary text-primary-foreground text-xs font-medium"
+              >
+                {link.tab === 'vent' ? 'Vent 탭에서 이야기하기' : link.tab === 'dig' ? 'Dig 탭에서 탐색하기' : 'Set 탭에서 실천 설계하기'}
+              </button>
+            </div>
+          );
+        })()}
       </div>
     );
   }

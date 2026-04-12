@@ -6,14 +6,25 @@ import { runDiagnosis } from '@/lib/vfileAlgorithm';
 import type { DiagnosisResult } from '@/lib/vfileAlgorithm';
 import { Button } from '@/components/ui/button';
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer } from 'recharts';
-import { supabase, veilrumDb } from '@/integrations/supabase/client';
+import { supabase, veilorDb } from '@/integrations/supabase/client';
+import UpgradeModal from '@/components/premium/UpgradeModal';
+import { useVeilorSubscription } from '@/hooks/useVeilorSubscription';
+
+interface M43Theory {
+  domain_name: string;
+  theory_title: string;
+  summary: string;
+}
 
 export default function PriperResult() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, completePriper } = useAuth();
+  const { isPro } = useVeilorSubscription();
   const [result, setResult] = useState<DiagnosisResult | null>(null);
   const [revealed, setRevealed] = useState(false);
+  const [paywallOpen, setPaywallOpen] = useState(false);
+  const [m43Theories, setM43Theories] = useState<M43Theory[]>([]);
 
   useEffect(() => {
     const responses = (location.state as { responses?: Record<string, string> } | null)?.responses;
@@ -24,7 +35,7 @@ export default function PriperResult() {
 
     // DB 저장
     if (user) {
-      veilrumDb.from('priper_sessions').insert({
+      veilorDb.from('priper_sessions').insert({
         user_id: user.id,
         responses,
         axis_scores: r.scores,
@@ -37,7 +48,7 @@ export default function PriperResult() {
         data_source: 'priper',
       });
       // prime_perspectives 초기 레코드 생성 (첫 분석 기준)
-      veilrumDb.from('prime_perspectives').upsert({
+      veilorDb.from('prime_perspectives').upsert({
         user_id: user.id,
         version: 1,
         attachment_type: r.primary.id,
@@ -50,8 +61,21 @@ export default function PriperResult() {
       }, { onConflict: 'user_id' });
     }
 
-    // 가면 공개 애니메이션 딜레이
+    // M43 이론 조회 — MSK 코드 기반 관계 이론 3개 로드
+    veilorDb.rpc('fn_m43_context', {
+      p_msk_code: r.primary.mskCode,
+      p_tab: 'get',
+      p_emotion: null,
+      p_limit: 3,
+    }).then(({ data }) => {
+      if (data && Array.isArray(data)) setM43Theories(data as M43Theory[]);
+    }).catch(() => {});
+
+    // 가면 공개 → 페이월 모달 (무료 유저만, 2초 딜레이)
     setTimeout(() => setRevealed(true), 800);
+    if (!isPro) {
+      setTimeout(() => setPaywallOpen(true), 2500);
+    }
   }, []);
 
   const qc = useQueryClient();
@@ -125,17 +149,51 @@ export default function PriperResult() {
               </div>
             ))}
           </div>
+
+          {/* M43 관계 이론 배경 */}
+          {m43Theories.length > 0 && (
+            <div className="space-y-2 pt-2">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-widest">
+                {result.primary.nameKo} 패턴과 연결된 관계 연구
+              </p>
+              {m43Theories.map((t, i) => (
+                <div key={i} className="bg-card border rounded-xl p-3 space-y-1">
+                  <p className="text-[10px] font-medium" style={{ color: result.primary.color }}>
+                    {t.domain_name}
+                  </p>
+                  <p className="text-xs leading-relaxed text-muted-foreground">
+                    {t.summary}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <Button className="w-full h-12 text-base" onClick={handleEnter}>
           내 관계 언어 탐색 시작 →
         </Button>
 
+        {!isPro && (
+          <button
+            onClick={() => setPaywallOpen(true)}
+            className="w-full text-xs text-muted-foreground underline underline-offset-2 py-1"
+          >
+            Premium 분석 보기
+          </button>
+        )}
+
         <p className="text-[10px] text-muted-foreground/50 leading-relaxed text-center px-2">
           이 결과는 자기탐색을 위한 참고 자료이며, 심리 진단이 아닙니다.
           정확한 평가를 원하시면 전문 심리상담사와 상담해 주세요.
         </p>
       </div>
+
+      <UpgradeModal
+        open={paywallOpen}
+        onClose={() => setPaywallOpen(false)}
+        trigger="priper_result"
+      />
     </div>
   );
 }

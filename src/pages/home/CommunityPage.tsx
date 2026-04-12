@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { veilrumDb } from '@/integrations/supabase/client';
+import { veilorDb } from '@/integrations/supabase/client';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -38,7 +38,7 @@ export default function CommunityPage() {
   const { data: groups } = useQuery({
     queryKey: ['community-groups'],
     queryFn: async () => {
-      const { data } = await veilrumDb.from('community_groups')
+      const { data } = await veilorDb.from('community_groups')
         .select('*').eq('is_active', true).order('member_count', { ascending: false });
       return data ?? [];
     },
@@ -48,7 +48,7 @@ export default function CommunityPage() {
   const { data: posts } = useQuery({
     queryKey: ['community-posts', selectedGroup?.id],
     queryFn: async () => {
-      const { data } = await veilrumDb.from('community_posts')
+      const { data } = await veilorDb.from('community_posts')
         .select('*')
         .eq('group_id', selectedGroup!.id as string)
         .eq('is_deleted', false)
@@ -63,7 +63,7 @@ export default function CommunityPage() {
   const { data: comments } = useQuery({
     queryKey: ['community-comments', selectedPost?.id],
     queryFn: async () => {
-      const { data } = await veilrumDb.from('community_comments')
+      const { data } = await veilorDb.from('community_comments')
         .select('*')
         .eq('post_id', selectedPost!.id as string)
         .eq('is_deleted', false)
@@ -76,7 +76,7 @@ export default function CommunityPage() {
   // 게시글 작성
   const postMutation = useMutation({
     mutationFn: async () => {
-      await veilrumDb.from('community_posts').insert({
+      await veilorDb.from('community_posts').insert({
         user_id: user!.id,
         group_id: selectedGroup!.id as string,
         title: newPostTitle,
@@ -97,7 +97,7 @@ export default function CommunityPage() {
   // 댓글 작성
   const commentMutation = useMutation({
     mutationFn: async () => {
-      await veilrumDb.from('community_comments').insert({
+      await veilorDb.from('community_comments').insert({
         post_id: selectedPost!.id as string,
         user_id: user!.id,
         content: newComment,
