@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { veilrumDb } from '@/integrations/supabase/client';
+import { veilorDb } from '@/integrations/supabase/client';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -65,7 +65,7 @@ export default function CodetalkPage() {
   const { data: profile } = useQuery({
     queryKey: ['codetalk-profile', user?.id],
     queryFn: async () => {
-      const { data } = await veilrumDb.from('user_profiles')
+      const { data } = await veilorDb.from('user_profiles')
         .select('codetalk_day, streak_count').eq('user_id', user!.id).single();
       return data;
     },
@@ -79,7 +79,7 @@ export default function CodetalkPage() {
   const { data: keyword, isLoading } = useQuery({
     queryKey: ['codetalk-today', user?.id, currentDay],
     queryFn: async () => {
-      const { data } = await veilrumDb.from('codetalk_keywords')
+      const { data } = await veilorDb.from('codetalk_keywords')
         .select('*').eq('day_number', currentDay).single();
       return data;
     },
@@ -89,7 +89,7 @@ export default function CodetalkPage() {
   const { data: todayEntry } = useQuery({
     queryKey: ['codetalk-entry-today', user?.id, keyword?.id],
     queryFn: async () => {
-      const { data } = await veilrumDb.from('codetalk_entries')
+      const { data } = await veilorDb.from('codetalk_entries')
         .select('*').eq('user_id', user!.id).eq('keyword_id', keyword.id)
         .order('created_at', { ascending: false }).limit(1).single();
       return data;
@@ -100,7 +100,7 @@ export default function CodetalkPage() {
   const { data: pastEntries } = useQuery({
     queryKey: ['codetalk-history', user?.id],
     queryFn: async () => {
-      const { data } = await veilrumDb.from('codetalk_entries')
+      const { data } = await veilorDb.from('codetalk_entries')
         .select('*, codetalk_keywords(keyword, day_number)')
         .eq('user_id', user!.id)
         .order('created_at', { ascending: false }).limit(10);
@@ -112,7 +112,7 @@ export default function CodetalkPage() {
   const saveMutation = useMutation({
     mutationFn: async () => {
       let alias: string | null = null;
-      const { data: existing } = await veilrumDb.from('anon_author_map')
+      const { data: existing } = await veilorDb.from('anon_author_map')
         .select('anon_alias').eq('real_user_id', user!.id).eq('context', 'codetalk').maybeSingle();
       if (existing) {
         alias = existing.anon_alias;
@@ -120,20 +120,20 @@ export default function CodetalkPage() {
         const adjectives = ['조용한', '따뜻한', '솔직한', '깊은', '유연한'];
         const nouns = ['달', '별', '숲', '강', '빛'];
         alias = adjectives[Math.floor(Math.random() * adjectives.length)] + ' ' + nouns[Math.floor(Math.random() * nouns.length)];
-        await veilrumDb.from('anon_author_map').insert({ real_user_id: user!.id, anon_alias: alias, context: 'codetalk' });
+        await veilorDb.from('anon_author_map').insert({ real_user_id: user!.id, anon_alias: alias, context: 'codetalk' });
       }
 
-      await veilrumDb.from('codetalk_entries').insert({
+      await veilorDb.from('codetalk_entries').insert({
         user_id: user!.id, keyword_id: keyword.id, keyword: keyword.keyword,
         definition: answers.definition ?? '', imprinting_moment: answers.imprinting_moment ?? '',
         root_cause: answers.root_cause ?? '', is_public: isPublic, anon_alias: alias,
         entry_date: new Date().toISOString().slice(0, 10),
       });
-      const { data: currentProfile } = await veilrumDb.from('user_profiles')
+      const { data: currentProfile } = await veilorDb.from('user_profiles')
         .select('codetalk_day, streak_count').eq('user_id', user!.id).single();
       const nextDay = Math.min((currentProfile?.codetalk_day ?? 1) + 1, 100);
       const newStreak = (currentProfile?.streak_count ?? 0) + 1;
-      await veilrumDb.from('user_profiles')
+      await veilorDb.from('user_profiles')
         .update({ codetalk_day: nextDay, streak_count: newStreak }).eq('user_id', user!.id);
     },
     onSuccess: () => {
@@ -151,7 +151,7 @@ export default function CodetalkPage() {
   const { data: publicFeed } = useQuery({
     queryKey: ['codetalk-public-feed', keyword?.id, keyword?.day_number],
     queryFn: async () => {
-      const { data } = await veilrumDb.from('codetalk_entries')
+      const { data } = await veilorDb.from('codetalk_entries')
         .select('anon_alias, keyword, definition, imprinting_moment, root_cause, created_at, entry_date')
         .eq('keyword_id', keyword!.id).eq('is_public', true).neq('user_id', user!.id)
         .order('created_at', { ascending: false }).limit(20);

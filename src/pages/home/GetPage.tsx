@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase, veilrumDb } from '@/integrations/supabase/client';
+import { supabase, veilorDb } from '@/integrations/supabase/client';
 import { ErrorState } from '@/components/ErrorState';
 import { toast } from '@/hooks/use-toast';
 import { usePremiumTrigger } from '@/hooks/usePremiumTrigger';
@@ -27,7 +27,7 @@ export default function GetPage() {
   const { data: pp, isError: ppError, refetch: refetchPp } = useQuery({
     queryKey: ['prime-perspective', user?.id],
     queryFn: async () => {
-      const { data } = await veilrumDb.from('prime_perspectives')
+      const { data } = await veilorDb.from('prime_perspectives')
         .select('*').eq('user_id', user!.id)
         .order('created_at', { ascending: false }).limit(1).single();
       return data;
@@ -39,7 +39,7 @@ export default function GetPage() {
   const { data: patternSummary } = useQuery({
     queryKey: ['pattern-summary', user?.id],
     queryFn: async () => {
-      const { data } = await veilrumDb.rpc('get_user_pattern_summary', { p_user_id: user!.id });
+      const { data } = await veilorDb.rpc('get_user_pattern_summary', { p_user_id: user!.id });
       return data as {
         top_emotions: { emotion: string; cnt: number }[];
         top_domains: { domain: string; cnt: number }[];
@@ -73,7 +73,7 @@ export default function GetPage() {
         paid_for: ikigaiForm.paid_for.split('\n').filter(Boolean),
         updated_at: new Date().toISOString(),
       };
-      await veilrumDb.from('prime_perspectives').upsert({ user_id: user!.id, ikigai }, { onConflict: 'user_id' });
+      await veilorDb.from('prime_perspectives').upsert({ user_id: user!.id, ikigai }, { onConflict: 'user_id' });
     },
     onSuccess: () => {
       toast({ title: 'Ikigai 저장 완료' });
@@ -103,7 +103,7 @@ export default function GetPage() {
   const brandSave = useMutation({
     mutationFn: async () => {
       const brand_identity = { ...brandForm, updated_at: new Date().toISOString() };
-      await veilrumDb.from('prime_perspectives').upsert({ user_id: user!.id, brand_identity }, { onConflict: 'user_id' });
+      await veilorDb.from('prime_perspectives').upsert({ user_id: user!.id, brand_identity }, { onConflict: 'user_id' });
     },
     onSuccess: () => {
       toast({ title: '브랜드 정체성 저장 완료' });

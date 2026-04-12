@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { veilrumDb } from '@/integrations/supabase/client';
+import { veilorDb } from '@/integrations/supabase/client';
 
 export default function PartnerCodetalk() {
   const { user } = useAuth();
@@ -13,7 +13,7 @@ export default function PartnerCodetalk() {
   const { data: partnerEntries = [] } = useQuery({
     queryKey: ['partner-codetalk', user?.id],
     queryFn: async () => {
-      const { data } = await veilrumDb
+      const { data } = await veilorDb
         .from('partner_codetalk')
         .select('*')
         .or(`user_id.eq.${user!.id},partner_id.eq.${user!.id}`)
@@ -28,7 +28,7 @@ export default function PartnerCodetalk() {
     mutationFn: async () => {
       if (!user || !partnerEmail.trim()) return;
       // 파트너 유저 ID 찾기
-      const { data: partner } = await veilrumDb
+      const { data: partner } = await veilorDb
         .from('user_profiles')
         .select('user_id')
         .eq('email', partnerEmail.trim())
@@ -37,7 +37,7 @@ export default function PartnerCodetalk() {
       if (!partner) throw new Error('파트너를 찾을 수 없습니다');
 
       // 초대 생성 (첫 빈 엔트리)
-      await veilrumDb.from('partner_codetalk').insert({
+      await veilorDb.from('partner_codetalk').insert({
         user_id: user.id,
         partner_id: partner.user_id,
         keyword: '파트너 초대',

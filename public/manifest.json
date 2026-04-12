@@ -1,7 +1,7 @@
 {
-  "name": "PRIPER - Prime Perspective 기반 자기분석 플랫폼",
-  "short_name": "PRIPER",
-  "description": "AI 기반 Why 분석, Ikigai 설계, 브랜드 전략 및 커뮤니티 매칭 플랫폼",
+  "name": "VEILOR - 관계 언어를 찾는 AI 코치",
+  "short_name": "VEILOR",
+  "description": "AI 기반 관계 심리 분석, 자기탐색, 코칭 플랫폼",
   "theme_color": "#000000",
   "background_color": "#000000",
   "display": "standalone",
@@ -22,38 +22,30 @@
       "purpose": "any maskable"
     }
   ],
-  "screenshots": [
-    {
-      "src": "/screenshot-mobile.png",
-      "sizes": "390x844",
-      "type": "image/png",
-      "form_factor": "narrow"
-    }
-  ],
   "shortcuts": [
     {
-      "name": "WHY 분석",
-      "short_name": "WHY",
-      "description": "WHY 분석 시작하기",
-      "url": "/why",
+      "name": "VENT — 감정 꺼내기",
+      "short_name": "VENT",
+      "description": "지금 감정 꺼내기",
+      "url": "/home/vent",
       "icons": [{ "src": "/icon-192x192.png", "sizes": "192x192" }]
     },
     {
-      "name": "Ikigai 설계",
-      "short_name": "Ikigai",
-      "description": "Ikigai 설계하기",
-      "url": "/ikigai",
+      "name": "DIG — 패턴 탐색",
+      "short_name": "DIG",
+      "description": "내 관계 패턴 탐색",
+      "url": "/home/dig",
       "icons": [{ "src": "/icon-192x192.png", "sizes": "192x192" }]
     },
     {
-      "name": "커뮤니티",
-      "short_name": "커뮤니티",
-      "description": "커뮤니티 매칭",
-      "url": "/community",
+      "name": "ME — 나의 프로필",
+      "short_name": "ME",
+      "description": "나의 관계 프로필",
+      "url": "/home/me",
       "icons": [{ "src": "/icon-192x192.png", "sizes": "192x192" }]
     }
   ],
-  "categories": ["lifestyle", "productivity", "education"],
+  "categories": ["lifestyle", "health", "education"],
   "lang": "ko-KR",
   "dir": "ltr"
 }

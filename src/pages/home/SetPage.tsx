@@ -3,10 +3,11 @@
 // Stage 2-2: Ax Mercer 3조건 (경계, 합의, 소통) 아코디언 체크리스트 추가
 
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { veilrumDb, supabase } from '@/integrations/supabase/client';
-import type { VeilrumUserBoundary, VeilrumConsentChecklist } from '@/integrations/supabase/veilrum-types';
+import { veilorDb, supabase } from '@/integrations/supabase/client';
+import type { VeilorUserBoundary, VeilorConsentChecklist } from '@/integrations/supabase/veilor-types';
 import { toast } from '@/hooks/use-toast';
 import { saveSetSignal } from '@/hooks/useSignalPipeline';
 import CodetalkTab from '@/components/set/CodetalkTab';
@@ -25,6 +26,7 @@ type ConditionKey = 'no_cross_boundary' | 'safe_to_speak' | 'can_withdraw';
 
 export default function SetPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const qc = useQueryClient();
   const [tab, setTab] = useState<Tab>('codetalk');
   const [entry, setEntry] = useState('');
@@ -55,11 +57,11 @@ export default function SetPage() {
     queryKey: ['codetalk-today', user?.id],
     queryFn: async () => {
       if (!user) throw new Error('Not authenticated');
-      const { data: profile } = await veilrumDb
+      const { data: profile } = await veilorDb
         .from('user_profiles')
         .select('codetalk_day').eq('user_id', user.id).single();
       const day = profile?.codetalk_day ?? 1;
-      const { data } = await veilrumDb
+      const { data } = await veilorDb
         .from('codetalk_keywords')
         .select('*').eq('day_number', day).single();
       return data;
@@ -72,7 +74,7 @@ export default function SetPage() {
     queryFn: async () => {
       if (!user) throw new Error('Not authenticated');
       const today = new Date().toLocaleDateString('sv-SE');
-      const { data } = await veilrumDb
+      const { data } = await veilorDb
         .from('codetalk_entries')
         .select('*').eq('user_id', user.id).eq('keyword_id', keyword.id)
         .eq('entry_date', today).single();
@@ -102,7 +104,7 @@ export default function SetPage() {
     queryKey: ['codetalk-history', user?.id],
     queryFn: async () => {
       if (!user) throw new Error('Not authenticated');
-      const { data } = await veilrumDb
+      const { data } = await veilorDb
         .from('codetalk_entries')
         .select('*, codetalk_keywords(keyword, day_number)')
         .eq('user_id', user.id)
@@ -117,7 +119,7 @@ export default function SetPage() {
     queryKey: ['codetalk-public', keyword?.id],
     queryFn: async () => {
       const today = new Date().toLocaleDateString('sv-SE');
-      const { data } = await veilrumDb
+      const { data } = await veilorDb
         .from('codetalk_entries')
         .select('id, content, created_at, user_id')
         .eq('keyword_id', keyword.id)
@@ -135,7 +137,7 @@ export default function SetPage() {
     queryKey: ['user-boundaries', user?.id],
     queryFn: async () => {
       if (!user) throw new Error('Not authenticated');
-      const { data } = await veilrumDb
+      const { data } = await veilorDb
         .from('user_boundaries')
         .select('*').eq('user_id', user.id);
       return data ?? [];
@@ -147,7 +149,7 @@ export default function SetPage() {
     queryKey: ['consent-checklist', user?.id],
     queryFn: async () => {
       if (!user) throw new Error('Not authenticated');
-      const { data } = await veilrumDb
+      const { data } = await veilorDb
         .from('consent_checklist')
         .select('*').eq('user_id', user.id);
       return data ?? [];
@@ -159,7 +161,7 @@ export default function SetPage() {
   useEffect(() => {
     if (savedBoundaries) {
       const texts: Record<string, string> = { emotional: '', physical: '', time: '', digital: '' };
-      savedBoundaries.forEach((b: VeilrumUserBoundary) => { texts[b.category] = b.boundary_text ?? ''; });
+      savedBoundaries.forEach((b: VeilorUserBoundary) => { texts[b.category] = b.boundary_text ?? ''; });
       setBoundaryTexts(texts);
     }
   }, [savedBoundaries]);
@@ -170,7 +172,7 @@ export default function SetPage() {
       const axChecks: Record<string, boolean> = {};
       ALL_AX_MERCER_KEYS.forEach(k => { axChecks[k] = false; });
 
-      savedChecklist.forEach((c: VeilrumConsentChecklist) => {
+      savedChecklist.forEach((c: VeilorConsentChecklist) => {
         const key = c.condition_key;
         if (key in checks) {
           checks[key] = c.is_checked ?? false;
@@ -188,19 +190,22 @@ export default function SetPage() {
   const saveMutation = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error('Not authenticated');
+      if (!keyword) throw new Error('오늘의 키워드를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.');
       const today = new Date().toLocaleDateString('sv-SE');
-      await veilrumDb.from('codetalk_entries').upsert({
+      await veilorDb.from('codetalk_entries').upsert({
         user_id: user.id,
         keyword_id: keyword.id,
-        entry_date: today,
+        keyword: keyword.keyword ?? '',
+        definition: entry,
         content: entry,
+        entry_date: today,
         is_public: isPublic,
-      });
-      const { data: profile } = await veilrumDb
+      }, { onConflict: 'user_id,keyword_id,entry_date' });
+      const { data: profile } = await veilorDb
         .from('user_profiles')
         .select('codetalk_day').eq('user_id', user.id).single();
       const nextDay = Math.min((profile?.codetalk_day ?? 1) + 1, 100);
-      await veilrumDb.from('user_profiles')
+      await veilorDb.from('user_profiles')
         .update({ codetalk_day: nextDay }).eq('user_id', user.id);
     },
     onSuccess: () => {
@@ -224,7 +229,7 @@ export default function SetPage() {
   const saveBoundaryMutation = useMutation({
     mutationFn: async (category: BoundaryCategory) => {
       if (!user) throw new Error('Not authenticated');
-      await veilrumDb.from('user_boundaries').upsert(
+      await veilorDb.from('user_boundaries').upsert(
         {
           user_id: user.id,
           category,
@@ -245,7 +250,7 @@ export default function SetPage() {
     mutationFn: async (conditionKey: ConditionKey) => {
       if (!user) throw new Error('Not authenticated');
       const newChecked = !checkedConditions[conditionKey];
-      await veilrumDb.from('consent_checklist').upsert(
+      await veilorDb.from('consent_checklist').upsert(
         {
           user_id: user.id,
           condition_key: conditionKey,
@@ -268,7 +273,7 @@ export default function SetPage() {
     mutationFn: async (itemKey: string) => {
       if (!user) throw new Error('Not authenticated');
       const newChecked = !axMercerChecks[itemKey];
-      await veilrumDb.from('consent_checklist').upsert(
+      await veilorDb.from('consent_checklist').upsert(
         {
           user_id: user.id,
           condition_key: itemKey,
@@ -344,7 +349,36 @@ export default function SetPage() {
           onRequestInsight={requestCodetalkInsight}
         />
       ) : tab === 'boundary' ? (
-        <BoundaryTab
+        <>
+          {/* SexSelf 진입 배너 — 경계 탭 상단에 위치 */}
+          <button
+            onClick={() => navigate('/home/sexself/questions')}
+            className="w-full rounded-2xl p-4 text-left transition-all mb-1"
+            style={{
+              background: 'rgba(236,72,153,0.05)',
+              border: '1px solid rgba(236,72,153,0.2)',
+            }}
+          >
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">🌸</span>
+                  <span className="text-sm font-medium" style={{ color: '#ec4899' }}>
+                    성적 자아 탐색
+                  </span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full"
+                    style={{ background: 'rgba(236,72,153,0.1)', color: '#ec4899', border: '1px solid rgba(236,72,153,0.2)' }}>
+                    SexSelf
+                  </span>
+                </div>
+                <p className="text-xs font-light" style={{ color: 'rgba(236,72,153,0.7)' }}>
+                  나는 어떤 성적 존재인가 — 욕구 패턴·수치심·표현 능력 진단
+                </p>
+              </div>
+              <span style={{ color: 'rgba(236,72,153,0.5)', fontSize: 18 }}>›</span>
+            </div>
+          </button>
+          <BoundaryTab
           boundaryTexts={boundaryTexts}
           setBoundaryTexts={setBoundaryTexts}
           saveBoundaryMutation={saveBoundaryMutation}
@@ -355,6 +389,7 @@ export default function SetPage() {
           totalAxProgress={totalAxProgress}
           getAxMercerProgress={getAxMercerProgress}
         />
+        </>
       ) : tab === 'tools' ? (
         <div className="space-y-4">
           <MiniToolsCard />

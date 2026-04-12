@@ -24,6 +24,9 @@ const VFileStart     = lazy(() => import("./pages/onboarding/vfile/Start"));
 const VFileQuestions = lazy(() => import("./pages/onboarding/vfile/Questions"));
 const VFileResult    = lazy(() => import("./pages/onboarding/vfile/Result"));
 
+// ── Admin ────────────────────────────────────────────────────────
+const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
+
 // ── Main ─────────────────────────────────────────────────────────
 const HomeLayout  = lazy(() => import("./layouts/HomeLayout"));
 const VentPage    = lazy(() => import("./pages/home/VentPage"));
@@ -32,6 +35,10 @@ const GetPage     = lazy(() => import("./pages/home/GetPage"));
 const SetPage     = lazy(() => import("./pages/home/SetPage"));
 const MePage      = lazy(() => import("./pages/home/MePage"));
 const DmPage      = lazy(() => import("./pages/home/DmPage"));
+const DivePage        = lazy(() => import("./pages/home/DivePage"));
+const SexSelfQuestions = lazy(() => import("./pages/home/sexself/Questions"));
+const SexSelfResult    = lazy(() => import("./pages/home/sexself/Result"));
+const CommunityPage   = lazy(() => import("./pages/home/CommunityPage"));
 const NotFound    = lazy(() => import("./pages/NotFound"));
 
 import { toast as sonnerToast } from "sonner";
@@ -64,6 +71,16 @@ const PageLoader = () => (
   </div>
 );
 
+const SUPERADMIN_EMAILS = ['concrecrw@gmail.com', 'elizabethcho1012@gmail.com'];
+
+const RequireAdmin = ({ children }: { children: JSX.Element }) => {
+  const { user, loading } = useAuth();
+  if (loading) return <PageLoader />;
+  if (!user) return <Navigate to="/auth/login" replace />;
+  if (!SUPERADMIN_EMAILS.includes(user.email ?? '')) return <Navigate to="/home" replace />;
+  return children;
+};
+
 const RequireAuth = ({ children }: { children: JSX.Element }) => {
   const { user, loading } = useAuth();
   const location = useLocation();
@@ -73,7 +90,8 @@ const RequireAuth = ({ children }: { children: JSX.Element }) => {
 };
 
 const RequireOnboarding = ({ children }: { children: JSX.Element }) => {
-  const { onboardingStep } = useAuth();
+  const { onboardingStep, loading } = useAuth();
+  if (loading) return <PageLoader />;
   const stepPath: Record<OnboardingStep, string> = {
     welcome: '/onboarding/welcome', cq: '/onboarding/cq',
     priper: '/onboarding/vfile/start', completed: '/home',
@@ -83,7 +101,8 @@ const RequireOnboarding = ({ children }: { children: JSX.Element }) => {
 };
 
 const OnboardingGuard = ({ children }: { children: JSX.Element }) => {
-  const { onboardingStep } = useAuth();
+  const { onboardingStep, loading } = useAuth();
+  if (loading) return <PageLoader />;
   if (onboardingStep === 'completed') return <Navigate to="/home" replace />;
   return children;
 };
@@ -150,7 +169,16 @@ const App = () => (
                   <Route path="set"   element={<SetPage />} />
                   <Route path="me"    element={<MePage />} />
                   <Route path="dm"    element={<DmPage />} />
+                  <Route path="dive"      element={<DivePage />} />
+                  <Route path="sexself/questions" element={<SexSelfQuestions />} />
+                  <Route path="sexself/result"    element={<SexSelfResult />} />
+                  <Route path="community" element={<CommunityPage />} />
                 </Route>
+
+                {/* 관리자 */}
+                <Route path="/admin" element={
+                  <RequireAdmin><AdminDashboard /></RequireAdmin>
+                } />
 
                 <Route path="*" element={<NotFound />} />
               </Routes>

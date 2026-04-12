@@ -25,7 +25,7 @@ beforeAll(() => {
   if (!hasEnv) return;
   anonClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: { persistSession: false, autoRefreshToken: false },
-    db: { schema: 'veilrum' },
+    db: { schema: 'veilor' },
   });
 });
 

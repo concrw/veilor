@@ -168,7 +168,7 @@ Deno.serve(async (req) => {
       body: payload.body || "",
       icon: payload.icon || "/icon-192x192.png",
       badge: payload.badge || "/icon-192x192.png",
-      tag: payload.tag || `veilrum-${Date.now()}`,
+      tag: payload.tag || `veilor-${Date.now()}`,
       url: payload.url || "/",
       actions: payload.actions || [],
     };

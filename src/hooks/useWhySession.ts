@@ -1,7 +1,7 @@
 // WhyFlow 세션 관리 + 타이머 로직
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { veilrumDb } from '@/integrations/supabase/client';
+import { veilorDb } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useM43WhyIntegration } from '@/hooks/useM43WhyIntegration';
 import type { WhySession, JobEntry, AnalysisResult } from '@/types/why';
@@ -44,7 +44,7 @@ export function useWhySession() {
   const loadSession = async () => {
     setLoading(true);
     try {
-      const { data: sessions } = await veilrumDb
+      const { data: sessions } = await veilorDb
         .from('why_sessions')
         .select('*')
         .eq('user_id', user!.id)
@@ -61,7 +61,7 @@ export function useWhySession() {
       const s = sessions[0] as WhySession;
       setSession(s);
 
-      const { data: entries } = await veilrumDb
+      const { data: entries } = await veilorDb
         .from('why_job_entries')
         .select('*')
         .eq('session_id', s.id)
@@ -107,7 +107,7 @@ export function useWhySession() {
 
   // ── 세션 생성 ──
   const createSession = async () => {
-    const { data, error } = await veilrumDb
+    const { data, error } = await veilorDb
       .from('why_sessions')
       .insert({ user_id: user!.id, current_step: 1 })
       .select()
@@ -122,7 +122,7 @@ export function useWhySession() {
 
   const updateSessionStep = async (newStep: number) => {
     if (!session) return;
-    await veilrumDb
+    await veilorDb
       .from('why_sessions')
       .update({ current_step: newStep, updated_at: new Date().toISOString() })
       .eq('id', session.id);

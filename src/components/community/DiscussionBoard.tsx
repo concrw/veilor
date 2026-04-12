@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { veilrumDb } from '@/integrations/supabase/client';
+import { veilorDb } from '@/integrations/supabase/client';
 
 const TOPICS = [
   { id: 'attachment', label: '애착 유형', icon: '🔗' },
@@ -22,7 +22,7 @@ export default function DiscussionBoard() {
   const { data: posts = [] } = useQuery({
     queryKey: ['discussion-posts', topic],
     queryFn: async () => {
-      const { data } = await veilrumDb
+      const { data } = await veilorDb
         .from('community_posts')
         .select('id, content, author_id, created_at, tab_context')
         .eq('tab_context', topic)
@@ -36,7 +36,7 @@ export default function DiscussionBoard() {
   const postMutation = useMutation({
     mutationFn: async () => {
       if (!user || !text.trim()) return;
-      await veilrumDb.from('community_posts').insert({
+      await veilorDb.from('community_posts').insert({
         author_id: user.id,
         content: text.trim(),
         tab_context: topic,

@@ -5,7 +5,35 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { CheckCircle, Loader2, ArrowRight } from "lucide-react";
+import { CheckCircle, Loader2, AlertCircle } from "lucide-react";
+
+// 반추 루프 위험 감지: pain 비율 + 세션 반복 횟수 기반
+function detectRuminationRisk(
+  painCount: number,
+  totalCount: number,
+  whySessionCount: number
+): { level: 'safe' | 'watch' | 'risk'; message: string; action: string } | null {
+  if (totalCount === 0) return null;
+  const painRatio = painCount / totalCount;
+
+  // 3회 이상 반복 + pain 70% 초과 → 반추 위험
+  if (whySessionCount >= 3 && painRatio >= 0.7) {
+    return {
+      level: 'risk',
+      message: '같은 고통을 반복해서 들여다보고 있어요. 이건 처리가 아니라 반추일 수 있습니다.',
+      action: '지금은 분석보다 "다음 한 걸음"이 더 필요할 수 있어요.',
+    };
+  }
+  // 2회 이상 + pain 80% 초과 → 주의
+  if (whySessionCount >= 2 && painRatio >= 0.8) {
+    return {
+      level: 'watch',
+      message: '고통스러운 부분에 오래 머물고 있어요.',
+      action: '탐색은 충분히 했습니다. 이제 작은 행동으로 옮겨볼 때가 됐을 수 있어요.',
+    };
+  }
+  return null;
+}
 
 interface Job {
   id: string;
@@ -34,27 +62,26 @@ export const Step4ResultsSection = ({
   const [analysisCompleted, setAnalysisCompleted] = useState<boolean | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [whySessionCount, setWhySessionCount] = useState(0);
 
-  // 분석 완료 상태 확인
+  // 분석 완료 상태 + Why 세션 횟수 조회
   useEffect(() => {
     const checkAnalysisStatus = async () => {
       if (!user?.id) return;
-      
+
       try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('has_completed_analysis')
-          .eq('id', user.id)
-          .single();
-        
-        if (error) {
-          console.error('Error checking analysis status:', error);
+        const [profileRes, sessionRes] = await Promise.all([
+          supabase.from('profiles').select('has_completed_analysis').eq('id', user.id).single(),
+          supabase.from('why_sessions').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
+        ]);
+
+        if (profileRes.error) {
           setAnalysisCompleted(false);
         } else {
-          setAnalysisCompleted(data.has_completed_analysis || false);
+          setAnalysisCompleted(profileRes.data.has_completed_analysis || false);
         }
-      } catch (error) {
-        console.error('Exception checking analysis status:', error);
+        setWhySessionCount(sessionRes.count ?? 0);
+      } catch {
         setAnalysisCompleted(false);
       } finally {
         setIsLoading(false);
@@ -109,9 +136,47 @@ export const Step4ResultsSection = ({
   const happyCount = jobs.filter(j => j.category === "happy").length;
   const painCount = jobs.filter(j => j.category === "pain").length;
   const neutralCount = jobs.filter(j => j.category === "neutral").length;
+  const ruminationRisk = detectRuminationRisk(painCount, jobs.length, whySessionCount);
 
   return (
     <section className="space-y-4" data-step-visible="4">
+      {/* 반추 루프 경고 배너 */}
+      {ruminationRisk && (
+        <div className={`rounded-xl p-4 space-y-2 border ${
+          ruminationRisk.level === 'risk'
+            ? 'bg-amber-500/5 border-amber-500/30'
+            : 'bg-yellow-500/5 border-yellow-500/20'
+        }`}>
+          <div className="flex items-start gap-2">
+            <AlertCircle className={`w-4 h-4 mt-0.5 shrink-0 ${
+              ruminationRisk.level === 'risk' ? 'text-amber-500' : 'text-yellow-500'
+            }`} />
+            <div className="space-y-1">
+              <p className="text-xs font-medium text-foreground">{ruminationRisk.message}</p>
+              <p className="text-xs text-muted-foreground">{ruminationRisk.action}</p>
+            </div>
+          </div>
+          <div className="flex gap-2 pl-6">
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-xs h-7"
+              onClick={() => navigate('/dive')}
+            >
+              DIVE로 감정 처리하기
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-xs h-7 text-muted-foreground"
+              onClick={() => navigate('/')}
+            >
+              오늘은 여기까지
+            </Button>
+          </div>
+        </div>
+      )}
+
       <Card className="bg-card/60">
         <CardHeader>
           <CardTitle className="text-sm">분석 결과</CardTitle>

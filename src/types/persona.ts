@@ -42,6 +42,16 @@ export interface PsychTrendPoint {
   role: number;
 }
 
+export interface OutcomeMetrics {
+  firstDate: string | null;
+  latestDate: string | null;
+  sessionCount: number;
+  axisChange: Record<string, number> | null;
+  maskChanged: boolean;
+  firstMask: string | null;
+  latestMask: string | null;
+}
+
 export interface MonthlyReportData {
   monthly_summary: {
     vent_count: number;
@@ -54,4 +64,5 @@ export interface MonthlyReportData {
   top_patterns: string[];
   chart_data: { month: string; vent: number; dig: number; codetalk: number }[];
   psych_trend?: PsychTrendPoint[];
+  outcome_metrics?: OutcomeMetrics;
 }

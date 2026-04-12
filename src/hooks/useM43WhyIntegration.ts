@@ -2,7 +2,7 @@
 // Why 분석 결과를 7 프레임워크 × 231 도메인에 매핑
 
 import { useState, useCallback } from 'react';
-import { veilrumDb, supabase } from '@/integrations/supabase/client';
+import { veilorDb, supabase } from '@/integrations/supabase/client';
 
 // ── 타입 ──────────────────────────────────────────────────────────
 export interface M43Framework {
@@ -66,7 +66,7 @@ export function useM43WhyIntegration() {
 
   // 7 프레임워크 로드
   const loadFrameworks = useCallback(async () => {
-    const { data } = await veilrumDb
+    const { data } = await veilorDb
       .from('m43_frameworks')
       .select('id, code, name, name_ko, description, core_question')
       .order('code');
@@ -88,7 +88,7 @@ export function useM43WhyIntegration() {
       .filter(t => t.length > 1);
 
     // m43_domain_questions에서 키워드 매칭
-    const { data: questions } = await veilrumDb
+    const { data: questions } = await veilorDb
       .from('m43_domain_questions')
       .select(`
         id, question, keywords, category,
@@ -302,7 +302,7 @@ export function useM43WhyIntegration() {
       setAnalysis(result);
 
       // DB 저장: why_sessions에 M43 분석 결과 반영
-      await veilrumDb
+      await veilorDb
         .from('why_sessions')
         .update({
           m43_domain_matches: domainMatches.map(d => ({ code: d.domain.code, name: d.domain.name, score: d.score })),
@@ -315,7 +315,7 @@ export function useM43WhyIntegration() {
 
       // m43_domain_answers에 유저 Why 데이터 저장 (각 매칭 도메인별)
       for (const dm of domainMatches.slice(0, 5)) {
-        await veilrumDb.from('m43_domain_answers').insert({
+        await veilorDb.from('m43_domain_answers').insert({
           user_id: userId,
           domain_id: dm.domain.id,
           session_id: sessionId,

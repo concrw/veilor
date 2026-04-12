@@ -1,14 +1,14 @@
 // CodetalkTab — 100-day keyword recording tab
-import type { VeilrumCodetalkEntry, VeilrumCodetalkKeyword } from '@/integrations/supabase/veilrum-types';
+import type { VeilorCodetalkEntry, VeilorCodetalkKeyword } from '@/integrations/supabase/veilor-types';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import type { UseMutationResult } from '@tanstack/react-query';
 
 interface CodetalkTabProps {
-  keyword: VeilrumCodetalkKeyword | null | undefined;
-  todayEntry: VeilrumCodetalkEntry | null | undefined;
-  pastEntries: VeilrumCodetalkEntry[] | undefined;
+  keyword: VeilorCodetalkKeyword | null | undefined;
+  todayEntry: VeilorCodetalkEntry | null | undefined;
+  pastEntries: VeilorCodetalkEntry[] | undefined;
   entry: string;
   setEntry: (v: string) => void;
   isPublic: boolean;
@@ -119,7 +119,7 @@ export default function CodetalkTab({
       {pastEntries && pastEntries.length > 0 && (
         <div className="space-y-3">
           <p className="text-sm font-medium text-muted-foreground">지난 기록</p>
-          {pastEntries.map((e: VeilrumCodetalkEntry) => (
+          {pastEntries.map((e: VeilorCodetalkEntry) => (
             <div key={e.id} className="bg-card border rounded-xl p-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-medium">DAY {e.codetalk_keywords?.day_number} · {e.codetalk_keywords?.keyword}</span>

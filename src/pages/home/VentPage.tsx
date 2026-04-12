@@ -3,9 +3,11 @@
 // Amber 단독 (Frost 없음)
 
 import { useState, useRef, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
-import { supabase, veilrumDb } from '@/integrations/supabase/client';
+import { supabase, veilorDb } from '@/integrations/supabase/client';
+import { invokeHeldChat } from '@/lib/heldChatClient';
 import { saveVentMessage, saveVentSummary, saveVentSessionSummary, saveVentPartialSession } from '@/hooks/useSignalPipeline';
 import { AmberBtn } from '../../layouts/HomeLayout';
 import { useAmberAttention } from '../../hooks/useAmberAttention';
@@ -14,6 +16,7 @@ import { CrisisBanner } from '@/components/CrisisBanner';
 import type { CrisisSeverity } from '@/hooks/useSignalPipeline';
 import { toast } from '@/hooks/use-toast';
 import { detectCrisisLevel } from '@/lib/crisisDetect';
+import { useLocalChatHistory } from '@/hooks/useLocalChatHistory';
 import EmotionSelector from '@/components/vent/EmotionSelector';
 import ChatView from '@/components/vent/ChatView';
 import VentLayerView from '@/components/vent/VentLayerView';
@@ -94,22 +97,52 @@ const SHEET_AI_MSG_STYLE = { background: C.bg2, border: `1px solid ${C.border}`,
 const SHEET_USER_MSG_STYLE = { background: alpha(C.amber, 0.05), border: `1px solid ${alpha(C.amber, 0.13)}`, borderRadius: '11px 11px 3px 11px', padding: '9px 13px' } as const;
 
 function AmberSheet({
-  open, onClose, aiName,
-}: { open: boolean; onClose: () => void; aiName: string }) {
+  open, onClose, aiName, user, primaryMask, axisScores,
+}: {
+  open: boolean;
+  onClose: () => void;
+  aiName: string;
+  user: ReturnType<typeof useAuth>['user'];
+  primaryMask: ReturnType<typeof useAuth>['primaryMask'];
+  axisScores: ReturnType<typeof useAuth>['axisScores'];
+}) {
   const [msgs, setMsgs] = useState<{ role: 'ai' | 'user'; text: string; tone?: string }[]>([
     { role: 'ai', text: '지금 어떤 감정인지 꺼내놔도 괜찮아요. 여기 있어요.', tone: '여기 있어요' },
   ]);
   const [val, setVal] = useState('');
+  const [thinking, setThinking] = useState(false);
   const chatRef = useRef<HTMLDivElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
-  const send = () => {
-    if (!val.trim()) return;
+  const send = async () => {
+    if (!val.trim() || thinking) return;
     const txt = val.trim();
     setMsgs(m => [...m, { role: 'user', text: txt }]);
     setVal('');
-    setTimeout(() => {
+    setThinking(true);
+
+    abortRef.current?.abort();
+    abortRef.current = new AbortController();
+
+    try {
+      const result = await invokeHeldChat(
+        {
+          text: txt,
+          mask: primaryMask ?? undefined,
+          axisScores: axisScores ?? null,
+          history: msgs.slice(-6),
+          tab: 'amber_sheet',
+          userId: user?.id,
+        },
+        abortRef.current.signal,
+      );
+      setMsgs(m => [...m, { role: 'ai', text: result.response, tone: '엠버가 듣고 있어요' }]);
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === 'AbortError') return;
       setMsgs(m => [...m, { role: 'ai', text: '그 감정, 언제부터 있었던 것 같아요?', tone: '같이 파고들어요' }]);
-    }, 700);
+    } finally {
+      setThinking(false);
+    }
   };
 
   useEffect(() => {
@@ -145,8 +178,11 @@ function AmberSheet({
         <div className="flex-shrink-0 flex items-center gap-[7px]" style={{ padding: '8px 14px 14px', borderTop: `1px solid ${C.border2}` }}>
           <input aria-label="메시지 입력" className="flex-1 text-[12px] font-light rounded-full outline-none"
             style={{ background: C.bg2, border: `1px solid ${C.border}`, padding: '7px 13px', color: C.text2, fontFamily: "'DM Sans', sans-serif" }}
-            placeholder={`${aiName}에게 말해요...`} value={val} onChange={e => setVal(e.target.value)} onKeyDown={e => e.key === 'Enter' && send()} />
-          <button aria-label="전송" onClick={send} className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: C.amber, border: 'none' }}>
+            placeholder={thinking ? '엠버가 생각하고 있어요...' : `${aiName}에게 말해요...`}
+            value={val} onChange={e => setVal(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && !thinking && send()}
+            disabled={thinking} />
+          <button aria-label="전송" onClick={() => send()} disabled={thinking} className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: thinking ? alpha(C.amber, 0.4) : C.amber, border: 'none' }}>
             <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M6 11V1M1 6l5-5 5 5" stroke="#1C1917" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
           </button>
         </div>
@@ -158,6 +194,8 @@ function AmberSheet({
 /* ── 메인 컴포넌트 ── */
 export default function VentPage() {
   const { user, axisScores, primaryMask } = useAuth();
+  const location = useLocation();
+  const prefillText = (location.state as { prefillText?: string } | null)?.prefillText ?? '';
   const qc = useQueryClient();
   const [section, setSection] = useState<'vent' | 'layer' | 'community'>('vent');
   const [phase, setPhase] = useState<'select' | 'chat'>('select');
@@ -165,7 +203,7 @@ export default function VentPage() {
   const [msgs, setMsgs] = useState<{ role: 'ai' | 'user'; text: string; tone?: string }[]>([]);
   const [msgCount, setMsgCount] = useState(0);
   const [qIdx, setQIdx] = useState(0);
-  const [msgVal, setMsgVal] = useState('');
+  const [msgVal, setMsgVal] = useState(prefillText);
   const [crisisLevel, setCrisisLevel] = useState<'high' | 'critical' | null>(null);
   const [aiThinking, setAiThinking] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
@@ -177,11 +215,16 @@ export default function VentPage() {
   const aiSettingsRef = useRef<Record<string, string> | null>(null);
   useEffect(() => {
     if (!user) return;
-    veilrumDb.from('user_profiles').select('ai_settings').eq('user_id', user.id).single()
+    veilorDb.from('user_profiles').select('ai_settings').eq('user_id', user.id).single()
       .then(({ data }) => { if (data?.ai_settings) aiSettingsRef.current = data.ai_settings; });
   }, [user]);
   const sessionSavedRef = useRef(false);
   const timerRefs = useRef<number[]>([]);
+  const transitionTimerRef = useRef<number | null>(null);
+  // C10: 이전 AI 요청 취소용 AbortController
+  const abortControllerRef = useRef<AbortController | null>(null);
+  // C5: localStorage 대화 히스토리 영속성
+  const { saveLocal, loadLocal, clearLocal } = useLocalChatHistory(user?.id);
   const greeting = getTimeGreeting();
   const aiName = '엠버';
   const amberFlash = useAmberAttention();
@@ -196,7 +239,7 @@ export default function VentPage() {
   const { data: lastSession } = useQuery({
     queryKey: ['last-vent-session', user?.id],
     queryFn: async () => {
-      const { data } = await veilrumDb.from('dive_sessions')
+      const { data } = await veilorDb.from('dive_sessions')
         .select('id, emotion, messages, turn_count, created_at')
         .eq('user_id', user!.id).eq('mode', 'F').eq('session_completed', false)
         .order('created_at', { ascending: false }).limit(1).maybeSingle();
@@ -208,7 +251,7 @@ export default function VentPage() {
   const { data: recentEmotions } = useQuery({
     queryKey: ['recent-emotions', user?.id],
     queryFn: async () => {
-      const { data } = await veilrumDb.from('dive_sessions')
+      const { data } = await veilorDb.from('dive_sessions')
         .select('emotion, created_at')
         .eq('user_id', user!.id).eq('mode', 'F').eq('session_completed', true)
         .order('created_at', { ascending: false }).limit(5);
@@ -247,22 +290,30 @@ export default function VentPage() {
     setCurEmo(emo);
     sessionSavedRef.current = false;
     const data = EMO_DATA[emo];
-    timerRefs.current.push(window.setTimeout(() => {
+    if (transitionTimerRef.current !== null) window.clearTimeout(transitionTimerRef.current);
+    transitionTimerRef.current = window.setTimeout(() => {
+      transitionTimerRef.current = null;
       setPhase('chat');
       setMsgs([
-        { role: 'ai', text: '저는 엠버예요. AI 감정 수용 파트너이고, 전문 상담사는 아니에요. 판단 없이 들을게요.', tone: '함께예요' },
+        { role: 'ai', text: '저는 엠버예요. AI 대화 파트너이고, 전문 심리상담사가 아니에요. 판단 없이 들을게요.', tone: '함께예요' },
         { role: 'ai', text: data.questions[0][0], tone: data.questions[0][1] },
       ]);
       setMsgCount(0); setQIdx(0); setShowSummary(false);
-    }, 300));
+    }, 300);
   }
 
   function finishSession() {
     if (!user || !curEmo || sessionSavedRef.current) return;
     const data = EMO_DATA[curEmo];
     sessionSavedRef.current = true;
+    clearLocal(); // C5: 세션 완료 시 localStorage 정리
     saveVentSummary(user.id, curEmo, data.suggestion);
-    saveVentSessionSummary(user.id, curEmo, msgs, data.suggestion, msgCount);
+    // C9: 저장 실패 시 사용자에게 비침습적 알림
+    saveVentSessionSummary(user.id, curEmo, msgs, data.suggestion, msgCount).then((id) => {
+      if (id === null) {
+        toast({ title: '이 대화는 저장되지 않았어요', description: '네트워크 문제일 수 있어요. 다음 대화는 정상 저장될 거예요.', variant: 'destructive' });
+      }
+    });
     setShowSummary(true);
     // Me탭 + 히스토리 캐시 갱신
     qc.invalidateQueries({ queryKey: ['me-stats'] });
@@ -274,18 +325,25 @@ export default function VentPage() {
   async function sendMsg() {
     if (!msgVal.trim() || !curEmo || aiThinking) return;
     const txt = msgVal.trim();
+
+    // C2: critical 위기 시 입력 차단 (새 메시지 전송 불가)
+    const clientCrisis = detectCrisisLevel(txt);
+    if (clientCrisis === 'critical') {
+      setCrisisLevel('critical');
+      return; // AI 호출 없이 즉시 종료
+    }
+    if (clientCrisis === 'high') {
+      setCrisisLevel('high');
+    }
+
     setMsgVal('');
     const newCount = msgCount + 1;
     const data = EMO_DATA[curEmo];
     const nextQIdx = Math.min(qIdx + 1, data.questions.length - 1);
+    // C5: setMsgs는 AI 응답 후 updatedMsgs로 일괄 처리 (user 메시지 즉시 표시)
     setMsgs(m => [...m, { role: 'user', text: txt }]);
     setMsgCount(newCount); setQIdx(nextQIdx);
-
-    // 위기 감지 3중 방어: 클라이언트 즉시 → RPC → AI 필터
-    const clientCrisis = detectCrisisLevel(txt);
-    if (clientCrisis === 'critical' || clientCrisis === 'high') {
-      setCrisisLevel(clientCrisis);
-    }
+    const msgsBeforeAI = [...msgs, { role: 'user' as const, text: txt }];
 
     if (user) {
       saveVentMessage(user.id, curEmo, txt, newCount).then(({ crisisSeverity }) => {
@@ -294,25 +352,41 @@ export default function VentPage() {
       supabase.functions.invoke('dm-message-filter', {
         body: { message: txt, userId: user.id },
       }).then(({ data: filterData }) => {
-        if (filterData?.verdict === 'CRISIS' && !crisisLevel) setCrisisLevel('critical');
+        if (filterData?.verdict === 'CRISIS') setCrisisLevel('critical');
       }).catch(() => {});
     }
+
+    // C10: 이전 요청 취소 후 새 AbortController 생성
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = new AbortController();
 
     setAiThinking(true);
     let aiText = data.questions[nextQIdx][0];
     let aiTone = data.questions[nextQIdx][1];
 
     try {
-      const { data: aiData, error } = await supabase.functions.invoke('held-chat', {
-        body: { emotion: curEmo, text: txt, userId: user?.id, axisScores: axisScores ?? null, mask: primaryMask ?? null, history: msgs.slice(-6), aiSettings: aiSettingsRef.current ?? null, tab: 'vent' },
-      });
-      if (!error && aiData?.response) { aiText = aiData.response; aiTone = '엠버가 듣고 있어요'; }
-    } catch {
+      const aiData = await invokeHeldChat(
+        {
+          emotion: curEmo, text: txt, mask: primaryMask ?? undefined,
+          axisScores: axisScores ?? null, history: msgs.slice(-6),
+          aiSettings: aiSettingsRef.current ?? undefined, tab: 'vent',
+          userId: user?.id,
+        },
+        abortControllerRef.current.signal,
+      );
+      if (aiData?.response) { aiText = aiData.response; aiTone = '엠버가 듣고 있어요'; }
+      // C2: AI 응답에서도 critical 반환 시 입력 잠금
+      if (aiData?.crisis === 'critical') setCrisisLevel('critical');
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === 'AbortError') return; // 취소된 요청은 무시
       toast({ title: 'AI 응답을 받지 못했어요', description: '기본 응답으로 대체합니다.', variant: 'destructive' });
     }
 
     setAiThinking(false);
-    setMsgs(m => [...m, { role: 'ai', text: aiText, tone: aiTone }]);
+    const updatedMsgs = [...msgsBeforeAI, { role: 'ai' as const, text: aiText, tone: aiTone }];
+    setMsgs(() => updatedMsgs);
+    // C5: 매 턴마다 localStorage에 암호화 저장
+    saveLocal({ emotion: curEmo, msgs: updatedMsgs, msgCount: newCount });
 
     if (newCount >= 4 && newCount % 4 === 0 && !sessionSavedRef.current) {
       timerRefs.current.push(window.setTimeout(() => {
@@ -367,7 +441,9 @@ export default function VentPage() {
               curEmo={curEmo} msgs={msgs} msgCount={msgCount} msgVal={msgVal}
               aiThinking={aiThinking} showSummary={showSummary}
               sessionSaved={sessionSavedRef.current}
+              crisisLocked={crisisLevel === 'critical'}
               emoData={EMO_DATA[curEmo]} greeting={greeting}
+              userId={user?.id}
               onMsgValChange={setMsgVal} onSendMsg={sendMsg}
               onFinishSession={finishSession}
               onContinueChat={() => { setShowSummary(false); setMsgs(m => [...m, { role: 'ai', text: '물론이죠. 또 어떤 게 마음에 있어요?', tone: '여기 있어요 · 천천히' }]); }}
@@ -386,7 +462,7 @@ export default function VentPage() {
         />
       )}
 
-      <AmberSheet open={amberOpen} onClose={() => setAmberOpen(false)} aiName={aiName} />
+      <AmberSheet open={amberOpen} onClose={() => setAmberOpen(false)} aiName={aiName} user={user} primaryMask={primaryMask} axisScores={axisScores} />
     </div>
   );
 }

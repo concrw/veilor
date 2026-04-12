@@ -3,7 +3,7 @@ import type { LocaleResource } from './types';
 export const en: LocaleResource = {
   // ─── common ────────────────────────────────────────────────
   common: {
-    appName: 'VEILRUM',
+    appName: 'VEILOR',
     loading: 'Loading...',
     retry: 'Retry',
     save: 'Save',
@@ -24,7 +24,7 @@ export const en: LocaleResource = {
     premium: 'Premium',
     active: 'Active',
     preparing: 'Coming soon — stay tuned',
-    disclaimer: 'VEILRUM is a self-exploration tool and does not replace professional counseling or therapy.',
+    disclaimer: 'VEILOR is a self-exploration tool and does not replace professional counseling or therapy.',
     skipToContent: 'Skip to content',
   },
 
@@ -56,7 +56,7 @@ export const en: LocaleResource = {
   // ─── onboarding ────────────────────────────────────────────
   onboarding: {
     welcome: {
-      title: 'VEILRUM',
+      title: 'VEILOR',
       subtitle: 'Discover your relationship language',
       card1Title: 'You have your own Mask',
       card1Desc: 'The name of the pattern you unconsciously use in relationships',
@@ -65,7 +65,7 @@ export const en: LocaleResource = {
       card3Title: '4 modules open, tailored to you',
       card3Desc: 'V-File · CODETALK · DIVE · Community',
       startButton: 'Get started',
-      disclaimer: 'VEILRUM is a self-exploration tool and does not replace professional counseling or therapy.',
+      disclaimer: 'VEILOR is a self-exploration tool and does not replace professional counseling or therapy.',
     },
     cq: {
       relationshipGoal: 'What do you want most in your relationships right now?',
@@ -532,7 +532,7 @@ export const en: LocaleResource = {
       emergency: 'Emergency 119',
     },
     disclaimerFull:
-      'VEILRUM is a self-exploration tool and does not replace professional counseling or therapy. In an emergency, please contact a professional immediately.',
+      'VEILOR is a self-exploration tool and does not replace professional counseling or therapy. In an emergency, please contact a professional immediately.',
   },
 
   // ─── errors ────────────────────────────────────────────────

@@ -1,6 +1,8 @@
 import { onCLS, onLCP, onFCP, onTTFB, onINP, type Metric } from 'web-vitals';
 
-const VITALS_ENDPOINT = '/api/vitals';
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+const ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+const VITALS_ENDPOINT = `${SUPABASE_URL}/functions/v1/collect-vitals`;
 
 function sendToAnalytics(metric: Metric) {
   const body = {
@@ -14,9 +16,17 @@ function sendToAnalytics(metric: Metric) {
     timestamp: Date.now(),
   };
 
-  // Beacon API — non-blocking, survives page unload
-  if (navigator.sendBeacon) {
-    navigator.sendBeacon(VITALS_ENDPOINT, JSON.stringify(body));
+  // keepalive fetch — non-blocking, survives page unload (sendBeacon은 헤더 커스텀 불가)
+  if (import.meta.env.PROD && SUPABASE_URL) {
+    fetch(VITALS_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': ANON_KEY,
+      },
+      body: JSON.stringify(body),
+      keepalive: true,
+    }).catch(() => {/* non-critical */});
   }
 
   // Dev mode: log to console

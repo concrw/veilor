@@ -1,13 +1,17 @@
 /**
  * Shared CORS handler for all Edge Functions.
  * Reads ALLOWED_ORIGINS env var (comma-separated).
- * Falls back to allowing all origins if env var is empty.
+ * Falls back to allowing all origins if env var is empty — set ALLOWED_ORIGINS in production.
  */
 
 const ALLOWED_ORIGINS = (Deno.env.get("ALLOWED_ORIGINS") ?? "")
   .split(",")
   .map((s: string) => s.trim())
   .filter(Boolean);
+
+if (ALLOWED_ORIGINS.length === 0) {
+  console.warn("[cors] ALLOWED_ORIGINS not set — all origins allowed. Set this env var in production.");
+}
 
 export function getCorsHeaders(req: Request): Record<string, string> {
   const origin = req.headers.get("origin") ?? "";

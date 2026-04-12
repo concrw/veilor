@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
+import * as Sentry from '@sentry/react';
 
 interface Props {
   children: ReactNode;
@@ -31,10 +32,12 @@ export class ErrorBoundary extends Component<Props, State> {
       name: error.name,
       stack: error.stack,
       componentStack: info.componentStack,
-      platform: 'veilrum',
+      platform: 'veilor',
       url: typeof window !== 'undefined' ? window.location.href : 'unknown',
     });
-    // TODO: Sentry 연동 시 이 위치에서 전송
+    Sentry.captureException(error, {
+      extra: { errorId, componentStack: info.componentStack, platform: 'veilor' },
+    });
   }
 
   handleReload = () => {

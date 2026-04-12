@@ -197,11 +197,12 @@ ${jobDescriptions}
     }
 
     // 5. Create persona-job mappings
+    // cluster_confidence: AI가 반환한 strength_score(0~100)를 0~1로 정규화
     const mappings = personas.flatMap((persona: any, index: number) =>
       persona.jobs.map((job: JobEntry) => ({
         persona_id: insertedPersonas![index].id,
         job_entry_id: job.id,
-        cluster_confidence: 0.85,
+        cluster_confidence: Math.min(1.0, Math.max(0.0, (persona.strength_score ?? 70) / 100)),
       }))
     );
 

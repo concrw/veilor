@@ -1,5 +1,5 @@
 /**
- * Veilrum Design Tokens — Single Source of Truth
+ * Veilor Design Tokens — Single Source of Truth
  *
  * 인라인 style에서 사용할 때: import { C } from '@/lib/colors'
  * Tailwind 클래스에서 사용할 때: bg-vr-bg, text-vr-amber, border-vr-border 등
@@ -28,5 +28,5 @@ export function alpha(hex: string, opacity: number): string {
   return `${hex}${a}`;
 }
 
-export type VeilrumColor = typeof C;
-export type VeilrumColorKey = keyof VeilrumColor;
+export type VeilorColor = typeof C;
+export type VeilorColorKey = keyof VeilorColor;

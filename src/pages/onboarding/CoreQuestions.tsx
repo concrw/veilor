@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { supabase, veilrumDb } from '@/integrations/supabase/client';
+import { supabase, veilorDb } from '@/integrations/supabase/client';
 import { safeGetItem, safeSetItem, safeRemoveItem } from '@/lib/storage';
 
-const CQ_STORAGE_KEY = 'veilrum:cq-progress';
+const CQ_STORAGE_KEY = 'veilor:cq-progress';
 
 const QUESTIONS = [
   {
@@ -78,7 +78,7 @@ export default function CoreQuestions() {
       const rows = Object.entries(data).map(([k, v]) => ({
         user_id: user.id, question_key: k, response_value: v,
       }));
-      await veilrumDb.from('cq_responses').upsert(rows);
+      await veilorDb.from('cq_responses').upsert(rows);
     }
     safeRemoveItem(CQ_STORAGE_KEY);
     await setOnboardingStep('priper');

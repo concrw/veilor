@@ -1,10 +1,23 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import ExperientialContent from '@/components/content/ExperientialContent';
+
+vi.mock('@/context/AuthContext', () => ({
+  useAuth: () => ({ user: null, primaryMask: null, axisScores: null }),
+}));
+
+vi.mock('@/integrations/supabase/client', () => ({
+  veilorDb: { from: () => ({ insert: () => Promise.resolve({ error: null }) }) },
+  supabase: {},
+}));
+
+const renderWithRouter = (ui: React.ReactElement) =>
+  render(<MemoryRouter>{ui}</MemoryRouter>);
 
 describe('ExperientialContent', () => {
   it('renders 5 content items', () => {
-    render(<ExperientialContent />);
+    renderWithRouter(<ExperientialContent />);
     expect(screen.getByText('거울 실험')).toBeInTheDocument();
     expect(screen.getByText('보내지 않을 편지')).toBeInTheDocument();
     expect(screen.getByText('관계 타임라인')).toBeInTheDocument();
@@ -13,20 +26,20 @@ describe('ExperientialContent', () => {
   });
 
   it('opens content detail on click', () => {
-    render(<ExperientialContent />);
+    renderWithRouter(<ExperientialContent />);
     fireEvent.click(screen.getByText('거울 실험'));
     expect(screen.getByText(/편안한 자세로 눈을 감으세요/)).toBeInTheDocument();
   });
 
   it('filters by level', () => {
-    render(<ExperientialContent />);
+    renderWithRouter(<ExperientialContent />);
     fireEvent.click(screen.getByText('Lv.3이하'));
     // Lv.4, Lv.5 items should be filtered out
     expect(screen.queryByText('욕구 표현 연습')).not.toBeInTheDocument();
   });
 
   it('navigates steps forward', () => {
-    render(<ExperientialContent />);
+    renderWithRouter(<ExperientialContent />);
     fireEvent.click(screen.getByText('거울 실험'));
     expect(screen.getByText(/편안한 자세/)).toBeInTheDocument();
     fireEvent.click(screen.getByText('다음'));
@@ -34,7 +47,7 @@ describe('ExperientialContent', () => {
   });
 
   it('closes detail and returns to list', () => {
-    render(<ExperientialContent />);
+    renderWithRouter(<ExperientialContent />);
     fireEvent.click(screen.getByText('거울 실험'));
     fireEvent.click(screen.getByText('닫기'));
     expect(screen.getByText('거울 실험')).toBeInTheDocument();

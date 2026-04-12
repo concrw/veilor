@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { MASK_PROFILES, VFILE_CONTEXT_LABELS, classifyVProfile } from '@/lib/vfileAlgorithm';
 import type { VFileContext } from '@/lib/vfileAlgorithm';
 import { useAuth } from '@/context/AuthContext';
-import { veilrumDb } from '@/integrations/supabase/client';
+import { veilorDb } from '@/integrations/supabase/client';
 import RadarTimeCompare from './RadarTimeCompare';
 
 // M43 확정 12종 + MSK 코드 매핑
@@ -76,7 +76,7 @@ function ReanalysisHistory({ userId, currentScores, currentMask }: {
   const { data: sessions } = useQuery({
     queryKey: ['priper-history', userId],
     queryFn: async () => {
-      const { data } = await veilrumDb
+      const { data } = await veilorDb
         .from('priper_sessions')
         .select('axis_scores, primary_mask, msk_code, completed_at, context')
         .eq('user_id', userId!)
@@ -154,7 +154,7 @@ export default function IdentityTab({
     queryKey: ['persona-profiles', user?.id],
     queryFn: async () => {
       if (!user) return [];
-      const { data } = await veilrumDb
+      const { data } = await veilorDb
         .from('persona_profiles')
         .select('*')
         .eq('user_id', user.id)
@@ -182,7 +182,20 @@ export default function IdentityTab({
           return (
             <>
               <div className="space-y-2">
-                <p className="text-2xl font-bold">{resolved.nameKo}</p>
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <p className="text-2xl font-bold">{resolved.nameKo}</p>
+                    <p className="text-[10px] text-muted-foreground leading-relaxed mt-0.5">
+                      고정된 정체성이 아니라, 지금 가장 자주 활성화되는 패턴입니다
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => navigate('/onboarding/vfile/questions', { state: { context: 'general', fromGet: true } })}
+                    className="flex-shrink-0 text-[10px] text-primary border border-primary/30 px-2.5 py-1 rounded-lg hover:bg-primary/5 transition-colors mt-1"
+                  >
+                    재분석
+                  </button>
+                </div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-mono bg-muted px-2 py-0.5 rounded">{resolved.code}</span>
                   <span className={`text-xs px-2 py-0.5 rounded-full ${resolved.category === '포식형' ? 'bg-red-500/10 text-red-400' : 'bg-blue-500/10 text-blue-400'}`}>

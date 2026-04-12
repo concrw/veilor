@@ -85,7 +85,7 @@ serve(async (req: Request) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          p_schema: 'veilrum',
+          p_schema: 'veilor',
           p_table: 'dm_message_filter_log',
           p_operation: 'FLAGGED',
           p_user_id: userId,

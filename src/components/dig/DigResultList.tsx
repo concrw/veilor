@@ -86,6 +86,16 @@ export function DigResultList({
               </span>
             )}
             <span className="text-xs text-muted-foreground">{selected.domain}</span>
+            {/* C8: 신뢰도 점수 배지 */}
+            {(() => {
+              const pct = Math.round(Math.min(selected.score * 100, 100));
+              const color = pct >= 70 ? 'text-emerald-500 bg-emerald-500/10' : pct >= 40 ? 'text-amber-500 bg-amber-500/10' : 'text-muted-foreground bg-muted/40';
+              return (
+                <span className={`ml-auto text-[10px] px-2 py-0.5 rounded-full font-medium ${color}`}>
+                  연관도 {pct}%
+                </span>
+              );
+            })()}
           </div>
           <p className="font-medium mt-1">{selected.question}</p>
         </div>
@@ -93,6 +103,10 @@ export function DigResultList({
           <p className="text-xs text-muted-foreground mb-2">— {selected.researcher}</p>
           <p className="text-sm leading-relaxed">{selected.answer}</p>
         </div>
+        {/* C8: 경향성 면책 문구 */}
+        <p className="text-[10px] text-muted-foreground/60 leading-relaxed border-t pt-3">
+          이 결과는 고정된 진단이 아니라, 지금 가장 자주 활성화되는 심리적 경향입니다. 상황과 맥락에 따라 달라질 수 있어요.
+        </p>
       </div>
 
       {results.length > 1 && (

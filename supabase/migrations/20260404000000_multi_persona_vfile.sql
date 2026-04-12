@@ -4,7 +4,7 @@
 -- ============================================================================
 
 -- 1. priper_sessions에 context 컬럼 추가
-ALTER TABLE veilrum.priper_sessions
+ALTER TABLE veilor.priper_sessions
 ADD COLUMN IF NOT EXISTS context text NOT NULL DEFAULT 'general'
   CHECK (context IN ('social', 'general', 'secret'));
 
@@ -12,7 +12,7 @@ ADD COLUMN IF NOT EXISTS context text NOT NULL DEFAULT 'general'
 
 -- unique: 한 유저당 맥락별 1개 최신 세션만 유지
 CREATE UNIQUE INDEX IF NOT EXISTS idx_priper_sessions_user_context
-  ON veilrum.priper_sessions (user_id, context)
+  ON veilor.priper_sessions (user_id, context)
   WHERE is_completed = true;
 
 -- 2. persona_profiles에 V-File 연동 컬럼 추가
@@ -32,6 +32,6 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_persona_profiles_user_vfile_context
   WHERE vfile_context IS NOT NULL;
 
 -- 3. user_profiles에 멀티페르소나 완료 상태 추가
-ALTER TABLE veilrum.user_profiles
+ALTER TABLE veilor.user_profiles
 ADD COLUMN IF NOT EXISTS persona_contexts_completed text[] DEFAULT '{}';
 -- 예: {'general'}, {'general','social'}, {'general','social','secret'}

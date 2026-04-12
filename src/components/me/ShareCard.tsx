@@ -14,7 +14,7 @@ export default function ShareCard() {
   const profile = MASK_PROFILES.find(m => m.nameKo === primaryMask || m.mskCode === primaryMask);
   const vProfile = classifyVProfile(axisScores as AxisScores);
 
-  const shareText = `나의 관계 가면은 "${profile?.nameKo ?? primaryMask}" (${vProfile.code})\n${profile?.archetype ?? ''}\n\n#VEILRUM #VFile #관계가면`;
+  const shareText = `나의 관계 가면은 "${profile?.nameKo ?? primaryMask}" (${vProfile.code})\n${profile?.archetype ?? ''}\n\n#VEILOR #VFile #관계가면`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(shareText).then(() => {
@@ -26,7 +26,7 @@ export default function ShareCard() {
   const handleShare = async () => {
     if (navigator.share) {
       try {
-        await navigator.share({ title: 'VEILRUM V-File', text: shareText });
+        await navigator.share({ title: 'VEILOR V-File', text: shareText });
       } catch { /* share cancelled by user */ }
     } else {
       handleCopy();
@@ -58,7 +58,7 @@ export default function ShareCard() {
             </div>
           ))}
         </div>
-        <p className="text-[9px] text-muted-foreground text-right">VEILRUM · veilor.ai</p>
+        <p className="text-[9px] text-muted-foreground text-right">VEILOR · veilor.ai</p>
       </div>
       {/* 공유 버튼 */}
       <div className="flex border-t" role="group" aria-label="공유 옵션">

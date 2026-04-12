@@ -235,6 +235,7 @@ export function findMasks(scores: AxisScores): {
   primary: MaskProfile;
   secondary: MaskProfile;
   isComplex: boolean;
+  primaryDist: number;
 } {
   const ranked = [...MASK_PROFILES]
     .map(m => ({ mask: m, dist: euclidean(scores, m.scores) }))
@@ -244,6 +245,7 @@ export function findMasks(scores: AxisScores): {
     primary: ranked[0].mask,
     secondary: ranked[1].mask,
     isComplex: ranked[1].dist - ranked[0].dist <= 10,
+    primaryDist: ranked[0].dist,
   };
 }
 
@@ -254,32 +256,55 @@ export function generateInsights(
   secondary: MaskProfile,
   isComplex: boolean
 ): string[] {
-  const axisName = { A: '애착', B: '소통', C: '욕구표현', D: '역할' };
-  const axisLabel = {
-    A: scores.A >= 70 ? '불안 애착' : scores.A <= 30 ? '회피 애착' : '혼합 애착',
-    B: scores.B >= 65 ? '개방적 소통' : scores.B <= 35 ? '폐쇄적 소통' : '선택적 소통',
-    C: scores.C >= 65 ? '표현형 욕구' : scores.C <= 35 ? '억압형 욕구' : '상황적 표현',
-    D: scores.D >= 65 ? '주도형 역할' : scores.D <= 35 ? '수용형 역할' : '유동적 역할',
+  // 축별 패턴 언어 — "~형입니다" 대신 "~패턴이 작동하고 있어요"
+  const axisPattern = {
+    A: scores.A >= 70
+      ? '관계에서 상대의 반응을 계속 확인하는 패턴이 작동하고 있어요'
+      : scores.A <= 30
+        ? '상대와 거리를 두면서 안전을 확보하는 패턴이 작동하고 있어요'
+        : '상황에 따라 가까워지고 멀어지는 패턴이 반복되고 있어요',
+    B: scores.B >= 65
+      ? '감정을 비교적 솔직하게 표현하는 편이에요'
+      : scores.B <= 35
+        ? '속마음을 꺼내기 전에 한 번 더 확인하는 패턴이 있어요'
+        : '신뢰하는 사람과 그렇지 않은 사람에게 다르게 열리는 패턴이 있어요',
+    C: scores.C >= 65
+      ? '원하는 것을 직접적으로 표현하는 편이에요'
+      : scores.C <= 35
+        ? '필요나 욕구를 내려놓거나 미루는 패턴이 자주 작동해요'
+        : '상황을 보면서 원하는 것을 표현할지 결정하는 패턴이 있어요',
+    D: scores.D >= 65
+      ? '관계의 흐름을 주도하려는 패턴이 자주 나타나요'
+      : scores.D <= 35
+        ? '상대의 흐름에 맞추면서 자신을 조율하는 패턴이 있어요'
+        : '상황에 따라 이끌기도 하고 따르기도 하는 유연함이 있어요',
   };
 
+  // 가장 강하게 작동 중인 축 (중앙에서 가장 먼 축)
   const extreme = (['A', 'B', 'C', 'D'] as (keyof AxisScores)[]).reduce((p, c) =>
     Math.abs(scores[c] - 50) > Math.abs(scores[p] - 50) ? c : p
   );
 
-  const balanced = (['A', 'B', 'C', 'D'] as (keyof AxisScores)[]).reduce((p, c) =>
+  // 가장 유연하게 작동 중인 축 (중앙에 가장 가까운 축)
+  const flexible = (['A', 'B', 'C', 'D'] as (keyof AxisScores)[]).reduce((p, c) =>
     Math.abs(scores[c] - 50) < Math.abs(scores[p] - 50) ? c : p
   );
 
-  const categoryLabel = primary.category === 'predatory' ? '포식형' : '피식형';
+  const axisName = { A: '애착', B: '소통', C: '욕구표현', D: '역할' };
   const pairMask = MASK_PROFILES.find(m => m.mskCode === primary.pairCode);
 
-  return [
-    `가장 두드러진 축은 ${axisName[extreme]}(${axisLabel[extreme]})입니다. 이것이 ${primary.nameKo}(${primary.mskCode}) 가면의 핵심 동력이 됩니다.`,
-    `${primary.nameKo}의 밑바닥에는 "${primary.coreWound}"라는 상처가 있습니다. 이로 인해 "${primary.coreFear}"라는 두려움이 관계 패턴을 형성하고 있습니다. 당신의 가면은 ${categoryLabel}입니다.`,
-    isComplex
-      ? `당신의 점수는 ${primary.nameKo}(${primary.mskCode})와 ${secondary.nameKo}(${secondary.mskCode})의 경계에 위치합니다. 지금 당신에게 가장 필요한 것은 "${primary.coreNeed}"입니다.`
-      : `${axisName[balanced]} 영역(${axisLabel[balanced]})은 상대적으로 유연하게 작동하고 있습니다.${pairMask ? ` ${pairMask.nameKo}(${pairMask.mskCode}) 유형과의 관계에서 끌림을 느낄 수 있습니다.` : ''} 지금 당신에게 가장 필요한 것은 "${primary.coreNeed}"입니다.`,
-  ];
+  // 인사이트 1 — 지금 가장 강하게 작동 중인 패턴 (관찰, 비진단)
+  const insight1 = `지금 ${axisName[extreme]} 영역에서 ${axisPattern[extreme]}. ${primary.nameKo} 패턴이 가장 활성화된 상태예요.`;
+
+  // 인사이트 2 — 패턴의 맥락 (가능성 언어, 단정 금지)
+  const insight2 = `이 패턴은 "${primary.coreWound}"와 같은 경험에서 만들어졌을 수 있어요. "${primary.coreFear}"라는 감각이 자동으로 작동할 때, 이 패턴이 보호막처럼 등장합니다.`;
+
+  // 인사이트 3 — 변화 가능성 + 유연한 지점
+  const insight3 = isComplex
+    ? `${primary.nameKo}와 ${secondary.nameKo}가 함께 작동하고 있어요. 두 패턴이 겹치는 자리는 변화가 가장 먼저 일어나는 곳이기도 합니다. "${primary.coreNeed}"라는 경험이 쌓일수록 패턴은 달라질 수 있어요.`
+    : `${axisName[flexible]} 영역이 가장 유연하게 열려 있어요.${pairMask ? ` ${pairMask.nameKo} 유형과 만날 때 이 유연함이 가장 크게 흔들릴 수 있습니다.` : ''} "${primary.coreNeed}"라는 경험이 반복될수록 이 패턴은 조금씩 변해갑니다.`;
+
+  return [insight1, insight2, insight3];
 }
 
 // ── V프로필 16유형 (4축 이분법) ──────────────────────────────────────
@@ -332,6 +357,7 @@ export interface DiagnosisResult {
   primary: MaskProfile;
   secondary: MaskProfile;
   isComplex: boolean;
+  primaryMaskDistance: number;
   insights: string[];
   dataSource: 'priper';
   context: VFileContext;
@@ -343,8 +369,8 @@ export function runDiagnosis(
   context: VFileContext = 'general',
 ): DiagnosisResult {
   const scores = calculateAxisScores(responses);
-  const { primary, secondary, isComplex } = findMasks(scores);
+  const { primary, secondary, isComplex, primaryDist } = findMasks(scores);
   const insights = generateInsights(scores, primary, secondary, isComplex);
   const vProfile = classifyVProfile(scores);
-  return { scores, primary, secondary, isComplex, insights, dataSource: 'priper', context, vProfile };
+  return { scores, primary, secondary, isComplex, primaryMaskDistance: primaryDist, insights, dataSource: 'priper', context, vProfile };
 }

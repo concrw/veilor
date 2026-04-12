@@ -24,7 +24,7 @@ vi.mock('@/integrations/supabase/client', () => ({
       signOut: mocks.signOut,
     },
   },
-  veilrumDb: {
+  veilorDb: {
     from: () => ({
       select: () => ({
         eq: () => ({
@@ -57,8 +57,10 @@ function wrapper({ children }: { children: React.ReactNode }) {
 describe('AuthContext', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.onAuthStateChange.mockReturnValue({
-      data: { subscription: { unsubscribe: vi.fn() } },
+    // onAuthStateChange를 즉시 INITIAL_SESSION 이벤트로 발행 → loading이 false로 전환됨
+    mocks.onAuthStateChange.mockImplementation((callback: (event: string, session: null) => void) => {
+      setTimeout(() => callback('INITIAL_SESSION', null), 0);
+      return { data: { subscription: { unsubscribe: vi.fn() } } };
     });
     mocks.getSession.mockResolvedValue({ data: { session: null }, error: null });
     mocks.profileSelect.mockResolvedValue({ data: null, error: { code: 'PGRST116' } });

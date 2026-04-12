@@ -1,5 +1,6 @@
-// 가상 유저 20명 — 커뮤니티 활성감 시드 데이터
+// 가상 유저 시드 포스트 (현재 8개) — 커뮤니티 활성감 시드 데이터
 // auth.users FK 제약으로 DB 직접 삽입 불가 → 프론트 레이어에서 혼합 표시
+// TODO: virtual_user_profiles 100명과 연결하려면 auth.users FK 우회 방법 필요 (서비스롤 INSERT 또는 별도 가상 유저 auth 계정 생성)
 
 export interface VirtualPost {
   id: string;

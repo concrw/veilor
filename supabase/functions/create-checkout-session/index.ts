@@ -60,23 +60,27 @@ serve(async (req) => {
       customerId = stripeCustomer.stripe_customer_id;
     }
 
-    // Create checkout session
-    const session = await stripe.checkout.sessions.create({
-      customer: customerId,
-      line_items: [
-        {
-          price: priceId,
-          quantity: 1,
+    // Create checkout session — idempotency key로 네트워크 재시도 시 중복 세션 방지
+    const idempotencyKey = `checkout-${user.id}-${priceId}-${Math.floor(Date.now() / 60000)}`; // 1분 단위 키
+    const session = await stripe.checkout.sessions.create(
+      {
+        customer: customerId,
+        line_items: [
+          {
+            price: priceId,
+            quantity: 1,
+          },
+        ],
+        mode: "subscription",
+        success_url: `${req.headers.get("origin")}/home?success=true`,
+        cancel_url: `${req.headers.get("origin")}/home?canceled=true`,
+        metadata: {
+          userId: user.id,
+          tier,
         },
-      ],
-      mode: "subscription",
-      success_url: `${req.headers.get("origin")}/dashboard?success=true`,
-      cancel_url: `${req.headers.get("origin")}/dashboard?canceled=true`,
-      metadata: {
-        userId: user.id,
-        tier,
       },
-    });
+      { idempotencyKey },
+    );
 
     return new Response(
       JSON.stringify({ sessionId: session.id, url: session.url }),

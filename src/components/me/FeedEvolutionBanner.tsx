@@ -1,7 +1,7 @@
 // #59 피드 진화 알림 — 사용 데이터가 일정 수준에 도달하면 알림
 import { useAuth } from '@/context/AuthContext';
 import { useQuery } from '@tanstack/react-query';
-import { veilrumDb } from '@/integrations/supabase/client';
+import { veilorDb } from '@/integrations/supabase/client';
 import { useState } from 'react';
 
 interface Milestone {
@@ -29,9 +29,9 @@ export default function FeedEvolutionBanner() {
     queryKey: ['feed-evolution', user?.id],
     queryFn: async () => {
       const [sessions, signals, codetalk] = await Promise.all([
-        veilrumDb.from('dive_sessions').select('id', { count: 'exact', head: true }).eq('user_id', user!.id).eq('session_completed', true),
-        veilrumDb.from('user_signals').select('id', { count: 'exact', head: true }).eq('user_id', user!.id),
-        veilrumDb.from('codetalk_entries').select('id', { count: 'exact', head: true }).eq('user_id', user!.id),
+        veilorDb.from('dive_sessions').select('id', { count: 'exact', head: true }).eq('user_id', user!.id).eq('session_completed', true),
+        veilorDb.from('user_signals').select('id', { count: 'exact', head: true }).eq('user_id', user!.id),
+        veilorDb.from('codetalk_entries').select('id', { count: 'exact', head: true }).eq('user_id', user!.id),
       ]);
       return { sessions: sessions.count ?? 0, signals: signals.count ?? 0, codetalk: codetalk.count ?? 0 };
     },
