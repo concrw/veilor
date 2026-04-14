@@ -33,14 +33,7 @@ export default function BrandTab({
   brandAiLoading, brandSavePending,
   onSetBrandEdit, onSetBrandForm, onBrandSave, onBrandAiGenerate,
 }: BrandTabProps) {
-  if (!isPro) {
-    return (
-      <PremiumLock
-        label="브랜드 정체성 설계 — 나만의 언어와 방향성으로 개인 브랜드를 구축합니다."
-        onUnlock={() => tryAccess('brand_identity')}
-      />
-    );
-  }
+  void isPro; void tryAccess;
 
   if (!brandEdit) {
     return (

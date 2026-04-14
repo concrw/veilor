@@ -1,5 +1,6 @@
 // PeopleSection — relationship entities list + add/edit
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { veilorDb } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -30,6 +31,7 @@ interface PeopleSectionProps {
 
 export default function PeopleSection({ people: externalPeople, peopleLoading }: PeopleSectionProps) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const qc = useQueryClient();
   const [openPerson, setOpenPerson] = useState<number | null>(null);
   const [addMode, setAddMode] = useState(false);
@@ -91,7 +93,7 @@ export default function PeopleSection({ people: externalPeople, peopleLoading }:
           const personName = 'name' in p ? (p as { name: string }).name : '';
           const personRel = 'relationship' in p ? (p as { relationship: string }).relationship : ('rel' in p ? (p as { rel: string }).rel : '');
           return (
-            <div key={i} onClick={() => setOpenPerson(isOpen ? null : i)} className="vr-fade-in"
+            <div key={i} onClick={() => p.id ? navigate(`/users/${p.id}`) : setOpenPerson(isOpen ? null : i)} className="vr-fade-in"
               style={{ background: isOpen ? `${C.amberGold}04` : C.bg2, border: `1px solid ${isOpen ? `${C.amberGold}44` : C.border}`, borderRadius: 12, padding: '12px 14px', cursor: 'pointer', transition: 'all .2s' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div style={{ width: 34, height: 34, borderRadius: '50%', background: p.color, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Cormorant Garamond', serif", fontWeight: 400, fontSize: 14, color: C.bg }}>{personName[0] ?? '?'}</div>

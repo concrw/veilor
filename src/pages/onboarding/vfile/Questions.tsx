@@ -3,7 +3,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { VFILE_QUESTIONS } from '@/data/vfileQuestions';
 import { VFILE_CONTEXT_LABELS } from '@/lib/vfileAlgorithm';
 import type { VFileContext } from '@/lib/vfileAlgorithm';
-import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 
 const STORAGE_KEY = 'veilor:priper-progress';
@@ -27,7 +26,6 @@ export default function PriperQuestions() {
   });
   const [sliderVal, setSliderVal] = useState(50);
 
-  // 저장된 위치 복원
   useEffect(() => {
     try {
       const saved = localStorage.getItem(storageKey);
@@ -58,7 +56,6 @@ export default function PriperQuestions() {
       setSliderVal(newR[VFILE_QUESTIONS[next].id] ?? 50);
       saveProgress(newR, next);
     } else {
-      // 완료
       localStorage.removeItem(storageKey);
       navigate('/onboarding/vfile/result', { state: { responses: newR, context } });
     }
@@ -74,13 +71,27 @@ export default function PriperQuestions() {
     }
   };
 
+  const choiceButtonStyle = (selected: boolean) => ({
+    border: `1px solid ${selected ? '#D4A574' : '#44403C'}`,
+    background: selected ? '#D4A57410' : 'transparent',
+    color: selected ? '#D4A574' : '#F5F5F4',
+    fontWeight: selected ? 500 : 400,
+    fontFamily: "'DM Sans', sans-serif",
+  } as React.CSSProperties);
+
   return (
-    <div className="min-h-screen bg-background flex flex-col px-6 py-8">
+    <div
+      className="min-h-screen flex flex-col px-6 py-8"
+      style={{ background: '#1C1917', fontFamily: "'DM Sans', sans-serif" }}
+    >
       <div className="max-w-sm w-full mx-auto flex-1 flex flex-col">
-        {/* 맥락 배지 (general 이외일 때만 표시) */}
+        {/* 맥락 배지 */}
         {context !== 'general' && (
           <div className="mb-3">
-            <span className="text-xs px-2.5 py-1 rounded-full bg-violet-500/10 text-violet-500 font-medium">
+            <span
+              className="text-xs px-2.5 py-1 rounded-full font-medium"
+              style={{ background: '#D4A57415', color: '#D4A574', border: '1px solid #D4A57430' }}
+            >
               {contextLabel.icon} {contextLabel.ko}
             </span>
           </div>
@@ -88,34 +99,40 @@ export default function PriperQuestions() {
 
         {/* 진행바 */}
         <div className="mb-6">
-          <div className="flex justify-between text-xs text-muted-foreground mb-2">
+          <div className="flex justify-between text-xs mb-2" style={{ color: '#A8A29E' }}>
             <span>{current + 1} / {VFILE_QUESTIONS.length}</span>
             <span>{progress}%</span>
           </div>
-          <div className="h-1.5 bg-muted rounded-full">
-            <div className="h-1.5 bg-primary rounded-full transition-all" style={{ width: `${progress}%` }} />
+          <div className="h-1.5 rounded-full" style={{ background: '#292524' }}>
+            <div
+              className="h-1.5 rounded-full transition-all"
+              style={{ width: `${progress}%`, background: '#D4A574' }}
+            />
           </div>
         </div>
 
         {/* 축 배지 */}
         <div className="mb-4">
-          <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+          <span
+            className="text-xs px-2 py-0.5 rounded-full font-medium"
+            style={{ background: '#D4A57415', color: '#D4A574' }}
+          >
             {q.axis === 'A' ? '애착' : q.axis === 'B' ? '소통' : q.axis === 'C' ? '욕구표현' : '역할'}
           </span>
         </div>
 
         {/* 질문 */}
-        <h2 className="text-lg font-semibold leading-snug mb-8 flex-1">{q.question}</h2>
+        <h2 className="text-lg font-semibold leading-snug mb-8 flex-1" style={{ color: '#F5F5F4' }}>{q.question}</h2>
 
-        {/* 응답 UI */}
+        {/* scenario 선택 */}
         {q.type === 'scenario' && q.choices && (
           <div className="space-y-3">
             {q.choices.map((choice, i) => (
               <button
                 key={i}
                 onClick={() => handleAnswer(choice.score)}
-                className={`w-full text-left px-4 py-3.5 rounded-xl border text-sm transition-all
-                  ${responses[q.id] === choice.score ? 'border-primary bg-primary/5 font-medium' : 'border-border hover:border-primary/40'}`}
+                className="w-full text-left px-4 py-3.5 rounded-xl text-sm transition-all"
+                style={choiceButtonStyle(responses[q.id] === choice.score)}
               >
                 {choice.label}
               </button>
@@ -123,6 +140,7 @@ export default function PriperQuestions() {
           </div>
         )}
 
+        {/* slider */}
         {q.type === 'slider' && (
           <div className="space-y-6">
             <div className="space-y-4">
@@ -132,24 +150,31 @@ export default function PriperQuestions() {
                 onValueChange={([v]) => setSliderVal(v)}
                 className="w-full"
               />
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>{q.sliderMin}</span>
-                <span className="font-medium text-foreground">{sliderVal}</span>
-                <span>{q.sliderMax}</span>
+              <div className="flex justify-between text-xs">
+                <span style={{ color: '#A8A29E' }}>{q.sliderMin}</span>
+                <span className="font-medium" style={{ color: '#D4A574' }}>{sliderVal}</span>
+                <span style={{ color: '#A8A29E' }}>{q.sliderMax}</span>
               </div>
             </div>
-            <Button className="w-full" onClick={handleSliderConfirm}>다음</Button>
+            <button
+              onClick={handleSliderConfirm}
+              className="w-full py-3 rounded-xl text-sm font-medium"
+              style={{ background: '#D4A574', color: '#1C1917', fontFamily: "'DM Sans', sans-serif" }}
+            >
+              다음
+            </button>
           </div>
         )}
 
+        {/* binary 선택 */}
         {q.type === 'binary' && q.choices && (
           <div className="space-y-3">
             {q.choices.map((choice, i) => (
               <button
                 key={i}
                 onClick={() => handleAnswer(choice.score)}
-                className={`w-full text-left px-4 py-4 rounded-xl border text-sm leading-relaxed transition-all
-                  ${responses[q.id] === choice.score ? 'border-primary bg-primary/5 font-medium' : 'border-border hover:border-primary/40'}`}
+                className="w-full text-left px-4 py-4 rounded-xl text-sm leading-relaxed transition-all"
+                style={choiceButtonStyle(responses[q.id] === choice.score)}
               >
                 {choice.label}
               </button>
@@ -159,7 +184,11 @@ export default function PriperQuestions() {
 
         {/* 이전 버튼 */}
         {current > 0 && (
-          <button onClick={handlePrev} className="mt-6 text-xs text-muted-foreground underline underline-offset-2">
+          <button
+            onClick={handlePrev}
+            className="mt-6 text-xs underline underline-offset-2"
+            style={{ color: '#A8A29E' }}
+          >
             이전 문항으로
           </button>
         )}

@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase, veilorDb } from '@/integrations/supabase/client';
+import { veilorDb } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
@@ -48,8 +49,15 @@ async function checkMessageSafety(message: string): Promise<{ flagged: boolean; 
   }
 }
 
+interface LocationState {
+  roomId?: string;
+  partnerUserId?: string;
+}
+
 export default function DmPage() {
   const { user, primaryMask } = useAuth();
+  const location = useLocation();
+  const locationState = (location.state ?? {}) as LocationState;
   const qc = useQueryClient();
   const [selectedRoom, setSelectedRoom] = useState<DmRoom | null>(null);
   const [newMsg, setNewMsg] = useState('');
@@ -70,6 +78,23 @@ export default function DmPage() {
     },
     enabled: !!user,
   });
+
+  // 프로필 페이지에서 진입 시 — roomId 또는 partnerUserId로 해당 룸 자동 선택
+  useEffect(() => {
+    if (!rooms || selectedRoom) return;
+    const { roomId, partnerUserId } = locationState;
+    if (roomId) {
+      const target = rooms.find((r: DmRoom) => r.id === roomId);
+      if (target) setSelectedRoom(target as DmRoom);
+    } else if (partnerUserId && user) {
+      const target = rooms.find(
+        (r: DmRoom) =>
+          (r.user_a_id === user.id && r.user_b_id === partnerUserId) ||
+          (r.user_a_id === partnerUserId && r.user_b_id === user.id)
+      );
+      if (target) setSelectedRoom(target as DmRoom);
+    }
+  }, [rooms, locationState, user, selectedRoom]);
 
   // 동의 대기 중인 룸 (상대방이 요청했으나 내가 아직 동의 안 한 룸)
   const { data: pendingRooms, refetch: refetchPending } = useQuery({
@@ -176,7 +201,7 @@ export default function DmPage() {
   /* ── 채팅 뷰 ── */
   if (selectedRoom) {
     return (
-      <div className="flex flex-col h-[calc(100vh-8rem)] max-w-sm mx-auto">
+      <div className="flex flex-col h-[calc(100vh-8rem)]">
         {/* 헤더 */}
         <div className="flex items-center gap-3 px-4 py-4 border-b">
           <button onClick={() => setSelectedRoom(null)}
@@ -226,7 +251,7 @@ export default function DmPage() {
 
   /* ── 룸 목록 뷰 ── */
   return (
-    <div className="px-4 py-6 max-w-sm mx-auto space-y-5">
+    <div className="px-4 py-6 space-y-5">
       <div>
         <h2 className="text-lg font-semibold">1:1 메시지</h2>
         <p className="text-sm text-muted-foreground mt-1">커뮤니티에서 연결된 대화</p>

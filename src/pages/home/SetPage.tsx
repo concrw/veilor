@@ -317,7 +317,7 @@ export default function SetPage() {
   );
 
   return (
-    <div className="px-4 py-6 max-w-sm mx-auto space-y-5">
+    <div className="px-4 py-6 space-y-5">
       <div>
         <h2 className="text-lg font-semibold">Set</h2>
         <p className="text-sm text-muted-foreground mt-1">오늘의 언어로 나를 재설정해요.</p>

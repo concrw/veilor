@@ -424,3 +424,236 @@ export type VeilorDatabase = {
     CompositeTypes: Record<string, never>;
   };
 };
+
+// ─────────────────────────────────────────────
+// B2B 타입 정의
+// ─────────────────────────────────────────────
+
+export type B2BOrgType = 'sports' | 'entertainment' | 'corporate';
+export type B2BOrgPlan = 'starter' | 'growth' | 'enterprise' | 'trainee_basic' | 'trainee_full';
+export type B2BOrgStatus = 'active' | 'paused' | 'terminated';
+export type B2BMemberType = 'member' | 'trainee' | 'admin';
+export type B2BMemberStatus = 'active' | 'inactive' | 'released';
+export type B2BAdminRole = 'owner' | 'manager' | 'viewer';
+export type B2BTriggerType = 'scheduled' | 'event_pre' | 'event_post' | 'slump_auto' | 'manual';
+export type B2BRiskLevel = 'normal' | 'low' | 'medium' | 'high';
+export type B2BRoutingResult = 'coaching' | 'counseling' | 'self_care' | 'none';
+export type B2BCoachStatus = 'candidate' | 'probation' | 'active' | 'suspended' | 'inactive';
+export type B2BSessionStatus = 'scheduled' | 'completed' | 'cancelled' | 'no_show';
+
+export interface B2BOrg {
+  id: string;
+  name: string;
+  org_type: B2BOrgType;
+  plan: B2BOrgPlan;
+  member_count: number;
+  contract_start: string;
+  contract_end?: string | null;
+  status: B2BOrgStatus;
+  meta?: Json;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface B2BOrgMember {
+  id: string;
+  org_id: string;
+  user_id: string;
+  member_type: B2BMemberType;
+  birth_year?: number | null;
+  guardian_user_id?: string | null;
+  guardian_consent_at?: string | null;
+  status: B2BMemberStatus;
+  joined_at: string;
+  released_at?: string | null;
+  meta?: Json;
+  created_at: string;
+}
+
+export interface B2BOrgAdmin {
+  id: string;
+  org_id: string;
+  user_id: string;
+  role: B2BAdminRole;
+  created_at: string;
+}
+
+export interface B2BOrgEvent {
+  id: string;
+  org_id: string;
+  event_type: string;
+  event_name: string;
+  event_date: string;
+  target_member_ids?: string[] | null;
+  auto_checkin: boolean;
+  checkin_schedule?: Json;
+  meta?: Json;
+  created_at: string;
+}
+
+export interface B2BCheckinSession {
+  id: string;
+  member_id: string;
+  org_id: string;
+  org_event_id?: string | null;
+  trigger_type: B2BTriggerType;
+  c_control?: number | null;
+  c_commitment?: number | null;
+  c_challenge?: number | null;
+  c_confidence?: number | null;
+  c_avg?: number | null;
+  free_text?: string | null;
+  risk_score: number;
+  risk_level: B2BRiskLevel;
+  routing_result?: B2BRoutingResult | null;
+  days_to_event?: number | null;
+  days_from_event?: number | null;
+  meta?: Json;
+  created_at: string;
+}
+
+export interface B2BCoachingSession {
+  id: string;
+  member_id: string;
+  org_id: string;
+  coach_id: string;
+  trigger_checkin_id?: string | null;
+  trigger_type?: string | null;
+  session_type?: string | null;
+  scheduled_at?: string | null;
+  started_at?: string | null;
+  ended_at?: string | null;
+  duration_min?: number | null;
+  status: B2BSessionStatus;
+  member_rating?: number | null;
+  coach_notes?: string | null;
+  followup_needed: boolean;
+  escalated_to_counseling: boolean;
+  meta?: Json;
+  created_at: string;
+}
+
+export interface B2BCoach {
+  id: string;
+  user_id: string;
+  display_name: string;
+  domains: string[];
+  specialties?: string[];
+  certifications?: string[];
+  languages: string[];
+  msk_affinity?: string[];
+  bio?: string | null;
+  status: B2BCoachStatus;
+  avg_rating: number;
+  session_count: number;
+  max_members: number;
+  current_members: number;
+  meta?: Json;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface B2BOrgAggregate {
+  id: string;
+  org_id: string;
+  week_start: string;
+  total_members: number;
+  checkin_count: number;
+  checkin_rate?: number | null;
+  avg_duration_sec?: number | null;
+  avg_c_control?: number | null;
+  avg_c_commitment?: number | null;
+  avg_c_challenge?: number | null;
+  avg_c_confidence?: number | null;
+  avg_4c?: number | null;
+  risk_normal_count: number;
+  risk_low_count: number;
+  risk_medium_count: number;
+  risk_high_count: number;
+  coaching_sessions_count: number;
+  coaching_avg_rating?: number | null;
+  created_at: string;
+}
+
+export interface B2BTraineeProfile {
+  id: string;
+  member_id: string;
+  org_id: string;
+  birth_year: number;
+  age_group: string;
+  trainee_start_date?: string | null;
+  specialty?: string | null;
+  ltad_stage?: string | null;
+  guardian_name?: string | null;
+  guardian_contact?: string | null;
+  status: string;
+  debuted_at?: string | null;
+  released_at?: string | null;
+  release_reason?: string | null;
+  meta?: Json;
+  created_at: string;
+  updated_at: string;
+}
+
+// 온보딩 폼 입력 타입
+export interface B2BOrgOnboardingInput {
+  name: string;
+  org_type: B2BOrgType;
+  plan: B2BOrgPlan;
+  contract_start: string;
+  admin_email: string;
+}
+
+// 멤버 초대 입력 타입
+export interface B2BMemberInviteInput {
+  email: string;
+  member_type: B2BMemberType;
+  birth_year?: number;
+}
+
+// 4C 체크인 입력 타입
+export interface B2BCheckinInput {
+  org_id: string;
+  org_event_id?: string;
+  trigger_type: B2BTriggerType;
+  c_control: number;
+  c_commitment: number;
+  c_challenge: number;
+  c_confidence: number;
+  free_text?: string;
+}
+
+// ── 코치 포스트 (소개 피드) ──────────────────────────────────────────
+export interface B2BCoachPost {
+  id: string;
+  coach_id: string;
+  user_id: string;
+  title?: string | null;
+  body: string;
+  tags?: string[] | null;
+  is_pinned?: boolean;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+// ── 코치 포털 전용 타입 ──────────────────────────────────────────────
+
+// 코치 관점 멤버 요약 (클라이언트 목록용)
+export interface B2BCoachMemberSummary {
+  member_id: string;
+  org_id: string;
+  org_name?: string;
+  member_type: B2BMemberType;
+  display_name?: string;
+  latest_checkin_at?: string | null;
+  latest_risk_level?: B2BRiskLevel | null;
+  latest_c_avg?: number | null;
+  sessions_count: number;
+}
+
+// 코치 관점 세션 상세 (멤버 정보 + 체크인 포함)
+export interface B2BCoachSessionDetail extends B2BCoachingSession {
+  member_name?: string;
+  org_name?: string;
+  trigger_checkin?: Pick<B2BCheckinSession, 'c_avg' | 'risk_level' | 'routing_result'> | null;
+}

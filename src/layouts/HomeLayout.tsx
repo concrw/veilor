@@ -1,9 +1,14 @@
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, lazy, Suspense } from 'react';
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
 import { useLongPress } from '@/hooks/useLongPress';
 import HoldCircle from '@/components/ai/HoldCircle';
 import AILeadOverlay from '@/components/ai/AILeadOverlay';
 import { useAuth } from '@/context/AuthContext';
+import { useMode } from '@/context/ModeContext';
+
+const RoutineHome = lazy(() => import('@/pages/home/RoutineHome'));
+const ClearHome   = lazy(() => import('@/pages/home/ClearHome'));
+
 
 // 탭별 포인트 컬러 (인계문서 §2 기준)
 interface TabDef { to: string; label: string; color: string; badge?: boolean }
@@ -13,13 +18,6 @@ const ALL_TABS: TabDef[] = [
   { to: '/home/dig',  label: 'Dig',  color: '#A07850' },
   { to: '/home/get',  label: 'Get',  color: '#8C7060' },
   { to: '/home/set',  label: 'Set',  color: '#C4A355' },
-  { to: '/home/me',   label: 'Me',   color: '#E7C17A' },
-];
-
-// V-File 미완료 시 기본 탭 (Get/Set은 진단 후 의미 있음)
-const BASIC_TABS: TabDef[] = [
-  { to: '/home/vent', label: 'Vent', color: '#D4A574' },
-  { to: '/home/dig',  label: 'Dig',  color: '#A07850' },
   { to: '/home/me',   label: 'Me',   color: '#E7C17A' },
 ];
 
@@ -59,22 +57,101 @@ export function FrostBtn({ onClick }: { onClick: () => void }) {
   );
 }
 
+// 데스크톱 사이드바
+function DesktopSidebar({ tabs }: { tabs: TabDef[] }) {
+  return (
+    <aside
+      className="hidden lg:flex flex-col fixed left-0 top-0 bottom-0 z-20"
+      style={{
+        width: '200px',
+        background: '#1C1917',
+        borderRight: '1px solid #44403C',
+      }}
+    >
+      {/* 로고 */}
+      <div
+        className="px-6 py-6 flex items-center"
+        style={{ borderBottom: '1px solid #2A2624' }}
+      >
+        <span
+          className="text-lg tracking-[0.12em] font-light"
+          style={{ color: '#D4A574', fontFamily: "'DM Sans', sans-serif", letterSpacing: '0.15em' }}
+        >
+          VEILOR
+        </span>
+      </div>
+
+      {/* 탭 목록 */}
+      <nav aria-label="메인 탭 네비게이션 (데스크톱)" className="flex flex-col gap-1 px-3 py-4 flex-1">
+        {tabs.map(({ to, label, color, badge }) => (
+          <NavLink
+            key={to}
+            to={to}
+            className="flex items-center gap-3 px-3 py-3 rounded-[10px] relative transition-colors"
+            style={({ isActive }) => ({
+              background: isActive ? `${color}12` : 'transparent',
+            })}
+          >
+            {({ isActive }) => (
+              <>
+                <span
+                  className="w-[6px] h-[6px] rounded-full flex-shrink-0 transition-all"
+                  style={{
+                    background: isActive ? color : '#3C3835',
+                    transform: isActive ? 'scale(1.3)' : 'scale(1)',
+                  }}
+                />
+                <span
+                  className="text-[14px] transition-colors"
+                  style={{
+                    color: isActive ? color : '#78716C',
+                    fontWeight: isActive ? 400 : 300,
+                    fontFamily: "'DM Sans', sans-serif",
+                  }}
+                >
+                  {label}
+                </span>
+                {badge && (
+                  <span
+                    className="absolute top-2 right-3 w-[6px] h-[6px] rounded-full"
+                    style={{ background: color }}
+                    aria-label="새 기능 알림"
+                  />
+                )}
+              </>
+            )}
+          </NavLink>
+        ))}
+      </nav>
+    </aside>
+  );
+}
+
 export default function HomeLayout() {
   const [aiLeadOpen, setAiLeadOpen] = useState(false);
   const [holding, setHolding] = useState(false);
   const location = useLocation();
   const { priperCompleted, personaContextsCompleted } = useAuth();
+  const { mode } = useMode();
 
-  // 67번: 바텀네비 동적 구성 — 사용자 상태에 따라 탭 결정
+  // vent 탭 진입 시 모드별 홈 분기
+  const isVentTab = location.pathname === '/home/vent' || location.pathname === '/home';
+  const showModeHome = isVentTab && (mode === 'routine' || mode === 'clear');
+
+  // Vent 탭 레이블 — 모드에 따라 변경
+  const ventLabel = mode === 'routine' ? 'Routine' : mode === 'clear' ? 'Clear' : 'Vent';
+
+  // 항상 ALL_TABS 표시 (priperCompleted 조건 제거)
   const tabs = useMemo<TabDef[]>(() => {
-    if (!priperCompleted) return BASIC_TABS;
-    // 멀티페르소나 2개 이상이면 Set 탭에 배지 표시
+    const applyVentLabel = (list: TabDef[]) =>
+      list.map(t => t.label === 'Vent' ? { ...t, label: ventLabel } : t);
+
     const hasMultiPersona = personaContextsCompleted.length >= 2;
-    if (hasMultiPersona) {
-      return ALL_TABS.map(t => t.label === 'Set' ? { ...t, badge: true } : t);
-    }
-    return ALL_TABS;
-  }, [priperCompleted, personaContextsCompleted]);
+    const base = hasMultiPersona
+      ? ALL_TABS.map(t => t.label === 'Set' ? { ...t, badge: true } : t)
+      : ALL_TABS;
+    return applyVentLabel(base);
+  }, [personaContextsCompleted, ventLabel]);
 
   // 현재 탭 감지
   const currentTab = location.pathname.split('/').pop() ?? '';
@@ -105,7 +182,7 @@ export default function HomeLayout() {
 
   return (
     <div
-      className="flex flex-col"
+      className="flex"
       style={{ minHeight: '100dvh', background: '#1C1917', fontFamily: "'DM Sans', sans-serif" }}
       {...longPressHandlers}
     >
@@ -127,61 +204,80 @@ export default function HomeLayout() {
         currentTab={currentTab}
       />
 
-      {/* 콘텐츠 */}
-      <main id="main-content" className="flex-1 overflow-y-auto" style={{ paddingBottom: '64px' }}>
-        <Outlet />
-      </main>
+      {/* 데스크톱 사이드바 (lg 이상에서만 표시) */}
+      <DesktopSidebar tabs={tabs} />
 
-      {/* 하단 탭 nav */}
-      <nav
-        aria-label="메인 탭 네비게이션"
-        className="fixed bottom-0 inset-x-0 z-20 flex justify-around"
-        style={{
-          background: '#1C1917',
-          borderTop: '1px solid #2A2624',
-          padding: '9px 10px 16px',
-        }}
-      >
-        {tabs.map(({ to, label, color, badge }) => (
-          <NavLink
-            key={to}
-            to={to}
-            className="flex flex-col items-center gap-1 cursor-pointer px-3 py-1 rounded-[9px] border-none bg-transparent relative"
-            style={({ isActive }) => ({
-              background: isActive ? `${color}0A` : 'transparent',
-            })}
-          >
-            {({ isActive }) => (
-              <>
-                <span
-                  className="w-[5px] h-[5px] rounded-full transition-all"
-                  style={{
-                    background: isActive ? color : '#3C3835',
-                    transform: isActive ? 'scale(1.3)' : 'scale(1)',
-                  }}
-                />
-                <span
-                  className="text-[11px] font-light transition-colors"
-                  style={{
-                    color: isActive ? color : '#57534E',
-                    fontWeight: isActive ? 400 : 300,
-                    fontFamily: "'DM Sans', sans-serif",
-                  }}
-                >
-                  {label}
-                </span>
-                {badge && (
-                  <span
-                    className="absolute -top-0.5 -right-0.5 w-[6px] h-[6px] rounded-full"
-                    style={{ background: color }}
-                    aria-label="새 기능 알림"
-                  />
-                )}
-              </>
+      {/* 메인 영역 */}
+      <div className="flex flex-col flex-1 lg:ml-[200px]">
+        {/* 콘텐츠 — 모드별 분기 */}
+        <main
+          id="main-content"
+          className="flex-1 overflow-y-auto"
+          style={{ paddingBottom: 'var(--bottom-nav-height, 64px)' }}
+        >
+          {/* 콘텐츠 너비 제한 — 모바일: sm, 태블릿: lg, 데스크톱: 2xl */}
+          <div className="w-full max-w-sm md:max-w-lg lg:max-w-2xl mx-auto">
+            {showModeHome ? (
+              <Suspense fallback={<div className="min-h-screen bg-[#1C1917]" />}>
+                {mode === 'routine' ? <RoutineHome /> : <ClearHome />}
+              </Suspense>
+            ) : (
+              <Outlet />
             )}
-          </NavLink>
-        ))}
-      </nav>
+          </div>
+        </main>
+
+        {/* 하단 탭 nav — lg 미만에서만 표시 */}
+        <nav
+          aria-label="메인 탭 네비게이션"
+          className="lg:hidden fixed bottom-0 left-0 right-0 z-20 flex justify-around"
+          style={{
+            background: '#1C1917',
+            borderTop: '1px solid #2A2624',
+            padding: '9px 10px 16px',
+          }}
+        >
+          {tabs.map(({ to, label, color, badge }) => (
+            <NavLink
+              key={to}
+              to={to}
+              className="flex flex-col items-center gap-1 cursor-pointer px-3 py-1 rounded-[9px] border-none bg-transparent relative"
+              style={({ isActive }) => ({
+                background: isActive ? `${color}0A` : 'transparent',
+              })}
+            >
+              {({ isActive }) => (
+                <>
+                  <span
+                    className="w-[5px] h-[5px] rounded-full transition-all"
+                    style={{
+                      background: isActive ? color : '#3C3835',
+                      transform: isActive ? 'scale(1.3)' : 'scale(1)',
+                    }}
+                  />
+                  <span
+                    className="text-[11px] font-light transition-colors"
+                    style={{
+                      color: isActive ? color : '#57534E',
+                      fontWeight: isActive ? 400 : 300,
+                      fontFamily: "'DM Sans', sans-serif",
+                    }}
+                  >
+                    {label}
+                  </span>
+                  {badge && (
+                    <span
+                      className="absolute -top-0.5 -right-0.5 w-[6px] h-[6px] rounded-full"
+                      style={{ background: color }}
+                      aria-label="새 기능 알림"
+                    />
+                  )}
+                </>
+              )}
+            </NavLink>
+          ))}
+        </nav>
+      </div>
     </div>
   );
 }

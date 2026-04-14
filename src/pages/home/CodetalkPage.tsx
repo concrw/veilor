@@ -182,7 +182,7 @@ export default function CodetalkPage() {
   );
 
   return (
-    <div className="px-4 py-6 space-y-5 max-w-sm mx-auto">
+    <div className="px-4 py-6 space-y-5">
       <KeywordCard keyword={keyword} streakCount={streakCount} streakMessage={streakMessage} />
 
       {/* 기록 영역 */}

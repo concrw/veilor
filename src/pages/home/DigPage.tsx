@@ -308,7 +308,7 @@ export default function DigPage() {
   }
 
   return (
-    <div className="px-4 py-6 max-w-sm mx-auto space-y-5">
+    <div className="px-4 py-6 space-y-5">
       <div>
         <h2 className="text-lg font-semibold">Dig</h2>
         <p className="text-sm text-muted-foreground mt-1">왜 이런 패턴이 반복되는지 파고들어요.</p>

@@ -75,7 +75,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, sess) => {
-      // VS-06-1: TOKEN_REFRESH_FAILED / 강제 로그아웃 이벤트 처리
+      // TOKEN_REFRESH_FAILED — 세션 만료 강제 로그아웃
       if (event === 'TOKEN_REFRESHED' && !sess) {
         console.warn('Token refresh returned no session — signing out');
         await supabase.auth.signOut();
@@ -86,7 +86,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return;
       }
 
-      if (event === 'SIGNED_OUT' || (!sess && event !== 'INITIAL_SESSION')) {
+      // SIGNED_OUT — 로그아웃
+      if (event === 'SIGNED_OUT') {
+        setSession(null);
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+
+      // INITIAL_SESSION — 앱 최초 로드 (비로그인 포함)
+      if (event === 'INITIAL_SESSION') {
+        setSession(sess ?? null);
+        setUser(sess?.user ?? null);
+        if (sess?.user) await syncOnboarding(sess.user.id);
+        setLoading(false);
+        return;
+      }
+
+      // SIGNED_IN / TOKEN_REFRESHED / USER_UPDATED 등 나머지 이벤트
+      if (!sess) {
         setSession(null);
         setUser(null);
         setLoading(false);
@@ -94,8 +112,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       setSession(sess);
-      setUser(sess?.user ?? null);
-      if (sess?.user) await syncOnboarding(sess.user.id);
+      setUser(sess.user);
+      await syncOnboarding(sess.user.id);
       setLoading(false);
     });
 
@@ -149,7 +167,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) toast({ title: '로그인 실패', description: error.message, variant: 'destructive' });
+    // 에러 표시는 Login.tsx에서 담당 — 여기서는 토스트 없음
     return { error };
   };
 
@@ -158,9 +176,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       email, password,
       options: { emailRedirectTo: `${window.location.origin}/` },
     });
-    if (error) {
-      toast({ title: '회원가입 실패', description: error.message, variant: 'destructive' });
-    } else if (data.user) {
+    // 에러/성공 표시는 Signup.tsx에서 담당
+    if (!error && data.user) {
       await veilorDb.from('user_profiles').upsert({
         user_id: data.user.id,
         nickname: nickname ?? email.split('@')[0],
@@ -169,7 +186,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       }, { onConflict: 'user_id' });
-      toast({ title: '회원가입 완료', description: '이메일을 확인해 주세요.' });
     }
     return { error };
   };
