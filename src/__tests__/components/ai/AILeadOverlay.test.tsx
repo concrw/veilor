@@ -140,15 +140,16 @@ describe('AILeadOverlay', () => {
   it('has a text input field', () => {
     render(<AILeadOverlay open={true} onClose={onClose} />);
 
-    const input = screen.getByLabelText('AI에게 보낼 메시지 입력');
+    const input = screen.getByLabelText(/AI에게 보낼 메시지를 입력해요/);
     expect(input).toBeInTheDocument();
   });
 
-  it('has a microphone button', () => {
+  it('has a microphone button with aria-pressed', () => {
     render(<AILeadOverlay open={true} onClose={onClose} />);
 
-    const micBtn = screen.getByLabelText('음성으로 말하기');
+    const micBtn = screen.getByLabelText('음성 입력 시작');
     expect(micBtn).toBeInTheDocument();
+    expect(micBtn).toHaveAttribute('aria-pressed', 'false');
   });
 
   it('shows swipe hint text', () => {
