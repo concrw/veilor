@@ -35,14 +35,7 @@ export default function IkigaiTab({
   ikigaiAiLoading, ikigaiAiInsight, ikigaiSavePending,
   onSetIkigaiEdit, onSetIkigaiForm, onIkigaiSave, onIkigaiAiInsight,
 }: IkigaiTabProps) {
-  if (!isPro) {
-    return (
-      <PremiumLock
-        label="Ikigai 설계 — 사랑/재능/소명/천직의 교차점에서 삶의 방향을 설계합니다."
-        onUnlock={() => tryAccess('ikigai_design')}
-      />
-    );
-  }
+  void isPro; void tryAccess;
 
   if (!ikigaiEdit) {
     return (

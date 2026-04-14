@@ -8,6 +8,8 @@ import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import type { OnboardingStep } from "./context/AuthContext";
 import { LanguageProvider } from "./context/LanguageContext";
+import { ModeProvider, useMode } from "./context/ModeContext";
+
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { OfflineBanner } from "./components/OfflineBanner";
 import { Analytics } from "@vercel/analytics/react";
@@ -24,8 +26,27 @@ const VFileStart     = lazy(() => import("./pages/onboarding/vfile/Start"));
 const VFileQuestions = lazy(() => import("./pages/onboarding/vfile/Questions"));
 const VFileResult    = lazy(() => import("./pages/onboarding/vfile/Result"));
 
+// ── 모드 선택 ─────────────────────────────────────────────────────
+const ModeSelect = lazy(() => import("./pages/onboarding/ModeSelect"));
+
+// ── Persona ───────────────────────────────────────────────────────
+const Personas              = lazy(() => import("./pages/Personas"));
+const PersonaRelationships  = lazy(() => import("./pages/PersonaRelationships"));
+
 // ── Admin ────────────────────────────────────────────────────────
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
+
+// ── B2B ──────────────────────────────────────────────────────────
+const B2BOrgOnboarding = lazy(() => import("./pages/b2b/OrgOnboarding"));
+const B2BMemberInvite  = lazy(() => import("./pages/b2b/MemberInvite"));
+const B2BOrgDashboard  = lazy(() => import("./pages/b2b/OrgDashboard"));
+const B2BCheckin          = lazy(() => import("./pages/b2b/Checkin"));
+const B2BTraineeCheckin   = lazy(() => import("./pages/b2b/TraineeCheckin"));
+const B2BCoachMatch       = lazy(() => import("./pages/b2b/CoachMatch"));
+const B2BGuardianApp      = lazy(() => import("./pages/b2b/GuardianApp"));
+const B2BCoachList        = lazy(() => import("./pages/b2b/CoachList"));
+const B2BCoachProfile     = lazy(() => import("./pages/b2b/CoachProfile"));
+const B2BCoachPortal      = lazy(() => import("./pages/b2b/CoachPortal"));
 
 // ── Main ─────────────────────────────────────────────────────────
 const HomeLayout  = lazy(() => import("./layouts/HomeLayout"));
@@ -39,6 +60,7 @@ const DivePage        = lazy(() => import("./pages/home/DivePage"));
 const SexSelfQuestions = lazy(() => import("./pages/home/sexself/Questions"));
 const SexSelfResult    = lazy(() => import("./pages/home/sexself/Result"));
 const CommunityPage   = lazy(() => import("./pages/home/CommunityPage"));
+const UserProfilePage = lazy(() => import("./pages/users/UserProfilePage"));
 const NotFound    = lazy(() => import("./pages/NotFound"));
 
 import { toast as sonnerToast } from "sonner";
@@ -109,8 +131,13 @@ const OnboardingGuard = ({ children }: { children: JSX.Element }) => {
 
 const RootRedirect = () => {
   const { user, loading, onboardingStep } = useAuth();
-  if (loading) return <PageLoader />;
+  const { isFirstVisit, isReady } = useMode();
+  if (loading || !isReady) return <PageLoader />;
   if (!user) return <Navigate to="/auth/login" replace />;
+  // 온보딩 완료 후 최초 진입 시 → 모드 선택 화면
+  if (onboardingStep === 'completed' && isFirstVisit) {
+    return <Navigate to="/onboarding/mode-select" replace />;
+  }
   const stepPath: Record<OnboardingStep, string> = {
     welcome: '/onboarding/welcome', cq: '/onboarding/cq',
     priper: '/onboarding/vfile/start', completed: '/home',
@@ -122,6 +149,7 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <HelmetProvider>
       <LanguageProvider>
+      <ModeProvider>
       <TooltipProvider>
         <Toaster />
         <Sonner />
@@ -149,13 +177,13 @@ const App = () => (
                   <RequireAuth><OnboardingGuard><CoreQuestions /></OnboardingGuard></RequireAuth>
                 } />
                 <Route path="/onboarding/vfile/start" element={
-                  <RequireAuth><VFileStart /></RequireAuth>
+                  <RequireAuth><OnboardingGuard><VFileStart /></OnboardingGuard></RequireAuth>
                 } />
                 <Route path="/onboarding/vfile/questions" element={
-                  <RequireAuth><VFileQuestions /></RequireAuth>
+                  <RequireAuth><OnboardingGuard><VFileQuestions /></OnboardingGuard></RequireAuth>
                 } />
                 <Route path="/onboarding/vfile/result" element={
-                  <RequireAuth><VFileResult /></RequireAuth>
+                  <RequireAuth><OnboardingGuard><VFileResult /></OnboardingGuard></RequireAuth>
                 } />
 
                 {/* 메인 앱 */}
@@ -175,9 +203,59 @@ const App = () => (
                   <Route path="community" element={<CommunityPage />} />
                 </Route>
 
+                {/* 유저 프로필 */}
+                <Route path="/users/:userId" element={
+                  <RequireAuth><RequireOnboarding><UserProfilePage /></RequireOnboarding></RequireAuth>
+                } />
+
+                {/* 모드 선택 */}
+                <Route path="/onboarding/mode-select" element={
+                  <RequireAuth><ModeSelect /></RequireAuth>
+                } />
+
+                {/* 페르소나 */}
+                <Route path="/personas" element={
+                  <RequireAuth><Personas /></RequireAuth>
+                } />
+                <Route path="/personas/relationships" element={
+                  <RequireAuth><PersonaRelationships /></RequireAuth>
+                } />
+
                 {/* 관리자 */}
                 <Route path="/admin" element={
                   <RequireAdmin><AdminDashboard /></RequireAdmin>
+                } />
+
+                {/* B2B */}
+                <Route path="/b2b/onboarding" element={
+                  <RequireAuth><B2BOrgOnboarding /></RequireAuth>
+                } />
+                <Route path="/b2b/dashboard/:orgId" element={
+                  <RequireAuth><B2BOrgDashboard /></RequireAuth>
+                } />
+                <Route path="/b2b/checkin/:orgId" element={
+                  <RequireAuth><B2BCheckin /></RequireAuth>
+                } />
+                <Route path="/b2b/invite/:orgId" element={
+                  <RequireAuth><B2BMemberInvite /></RequireAuth>
+                } />
+                <Route path="/b2b/coach-match/:orgId" element={
+                  <RequireAuth><B2BCoachMatch /></RequireAuth>
+                } />
+                <Route path="/b2b/trainee-checkin/:orgId" element={
+                  <RequireAuth><B2BTraineeCheckin /></RequireAuth>
+                } />
+                <Route path="/b2b/guardian/:orgId" element={
+                  <RequireAuth><B2BGuardianApp /></RequireAuth>
+                } />
+                <Route path="/b2b/coaches" element={
+                  <RequireAuth><B2BCoachList /></RequireAuth>
+                } />
+                <Route path="/b2b/coaches/:coachId" element={
+                  <RequireAuth><B2BCoachProfile /></RequireAuth>
+                } />
+                <Route path="/b2b/coach/portal" element={
+                  <RequireAuth><B2BCoachPortal /></RequireAuth>
                 } />
 
                 <Route path="*" element={<NotFound />} />
@@ -189,6 +267,7 @@ const App = () => (
           <SpeedInsights />
         </AuthProvider>
       </TooltipProvider>
+      </ModeProvider>
       </LanguageProvider>
     </HelmetProvider>
   </QueryClientProvider>

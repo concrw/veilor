@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AmberBtn, FrostBtn } from '../../layouts/HomeLayout';
 import { useAmberAttention } from '../../hooks/useAmberAttention';
 import { supabase } from '../../integrations/supabase/client';
@@ -104,6 +105,7 @@ export default function MePage() {
     }, { onConflict: 'user_id,sub_zone' });
   }, [user, zoneState]);
 
+  const navigate = useNavigate();
   const [chartMode, setChartMode] = useState<'prev' | 'now'>('now');
   const [openPersona, setOpenPersona] = useState<number | null>(null);
   const [openGroups, setOpenGroups] = useState<Record<number, boolean>>({ 0: true, 1: true, 2: true });
@@ -208,9 +210,17 @@ export default function MePage() {
           <div className="vr-fade-in" style={{ background: C.bg2, border: `1px solid ${C.border}`, borderRadius: 14, padding: '15px 17px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 11 }}>
               <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 16, color: C.text }}>멀티페르소나</span>
-              <span style={{ fontSize: 9, fontWeight: 300, color: C.text4 }}>
-                {meData.personasLoading ? '...' : `${meData.personas.length > 0 ? meData.personas.length : PERSONAS.length}개 발견됨`}
-              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 9, fontWeight: 300, color: C.text4 }}>
+                  {meData.personasLoading ? '...' : `${meData.personas.length > 0 ? meData.personas.length : PERSONAS.length}개 발견됨`}
+                </span>
+                <button
+                  onClick={() => navigate('/personas')}
+                  style={{ fontSize: 9, padding: '3px 9px', borderRadius: 99, border: `1px solid ${C.amberGold}44`, color: C.amberGold, background: `${C.amberGold}08`, cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", whiteSpace: 'nowrap' }}
+                >
+                  전체 보기
+                </button>
+              </div>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
               {(meData.personas.length > 0 ? meData.personas : PERSONAS).map((p, i) => {

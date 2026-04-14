@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import ZoneToggle from './ZoneToggle';
 import AppCustomization from '@/components/settings/AppCustomization';
 import { LANG_LABELS } from '@/data/mePageData';
+import { useMode, type UXMode } from '@/context/ModeContext';
 
 export interface AiSettings {
   name: string;
@@ -47,6 +48,7 @@ function SettingsSheet({
   aiSettings?: AiSettings; onAiSettingsChange?: (s: AiSettings) => void;
 }) {
   const { user, signOut } = useAuth();
+  const { mode, setMode } = useMode();
   const [langOpen, setLangOpen] = useState(false);
   const [notifAmber, setNotifAmber] = useState(true);
   const [notifReport, setNotifReport] = useState(true);
@@ -247,6 +249,40 @@ function SettingsSheet({
                 <p style={{ fontSize: 10, color: C.text4 }}>{row.sub}</p>
               </div>
               <ZoneToggle on={row.on} onToggle={() => toggleNotif(row.key, row.setter)} />
+            </div>
+          ))}
+
+          {/* UX 모드 */}
+          <p style={{ fontSize: 9, fontWeight: 400, letterSpacing: '.09em', textTransform: 'uppercase', color: C.text5, padding: '8px 0 4px' }}>UX 모드</p>
+          {(
+            [
+              { id: 'original' as UXMode, label: '오리지널', sub: '감성적 · 대화 중심', color: C.amberGold },
+              { id: 'clear'    as UXMode, label: '클리어',   sub: '구조적 · 멘탈 대시보드', color: '#4AAEFF' },
+              { id: 'routine'  as UXMode, label: '루틴',     sub: '습관 · 스트릭 · 30초 체크인', color: '#F5C98A' },
+            ] as { id: UXMode; label: string; sub: string; color: string }[]
+          ).map((m) => (
+            <div
+              key={m.id}
+              onClick={() => { setMode(m.id); onClose(); }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                padding: '11px 13px',
+                background: mode === m.id ? `${m.color}08` : C.bg2,
+                border: `1px solid ${mode === m.id ? `${m.color}55` : C.border}`,
+                borderRadius: 11, cursor: 'pointer',
+                transition: 'border-color .2s, background .2s',
+              }}
+            >
+              <div style={{ width: 30, height: 30, borderRadius: 8, background: `${m.color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span style={{ width: 12, height: 12, borderRadius: '50%', background: m.color, display: 'block' }} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 15, color: C.text, marginBottom: 1 }}>{m.label}</p>
+                <p style={{ fontSize: 10, color: C.text4 }}>{m.sub}</p>
+              </div>
+              {mode === m.id && (
+                <span style={{ fontSize: 11, color: m.color }}>✓ 사용 중</span>
+              )}
             </div>
           ))}
 

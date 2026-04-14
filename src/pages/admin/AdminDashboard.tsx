@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { veilorDb } from "@/integrations/supabase/client";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend, RadarChart, Radar, PolarGrid,
-  PolarAngleAxis, PolarRadiusAxis,
+  PolarAngleAxis, PolarRadiusAxis, LineChart, Line,
 } from "recharts";
 
 // ── 색상 팔레트 ─────────────────────────────────────────────────────
@@ -32,11 +33,28 @@ const FRAGMENT_LABELS: Record<string, string> = {
   "과거를 안고 사는 나": "과거를 안고 사는 나",
 };
 
+// ── B2B 타입 ─────────────────────────────────────────────────────────
+type B2BOrg = {
+  id: string; org_name: string; org_type: string; plan: string;
+  status: string; created_at: string; member_count: number;
+};
+type B2BCoachRow = {
+  id: string; display_name: string; domains: string[]; status: string;
+  avg_rating: number; session_count: number; current_members: number; max_members: number;
+};
+type B2BCheckinAgg = {
+  week: string; avg_c: number; high_risk: number; medium_risk: number; total: number;
+};
+
 // ── 타입 ────────────────────────────────────────────────────────────
 type Row = {
   id: string; seq: number; primary_concern: string; relationship_status: string;
   axis_attachment: number; axis_communication: number; axis_expression: number; axis_role: number;
   mask_type: string; attachment_type: string; fragment_count: number; session_count: number;
+};
+
+type GroupMembership = {
+  user_id: string; group_code: string; source: string;
 };
 
 // ── 헬퍼 ────────────────────────────────────────────────────────────
@@ -59,23 +77,244 @@ const StatCard = ({ label, value, sub }: { label: string; value: string | number
   </div>
 );
 
+// ── B2B 탭 컴포넌트 ─────────────────────────────────────────────────
+function B2BTab() {
+  const [orgs,    setOrgs]    = useState<B2BOrg[]>([]);
+  const [coaches, setCoaches] = useState<B2BCoachRow[]>([]);
+  const [checkinTrend, setCheckinTrend] = useState<B2BCheckinAgg[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [coachForm, setCoachForm] = useState({ display_name: '', bio: '', domains: 'sports', max_members: 10 });
+  const [saving, setSaving] = useState(false);
+  const [coachMsg, setCoachMsg] = useState('');
+
+  useEffect(() => { loadB2B(); }, []);
+
+  const loadB2B = async () => {
+    setLoading(true);
+    const [{ data: orgData }, { data: coachData }, { data: ciData }] = await Promise.all([
+      veilorDb.from('b2b_orgs').select('id,org_name,org_type,plan,status,created_at').order('created_at', { ascending: false }).limit(50),
+      veilorDb.from('b2b_coaches').select('*').order('created_at', { ascending: false }),
+      veilorDb.from('b2b_checkin_sessions')
+        .select('created_at,risk_level,c_avg')
+        .gte('created_at', new Date(Date.now() - 28 * 86400_000).toISOString())
+        .order('created_at', { ascending: true }),
+    ]);
+
+    // 주간 체크인 집계
+    const weekMap: Record<string, { total: number; sumC: number; high: number; medium: number }> = {};
+    ((ciData ?? []) as { created_at: string; risk_level: string; c_avg: number }[]).forEach(r => {
+      const week = new Date(r.created_at).toISOString().slice(0, 10).slice(0, 7) + '-W' +
+        Math.ceil(new Date(r.created_at).getDate() / 7);
+      if (!weekMap[week]) weekMap[week] = { total: 0, sumC: 0, high: 0, medium: 0 };
+      weekMap[week].total++;
+      weekMap[week].sumC += r.c_avg ?? 0;
+      if (r.risk_level === 'high')   weekMap[week].high++;
+      if (r.risk_level === 'medium') weekMap[week].medium++;
+    });
+    const trend = Object.entries(weekMap).map(([week, v]) => ({
+      week, avg_c: Math.round((v.sumC / v.total) * 10) / 10,
+      high_risk: v.high, medium_risk: v.medium, total: v.total,
+    }));
+
+    setOrgs((orgData ?? []) as B2BOrg[]);
+    setCoaches((coachData ?? []) as B2BCoachRow[]);
+    setCheckinTrend(trend);
+    setLoading(false);
+  };
+
+  const handleCoachRegister = async () => {
+    setSaving(true);
+    setCoachMsg('');
+    const { error } = await veilorDb.from('b2b_coaches').insert({
+      display_name:    coachForm.display_name,
+      bio:             coachForm.bio || null,
+      domains:         [coachForm.domains],
+      max_members:     coachForm.max_members,
+      current_members: 0,
+      session_count:   0,
+      avg_rating:      0,
+      status:          'active',
+    });
+    setSaving(false);
+    if (error) { setCoachMsg(`오류: ${error.message}`); }
+    else { setCoachMsg('코치 등록 완료'); setCoachForm({ display_name: '', bio: '', domains: 'sports', max_members: 10 }); loadB2B(); }
+  };
+
+  const toggleCoachStatus = async (id: string, current: string) => {
+    const next = current === 'active' ? 'inactive' : 'active';
+    await veilorDb.from('b2b_coaches').update({ status: next }).eq('id', id);
+    loadB2B();
+  };
+
+  if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" /></div>;
+
+  const ORG_TYPE_LABELS: Record<string, string> = { sports: '스포츠', entertainment: '엔터테인먼트', corporate: '기업' };
+  const PLAN_LABELS: Record<string, string> = { starter: '스타터', growth: '그로스', enterprise: '엔터프라이즈', trainee_basic: '트레이니 기본', trainee_full: '트레이니 풀' };
+
+  return (
+    <div className="space-y-8">
+      {/* 요약 카드 */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <StatCard label="전체 조직" value={`${orgs.length}개`} />
+        <StatCard label="활성 조직" value={`${orgs.filter(o => o.status === 'active').length}개`} />
+        <StatCard label="등록 코치" value={`${coaches.length}명`} sub={`활성 ${coaches.filter(c => c.status === 'active').length}명`} />
+        <StatCard label="최근 4주 체크인" value={`${checkinTrend.reduce((a, b) => a + b.total, 0)}회`} />
+      </div>
+
+      {/* 4주 체크인 트렌드 */}
+      {checkinTrend.length > 0 && (
+        <Section title="최근 4주 체크인 트렌드" sub="주간 평균 4C 점수 및 위험 신호 건수">
+          <div className="h-56">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={checkinTrend} margin={{ top: 4, right: 16, bottom: 4, left: 0 }}>
+                <XAxis dataKey="week" tick={{ fill: '#ffffff80', fontSize: 11 }} />
+                <YAxis yAxisId="c" domain={[0, 10]} tick={{ fill: '#ffffff80', fontSize: 11 }} />
+                <YAxis yAxisId="risk" orientation="right" tick={{ fill: '#ffffff80', fontSize: 11 }} />
+                <Tooltip contentStyle={{ background: '#1a1a2e', border: 'none', borderRadius: 8 }} />
+                <Legend wrapperStyle={{ fontSize: 12, color: '#ffffff80' }} />
+                <Line yAxisId="c" type="monotone" dataKey="avg_c" name="평균 4C" stroke="#6366f1" strokeWidth={2} dot />
+                <Line yAxisId="risk" type="monotone" dataKey="high_risk" name="HIGH 위험" stroke="#ef4444" strokeWidth={1.5} dot />
+                <Line yAxisId="risk" type="monotone" dataKey="medium_risk" name="MEDIUM 위험" stroke="#f59e0b" strokeWidth={1.5} dot />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </Section>
+      )}
+
+      {/* 조직 목록 */}
+      <Section title="B2B 조직 목록" sub="최근 가입 순">
+        {orgs.length === 0 ? (
+          <p className="text-white/40 text-sm text-center py-6">등록된 조직이 없습니다.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-white/40 text-xs border-b border-white/10">
+                  <th className="text-left py-2 pr-4">조직명</th>
+                  <th className="text-left py-2 pr-4">분야</th>
+                  <th className="text-left py-2 pr-4">플랜</th>
+                  <th className="text-left py-2 pr-4">상태</th>
+                  <th className="text-left py-2">가입일</th>
+                </tr>
+              </thead>
+              <tbody>
+                {orgs.map(org => (
+                  <tr key={org.id} className="border-b border-white/5 hover:bg-white/5">
+                    <td className="py-2 pr-4 font-medium">{org.org_name}</td>
+                    <td className="py-2 pr-4 text-white/60">{ORG_TYPE_LABELS[org.org_type] ?? org.org_type}</td>
+                    <td className="py-2 pr-4 text-white/60">{PLAN_LABELS[org.plan] ?? org.plan}</td>
+                    <td className="py-2 pr-4">
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${org.status === 'active' ? 'bg-green-500/20 text-green-400' : 'bg-white/10 text-white/40'}`}>
+                        {org.status}
+                      </span>
+                    </td>
+                    <td className="py-2 text-white/40 text-xs">{org.created_at.slice(0, 10)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Section>
+
+      {/* 코치 관리 */}
+      <Section title="코치 관리" sub="코치 등록 및 활성화/비활성화">
+        {/* 등록 폼 */}
+        <div className="bg-white/5 rounded-xl p-4 mb-4 space-y-3">
+          <p className="text-sm font-medium text-white/80">새 코치 등록</p>
+          <div className="grid md:grid-cols-2 gap-3">
+            <input
+              placeholder="이름 (표시명)"
+              value={coachForm.display_name}
+              onChange={e => setCoachForm(f => ({ ...f, display_name: e.target.value }))}
+              className="bg-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 border border-white/10 focus:outline-none focus:border-indigo-500"
+            />
+            <select
+              value={coachForm.domains}
+              onChange={e => setCoachForm(f => ({ ...f, domains: e.target.value }))}
+              className="bg-white/10 rounded-lg px-3 py-2 text-sm text-white border border-white/10 focus:outline-none focus:border-indigo-500"
+            >
+              <option value="sports">스포츠</option>
+              <option value="entertainment">엔터테인먼트</option>
+              <option value="corporate">기업</option>
+            </select>
+            <input
+              placeholder="한 줄 소개 (선택)"
+              value={coachForm.bio}
+              onChange={e => setCoachForm(f => ({ ...f, bio: e.target.value }))}
+              className="bg-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 border border-white/10 focus:outline-none focus:border-indigo-500 md:col-span-2"
+            />
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-white/50">최대 담당 인원</label>
+              <input
+                type="number" min={1} max={50}
+                value={coachForm.max_members}
+                onChange={e => setCoachForm(f => ({ ...f, max_members: Number(e.target.value) }))}
+                className="w-20 bg-white/10 rounded-lg px-3 py-2 text-sm text-white border border-white/10 focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+            <button
+              onClick={handleCoachRegister}
+              disabled={saving || !coachForm.display_name}
+              className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white text-sm rounded-lg px-4 py-2 transition-colors"
+            >
+              {saving ? '등록 중...' : '등록'}
+            </button>
+          </div>
+          {coachMsg && <p className="text-xs text-green-400">{coachMsg}</p>}
+        </div>
+
+        {/* 코치 목록 */}
+        {coaches.length === 0 ? (
+          <p className="text-white/40 text-sm text-center py-4">등록된 코치가 없습니다.</p>
+        ) : (
+          <div className="space-y-2">
+            {coaches.map(c => (
+              <div key={c.id} className="flex items-center justify-between bg-white/5 rounded-lg px-4 py-3">
+                <div>
+                  <p className="text-sm font-medium">{c.display_name}</p>
+                  <p className="text-xs text-white/40">
+                    {c.domains?.join(', ')} · {c.session_count}회 진행 · {c.current_members}/{c.max_members}명
+                    {c.avg_rating > 0 && ` · ★ ${c.avg_rating.toFixed(1)}`}
+                  </p>
+                </div>
+                <button
+                  onClick={() => toggleCoachStatus(c.id, c.status)}
+                  className={`text-xs px-3 py-1 rounded-full transition-colors ${
+                    c.status === 'active'
+                      ? 'bg-green-500/20 text-green-400 hover:bg-red-500/20 hover:text-red-400'
+                      : 'bg-white/10 text-white/40 hover:bg-green-500/20 hover:text-green-400'
+                  }`}
+                >
+                  {c.status === 'active' ? '활성' : '비활성'}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </Section>
+    </div>
+  );
+}
+
 // ── 메인 ────────────────────────────────────────────────────────────
 export default function AdminDashboard() {
   const [rows, setRows] = useState<Row[]>([]);
   const [fragments, setFragments] = useState<{ name_ko: string }[]>([]);
+  const [memberships, setMemberships] = useState<GroupMembership[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'b2c' | 'b2b'>('b2c');
 
   useEffect(() => {
     async function load() {
-      const { data: vData } = await supabase
-        .from("admin_dashboard_stats" as never)
-        .select("*")
-        .limit(2000);
-      const { data: fData } = await supabase
-        .from("persona_fragments" as never)
-        .select("name_ko");
+      const [{ data: vData }, { data: fData }, { data: mData }] = await Promise.all([
+        supabase.from("admin_dashboard_stats" as never).select("*").limit(2000),
+        supabase.from("persona_fragments" as never).select("name_ko"),
+        supabase.from("user_group_memberships" as never).select("user_id,group_code,source").limit(5000),
+      ]);
       setRows((vData as Row[]) || []);
       setFragments((fData as { name_ko: string }[]) || []);
+      setMemberships((mData as GroupMembership[]) || []);
       setLoading(false);
     }
     load();
@@ -114,6 +353,22 @@ export default function AdminDashboard() {
   // 페르소나 조각 분포
   const fragNameDist = countBy(fragments, f => f.name_ko);
 
+  // 그룹 멤버십 집계
+  const GROUP_CODES = ['APV','DEP','GVR','AVD','EMP','PWR','SAV','SCP'];
+  const groupDist = GROUP_CODES.map(code => {
+    const primary = memberships.filter(m => m.group_code === code && m.source === 'primary').length;
+    const fragment = memberships.filter(m => m.group_code === code && m.source === 'fragment').length;
+    return { name: MASK_LABELS[code] || code, primary, fragment, total: primary + fragment };
+  }).filter(d => d.total > 0).sort((a, b) => b.total - a.total);
+
+  // 유저당 그룹 소속 수 분포
+  const userGroupCount: Record<string, number> = {};
+  memberships.forEach(m => { userGroupCount[m.user_id] = (userGroupCount[m.user_id] || 0) + 1; });
+  const groupCountDist = [1,2,3,4,5].map(n => ({
+    name: `${n}개`,
+    value: Object.values(userGroupCount).filter(c => n === 5 ? c >= 5 : c === n).length,
+  }));
+
   // 4축 평균
   const axisAvg = [
     { axis: "애착", value: avg(rows.map(r => r.axis_attachment).filter(Boolean)) },
@@ -128,23 +383,44 @@ export default function AdminDashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">관리자 대시보드</h1>
-          <p className="text-white/40 text-sm mt-1">Veilor 유저 현황 분석</p>
+          <p className="text-white/40 text-sm mt-1">Veilor 전체 현황</p>
         </div>
         <p className="text-white/30 text-xs">총 {total.toLocaleString()}명 기준</p>
       </div>
+
+      {/* 탭 */}
+      <div className="flex gap-2 border-b border-white/10">
+        {([['b2c', 'B2C 유저 분석'], ['b2b', 'B2B 조직·코치']] as const).map(([key, label]) => (
+          <button
+            key={key}
+            onClick={() => setActiveTab(key)}
+            className={`px-4 py-2 text-sm font-medium transition-colors ${
+              activeTab === key
+                ? 'border-b-2 border-indigo-400 text-indigo-300'
+                : 'text-white/40 hover:text-white/70'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === 'b2b' && <B2BTab />}
+      {activeTab === 'b2c' && (<>
 
       {/* 상단 요약 카드 */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatCard label="전체 가상유저" value={`${total}명`} />
         <StatCard label="세션 보유" value={`${withSession}명`} sub={`${Math.round(withSession*100/total)}%`} />
         <StatCard
-          label="멀티페르소나 보유"
-          value={`${rows.filter(r => r.fragment_count >= 2).length}명`}
-          sub="2개 이상"
+          label="멀티그룹 소속"
+          value={`${Object.values(userGroupCount).filter(c => c >= 2).length}명`}
+          sub="2개 이상 그룹 소속"
         />
         <StatCard
-          label="평균 페르소나 조각"
-          value={(rows.reduce((s, r) => s + r.fragment_count, 0) / total).toFixed(1) + "개"}
+          label="평균 그룹 소속"
+          value={(memberships.length / total).toFixed(1) + "개"}
+          sub={`총 ${memberships.length}건`}
         />
       </div>
 
@@ -166,6 +442,54 @@ export default function AdminDashboard() {
           {fragDist.map(d => (
             <div key={d.name} className="text-xs text-white/60">
               <span className="font-medium text-white">{d.name}</span>: {d.value}명 ({Math.round(d.value*100/total)}%)
+            </div>
+          ))}
+        </div>
+      </Section>
+
+      {/* 그룹 멤버십 — primary + fragment 스택 */}
+      <Section title="그룹 소속 분포 (멀티페르소나 반영)" sub="primary: mask_type 기준 / fragment: 페르소나 조각 기반 추가 소속">
+        <div className="h-64">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={groupDist} layout="vertical" margin={{ left: 72, right: 16 }}>
+              <XAxis type="number" tick={{ fill: "#ffffff80", fontSize: 11 }} />
+              <YAxis dataKey="name" type="category" tick={{ fill: "#ffffffb0", fontSize: 12 }} width={72} />
+              <Tooltip contentStyle={{ background: "#1a1a2e", border: "none", borderRadius: 8 }} />
+              <Legend wrapperStyle={{ fontSize: 12, color: "#ffffff80" }} />
+              <Bar dataKey="primary" name="Primary" stackId="a" fill="#6366f1" radius={[0,0,0,0]} />
+              <Bar dataKey="fragment" name="Fragment" stackId="a" fill="#a78bfa" radius={[0,4,4,0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="mt-3 flex flex-wrap gap-3">
+          {groupDist.map(d => (
+            <div key={d.name} className="text-xs text-white/60">
+              <span className="font-medium text-white">{d.name}</span>: 총 {d.total}명
+              <span className="text-white/40"> (P:{d.primary} F:{d.fragment})</span>
+            </div>
+          ))}
+        </div>
+      </Section>
+
+      {/* 그룹 중복 소속 분포 */}
+      <Section title="유저당 그룹 소속 수 분포" sub="멀티페르소나로 인해 복수 그룹 소속 가능">
+        <div className="h-48">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={groupCountDist} margin={{ top: 4, right: 8, bottom: 4, left: 0 }}>
+              <XAxis dataKey="name" tick={{ fill: "#ffffff80", fontSize: 12 }} />
+              <YAxis tick={{ fill: "#ffffff80", fontSize: 11 }} />
+              <Tooltip contentStyle={{ background: "#1a1a2e", border: "none", borderRadius: 8 }} />
+              <Bar dataKey="value" name="유저 수" radius={[4,4,0,0]}>
+                {groupCountDist.map((_, i) => <Cell key={i} fill={COLORS[i * 2]} />)}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="flex flex-wrap gap-4 mt-2 justify-center">
+          {groupCountDist.filter(d => d.value > 0).map(d => (
+            <div key={d.name} className="text-center">
+              <p className="text-lg font-semibold text-indigo-300">{d.value}명</p>
+              <p className="text-xs text-white/50">{d.name} 소속</p>
             </div>
           ))}
         </div>
@@ -304,6 +628,7 @@ export default function AdminDashboard() {
           })}
         </div>
       </Section>
+      </>)}
     </div>
   );
 }

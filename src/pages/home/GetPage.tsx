@@ -142,7 +142,7 @@ export default function GetPage() {
   if (ppError) return <ErrorState title="Get 데이터를 불러오지 못했습니다" onRetry={() => refetchPp()} />;
 
   return (
-    <div className="px-4 py-6 max-w-sm mx-auto space-y-5">
+    <div className="px-4 py-6 space-y-5">
       <div>
         <h2 className="text-lg font-semibold">Get</h2>
         <p className="text-sm text-muted-foreground mt-1">나를 이루는 구조를 봐요.</p>

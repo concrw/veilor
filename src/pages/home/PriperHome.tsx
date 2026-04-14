@@ -17,7 +17,7 @@ export default function PriperHome() {
   ] : [];
 
   return (
-    <div className="px-4 py-6 max-w-sm mx-auto space-y-5">
+    <div className="px-4 py-6 space-y-5">
       {mask ? (
         <>
           <div className="text-center space-y-2">

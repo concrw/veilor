@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { supabase, veilorDb } from '@/integrations/supabase/client';
+import { veilorDb } from '@/integrations/supabase/client';
 import { safeGetItem, safeSetItem, safeRemoveItem } from '@/lib/storage';
+import { toast } from '@/hooks/use-toast';
 
 const CQ_STORAGE_KEY = 'veilor:cq-progress';
 
@@ -78,7 +77,11 @@ export default function CoreQuestions() {
       const rows = Object.entries(data).map(([k, v]) => ({
         user_id: user.id, question_key: k, response_value: v,
       }));
-      await veilorDb.from('cq_responses').upsert(rows);
+      const { error } = await veilorDb.from('cq_responses').upsert(rows);
+      if (error) {
+        toast({ title: '저장 실패', description: '잠시 후 다시 시도해 주세요.', variant: 'destructive' });
+        return;
+      }
     }
     safeRemoveItem(CQ_STORAGE_KEY);
     await setOnboardingStep('priper');
@@ -86,17 +89,24 @@ export default function CoreQuestions() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col px-6 py-12">
+    <div
+      className="min-h-screen flex flex-col px-6 py-12"
+      style={{ background: '#1C1917', fontFamily: "'DM Sans', sans-serif" }}
+    >
       <div className="max-w-sm w-full mx-auto flex-1 flex flex-col">
         {/* 진행바 */}
         <div className="flex gap-1.5 mb-10">
           {QUESTIONS.map((_, i) => (
-            <div key={i} className={`h-1 flex-1 rounded-full transition-colors ${i <= current ? 'bg-primary' : 'bg-muted'}`} />
+            <div
+              key={i}
+              className="h-1 flex-1 rounded-full transition-colors"
+              style={{ background: i <= current ? '#D4A574' : '#292524' }}
+            />
           ))}
         </div>
 
-        <p className="text-xs text-muted-foreground mb-2">{current + 1} / {QUESTIONS.length}</p>
-        <h2 className="text-xl font-semibold mb-8 leading-snug">{q.question}</h2>
+        <p className="text-xs mb-2" style={{ color: '#A8A29E' }}>{current + 1} / {QUESTIONS.length}</p>
+        <h2 className="text-xl font-semibold mb-8 leading-snug" style={{ color: '#F5F5F4' }}>{q.question}</h2>
 
         {q.type === 'choice' && (
           <div className="space-y-3">
@@ -104,8 +114,14 @@ export default function CoreQuestions() {
               <button
                 key={opt}
                 onClick={() => handleSelect(opt)}
-                className={`w-full text-left px-4 py-3.5 rounded-xl border text-sm transition-all
-                  ${answers[q.key] === opt ? 'border-primary bg-primary/5 font-medium' : 'border-border hover:border-primary/50'}`}
+                className="w-full text-left px-4 py-3.5 rounded-xl text-sm transition-all"
+                style={{
+                  border: `1px solid ${answers[q.key] === opt ? '#D4A574' : '#44403C'}`,
+                  background: answers[q.key] === opt ? '#D4A57410' : 'transparent',
+                  color: answers[q.key] === opt ? '#D4A574' : '#F5F5F4',
+                  fontWeight: answers[q.key] === opt ? 500 : 400,
+                  fontFamily: "'DM Sans', sans-serif",
+                }}
               >
                 {opt}
               </button>
@@ -115,16 +131,30 @@ export default function CoreQuestions() {
 
         {q.type === 'text' && (
           <div className="space-y-4">
-            <Textarea
+            <textarea
               placeholder={q.placeholder}
               maxLength={200}
               value={answers[q.key] ?? ''}
               onChange={e => setAnswers({ ...answers, [q.key]: e.target.value })}
-              className="h-32 resize-none"
+              className="w-full h-32 resize-none rounded-xl p-3 text-sm outline-none"
+              style={{
+                background: '#292524',
+                border: '1px solid #44403C',
+                color: '#F5F5F4',
+                fontFamily: "'DM Sans', sans-serif",
+              }}
             />
-            <Button className="w-full" onClick={handleTextNext}>
+            <button
+              onClick={handleTextNext}
+              className="w-full py-3 rounded-xl text-sm font-medium"
+              style={{
+                background: '#D4A574',
+                color: '#1C1917',
+                fontFamily: "'DM Sans', sans-serif",
+              }}
+            >
               {isLast ? '분석 시작하기' : '다음'}
-            </Button>
+            </button>
           </div>
         )}
       </div>

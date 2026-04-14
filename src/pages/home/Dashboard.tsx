@@ -93,7 +93,7 @@ export default function Dashboard() {
   });
 
   return (
-    <div className="px-4 py-6 space-y-5 max-w-sm mx-auto">
+    <div className="px-4 py-6 space-y-5">
       {/* 상태별 진입 안내 (#16/#61) */}
       <button
         onClick={() => navigate(stage.path)}

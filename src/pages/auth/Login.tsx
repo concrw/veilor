@@ -1,16 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
-import { useToast } from "@/components/ui/use-toast";
 
 const Login = () => {
   const { user, loading, signIn, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
-  const { toast } = useToast();
-  
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -22,6 +17,26 @@ const Login = () => {
     }
   }, [user, loading, navigate]);
 
+  const getKoreanError = (message: string): string => {
+    const m = message.toLowerCase();
+    if (m.includes('invalid login credentials') || m.includes('invalid_grant')) {
+      return '이메일 또는 비밀번호가 올바르지 않습니다.';
+    }
+    if (m.includes('email not confirmed')) {
+      return '이메일 인증이 필요합니다. 받은 편지함을 확인해 주세요.';
+    }
+    if (m.includes('too many requests') || m.includes('rate limit')) {
+      return '잠시 후 다시 시도해 주세요.';
+    }
+    if (m.includes('user not found') || m.includes('no user found')) {
+      return '등록되지 않은 이메일입니다.';
+    }
+    if (m.includes('network') || m.includes('fetch')) {
+      return '네트워크 오류가 발생했습니다. 인터넷 연결을 확인해 주세요.';
+    }
+    return '로그인에 실패했습니다. 다시 시도해 주세요.';
+  };
+
   const handleSubmit = async () => {
     if (!email || !password) {
       setError("이메일과 비밀번호를 입력해주세요.");
@@ -30,32 +45,15 @@ const Login = () => {
 
     setSubmitting(true);
     setError("");
-    
+
     try {
       const { error } = await signIn(email, password);
-      
+
       if (error) {
-        setError(error.message || "로그인에 실패했습니다.");
-        toast({
-          title: "로그인 실패",
-          description: error.message,
-          variant: "destructive",
-        });
-      } else {
-        // 로그인 성공 시 useEffect에서 자동 리다이렉트
-        toast({
-          title: "로그인 성공",
-          description: "환영합니다!",
-        });
+        setError(getKoreanError(error.message));
       }
     } catch (err) {
-      const errorMessage = "로그인 중 오류가 발생했습니다.";
-      setError(errorMessage);
-      toast({
-        title: "오류",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      setError("로그인 중 오류가 발생했습니다.");
     } finally {
       setSubmitting(false);
     }
@@ -64,23 +62,11 @@ const Login = () => {
   const handleGoogleLogin = async () => {
     try {
       const { error } = await signInWithGoogle();
-      
       if (error) {
-        setError(error.message || "Google 로그인에 실패했습니다.");
-        toast({
-          title: "Google 로그인 실패",
-          description: error.message,
-          variant: "destructive",
-        });
+        setError('Google 로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.');
       }
     } catch (err) {
-      const errorMessage = "Google 로그인 중 오류가 발생했습니다.";
-      setError(errorMessage);
-      toast({
-        title: "오류", 
-        description: errorMessage,
-        variant: "destructive",
-      });
+      setError('Google 로그인 중 오류가 발생했습니다.');
     }
   };
 
@@ -92,97 +78,124 @@ const Login = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background px-4 py-6 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#1C1917', fontFamily: "'DM Sans', sans-serif" }}>
         <div className="text-center">
-          <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-          <p className="text-xs text-muted-foreground">로딩 중...</p>
+          <div className="w-6 h-6 rounded-full animate-spin mx-auto mb-2" style={{ border: '2px solid #D4A574', borderTopColor: 'transparent' }} />
+          <p className="text-xs" style={{ color: '#A8A29E' }}>로딩 중...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <main className="min-h-screen bg-background px-4 py-6">
+    <main className="min-h-screen px-4 py-6" style={{ background: '#1C1917', fontFamily: "'DM Sans', sans-serif" }}>
       <header className="mb-8 text-center">
-        <h1 className="text-3xl font-bold tracking-tight mx-auto mt-5">VEILOR</h1>
+        <h1 className="text-3xl font-bold tracking-tight mx-auto mt-5" style={{ color: '#F5F5F4', fontFamily: "'DM Sans', sans-serif" }}>
+          VEILOR
+        </h1>
       </header>
 
-      <Card className="bg-card/60 max-w-sm mx-auto">
-        <CardHeader className="text-center pb-4">
-          <CardTitle className="text-lg font-medium">로그인</CardTitle>
-          <p className="text-xs text-muted-foreground mt-1">
+      <div className="max-w-sm mx-auto rounded-2xl px-6 py-6" style={{ background: '#292524', border: '1px solid #44403C' }}>
+        <div className="text-center pb-4">
+          <h2 className="text-lg font-medium" style={{ color: '#F5F5F4' }}>로그인</h2>
+          <p className="text-xs mt-1" style={{ color: '#A8A29E' }}>
             당신의 관계 언어를 발견하세요
           </p>
-        </CardHeader>
-        
-        <CardContent className="space-y-4">
+        </div>
+
+        <div className="space-y-4">
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-              <p className="text-xs text-red-800">{error}</p>
+            <div className="rounded-lg p-3" style={{ border: '1px solid #D4A57450', background: '#D4A57410' }}>
+              <p className="text-xs" style={{ color: '#D4A574' }}>{error}</p>
             </div>
           )}
 
           <div className="space-y-3">
-            <Input 
-              type="email" 
-              placeholder="이메일" 
-              value={email} 
+            <input
+              type="email"
+              placeholder="이메일"
+              value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="text-sm"
               disabled={submitting}
               onKeyPress={handleKeyPress}
+              className="w-full text-sm rounded-xl px-4 py-3 outline-none transition-colors"
+              style={{
+                background: '#1C1917',
+                border: '1px solid #44403C',
+                color: '#F5F5F4',
+                fontFamily: "'DM Sans', sans-serif",
+              }}
             />
-            
-            <Input 
-              type="password" 
-              placeholder="비밀번호" 
-              value={password} 
+
+            <input
+              type="password"
+              placeholder="비밀번호"
+              value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="text-sm"
               disabled={submitting}
               onKeyPress={handleKeyPress}
+              className="w-full text-sm rounded-xl px-4 py-3 outline-none transition-colors"
+              style={{
+                background: '#1C1917',
+                border: '1px solid #44403C',
+                color: '#F5F5F4',
+                fontFamily: "'DM Sans', sans-serif",
+              }}
             />
-            
-            <Button 
+
+            <button
               onClick={handleSubmit}
-              className="w-full text-sm" 
               disabled={submitting}
+              className="w-full text-sm py-3 rounded-xl font-medium transition-opacity"
+              style={{
+                background: '#D4A574',
+                color: '#1C1917',
+                opacity: submitting ? 0.6 : 1,
+                fontFamily: "'DM Sans', sans-serif",
+              }}
             >
               {submitting ? '로그인 중...' : '로그인'}
-            </Button>
+            </button>
           </div>
 
-          <div className="relative">
+          <div className="relative my-2">
             <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
+              <span className="w-full" style={{ borderTop: '1px solid #44403C' }} />
             </div>
             <div className="relative flex justify-center text-xs">
-              <span className="bg-background px-2 text-muted-foreground">또는</span>
+              <span className="px-2 text-xs" style={{ background: '#292524', color: '#A8A29E' }}>또는</span>
             </div>
           </div>
 
-          <Button 
-            variant="outline" 
-            className="w-full text-sm" 
+          <button
             onClick={handleGoogleLogin}
             disabled={submitting}
+            className="w-full text-sm py-3 rounded-xl font-medium transition-opacity"
+            style={{
+              background: 'transparent',
+              border: '1px solid #44403C',
+              color: '#A8A29E',
+              opacity: submitting ? 0.6 : 1,
+              fontFamily: "'DM Sans', sans-serif",
+            }}
           >
             Google로 로그인
-          </Button>
+          </button>
 
           <div className="text-center pt-2">
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs" style={{ color: '#A8A29E' }}>
               계정이 없으신가요?{' '}
-              <button 
+              <button
                 onClick={() => navigate('/auth/signup')}
-                className="text-primary underline hover:no-underline bg-transparent border-none p-0 cursor-pointer"
+                className="underline hover:no-underline bg-transparent border-none p-0 cursor-pointer"
+                style={{ color: '#D4A574' }}
               >
                 회원가입
               </button>
             </p>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </main>
   );
 };

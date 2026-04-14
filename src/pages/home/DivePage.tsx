@@ -133,7 +133,7 @@ export default function DivePage() {
   // 답변 화면
   if (selectedResult) {
     return (
-      <div className="px-4 py-6 max-w-sm mx-auto space-y-5">
+      <div className="px-4 py-6 space-y-5">
         <button onClick={() => setSelectedResult(null)} className="text-xs text-muted-foreground flex items-center gap-1">
           ← 돌아가기
         </button>
@@ -164,7 +164,7 @@ export default function DivePage() {
   }
 
   return (
-    <div className="px-4 py-6 max-w-sm mx-auto space-y-5">
+    <div className="px-4 py-6 space-y-5">
       {/* 모드 토글 */}
       <div className="bg-card border rounded-2xl p-1 flex">
         {(['F', 'T'] as Mode[]).map(m => (

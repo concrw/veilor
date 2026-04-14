@@ -288,3 +288,14 @@ html {
     scroll-behavior: auto;
   }
 }
+
+/* 반응형 바텀네비 패딩 제어 */
+:root {
+  --bottom-nav-height: 64px;
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --bottom-nav-height: 0px;
+  }
+}

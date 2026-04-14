@@ -90,7 +90,7 @@ export default function HeldPage() {
   if (response) {
     if (showClosing) {
       return (
-        <div className="px-4 py-6 max-w-sm mx-auto">
+        <div className="px-4 py-6">
           <SessionClosingProtocol
             messageCount={messageCount}
             lastEmotion={emotion}
@@ -101,7 +101,7 @@ export default function HeldPage() {
     }
 
     return (
-      <div className="px-4 py-6 max-w-sm mx-auto space-y-5">
+      <div className="px-4 py-6 space-y-5">
         <button onClick={() => setResponse('')} className="text-xs text-muted-foreground">← 돌아가기</button>
         {(crisisLevel === 'critical' || crisisLevel === 'high') && (
           <CrisisBanner severity={crisisLevel} onDismiss={() => setCrisisLevel('none')} />
@@ -143,7 +143,7 @@ export default function HeldPage() {
   }
 
   return (
-    <div className="px-4 py-6 max-w-sm mx-auto space-y-5">
+    <div className="px-4 py-6 space-y-5">
       <div>
         <h2 className="text-lg font-semibold">Held</h2>
         <p className="text-sm text-muted-foreground mt-1">지금 느끼는 걸 그대로 말해도 괜찮아요.</p>

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { veilorDb } from '@/integrations/supabase/client';
@@ -22,6 +23,7 @@ type View = 'groups' | 'posts' | 'post';
 
 export default function CommunityPage() {
   const { user, primaryMask } = useAuth();
+  const navigate = useNavigate();
   const qc = useQueryClient();
   const [view, setView] = useState<View>('groups');
   const [selectedGroup, setSelectedGroup] = useState<Record<string, unknown> | null>(null);
@@ -124,7 +126,7 @@ export default function CommunityPage() {
   /* ── 댓글 상세 뷰 ── */
   if (view === 'post' && selectedPost) {
     return (
-      <div className="px-4 py-6 max-w-sm mx-auto space-y-5">
+      <div className="px-4 py-6 space-y-5">
         <button onClick={() => { setView('posts'); setSelectedPost(null); }}
           className="text-xs text-muted-foreground">← 목록으로</button>
 
@@ -178,7 +180,7 @@ export default function CommunityPage() {
   /* ── 게시글 목록 뷰 ── */
   if (view === 'posts' && selectedGroup) {
     return (
-      <div className="px-4 py-6 max-w-sm mx-auto space-y-5">
+      <div className="px-4 py-6 space-y-5">
         <div className="flex items-center justify-between">
           <div>
             <button onClick={() => { setView('groups'); setSelectedGroup(null); }}
@@ -227,7 +229,17 @@ export default function CommunityPage() {
                 onClick={() => p.is_virtual ? null : (() => { setSelectedPost(p); setView('post'); })()}
                 className={`w-full text-left bg-card border rounded-xl p-4 space-y-1.5 transition-colors ${!p.is_virtual ? 'hover:border-primary/50 cursor-pointer' : 'cursor-default'}`}>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">{displayName(p.is_anonymous)}</span>
+                  {/* 비익명 작성자 닉네임: 터치 시 프로필 이동 */}
+                  {!p.is_anonymous && p.user_id ? (
+                    <button
+                      onClick={e => { e.stopPropagation(); navigate(`/users/${p.user_id}`); }}
+                      className="text-xs text-muted-foreground hover:underline cursor-pointer bg-transparent border-0 p-0"
+                    >
+                      {displayName(false)}
+                    </button>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">{displayName(p.is_anonymous)}</span>
+                  )}
                   {p.mask && <span className="text-xs bg-muted px-1.5 py-0.5 rounded">{p.mask}</span>}
                   <span className="text-xs text-muted-foreground">
                     {new Date(p.created_at).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}
@@ -249,7 +261,7 @@ export default function CommunityPage() {
 
   /* ── 그룹 목록 뷰 ── */
   return (
-    <div className="px-4 py-6 max-w-sm mx-auto space-y-6">
+    <div className="px-4 py-6 space-y-6">
       <div>
         <h2 className="text-lg font-semibold">커뮤니티</h2>
         <p className="text-sm text-muted-foreground mt-1">관계 패턴별 익명 공간</p>
