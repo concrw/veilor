@@ -5,6 +5,7 @@ interface UseSpeechRecognitionOptions {
   continuous?: boolean;
   onResult?: (transcript: string) => void;
   onEnd?: () => void;
+  onError?: (error: string) => void;
 }
 
 // Web Speech API 타입 (브라우저 내장)
@@ -34,12 +35,20 @@ declare global {
 }
 
 export function useSpeechRecognition(options: UseSpeechRecognitionOptions = {}) {
-  const { lang = 'ko-KR', continuous = false, onResult, onEnd } = options;
+  const { lang = 'ko-KR', continuous = false, onResult, onEnd, onError } = options;
   const [listening, setListening] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [interimTranscript, setInterimTranscript] = useState('');
   const [supported, setSupported] = useState(false);
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
+
+  // 콜백을 ref로 보관 — 재생성 시 인식 인스턴스가 낡은 클로저를 붙잡지 않도록
+  const onResultRef = useRef(onResult);
+  const onEndRef    = useRef(onEnd);
+  const onErrorRef  = useRef(onError);
+  useEffect(() => { onResultRef.current = onResult; }, [onResult]);
+  useEffect(() => { onEndRef.current    = onEnd;    }, [onEnd]);
+  useEffect(() => { onErrorRef.current  = onError;  }, [onError]);
 
   useEffect(() => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -49,6 +58,9 @@ export function useSpeechRecognition(options: UseSpeechRecognitionOptions = {}) 
   const start = useCallback(() => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) return;
+
+    // 이전 인스턴스 정리
+    recognitionRef.current?.abort();
 
     const recognition = new SR();
     recognition.lang = lang;
@@ -74,28 +86,30 @@ export function useSpeechRecognition(options: UseSpeechRecognitionOptions = {}) 
       }
       if (final) {
         setTranscript(prev => prev + final);
-        onResult?.(final);
+        onResultRef.current?.(final);
       }
       setInterimTranscript(interim);
     };
 
     recognition.onerror = (e) => {
-      // 'no-speech'나 'aborted'는 정상 종료
+      setListening(false);
+      setInterimTranscript('');
+      // 'no-speech' · 'aborted'는 정상 종료이지만 호출자에게는 전달
+      onErrorRef.current?.(e.error);
       if (e.error !== 'no-speech' && e.error !== 'aborted') {
         console.warn('Speech recognition error:', e.error);
       }
-      setListening(false);
     };
 
     recognition.onend = () => {
       setListening(false);
       setInterimTranscript('');
-      onEnd?.();
+      onEndRef.current?.();
     };
 
     recognitionRef.current = recognition;
     recognition.start();
-  }, [lang, continuous, onResult, onEnd]);
+  }, [lang, continuous]);
 
   const stop = useCallback(() => {
     recognitionRef.current?.stop();
@@ -104,6 +118,7 @@ export function useSpeechRecognition(options: UseSpeechRecognitionOptions = {}) 
   const abort = useCallback(() => {
     recognitionRef.current?.abort();
     setListening(false);
+    setInterimTranscript('');
   }, []);
 
   return {

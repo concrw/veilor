@@ -287,6 +287,27 @@ html {
   html {
     scroll-behavior: auto;
   }
+  /* 음성 파형·펄스 애니메이션 중단 — 전정기관 장애 사용자 배려 */
+  @keyframes vr-wave      { 0%, 100% { height: 8px; } }
+  @keyframes vr-pulse-mic { 0%, 100% { transform: scale(1); box-shadow: none; } }
+  @keyframes vr-pulse-ring { 0%, 100% { transform: scale(1); opacity: 0.4; } }
+}
+
+/* 음성 마이크 버튼 포커스 링 — 키보드 / Switch Access 사용자
+   전역 *:focus-visible 대신 별도 지정하여 더 눈에 띄게 표시          */
+.voice-mic-btn:focus-visible {
+  outline: 3px solid #E7C17A;   /* --amber-gold */
+  outline-offset: 4px;
+}
+
+/* 고대비 모드 대응 */
+@media (prefers-contrast: more) {
+  .voice-mic-btn {
+    border-width: 3px !important;
+  }
+  .voice-mic-btn:focus-visible {
+    outline-width: 4px;
+  }
 }
 
 /* 반응형 바텀네비 패딩 제어 */
