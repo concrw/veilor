@@ -2,13 +2,14 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AmberBtn, FrostBtn } from '../../layouts/HomeLayout';
 import { useAmberAttention } from '../../hooks/useAmberAttention';
-import { supabase } from '../../integrations/supabase/client';
+import { supabase, veilorDb } from '../../integrations/supabase/client';
 import { useAuth } from '../../context/AuthContext';
 import { useUserMeData } from '../../hooks/useUserMeData';
 import { usePremiumTrigger } from '../../hooks/usePremiumTrigger';
 import UpgradeModal from '../../components/premium/UpgradeModal';
 import { C } from '@/lib/colors';
 import { ZONES, TOTAL_ZONES, RADAR_DATA, PERSONAS, FRIENDS, SEED_STAGES } from '@/data/mePageData';
+import { useMode } from '@/context/ModeContext';
 import PersonaMap from '@/components/persona/PersonaMap';
 import RadarChart from '@/components/me/RadarChart';
 import MonthlyReportCard from '@/components/me/MonthlyReportCard';
@@ -26,6 +27,231 @@ import WeeklyReportSection from '@/components/me/WeeklyReportSection';
 import DiagnosisSection from '@/components/me/DiagnosisSection';
 import RelationshipTimeline from '@/components/me/RelationshipTimeline';
 import PersonaFragmentsSection from '@/components/me/PersonaFragmentsSection';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ClearMeView — 클리어 모드 Me 탭
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface MonthCheckin {
+  mood_score: number;
+  created_at: string;
+}
+
+function getMonthRange(now: Date): { firstDay: string; lastDay: string } {
+  const y = now.getFullYear();
+  const m = now.getMonth();
+  const first = new Date(y, m, 1);
+  const last = new Date(y, m + 1, 0, 23, 59, 59, 999);
+  return {
+    firstDay: first.toISOString(),
+    lastDay: last.toISOString(),
+  };
+}
+
+function getMoodColor(score: number | null, solid = false): string {
+  if (score === null) return '#1e2a38';
+  const alpha = solid ? 'FF' : '33';
+  if (score <= 4) return `#F59E0B${alpha}`;
+  if (score <= 7) return `#4AAEFF${alpha}`;
+  return `#34C48B${alpha}`;
+}
+
+function getMoodBorderColor(score: number | null): string {
+  if (score === null) return '#1e2a38';
+  if (score <= 4) return '#F59E0B';
+  if (score <= 7) return '#4AAEFF';
+  return '#34C48B';
+}
+
+function ClearMeView({ userId }: { userId: string }) {
+  const [checkins, setCheckins] = useState<MonthCheckin[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const now = new Date();
+  const { firstDay, lastDay } = getMonthRange(now);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    veilorDb
+      .from('tab_conversations')
+      .select('content, created_at')
+      .eq('user_id', userId)
+      .eq('tab', 'clear_checkin')
+      .gte('created_at', firstDay)
+      .lte('created_at', lastDay)
+      .order('created_at', { ascending: true })
+      .then(({ data }) => {
+        if (cancelled) return;
+        if (!data) { setCheckins([]); setLoading(false); return; }
+        // content는 JSON string: { mood_score, activities, checked_at }
+        const parsed: MonthCheckin[] = (data as { content: string; created_at: string }[])
+          .map(row => {
+            try {
+              const obj = JSON.parse(row.content) as { mood_score?: number };
+              return {
+                mood_score: typeof obj.mood_score === 'number' ? obj.mood_score : 0,
+                created_at: row.created_at,
+              };
+            } catch {
+              return null;
+            }
+          })
+          .filter((x): x is MonthCheckin => x !== null);
+        setCheckins(parsed);
+        setLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [userId, firstDay, lastDay]);
+
+  // 날짜별 최신 기록 맵 (YYYY-MM-DD → mood_score)
+  const dayMap = new Map<string, number>();
+  for (const c of checkins) {
+    const dateKey = c.created_at.slice(0, 10);
+    // 같은 날 여러 개면 가장 마지막(최신) 기록 사용 (ascending 정렬이므로 덮어쓰기)
+    dayMap.set(dateKey, c.mood_score);
+  }
+
+  // 이번 달 달력 데이터
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const firstDow = new Date(year, month, 1).getDay(); // 0=Sun
+  const todayStr = now.toISOString().slice(0, 10);
+
+  // 앞 빈칸 포함한 셀 배열
+  const calCells: (number | null)[] = [
+    ...Array(firstDow).fill(null),
+    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
+  ];
+  // 7의 배수로 맞추기
+  while (calCells.length % 7 !== 0) calCells.push(null);
+
+  // 수치 계산
+  const recordCount = dayMap.size;
+  const moodValues = [...dayMap.values()].filter(v => v > 0);
+  const avgScore = moodValues.length > 0
+    ? (moodValues.reduce((a, b) => a + b, 0) / moodValues.length).toFixed(1)
+    : '—';
+  const maxScore = moodValues.length > 0 ? Math.max(...moodValues) : null;
+
+  const MONTH_LABEL = `${month + 1}월`;
+
+  if (loading) {
+    return (
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#334155', fontSize: 12 }}>
+        불러오는 중…
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px 80px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+      {/* 이번 달 요약 카드 3개 */}
+      <div style={{ display: 'flex', gap: 8 }}>
+        {[
+          { label: '기록', value: `${recordCount}일` },
+          { label: '평균 점수', value: avgScore },
+          { label: '최고점', value: maxScore !== null ? String(maxScore) : '—' },
+        ].map(({ label, value }) => (
+          <div
+            key={label}
+            style={{
+              flex: 1,
+              background: '#111318',
+              border: '1px solid #4AAEFF22',
+              borderRadius: 14,
+              padding: '12px 8px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 4,
+            }}
+          >
+            <span style={{ fontSize: 24, fontWeight: 700, color: '#4AAEFF', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
+              {value}
+            </span>
+            <span style={{ fontSize: 11, color: '#64748b', fontWeight: 400 }}>{label}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* 월간 캘린더 히트맵 */}
+      <div
+        style={{
+          background: '#111318',
+          border: '1px solid #4AAEFF22',
+          borderRadius: 16,
+          padding: '14px 12px',
+        }}
+      >
+        <p style={{ fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#475569', marginBottom: 10 }}>
+          {MONTH_LABEL} 기록
+        </p>
+
+        {/* 요일 헤더 */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginBottom: 4 }}>
+          {['일', '월', '화', '수', '목', '금', '토'].map(d => (
+            <div key={d} style={{ textAlign: 'center', fontSize: 9, color: '#334155', fontWeight: 400 }}>
+              {d}
+            </div>
+          ))}
+        </div>
+
+        {/* 날짜 셀 */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
+          {calCells.map((day, idx) => {
+            if (day === null) {
+              return <div key={`empty-${idx}`} style={{ width: 24, height: 24 }} />;
+            }
+            const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const score = dayMap.get(dateKey) ?? null;
+            const isToday = dateKey === todayStr;
+            const bgColor = getMoodColor(score);
+            const borderColor = isToday ? getMoodBorderColor(score) : 'transparent';
+            const textColor = score !== null
+              ? (score <= 4 ? '#FCD34D' : score <= 7 ? '#7DD3FC' : '#6EE7B7')
+              : '#475569';
+
+            return (
+              <div
+                key={dateKey}
+                style={{
+                  width: 24,
+                  height: 24,
+                  borderRadius: 6,
+                  background: bgColor,
+                  border: `1px solid ${borderColor}`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxSizing: 'border-box',
+                }}
+              >
+                <span style={{ fontSize: 10, color: textColor, lineHeight: 1 }}>{day}</span>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* 범례 */}
+        <div style={{ display: 'flex', gap: 12, marginTop: 12, justifyContent: 'flex-end', alignItems: 'center' }}>
+          {[
+            { color: '#F59E0B33', border: '#F59E0B', label: '1–4' },
+            { color: '#4AAEFF33', border: '#4AAEFF', label: '5–7' },
+            { color: '#34C48B33', border: '#34C48B', label: '8–10' },
+          ].map(({ color, border, label }) => (
+            <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <div style={{ width: 10, height: 10, borderRadius: 3, background: color, border: `1px solid ${border}44` }} />
+              <span style={{ fontSize: 9, color: '#475569' }}>{label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 /* ── Pure helpers (outside component) ── */
 function getSeedTitle(pct: number): string {
@@ -69,6 +295,7 @@ const ZONE_SENSITIVE_BADGE_STYLE = { fontSize: 9, padding: '2px 6px', borderRadi
 export default function MePage() {
   type Tab = 'growth' | 'people' | 'zone';
   const { user } = useAuth();
+  const { mode } = useMode();
   const meData = useUserMeData();
   const { modalOpen, activeTrigger, closeModal } = usePremiumTrigger();
   const [tab, setTab] = useState<Tab>('growth');
@@ -158,6 +385,14 @@ export default function MePage() {
         </div>
       </div>
 
+      {/* Clear 모드: ClearMeView 전용 렌더링 */}
+      {mode === 'clear' && user && (
+        <ClearMeView userId={user.id} />
+      )}
+
+      {/* Clear 모드가 아닐 때만 탭 + 탭 콘텐츠 표시 */}
+      {mode !== 'clear' && (
+        <>
       {/* Section tabs */}
       <div style={{ display: 'flex', borderBottom: `1px solid ${C.border2}`, padding: '0 20px', flexShrink: 0 }}>
         {TABS.map(t => (
@@ -406,6 +641,8 @@ export default function MePage() {
             })}
           </div>
         </div>
+      )}
+        </>
       )}
 
       {/* Sheets */}
