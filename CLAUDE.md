@@ -41,6 +41,38 @@ SELECT content FROM deepplot_core.protocols WHERE protocol_code = 'DEEPPLOT_MAST
 
 VEILOR의 스프린트는 AOSIS가 중앙 관리한다. 스프린트 항목은 반드시 `aosis.sprint_items`에 `product = 'veilor'`으로 기록해야 한다.
 
+### 세션 시작 시 — 현재 스프린트 확인 (필수)
+
+세션 시작 즉시 실행:
+
+```sql
+SELECT id, sprint_number, status, code
+FROM aosis.sprints
+WHERE product = 'veilor'
+ORDER BY sprint_number DESC
+LIMIT 5;
+```
+
+| 결과 | 조치 |
+|------|------|
+| `IN_PROGRESS` 스프린트 있음 | **다음 sprint_number로 새 스프린트 생성** 후 작업 |
+| `IN_PROGRESS` 없음 | 새 스프린트 생성 후 작업 |
+
+IN_PROGRESS는 AOSIS runtime이 돌리는 스프린트다. Claude Code 세션에서 끼어들지 않는다.
+
+새 스프린트 생성:
+```sql
+INSERT INTO aosis.sprints (product, sprint_number, code, status, goal)
+VALUES (
+  'veilor',
+  (SELECT COALESCE(MAX(sprint_number), 0) + 1 FROM aosis.sprints WHERE product = 'veilor'),
+  'veilor-sprint-{NNN}',
+  'PLANNED',
+  '{스프린트 목표}'
+)
+RETURNING id, sprint_number, code;
+```
+
 ### sprint_items 작성 규칙 (위반 시 작업 무효)
 
 - 구현 항목이 추가/변경/완료될 때마다 즉시 `aosis.sprint_items` INSERT/UPDATE
