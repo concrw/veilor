@@ -1,4 +1,4 @@
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -56,14 +56,16 @@ const GetPage     = lazy(() => import("./pages/home/GetPage"));
 const SetPage     = lazy(() => import("./pages/home/SetPage"));
 const MePage      = lazy(() => import("./pages/home/MePage"));
 const DmPage      = lazy(() => import("./pages/home/DmPage"));
-const DivePage        = lazy(() => import("./pages/home/DivePage"));
-const SexSelfQuestions = lazy(() => import("./pages/home/sexself/Questions"));
-const SexSelfResult    = lazy(() => import("./pages/home/sexself/Result"));
+const SexSelfQuestions  = lazy(() => import("./pages/home/sexself/Questions"));
+const SexSelfResult     = lazy(() => import("./pages/home/sexself/Result"));
+const NeedAssessment    = lazy(() => import("./pages/home/sexself/NeedAssessment"));
 const CommunityPage   = lazy(() => import("./pages/home/CommunityPage"));
 const UserProfilePage = lazy(() => import("./pages/users/UserProfilePage"));
 const NotFound    = lazy(() => import("./pages/NotFound"));
 
 import { toast as sonnerToast } from "sonner";
+import { GrowthBookProvider } from "@growthbook/growthbook-react";
+import { growthbook } from "./lib/growthbook";
 
 const queryClient = new QueryClient({
   queryCache: new QueryCache({
@@ -145,7 +147,10 @@ const RootRedirect = () => {
   return <Navigate to={stepPath[onboardingStep]} replace />;
 };
 
-const App = () => (
+const App = () => {
+  useEffect(() => { growthbook.loadFeatures(); }, []);
+  return (
+  <GrowthBookProvider growthbook={growthbook}>
   <QueryClientProvider client={queryClient}>
     <HelmetProvider>
       <LanguageProvider>
@@ -197,9 +202,10 @@ const App = () => (
                   <Route path="set"   element={<SetPage />} />
                   <Route path="me"    element={<MePage />} />
                   <Route path="dm"    element={<DmPage />} />
-                  <Route path="dive"      element={<DivePage />} />
-                  <Route path="sexself/questions" element={<SexSelfQuestions />} />
-                  <Route path="sexself/result"    element={<SexSelfResult />} />
+                  <Route path="dive" element={<Navigate to="/home/dig" replace />} />
+                  <Route path="sexself/questions"       element={<SexSelfQuestions />} />
+                  <Route path="sexself/result"          element={<SexSelfResult />} />
+                  <Route path="sexself/need-assessment" element={<NeedAssessment />} />
                   <Route path="community" element={<CommunityPage />} />
                 </Route>
 
@@ -271,6 +277,8 @@ const App = () => (
       </LanguageProvider>
     </HelmetProvider>
   </QueryClientProvider>
-);
+  </GrowthBookProvider>
+  );
+};
 
 export default App;

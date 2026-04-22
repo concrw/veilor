@@ -1,9 +1,11 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { C } from '@/lib/colors';
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
 import { useSpeechSynthesis } from '@/hooks/useSpeechSynthesis';
 import { useAuth } from '@/context/AuthContext';
-import { invokeHeldChat } from '@/lib/heldChatClient';
+import { invokeHeldChatStream } from '@/lib/heldChatClient';
+import { veilorDb } from '@/integrations/supabase/client';
 
 const FOCUS_TRAP_SELECTOR = 'button:not([disabled]), [href], input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])';
 
@@ -79,6 +81,20 @@ export default function AILeadOverlay({
   const [message,        setMessage]        = useState('');
   const [history,        setHistory]        = useState<ChatMessage[]>([]);
   const [voiceState,     setVoiceState]     = useState<VoiceState>('idle');
+  const [userVoiceId,    setUserVoiceId]    = useState<string | undefined>(undefined);
+
+  // 사용자 클론 Voice ID 로드
+  useEffect(() => {
+    if (!user?.id) return;
+    veilorDb.from('user_profiles')
+      .select('elevenlabs_voice_id')
+      .eq('user_id', user.id)
+      .single()
+      .then(({ data }) => {
+        const vid = data && (data as { elevenlabs_voice_id?: string }).elevenlabs_voice_id;
+        if (vid) setUserVoiceId(vid);
+      });
+  }, [user?.id]);
 
   // ── aria-live 공지 전용 state ─────────────────────────────────────────────
   // 3개 채널: status(polite) / error(assertive) / newMessage(polite·additions)
@@ -97,8 +113,9 @@ export default function AILeadOverlay({
 
   // ── TTS ───────────────────────────────────────────────────────────────────
   const tts = useSpeechSynthesis({
-    lang:  'ko-KR',
-    rate:  0.92,   // 약간 느리게 — 감정 맥락, 시각장애 청취 편의
+    lang:    'ko-KR',
+    rate:    0.92,
+    voiceId: userVoiceId,  // 사용자 클론 Voice ID — 없으면 기본 Ohana
     onEnd: () => {
       // TTS 끝나면 자동으로 다시 듣기 시작 (핸즈프리 루프)
       if (open) {
@@ -109,7 +126,7 @@ export default function AILeadOverlay({
     },
   });
 
-  // ── AI 전송 ───────────────────────────────────────────────────────────────
+  // ── AI 전송 (SSE 스트리밍) ────────────────────────────────────────────────
   const sendToAI = useCallback(async (text: string) => {
     if (!text.trim() || voiceState === 'thinking') return;
 
@@ -123,8 +140,14 @@ export default function AILeadOverlay({
     abortRef.current?.abort();
     abortRef.current = new AbortController();
 
+    // 스트리밍 응답을 담을 임시 버블을 미리 history에 추가
+    const streamingPlaceholder: ChatMessage = { role: 'ai', text: '' };
+    setHistory(prev => [...prev, streamingPlaceholder]);
+
     try {
-      const data = await invokeHeldChat(
+      let accumulated = '';
+
+      const data = await invokeHeldChatStream(
         {
           text:       text.trim(),
           emotion:    '',
@@ -134,27 +157,42 @@ export default function AILeadOverlay({
           tab:        currentTab ?? 'vent',
           userId:     user?.id,
         },
+        (delta) => {
+          accumulated += delta;
+          // 마지막 버블(스트리밍 중)의 텍스트를 실시간 업데이트
+          setHistory(prev => {
+            const next = [...prev];
+            next[next.length - 1] = { role: 'ai', text: accumulated };
+            return next;
+          });
+        },
         abortRef.current.signal,
       );
 
-      const aiText  = data?.response ?? '...';
-      const aiMsg: ChatMessage = { role: 'ai', text: aiText };
-      setHistory(prev => [...prev, aiMsg]);
-      setLatestAiMessage(aiText);   // aria-live="polite" additions 채널
+      const aiText = data?.response || accumulated || '...';
+      // 최종 완성 텍스트로 버블 확정
+      setHistory(prev => {
+        const next = [...prev];
+        next[next.length - 1] = { role: 'ai', text: aiText };
+        return next;
+      });
+      setLatestAiMessage(aiText);
       setVoiceState('speaking');
       setStatusAnnounce('');
       tts.speak(aiText);
     } catch (err: unknown) {
       if (err instanceof Error && err.name === 'AbortError') return;
       const fallbackText = '연결이 불안정해요. 다시 말해줄래요?';
-      const fallback: ChatMessage = { role: 'ai', text: fallbackText };
-      setHistory(prev => [...prev, fallback]);
+      setHistory(prev => {
+        const next = [...prev];
+        next[next.length - 1] = { role: 'ai', text: fallbackText };
+        return next;
+      });
       setLatestAiMessage(fallbackText);
       setErrorAnnounce('연결 오류가 발생했어요. 다시 시도해주세요.');
       setVoiceState('speaking');
       tts.speak(fallbackText);
     }
-  // sendToAI 자체는 voiceState가 아닌 ref를 통해 guard — 의존성에서 제외해도 안전
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [history, primaryMask, axisScores, currentTab, user?.id]);
 
@@ -291,19 +329,23 @@ export default function AILeadOverlay({
   const isListening = voiceState === 'listening';
 
   return (
-    <div
+    <AnimatePresence>
+    {open && (
+    <motion.div
+      key="ai-overlay"
       ref={overlayRef}
       role="dialog"
       aria-label={`${aiName} 음성 대화 — 음성 또는 텍스트로 대화할 수 있어요`}
       aria-modal="true"
-      aria-hidden={!open}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
+      initial={{ y: '100%', opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      exit={{ y: '100%', opacity: 0 }}
+      transition={{ type: 'spring', damping: 32, stiffness: 300 }}
       style={{
         position: 'fixed', inset: 0, zIndex: 9999, background: C.bg,
         display: 'flex', flexDirection: 'column',
-        opacity: open ? 1 : 0, pointerEvents: open ? 'all' : 'none',
-        transition: 'opacity 0.4s ease',
       }}
     >
       {/* ── 접근성 공지 영역 3개 — 항상 DOM에 존재 (내용만 바뀜) ─────────── */}
@@ -400,12 +442,14 @@ export default function AILeadOverlay({
           </div>
         )}
 
-        {/* 대화 버블
-              각 버블에 sr-only로 발화자 명시 → "엠버: ...", "나: ..."
-              개별 버블은 tabIndex 없음 — role="log" 내 방향키 탐색에 맡김  */}
+        {/* 대화 버블 */}
+        <AnimatePresence initial={false}>
         {history.map((msg, i) => (
-          <div
+          <motion.div
             key={i}
+            initial={{ opacity: 0, y: 8, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
             style={{
               alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
               maxWidth: '80%', marginBottom: 10,
@@ -414,7 +458,6 @@ export default function AILeadOverlay({
               border: `1px solid ${msg.role === 'user' ? `${C.amberGold}33` : C.border}`,
             }}
           >
-            {/* 발화자 레이블: 스크린리더에만 읽힘 */}
             <span className="sr-only">
               {msg.role === 'ai' ? `${aiName}:` : '나:'}
             </span>
@@ -426,8 +469,9 @@ export default function AILeadOverlay({
             <p style={{ fontSize: 13, fontWeight: 300, color: C.text2, lineHeight: 1.6, fontFamily: "'DM Sans', sans-serif" }}>
               {msg.text}
             </p>
-          </div>
+          </motion.div>
         ))}
+        </AnimatePresence>
 
         {/* AI 생각 중 — 점 3개 (시각 전용, aria-hidden) */}
         {voiceState === 'thinking' && (
@@ -599,6 +643,8 @@ export default function AILeadOverlay({
 
       {/* 하단 safe area */}
       <div aria-hidden="true" style={{ height: 'env(safe-area-inset-bottom, 16px)' }} />
-    </div>
+    </motion.div>
+    )}
+    </AnimatePresence>
   );
 }

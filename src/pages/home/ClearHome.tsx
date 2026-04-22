@@ -17,6 +17,7 @@ import {
   isChallengeCompletedToday,
   markChallengeCompleted,
 } from '@/data/challengeConstants';
+import EmotionWheel, { type EmotionScore } from '@/components/charts/EmotionWheel';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 타입
@@ -435,6 +436,177 @@ function RecoveryCard() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// ZONE F — SexSelf 인사이트 패널
+// 조건: cq_responses에 'sexself_profile' 키 존재 여부로 진단 완료 판단
+// ─────────────────────────────────────────────────────────────────────────────
+
+const SEXSELF_PROFILE_LABELS: Record<string, string> = {
+  OPEN_EXPRESSIVE: '열린 표현형',
+  RESPONSIVE: '반응형',
+  SUPPRESSED: '억제형',
+  DORMANT: '휴면형',
+  SHAME_BLOCKED: '수치 차단형',
+  SAFETY_SEEKING: '안전 추구형',
+  EXPLORING: '탐색형',
+  BUILDING_AWARENESS: '인식 형성 중',
+  ANXIETY_FROZEN: '욕구 동결',
+};
+
+const SEXSELF_PROFILE_COLORS: Record<string, string> = {
+  OPEN_EXPRESSIVE: '#10b981',
+  RESPONSIVE: '#3b82f6',
+  SUPPRESSED: '#f59e0b',
+  DORMANT: '#6b7280',
+  SHAME_BLOCKED: '#ef4444',
+  SAFETY_SEEKING: '#8b5cf6',
+  EXPLORING: '#06b6d4',
+  BUILDING_AWARENESS: '#64748b',
+  ANXIETY_FROZEN: '#6366f1',
+};
+
+function SexAxisBar({ label, value }: { label: string; value: number }) {
+  // value: -1.0 ~ +1.0 → 0%~100% 시각화
+  const pct = Math.round((value + 1) / 2 * 100);
+  const color = value >= 0 ? '#f59e0b' : '#3b82f6';
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-[10px] w-16 text-right shrink-0" style={{ color: '#64748b' }}>
+        {label}
+      </span>
+      <div className="flex-1 h-1.5 rounded-full" style={{ background: '#1e2a38' }}>
+        <div
+          className="h-full rounded-full"
+          style={{ width: `${pct}%`, background: color }}
+        />
+      </div>
+      <span className="text-[10px] w-7 text-right" style={{ color }}>{value >= 0 ? '+' : ''}{value}</span>
+    </div>
+  );
+}
+
+function SexSelfInsightPanel({
+  data,
+  onNavigate,
+}: {
+  data: Record<string, string> | null | undefined;
+  onNavigate: (path: string) => void;
+}) {
+  // 미진단: CTA
+  if (!data || !data.sexself_profile) {
+    return (
+      <div
+        className="rounded-2xl border p-5 flex items-center justify-between"
+        style={{ background: '#111318', borderColor: '#ec489922' }}
+      >
+        <div>
+          <p className="text-sm font-medium mb-0.5" style={{ color: '#e2e8f0' }}>성적 자아 탐색하기</p>
+          <p className="text-xs" style={{ color: '#64748b' }}>나의 성적 자아를 발견해 보세요</p>
+        </div>
+        <button
+          onClick={() => onNavigate('/home/sexself/questions')}
+          className="text-xs font-medium px-3 py-1.5 rounded-lg"
+          style={{ background: '#ec489922', color: '#ec4899' }}
+        >
+          시작 →
+        </button>
+      </div>
+    );
+  }
+
+  const profile = data.sexself_profile;
+  const profileColor = SEXSELF_PROFILE_COLORS[profile] ?? '#64748b';
+  const profileLabel = SEXSELF_PROFILE_LABELS[profile] ?? profile;
+  const isAnxietyFrozen = profile === 'ANXIETY_FROZEN';
+
+  // ANXIETY_FROZEN: 안전 메시지만 표시
+  if (isAnxietyFrozen) {
+    return (
+      <div
+        className="rounded-2xl border p-5"
+        style={{ background: '#111318', borderColor: '#6366f122' }}
+      >
+        <div className="flex items-center gap-2 mb-3">
+          <span
+            className="text-[11px] px-2 py-0.5 rounded-full font-medium"
+            style={{ background: '#6366f122', color: '#6366f1' }}
+          >
+            성적 자아
+          </span>
+          <span className="text-xs font-medium" style={{ color: '#6366f1' }}>{profileLabel}</span>
+        </div>
+        <p className="text-xs leading-relaxed" style={{ color: '#94a3b8' }}>
+          지금 이 상태도 자연스러운 보호 반응이에요. 준비가 될 때 천천히 탐색해도 괜찮습니다.
+        </p>
+      </div>
+    );
+  }
+
+  const leading = parseFloat(data.sexself_sex_leading ?? '0');
+  const expressiveness = parseFloat(data.sexself_sex_expressiveness ?? '0');
+  const intensity = parseFloat(data.sexself_sex_intensity ?? '0');
+  const roleLabel = data.sexself_kink_role ?? '';
+  const intensityLabel = data.sexself_kink_intensity ?? '';
+
+  return (
+    <div
+      className="rounded-2xl border p-5 space-y-4"
+      style={{ background: '#111318', borderColor: `${profileColor}22` }}
+    >
+      {/* 헤더 */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span
+            className="text-[11px] px-2 py-0.5 rounded-full font-medium"
+            style={{ background: `${profileColor}22`, color: profileColor }}
+          >
+            성적 자아
+          </span>
+          <span className="text-xs font-medium" style={{ color: profileColor }}>
+            {profileLabel}
+          </span>
+        </div>
+        <button
+          onClick={() => onNavigate('/home/sexself/questions')}
+          className="text-[10px]"
+          style={{ color: '#64748b' }}
+        >
+          자세히 →
+        </button>
+      </div>
+
+      {/* SEX 3축 바 */}
+      <div className="space-y-1.5">
+        <SexAxisBar label="주도/복종" value={Math.round(leading * 100) / 100} />
+        <SexAxisBar label="표현/억제" value={Math.round(expressiveness * 100) / 100} />
+        <SexAxisBar label="강도" value={Math.round(intensity * 100) / 100} />
+      </div>
+
+      {/* 역할 + 강도 레이블 */}
+      {(roleLabel || intensityLabel) && (
+        <div className="flex gap-2">
+          {roleLabel && (
+            <span
+              className="text-[11px] px-2 py-0.5 rounded-full border"
+              style={{ color: '#94a3b8', borderColor: '#1e2a38' }}
+            >
+              {roleLabel}
+            </span>
+          )}
+          {intensityLabel && (
+            <span
+              className="text-[11px] px-2 py-0.5 rounded-full border"
+              style={{ color: '#94a3b8', borderColor: '#1e2a38' }}
+            >
+              {intensityLabel}
+            </span>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // 메인 컴포넌트
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -511,7 +683,7 @@ export default function ClearHome() {
     const d = new Date(today);
     d.setDate(today.getDate() - (6 - i));
     d.setHours(0, 0, 0, 0);
-    const dateStr = d.toISOString().split('T')[0];
+    const dateStr = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().split('T')[0];
     const count = weekSessions.filter(s =>
       (s.created_at ?? '').startsWith(dateStr)
     ).length;
@@ -565,6 +737,60 @@ export default function ClearHome() {
     [user, queryClient],
   );
 
+  // ── 최근 감정 분포 (EmotionWheel용) ────────────────────────────────────────
+  const { data: emotionScores } = useQuery({
+    queryKey: ['emotion_scores_recent', user?.id],
+    queryFn: async (): Promise<EmotionScore[]> => {
+      if (!user) return [];
+      const { data } = await veilorDb
+        .from('emotion_scores' as never)
+        .select('top_emotions')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(5);
+      if (!data?.length) return [];
+      // 최근 5개 감정 결과를 합산 평균
+      const totals: Record<string, number> = {};
+      const counts: Record<string, number> = {};
+      for (const row of data as Array<{ top_emotions: Array<{ label: string; score: number }> }>) {
+        for (const { label, score } of row.top_emotions ?? []) {
+          totals[label] = (totals[label] ?? 0) + score;
+          counts[label] = (counts[label] ?? 0) + 1;
+        }
+      }
+      return Object.entries(totals).map(([emotion, total]) => ({
+        emotion,
+        score: total / counts[emotion],
+      }));
+    },
+    enabled: !!user,
+  });
+
+  // ── SexSelf 진단 결과 (ZONE F용) ───────────────────────────────────────────
+  const { data: sexSelfData } = useQuery({
+    queryKey: ['clear_sexself', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data } = await veilorDb
+        .from('cq_responses')
+        .select('question_key, response_value')
+        .eq('user_id', user.id)
+        .in('question_key', [
+          'sexself_profile',
+          'sexself_sex_leading',
+          'sexself_sex_expressiveness',
+          'sexself_sex_intensity',
+          'sexself_kink_role',
+          'sexself_kink_intensity',
+        ]);
+      if (!data || data.length === 0) return null;
+      return Object.fromEntries(
+        data.map(r => [r.question_key, r.response_value])
+      ) as Record<string, string>;
+    },
+    enabled: !!user,
+  });
+
   // ── Adaptive 조건 ────────────────────────────────────────────────────────────
   // 체크인 여부 + 점수 3구간으로 ZONE C/E 분기
 
@@ -610,9 +836,24 @@ export default function ClearHome() {
         <WeekSnapshotCard weekBars={weekBars} checkins={clearCheckins} />
       </div>
 
+      {/* ZONE D-2 — 감정 분포 휠 */}
+      {emotionScores && emotionScores.length > 0 && (
+        <div className="mb-3 rounded-2xl border p-5" style={{ background: '#111318', borderColor: '#4AAEFF22' }}>
+          <p className="text-[11px] tracking-[0.2em] uppercase text-slate-500 mb-4">감정 분포</p>
+          <div className="flex justify-center">
+            <EmotionWheel scores={emotionScores} size={220} />
+          </div>
+        </div>
+      )}
+
       {/* ZONE E — Daily Challenge */}
       <div className="mb-3">
         <ChallengeCard score={healthScore} />
+      </div>
+
+      {/* ZONE F — SexSelf 인사이트 패널 */}
+      <div className="mb-3">
+        <SexSelfInsightPanel data={sexSelfData} onNavigate={navigate} />
       </div>
 
       {/* 추가 네비게이션 — 탭 바로가기 */}

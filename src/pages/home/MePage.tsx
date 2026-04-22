@@ -18,6 +18,7 @@ import PatternDeviationCard from '@/components/me/PatternDeviationCard';
 import ShareCard from '@/components/me/ShareCard';
 import FeedEvolutionBanner from '@/components/me/FeedEvolutionBanner';
 import ZoneToggle from '@/components/me/ZoneToggle';
+import EmotionWheel, { type EmotionScore } from '@/components/charts/EmotionWheel';
 import AISheet from '@/components/me/AISheet';
 import SettingsSheet from '@/components/me/SettingsSheet';
 import RenameSheet from '@/components/me/RenameSheet';
@@ -66,6 +67,7 @@ function getMoodBorderColor(score: number | null): string {
 function ClearMeView({ userId }: { userId: string }) {
   const [checkins, setCheckins] = useState<MonthCheckin[]>([]);
   const [loading, setLoading] = useState(true);
+  const [emotionScores, setEmotionScores] = useState<EmotionScore[]>([]);
 
   const now = new Date();
   const { firstDay, lastDay } = getMonthRange(now);
@@ -100,9 +102,43 @@ function ClearMeView({ userId }: { userId: string }) {
           .filter((x): x is MonthCheckin => x !== null);
         setCheckins(parsed);
         setLoading(false);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setCheckins([]);
+        setLoading(false);
       });
     return () => { cancelled = true; };
   }, [userId, firstDay, lastDay]);
+
+  useEffect(() => {
+    let cancelled = false;
+    veilorDb
+      .from('emotion_scores' as never)
+      .select('top_emotions')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(5)
+      .then(({ data }) => {
+        if (cancelled || !data?.length) return;
+        const totals: Record<string, number> = {};
+        const counts: Record<string, number> = {};
+        for (const row of data as Array<{ top_emotions: Array<{ label: string; score: number }> }>) {
+          for (const { label, score } of row.top_emotions ?? []) {
+            totals[label] = (totals[label] ?? 0) + score;
+            counts[label] = (counts[label] ?? 0) + 1;
+          }
+        }
+        setEmotionScores(
+          Object.entries(totals).map(([emotion, total]) => ({
+            emotion,
+            score: total / counts[emotion],
+          }))
+        );
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [userId]);
 
   // 날짜별 최신 기록 맵 (YYYY-MM-DD → mood_score)
   const dayMap = new Map<string, number>();
@@ -249,6 +285,26 @@ function ClearMeView({ userId }: { userId: string }) {
           ))}
         </div>
       </div>
+
+      {/* 감정 분포 휠 */}
+      {emotionScores.length > 0 && (
+        <div
+          style={{
+            background: '#111318',
+            border: '1px solid #4AAEFF22',
+            borderRadius: 16,
+            padding: '14px 12px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+          }}
+        >
+          <p style={{ fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#475569', marginBottom: 12, alignSelf: 'flex-start' }}>
+            감정 분포
+          </p>
+          <EmotionWheel scores={emotionScores} size={200} />
+        </div>
+      )}
     </div>
   );
 }

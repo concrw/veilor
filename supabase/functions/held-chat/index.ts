@@ -353,7 +353,29 @@ serve(async (req: Request) => {
       const rawMask = sanitizeUserInput(body.mskCode ?? mask ?? '', 20);
       const mskCode = MASK_NAME_TO_CODE[rawMask] ?? rawMask;
 
-      const [sessionResult, m43Result] = await Promise.allSettled([
+      // KURE-v1 현재 텍스트 임베딩 (HF API — 실패해도 기존 키워드 방식으로 폴백)
+      let currentEmbedding: number[] | null = null;
+      const HF_API_KEY = Deno.env.get('HUGGINGFACE_API_KEY');
+      if (HF_API_KEY && userId && text) {
+        try {
+          const hfResp = await fetch(
+            'https://api-inference.huggingface.co/pipeline/feature-extraction/nlpai-lab/KURE-v1',
+            {
+              method: 'POST',
+              headers: { 'Authorization': `Bearer ${HF_API_KEY}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ inputs: text.slice(0, 300), options: { wait_for_model: true } }),
+              signal: AbortSignal.timeout(4000),
+            },
+          );
+          if (hfResp.ok) {
+            const raw = await hfResp.json();
+            const vec: number[] = Array.isArray(raw[0]) ? raw[0] : raw;
+            if (Array.isArray(vec) && vec.length === 1024) currentEmbedding = vec;
+          }
+        } catch { /* 타임아웃/네트워크 오류 — 폴백 진행 */ }
+      }
+
+      const [sessionResult, m43Result, similarResult] = await Promise.allSettled([
         // 이전 세션 기억 (userId 있을 때만)
         userId ? sb
           .from('dive_sessions')
@@ -374,6 +396,16 @@ serve(async (req: Request) => {
           p_axis_c:   axisScores?.C ?? null,
           p_axis_d:   axisScores?.D ?? null,
         }),
+
+        // KURE-v1 유사 세션 검색 (임베딩 있을 때만)
+        userId && currentEmbedding
+          ? sb.rpc('fn_similar_sessions', {
+              p_user_id:   userId,
+              p_embedding: `[${currentEmbedding.join(',')}]`,
+              p_limit:     2,
+              p_threshold: 0.75,
+            })
+          : Promise.resolve({ data: null }),
       ]);
 
       // 세션 기억 처리 + 반복 패턴 추출
@@ -420,6 +452,25 @@ serve(async (req: Request) => {
         console.warn('Memory fetch failed:', sessionResult.reason);
       }
 
+      // KURE-v1 유사 세션 결과 — sessionPattern 보강
+      if (similarResult.status === 'fulfilled' && similarResult.value?.data && Array.isArray(similarResult.value.data)) {
+        const similar = similarResult.value.data as Array<{
+          session_id: string; emotion: string | null;
+          context_summary: string | null; held_keywords: string[] | null;
+          similarity: number; created_at: string;
+        }>;
+        if (similar.length > 0) {
+          const topMatch = similar[0];
+          const daysDiff = Math.round(
+            (Date.now() - new Date(topMatch.created_at).getTime()) / (1000 * 60 * 60 * 24)
+          );
+          const similarNote = `유사 과거 패턴 (${daysDiff}일 전, 유사도 ${Math.round(topMatch.similarity * 100)}%): ${topMatch.emotion ?? ''}${topMatch.context_summary ? ' — ' + topMatch.context_summary.slice(0, 80) : ''}`;
+          sessionPattern = sessionPattern
+            ? `${sessionPattern} | ${similarNote}`
+            : similarNote;
+        }
+      }
+
       // M43 이론 컨텍스트 처리
       if (m43Result.status === 'fulfilled' && m43Result.value?.data && Array.isArray(m43Result.value.data)) {
         const theories = m43Result.value.data as Array<{
@@ -463,30 +514,47 @@ serve(async (req: Request) => {
     const mskCodeForProfile = MASK_NAME_TO_CODE[rawMaskForProfile] ?? rawMaskForProfile;
     const maskCtx: MaskContext | null = MASK_PROFILES[mskCodeForProfile] ?? null;
 
+    const systemPrompt = buildSystemPrompt(aiName, aiTone, aiPersonality, tab, m43Context, messageCount, maskCtx, sessionPattern ?? null) + getModeTransitionHint(messageCount);
+    const useStream = req.headers.get('accept') === 'text/event-stream';
+
     const aiResp = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'x-api-key': ANTHROPIC_API_KEY,
         'anthropic-version': '2023-06-01',
+        'anthropic-beta': 'prompt-caching-2024-07-31',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         model: MODELS.SONNET,
         max_tokens: 512,
         temperature: TEMPERATURES.CONVERSATION,
-        system: buildSystemPrompt(aiName, aiTone, aiPersonality, tab, m43Context, messageCount, maskCtx, sessionPattern ?? null) + getModeTransitionHint(messageCount),
+        // Prompt Caching: 시스템 프롬프트(마스크·이론·모드 지침)를 캐시 — API 비용 50~80% 절감
+        system: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
         messages,
+        stream: useStream,
       }),
     });
 
     if (!aiResp.ok) {
       const details = await aiResp.text();
       console.error('Anthropic error:', aiResp.status, details);
-      // C11: API 장애 시 rule-based fallback — 완전 블랙아웃 방지
       const fallback = getRuleBasedFallback(tab, emotion, crisisLevel);
       return new Response(JSON.stringify({ response: fallback, fallback: true }), {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // SSE 스트리밍: 클라이언트가 Accept: text/event-stream 헤더 전송 시
+    if (useStream) {
+      return new Response(aiResp.body, {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'X-Accel-Buffering': 'no',
+        },
       });
     }
 

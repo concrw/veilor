@@ -85,3 +85,83 @@ export async function invokeHeldChat(
   const data = await res.json() as HeldChatResult;
   return data;
 }
+
+/**
+ * SSE 스트리밍 모드 — Anthropic SSE 이벤트를 청크 단위로 콜백 전달
+ * onChunk: 텍스트 델타가 올 때마다 호출
+ * returns: 완성된 전체 응답 문자열
+ */
+export async function invokeHeldChatStream(
+  params: HeldChatParams,
+  onChunk: (delta: string) => void,
+  signal?: AbortSignal,
+): Promise<HeldChatResult> {
+  const { text } = params;
+
+  const crisisLevel = detectCrisisLevel(text);
+  if (crisisLevel === 'critical') {
+    onChunk(CRISIS_RESPONSE_CRITICAL);
+    return { response: CRISIS_RESPONSE_CRITICAL, crisis: 'critical' };
+  }
+  if (crisisLevel === 'high') {
+    onChunk(CRISIS_RESPONSE_HIGH);
+    return { response: CRISIS_RESPONSE_HIGH, crisis: 'high' };
+  }
+
+  const { data: { session } } = await supabase.auth.getSession();
+
+  const res = await fetch(
+    `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/held-chat`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session?.access_token ?? import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        'Accept': 'text/event-stream',
+      },
+      body: JSON.stringify({
+        ...params,
+        userId: params.userId ?? session?.user?.id,
+      }),
+      signal,
+    },
+  );
+
+  if (!res.ok || !res.body) {
+    throw new Error(`held-chat 스트리밍 오류: ${res.status}`);
+  }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let fullText = '';
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop() ?? '';
+
+    for (const line of lines) {
+      if (!line.startsWith('data: ')) continue;
+      const raw = line.slice(6).trim();
+      if (raw === '[DONE]') break;
+
+      try {
+        const evt = JSON.parse(raw);
+        // Anthropic SSE: content_block_delta 이벤트에서 텍스트 추출
+        const delta: string = evt?.delta?.text ?? '';
+        if (delta) {
+          fullText += delta;
+          onChunk(delta);
+        }
+      } catch {
+        // 파싱 실패한 줄은 무시
+      }
+    }
+  }
+
+  return { response: fullText };
+}
