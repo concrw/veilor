@@ -16,9 +16,11 @@ export const TEST_USERS = {
 
 export async function login(page: Page, email: string, password: string) {
   await page.goto('/auth/login');
-  await page.getByRole('textbox', { name: /이메일/i }).fill(email);
-  await page.getByRole('textbox', { name: /비밀번호/i }).fill(password);
-  await page.getByRole('button', { name: '로그인', exact: true }).click();
+  await page.waitForSelector('input[type="email"]', { timeout: 10_000 });
+  await page.locator('input[type="email"]').fill(email);
+  await page.locator('input[type="password"]').fill(password);
+  // Login.tsx: button은 type 속성 없음, text로 찾음
+  await page.locator('button', { hasText: '로그인' }).first().click();
 }
 
 export async function waitForHome(page: Page) {

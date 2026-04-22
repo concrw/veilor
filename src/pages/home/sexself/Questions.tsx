@@ -4,6 +4,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDrag } from '@use-gesture/react';
 import {
   SEX_SELF_QUESTIONS,
   STAGE_1_END,
@@ -295,9 +296,28 @@ export default function SexSelfQuestions() {
     current < STAGE_1_END ? '1단계' :
     current < STAGE_2_END ? '2단계' : '3단계';
 
+  // 스와이프: 좌 → 다음(슬라이더/선택값 확인), 우 → 이전
+  // axis < 0 이면 오른쪽→왼쪽 스와이프 (다음), axis > 0 이면 왼쪽→오른쪽 (이전)
+  const bind = useDrag(
+    ({ last, movement: [mx], direction: [dx], axis }) => {
+      if (!last) return;
+      if (axis !== 'x') return; // 수직 드래그 무시 (슬라이더 충돌 방지)
+      if (Math.abs(mx) < 60) return; // 임계값 미만 무시
+      if (dx < 0) {
+        // 왼쪽 스와이프 → 다음
+        if (q.type === 'slider') handleSliderConfirm();
+        else if (responses[q.id] !== undefined) handleAnswer(responses[q.id]);
+      } else {
+        // 오른쪽 스와이프 → 이전
+        handlePrev();
+      }
+    },
+    { axis: 'x', filterTaps: true },
+  );
+
   return (
     <div className="min-h-screen flex flex-col px-6 py-8" style={{ background: C.bg }}>
-      <div className="max-w-sm w-full mx-auto flex-1 flex flex-col">
+      <div className="max-w-sm w-full mx-auto flex-1 flex flex-col" {...bind()}>
 
         {/* 헤더 */}
         <div className="flex items-center justify-between mb-6">

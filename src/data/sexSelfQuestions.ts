@@ -196,6 +196,28 @@ const STAGE_2: SexSelfQuestion[] = [
     ],
   },
   {
+    // PWR-S vs PWR-P 분기 질문 1 — 영향력의 방향성 (McClelland 사회화/개인화 구분 핵심 기준)
+    id: 'SS16A', type: 'scenario', axis: 'PWR', reversed: false, depth_level: 2,
+    question: '관계나 상황에서 영향력을 발휘하고 싶을 때 — 그 에너지의 방향은 주로 어디를 향하는가?',
+    subtext: '정답 없어요. 솔직한 내면의 첫 반응을 고르세요.',
+    choices: [
+      { label: '상대가 잘 되고, 성장하고, 변화하는 것을 보고 싶다 (타인 지향)', score: 90 },  // PWR-S
+      { label: '내 말대로 되거나 내가 원하는 방향으로 흘러가길 바란다 (자기 지향)', score: 15 },  // PWR-P
+      { label: '상황이나 관계 유형에 따라 다르다', score: 55 },
+      { label: '영향력을 발휘하고 싶다는 욕구가 별로 없다', score: 50 },
+    ],
+  },
+  {
+    // PWR-S vs PWR-P 분기 질문 2 — 갈등/경쟁에서의 반응 (자제력·충동성 기준)
+    id: 'SS16B', type: 'binary', axis: 'PWR', reversed: false, depth_level: 2,
+    question: '경쟁이나 갈등 상황에서 "지는 것"에 대한 나의 반응은?',
+    subtext: 'McClelland: 자제력 수준이 두 권력욕 유형을 가르는 핵심 변수다.',
+    choices: [
+      { label: '불쾌하거나 답답하지만 상황을 받아들이고 전략을 바꾼다', score: 80 },  // PWR-S
+      { label: '이기지 못하면 강한 불쾌감·반발심·복수심이 올라온다', score: 10 },  // PWR-P
+    ],
+  },
+  {
     id: 'SS16', type: 'slider', axis: 'CON', reversed: false, depth_level: 2,
     question: '나에게 성적 친밀감은 관계의 깊이를 확인하는 수단인가, 독립적인 즐거움인가?',
     sliderMin: '관계 깊이 확인 수단', sliderMax: '독립적인 즐거움',
@@ -294,7 +316,7 @@ export const SEX_SELF_QUESTIONS: SexSelfQuestion[] = [
 
 // ── Stage 경계 인덱스 (Questions.tsx에서 단계 전환에 사용)
 export const STAGE_1_END = STAGE_1.length;           // 7
-export const STAGE_2_END = STAGE_1.length + STAGE_2.length; // 17
+export const STAGE_2_END = STAGE_1.length + STAGE_2.length; // 19
 
 // ── Stage 진입 임계값
 export const STAGE_2_THRESHOLD = 45; // Stage 1 평균 ≥ 45 → Stage 2 자동 진행
@@ -303,9 +325,12 @@ export const STAGE_3_THRESHOLD = 60; // Stage 2 평균 ≥ 60 → Stage 3 진입
 // 축별 문항 수 요약
 // DES: SS01 SS02 SS07 — 3문항
 // SHA: SS03 SS08 SS09 SS19 SS20 — 5문항
-// PWR: SS06 SS10 SS11 SS12 — 4문항
+// PWR: SS06 SS10 SS11 SS12 SS16A SS16B — 6문항
+//      ↑ SS16A·SS16B: PWR-S(사회화) vs PWR-P(개인화) 구분 전용 질문
+//      SS06: 성적 역할 방향성 / SS10·SS11: Dom·Sub 반응 / SS12: 경계 설정
+//      SS16A: 영향력 방향성 (타인 vs 자기) / SS16B: 갈등 자제력
 // BDY: SS05 SS13 SS18 — 3문항
 // HIS: SS14 SS21 SS22 — 3문항
 // FAN: SS15 SS23 SS24 — 3문항
 // CON: SS04 SS16 SS17 SS25 — 4문항
-// 총 25문항
+// 총 27문항

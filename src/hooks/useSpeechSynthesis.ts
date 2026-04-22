@@ -1,84 +1,45 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
+import { useKokoroTTS }      from './useKokoroTTS';
+import { useElevenLabsTTS }  from './useElevenLabsTTS';
+import { useVeilorSubscription } from './useVeilorSubscription';
 
 interface UseSpeechSynthesisOptions {
   lang?: string;
-  rate?: number;    // 0.1~10, default 0.95
-  pitch?: number;   // 0~2, default 1
+  rate?: number;    // Web Speech 폴백 전용
+  pitch?: number;   // Web Speech 폴백 전용
+  voiceId?: string; // Pro: ElevenLabs 사용자 클론 Voice ID
   onEnd?: () => void;
 }
 
-/** 한국어 음성을 찾아 반환. iOS Safari는 getVoices()가 비동기로 채워지므로
- *  voiceschanged 이벤트까지 대기한다. 5초 안에 로드되지 않으면 null 반환. */
-function resolveKoreanVoice(): Promise<SpeechSynthesisVoice | null> {
-  return new Promise(resolve => {
-    const pick = () => {
-      const voices = window.speechSynthesis.getVoices();
-      return voices.find(v => v.lang.startsWith('ko')) ?? null;
-    };
-
-    const immediate = pick();
-    if (immediate) { resolve(immediate); return; }
-
-    // iOS 18 등에서 목록이 아직 비어 있을 때 — voiceschanged 대기
-    const onChanged = () => {
-      clearTimeout(timer);
-      resolve(pick());
-    };
-    const timer = setTimeout(() => {
-      window.speechSynthesis.removeEventListener('voiceschanged', onChanged);
-      resolve(pick()); // 타임아웃 후 재시도 (없으면 null → 시스템 기본 음성 사용)
-    }, 5000);
-
-    window.speechSynthesis.addEventListener('voiceschanged', onChanged, { once: true });
-  });
-}
-
+/**
+ * 티어별 TTS 분기
+ * - 무료: Kokoro-82M (브라우저 로컬, 비용 0)
+ * - Pro+: ElevenLabs (고품질, Voice Clone 지원)
+ */
 export function useSpeechSynthesis(options: UseSpeechSynthesisOptions = {}) {
-  const { lang = 'ko-KR', rate = 0.95, pitch = 1, onEnd } = options;
-  const [speaking, setSpeaking] = useState(false);
-  const [supported, setSupported] = useState(false);
-  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
-  const onEndRef     = useRef(onEnd);
-  useEffect(() => { onEndRef.current = onEnd; }, [onEnd]);
+  const { lang = 'ko-KR', voiceId, onEnd } = options;
+  const { isPro } = useVeilorSubscription();
 
-  useEffect(() => {
-    setSupported(typeof window !== 'undefined' && 'speechSynthesis' in window);
-  }, []);
+  const kokoro  = useKokoroTTS({ lang, onEnd });
+  const eleven  = useElevenLabsTTS({ lang, voiceId, onEnd });
 
   const speak = useCallback(async (text: string) => {
-    if (!('speechSynthesis' in window)) return;
-
-    // 이전 발화 중단
-    window.speechSynthesis.cancel();
-
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang  = lang;
-    utterance.rate  = rate;
-    utterance.pitch = pitch;
-
-    // 한국어 음성 선택 — iOS voiceschanged 비동기 대기 포함
-    const koVoice = await resolveKoreanVoice();
-    if (koVoice) utterance.voice = koVoice;
-
-    utterance.onstart = () => setSpeaking(true);
-    utterance.onend   = () => {
-      setSpeaking(false);
-      onEndRef.current?.();
-    };
-    utterance.onerror = () => setSpeaking(false);
-
-    utteranceRef.current = utterance;
-    window.speechSynthesis.speak(utterance);
-  }, [lang, rate, pitch]);
+    if (isPro) {
+      await eleven.speak(text);
+    } else {
+      await kokoro.speak(text);
+    }
+  }, [isPro, eleven, kokoro]);
 
   const stop = useCallback(() => {
-    window.speechSynthesis.cancel();
-    setSpeaking(false);
-  }, []);
+    eleven.stop();
+    kokoro.stop();
+  }, [eleven, kokoro]);
 
   return {
-    speaking,
-    supported,
+    speaking:  isPro ? eleven.speaking  : kokoro.speaking,
+    supported: true,
+    loading:   isPro ? false            : kokoro.loading,  // Kokoro 모델 로딩 상태
     speak,
     stop,
   };

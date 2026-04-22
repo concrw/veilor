@@ -7,6 +7,9 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
 import { runSexSelfDiagnosis } from '@/lib/sexSelfAlgorithm';
 import type { SexSelfResult } from '@/lib/sexSelfAlgorithm';
+import { computeKinkLanguage } from '@/lib/kinkLanguageAlgorithm';
+import type { KinkLanguageResult } from '@/lib/kinkLanguageAlgorithm';
+import KinkLanguageSection from '@/components/sexself/KinkLanguageSection';
 import { veilorDb } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer } from 'recharts';
@@ -19,6 +22,7 @@ export default function SexSelfResult() {
   const qc = useQueryClient();
 
   const [result, setResult] = useState<SexSelfResult | null>(null);
+  const [kinkResult, setKinkResult] = useState<KinkLanguageResult | null>(null);
   const [revealed, setRevealed] = useState(false);
 
   const stateData = location.state as { responses?: Record<string, string> } | null;
@@ -59,6 +63,8 @@ export default function SexSelfResult() {
 
       const r = runSexSelfDiagnosis(responses, attachmentStyle, coreWound);
       setResult(r);
+      const kr = computeKinkLanguage(r.scores, r.profileType);
+      setKinkResult(kr);
 
       // DB 저장 — user_signals에 sexself 완료 신호 저장
       if (user) {
@@ -85,6 +91,16 @@ export default function SexSelfResult() {
           { user_id: user.id, question_key: 'sexself_fan', response_value: String(r.scores.FAN) },
           { user_id: user.id, question_key: 'sexself_con', response_value: String(r.scores.CON) },
           { user_id: user.id, question_key: 'sexself_profile', response_value: r.profileType },
+          // PWR S/P 하위 유형 (McClelland 사회화/개인화 분기)
+          { user_id: user.id, question_key: 'sexself_pwr_subtype', response_value: r.pwrAnalysis.subtype },
+          { user_id: user.id, question_key: 'sexself_pwr_sscore', response_value: String(r.pwrAnalysis.sScore) },
+          // KinkLanguage SEX 3축 + 역할/강도/SHA 하위 유형
+          { user_id: user.id, question_key: 'sexself_sex_leading', response_value: String(kr.sexAxes.leading) },
+          { user_id: user.id, question_key: 'sexself_sex_expressiveness', response_value: String(kr.sexAxes.expressiveness) },
+          { user_id: user.id, question_key: 'sexself_sex_intensity', response_value: String(kr.sexAxes.intensity) },
+          { user_id: user.id, question_key: 'sexself_kink_role', response_value: kr.roleLabel },
+          { user_id: user.id, question_key: 'sexself_kink_intensity', response_value: kr.intensityLabel },
+          { user_id: user.id, question_key: 'sexself_sha_subtype', response_value: kr.shaSubtype },
         ];
         await veilorDb.from('cq_responses')
           .upsert(cqRows, { onConflict: 'user_id,question_key' })
@@ -253,6 +269,60 @@ export default function SexSelfResult() {
               ))}
             </div>
           </div>
+        )}
+
+        {/* 나의 성적 언어 섹션 */}
+        {kinkResult && (
+          <div className={`transition-all duration-700 delay-700 ${revealed ? 'opacity-100' : 'opacity-0'}`}>
+            <KinkLanguageSection kinkResult={kinkResult} sha={result.scores.SHA} />
+          </div>
+        )}
+
+        {/* ANXIETY_FROZEN 전용 안전 메시지 + 전문 상담 안내 */}
+        {result.profileType === 'ANXIETY_FROZEN' && (
+          <div className={`space-y-3 transition-all duration-700 delay-700 ${revealed ? 'opacity-100' : 'opacity-0'}`}>
+            {/* 안전 메시지 카드 */}
+            <div
+              className="rounded-xl p-4"
+              style={{ background: alpha('#64748b', 0.08), border: `1px solid ${alpha('#64748b', 0.25)}` }}
+            >
+              <p className="text-xs font-medium mb-2" style={{ color: '#94a3b8' }}>지금 당신에게 필요한 것</p>
+              <p className="text-sm font-light leading-relaxed" style={{ color: C.text }}>
+                지금은 어떤 취향을 찾거나 탐색하기보다, 먼저 안전함을 느끼는 것이 중요할 수 있어요.
+                욕구가 잠들어 있는 것은 의지의 문제가 아닙니다 — 몸과 마음이 스스로를 보호하고 있는 신호예요.
+              </p>
+            </div>
+            {/* 전문 상담 안내 카드 */}
+            <div
+              className="rounded-xl p-4"
+              style={{ background: alpha('#3b82f6', 0.06), border: `1px solid ${alpha('#3b82f6', 0.2)}` }}
+            >
+              <p className="text-xs font-medium mb-2" style={{ color: '#60a5fa' }}>전문 상담과 함께하기</p>
+              <p className="text-xs font-light leading-relaxed" style={{ color: C.text2 }}>
+                전문 상담사와 함께 이 상태를 탐색하는 것이 가장 안전하고 효과적인 방법이에요.
+                혼자 해결하려 하지 않아도 됩니다. 도움을 요청하는 것은 용기 있는 일이에요.
+              </p>
+              <p className="text-[10px] mt-2" style={{ color: alpha('#60a5fa', 0.7) }}>
+                정신건강 위기상담 전화 ☎ 1577-0199 (24시간)
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* NeedAssessment 진입 — ANXIETY_FROZEN 제외 */}
+        {result.profileType !== 'ANXIETY_FROZEN' && (
+          <button
+            onClick={() => navigate('/home/sexself/need-assessment')}
+            className="w-full rounded-xl p-4 text-left"
+            style={{ background: alpha(profileColor, 0.06), border: `1px solid ${alpha(profileColor, 0.2)}` }}
+          >
+            <p className="text-xs font-medium mb-1" style={{ color: profileColor }}>
+              내 욕구 충족도 살펴보기 →
+            </p>
+            <p className="text-[10px]" style={{ color: C.text4 }}>
+              성적 자아 결과를 바탕으로 지금의 욕구 상태를 함께 진단합니다
+            </p>
+          </button>
         )}
 
         <Button

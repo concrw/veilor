@@ -1,4 +1,5 @@
 import type { Json } from './types';
+import type { PersonaProfile, PersonaRelationship } from './persona-types';
 
 export interface VeilorUserProfile {
   user_id: string;
@@ -13,8 +14,19 @@ export interface VeilorUserProfile {
   app_theme?: string | null;
   codetalk_day?: number | null;
   streak_count?: number | null;
+  persona_contexts_completed?: string[] | null;
   created_at?: string | null;
   updated_at?: string | null;
+}
+
+export interface VeilorDmRoom {
+  id: string;
+  user_a_id: string;
+  user_b_id: string;
+  is_active: boolean;
+  consent_a: boolean;
+  consent_b: boolean;
+  created_at?: string | null;
 }
 
 export interface VeilorPriperSession {
@@ -242,6 +254,46 @@ export interface VeilorPremiumTriggerEvent {
   created_at?: string | null;
 }
 
+// ── user_wellness_scores 타입 ────────────────────────────────────
+// 사용 위치: 코드베이스 전반 (V-NEED 욕구 점수 집계 결과 저장용)
+export interface VeilorUserWellnessScore {
+  id?: string;
+  user_id: string;
+  // V-NEED 12욕구 Desired (0~100)
+  need_bio_slp_desired?: number | null;
+  need_bio_eat_desired?: number | null;
+  need_bio_sex_desired?: number | null;
+  need_saf_sec_desired?: number | null;
+  need_saf_ctl_desired?: number | null;
+  need_con_bel_desired?: number | null;
+  need_con_int_desired?: number | null;
+  need_grw_ach_desired?: number | null;
+  need_grw_rec_desired?: number | null;
+  need_grw_pwr_desired?: number | null;
+  need_exs_aut_desired?: number | null;
+  need_exs_mng_desired?: number | null;
+  // V-NEED 12욕구 Satisfied (0~100)
+  need_bio_slp_satisfied?: number | null;
+  need_bio_eat_satisfied?: number | null;
+  need_bio_sex_satisfied?: number | null;
+  need_saf_sec_satisfied?: number | null;
+  need_saf_ctl_satisfied?: number | null;
+  need_con_bel_satisfied?: number | null;
+  need_con_int_satisfied?: number | null;
+  need_grw_ach_satisfied?: number | null;
+  need_grw_rec_satisfied?: number | null;
+  need_grw_pwr_satisfied?: number | null;
+  need_exs_aut_satisfied?: number | null;
+  need_exs_mng_satisfied?: number | null;
+  // 집계 결과
+  top_deficit_codes?: string[] | null;   // 상위 3개 결핍 욕구 코드
+  bio_sex_adjustment?: number | null;    // ANXIETY_FROZEN 시 BIO-SEX 조정값
+  anxiety_frozen_detected?: boolean | null;
+  assessed_at?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
 export interface VeilorWhyJobEntry {
   id: string;
   session_id: string;
@@ -404,6 +456,118 @@ export type VeilorDatabase = {
         Row: { id: string; user_id: string; raw_question?: string; matched_question_id?: string; matched_domain_id?: string; created_at?: string };
         Insert: { user_id: string; raw_question?: string; matched_question_id?: string; matched_domain_id?: string };
         Update: Partial<{ user_id: string; raw_question?: string; matched_question_id?: string; matched_domain_id?: string }>;
+        Relationships: [];
+      };
+      // ── 멀티페르소나 테이블 (persona-types.ts의 인터페이스 재사용) ──
+      persona_profiles: {
+        Row: PersonaProfile;
+        Insert: Omit<PersonaProfile, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<PersonaProfile, 'id' | 'user_id'>>;
+        Relationships: [];
+      };
+      persona_relationships: {
+        Row: PersonaRelationship;
+        Insert: Omit<PersonaRelationship, 'id' | 'created_at'>;
+        Update: Partial<Omit<PersonaRelationship, 'id' | 'user_id'>>;
+        Relationships: [];
+      };
+      // ── V-NEED 욕구 점수 집계 ──────────────────────────────────────
+      user_wellness_scores: {
+        Row: VeilorUserWellnessScore;
+        Insert: Omit<VeilorUserWellnessScore, 'id'>;
+        Update: Partial<Omit<VeilorUserWellnessScore, 'id' | 'user_id'>>;
+        Relationships: [];
+      };
+      // ── DM 룸 ──────────────────────────────────────────────────────
+      dm_rooms: {
+        Row: VeilorDmRoom;
+        Insert: Omit<VeilorDmRoom, 'id' | 'created_at'>;
+        Update: Partial<Omit<VeilorDmRoom, 'id' | 'user_a_id' | 'user_b_id'>>;
+        Relationships: [];
+      };
+      // ── B2B 테이블 ──────────────────────────────────────────────────
+      b2b_orgs: {
+        Row: B2BOrg;
+        Insert: Omit<B2BOrg, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<B2BOrg, 'id'>>;
+        Relationships: [];
+      };
+      b2b_org_members: {
+        Row: B2BOrgMember;
+        Insert: Omit<B2BOrgMember, 'id' | 'created_at'>;
+        Update: Partial<Omit<B2BOrgMember, 'id'>>;
+        Relationships: [];
+      };
+      b2b_org_admins: {
+        Row: B2BOrgAdmin;
+        Insert: Omit<B2BOrgAdmin, 'id' | 'created_at'>;
+        Update: Partial<Omit<B2BOrgAdmin, 'id'>>;
+        Relationships: [];
+      };
+      b2b_org_events: {
+        Row: B2BOrgEvent;
+        Insert: Omit<B2BOrgEvent, 'id' | 'created_at'>;
+        Update: Partial<Omit<B2BOrgEvent, 'id'>>;
+        Relationships: [];
+      };
+      b2b_checkin_sessions: {
+        Row: B2BCheckinSession;
+        Insert: Omit<B2BCheckinSession, 'id' | 'created_at'>;
+        Update: Partial<Omit<B2BCheckinSession, 'id'>>;
+        Relationships: [];
+      };
+      b2b_coaching_sessions: {
+        Row: B2BCoachingSession;
+        Insert: Omit<B2BCoachingSession, 'id' | 'created_at'>;
+        Update: Partial<Omit<B2BCoachingSession, 'id'>>;
+        Relationships: [];
+      };
+      b2b_coaches: {
+        Row: B2BCoach;
+        Insert: Omit<B2BCoach, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<B2BCoach, 'id'>>;
+        Relationships: [];
+      };
+      b2b_coach_posts: {
+        Row: B2BCoachPost;
+        Insert: Omit<B2BCoachPost, 'id'>;
+        Update: Partial<Omit<B2BCoachPost, 'id'>>;
+        Relationships: [];
+      };
+      b2b_org_aggregate: {
+        Row: B2BOrgAggregate;
+        Insert: Omit<B2BOrgAggregate, 'id' | 'created_at'>;
+        Update: Partial<Omit<B2BOrgAggregate, 'id'>>;
+        Relationships: [];
+      };
+      b2b_trainee_profiles: {
+        Row: B2BTraineeProfile;
+        Insert: Omit<B2BTraineeProfile, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<B2BTraineeProfile, 'id'>>;
+        Relationships: [];
+      };
+      emotion_scores: {
+        Row: VeilorEmotionScore;
+        Insert: Omit<VeilorEmotionScore, 'id' | 'created_at'>;
+        Update: Partial<Omit<VeilorEmotionScore, 'id'>>;
+        Relationships: [];
+      };
+      emotion_checkins: {
+        Row: VeilorEmotionCheckin;
+        Insert: Omit<VeilorEmotionCheckin, 'id' | 'created_at'>;
+        Update: Partial<Omit<VeilorEmotionCheckin, 'id'>>;
+        Relationships: [];
+      };
+      b2b_reports: {
+        Row: B2BReport;
+        Insert: Omit<B2BReport, 'id' | 'created_at'>;
+        Update: Partial<Omit<B2BReport, 'id'>>;
+        Relationships: [];
+      };
+      dp_budget_log: {
+        Row: DPBudgetLog;
+        Insert: Omit<DPBudgetLog, 'id' | 'created_at'>;
+        Update: Partial<Omit<DPBudgetLog, 'id'>>;
         Relationships: [];
       };
     };
@@ -593,6 +757,45 @@ export interface B2BTraineeProfile {
   meta?: Json;
   created_at: string;
   updated_at: string;
+}
+
+export interface VeilorEmotionScore {
+  id: string;
+  user_id: string;
+  session_id?: string | null;
+  input_text: string;
+  top_emotions: Array<{ label: string; score: number }>;
+  need_gaps: Record<string, number>;
+  model_version: string;
+  created_at: string;
+}
+
+export interface VeilorEmotionCheckin {
+  id: string;
+  user_id: string;
+  emotion: string;
+  score: number;
+  note?: string | null;
+  created_at: string;
+}
+
+export interface B2BReport {
+  id: string;
+  org_id: string;
+  report_type: string;
+  dp_epsilon: number;
+  dp_delta: number;
+  dp_mechanism: string;
+  report_data: Json;
+  created_at: string;
+}
+
+export interface DPBudgetLog {
+  id: string;
+  org_id: string;
+  epsilon_used: number;
+  mechanism: string;
+  created_at: string;
 }
 
 // 온보딩 폼 입력 타입

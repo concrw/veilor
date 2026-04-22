@@ -53,6 +53,18 @@ serve(async (req) => {
       "persona_zones",
       "compatibility_matches",
       "user_profiles",
+      // B2B 조직 연계 데이터 (GDPR: 개인이 탈퇴해도 org 데이터에서 제거)
+      "b2b_org_members",
+      "b2b_checkin_sessions",
+      "b2b_coaching_sessions",
+      "b2b_org_events",
+      // 추가 누락 테이블 (GDPR 필수)
+      "why_sessions",
+      "dive_sessions",
+      "m43_domain_answers",
+      "user_wellness_scores",
+      "persona_profiles",
+      "persona_relationships",
     ];
 
     for (const table of veilorTables) {

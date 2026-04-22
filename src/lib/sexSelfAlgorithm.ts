@@ -9,14 +9,31 @@ import { SEX_SELF_QUESTIONS } from '@/data/sexSelfQuestions';
 export interface SexSelfScores {
   DES: number; // 욕망의 실체 (0~100, 높을수록 욕구 명확)
   SHA: number; // 수치심 (0~100, 높을수록 수치심 낮음 = 건강)
-  PWR: number; // 권력·통제 역학 (0~100, 높을수록 개방적)
+  PWR: number; // 권력·통제 역학 (0~100, 높을수록 개방적) — 성적 역할 역학 종합
   BDY: number; // 몸과의 관계 (0~100)
   HIS: number; // 성적 역사 통합도 (0~100)
   FAN: number; // 판타지 수용도 (0~100)
   CON: number; // 연결 방식 다양성 (0~100)
 }
 
-// ── 8가지 프로파일 ─────────────────────────────────────────────
+// ── PWR S/P 분기 분석 ───────────────────────────────────────────
+// McClelland(1975) + Magee & Langner(2008): 권력욕은 사회화/개인화 두 유형으로 분기
+// SS16A(영향력 방향성) + SS16B(갈등 자제력)가 분기 신호
+export type PwrSubtype =
+  | 'SOCIALIZED'   // GRW-PWR-S: 타인 성장·집단 목표 지향. 높은 자제력
+  | 'PERSONALIZED' // GRW-PWR-P: 자기 우월·지배 지향. 낮은 자제력
+  | 'MIXED'        // 두 유형이 혼합됨 (상황 의존적)
+  | 'LOW';         // 권력욕 자체가 낮음
+
+export interface PwrAnalysis {
+  subtype: PwrSubtype;
+  subtypeKo: string;
+  score: number;      // 전체 PWR 점수 (0~100)
+  sScore: number;     // 사회화 신호 점수 (0~100, SS16A·SS16B 기반)
+  insight: string;
+}
+
+// ── 9가지 프로파일 ─────────────────────────────────────────────
 export type SexSelfProfileType =
   | 'OPEN_EXPRESSIVE'     // DES↑ SHA↑ FAN↑ — 욕구를 자연스럽게 표현
   | 'RESPONSIVE'          // DES↑ SHA↑ CON↑ — 반응형 욕구, 조건이 맞으면 풍부
@@ -25,7 +42,8 @@ export type SexSelfProfileType =
   | 'SHAME_BLOCKED'       // DES↑ SHA↓ HIS↑  — 역사적 상처 + 수치심이 주요 차단
   | 'SAFETY_SEEKING'      // CON↑ DES↓       — 안전감이 욕구보다 먼저
   | 'EXPLORING'           // HIS↑ FAN↑       — 패턴 인식 높고 탐색 의지 강함
-  | 'BUILDING_AWARENESS'; // 전반 중간값 — 인식 형성 중
+  | 'BUILDING_AWARENESS'  // 전반 중간값 — 인식 형성 중
+  | 'ANXIETY_FROZEN';     // HIS↓ SHA↓ DES↓ 동시 — 욕구 동결 상태 (임상 설계 원칙)
 
 export interface SexSelfProfile {
   type: SexSelfProfileType;
@@ -119,6 +137,16 @@ const PROFILES: Record<SexSelfProfileType, SexSelfProfile> = {
     growthEdge: 'SexSelf 세션을 반복하며 조금씩 자신의 패턴을 발견해 나가기',
     color: '#94a3b8',
   },
+  ANXIETY_FROZEN: {
+    type: 'ANXIETY_FROZEN',
+    nameKo: '욕구 동결 상태',
+    tagline: '지금은 어떤 취향보다 먼저 안전함이 필요합니다',
+    description: '성적 역사(HIS), 수치심(SHA), 욕망(DES) 세 축이 동시에 낮은 상태입니다. 과거의 부정적 경험—동의 없는 접촉, 반복적 수치 경험, 깊은 좌절—이 신경 회로 수준에서 욕구 시스템 자체를 억제하고 있을 수 있습니다. 이것은 의지의 문제가 아닙니다. SIS(억제 시스템)가 너무 강하게 활성화되어 SES(흥분 시스템)가 작동할 여지가 없는 상태입니다.',
+    coreWoundLink: '동의 없는 경험, 반복적 수치심, 또는 심각한 관계 트라우마가 욕구 시스템을 동결시켰을 가능성이 있습니다. 이것은 치유될 수 있습니다.',
+    brakeFactors: ['신경 수준의 욕구 억제', '트라우마 영향', '극도의 SIS 과활성'],
+    growthEdge: '취향 탐색보다 먼저 심리 안전감을 회복하는 것. 전문 상담사와 함께하는 것이 가장 안전한 방법입니다.',
+    color: '#64748b',
+  },
 };
 
 // ── 점수 계산 (7축) ────────────────────────────────────────────
@@ -174,6 +202,9 @@ const PROFILE_MAP: [boolean, boolean, boolean, boolean, boolean, SexSelfProfileT
 ];
 
 export function classifyProfile(scores: SexSelfScores): SexSelfProfileType {
+  // ANXIETY_FROZEN: HIS < 35 && SHA < 35 && DES < 35 — SUPPRESSED 분류 전 먼저 검사
+  if (scores.HIS < 35 && scores.SHA < 35 && scores.DES < 35) return 'ANXIETY_FROZEN';
+
   const desHigh = scores.DES >= 60;
   const shaHigh = scores.SHA >= 60;
   const fanHigh = scores.FAN >= 60;
@@ -205,7 +236,46 @@ function shameInsight(sha: number): string {
   return '수치심이 낮고 자신의 욕구를 비교적 자연스럽게 받아들이는 편이에요.';
 }
 
-function pwrInsight(pwr: number): string {
+// PWR S/P 하위 유형 분류
+// SS16A: 타인 지향(90) / 자기 지향(15) / 혼합(55) / 낮음(50)
+// SS16B: 자제력 있음(80) / 충동적(10)
+export function analyzePwrSubtype(
+  responses: Record<string, string>,
+  pwrScore: number,
+): PwrAnalysis {
+  const s16a = parseFloat(responses['SS16A'] ?? '50');
+  const s16b = parseFloat(responses['SS16B'] ?? '50');
+
+  // 두 질문의 평균으로 사회화 성향 점수 산출
+  const sScore = Math.round((s16a + s16b) / 2);
+
+  let subtype: PwrSubtype;
+  let subtypeKo: string;
+  let insight: string;
+
+  if (pwrScore < 35) {
+    subtype = 'LOW';
+    subtypeKo = '권력욕 낮음';
+    insight = '타인이나 상황에 영향력을 행사하려는 욕구가 전반적으로 낮은 편이에요. 자신의 경계를 지키는 것과 타인에게 맞춰주는 것 사이의 균형을 살펴볼 수 있어요.';
+  } else if (sScore >= 70) {
+    subtype = 'SOCIALIZED';
+    subtypeKo = '사회화된 영향욕';
+    insight = '영향력을 타인의 성장과 집단의 목표를 위해 쓰고 싶은 방향이에요. 리더십·멘토링·코칭 에너지가 있고, 갈등에서도 상생 해결책을 먼저 찾는 편이에요. 이 욕구를 억누르면 오히려 자기 소진으로 이어질 수 있어요.';
+  } else if (sScore <= 30) {
+    subtype = 'PERSONALIZED';
+    subtypeKo = '개인화된 지배욕';
+    insight = '영향력이 자기 뜻대로 되는 것, 이기는 것에 집중되는 경향이 있어요. 이 에너지는 강한 동기가 될 수 있지만, 관계에서 지배-종속 패턴을 만들거나 파트너를 소진시킬 수 있어요. 이 욕구의 방향을 알아차리는 것이 성장의 시작이에요.';
+  } else {
+    subtype = 'MIXED';
+    subtypeKo = '혼합형';
+    insight = '영향력 욕구가 상황에 따라 타인 지향과 자기 지향을 오가는 편이에요. 어떤 조건에서 어느 방향으로 흐르는지 패턴을 살펴보면 자기 이해가 깊어질 수 있어요.';
+  }
+
+  return { subtype, subtypeKo, score: pwrScore, sScore, insight };
+}
+
+function pwrInsight(pwr: number, pwrAnalysis?: PwrAnalysis): string {
+  if (pwrAnalysis) return pwrAnalysis.insight;
   if (pwr < 40) return '권력·통제 역학에 대해 불편함이나 불안이 있어요. 주도와 복종 사이의 자신의 선호를 천천히 탐색해 보는 것이 도움이 될 수 있어요.';
   if (pwr < 65) return '역할 역학에 대한 탐색이 진행 중이에요.';
   return '주도와 내맡김 사이의 역학을 편안하게 탐색할 수 있는 상태예요.';
@@ -216,6 +286,7 @@ export function generateSexSelfInsights(
   profile: SexSelfProfile,
   attachmentStyle?: string,
   coreWound?: string,
+  pwrAnalysis?: PwrAnalysis,
 ): string[] {
   const insights: string[] = [];
 
@@ -227,8 +298,8 @@ export function generateSexSelfInsights(
   const sha = shameInsight(scores.SHA);
   insights.push(`${des} ${sha}`);
 
-  // 3번: 권력·통제 + 신체 연결
-  const pwr = pwrInsight(scores.PWR);
+  // 3번: 권력·통제 (S/P 분기 인사이트) + 신체 연결
+  const pwr = pwrInsight(scores.PWR, pwrAnalysis);
   const bdyNote = scores.BDY < 45
     ? ' 신체와의 연결감도 아직 형성 중이에요 — 성적 맥락 밖에서 자기 몸을 탐색하는 것부터 시작할 수 있어요.'
     : '';
@@ -266,6 +337,7 @@ export interface SexSelfResult {
   profileType: SexSelfProfileType;
   insights: string[];
   radarData: { axis: string; value: number }[];
+  pwrAnalysis: PwrAnalysis;
   completedAt: string;
 }
 
@@ -277,7 +349,8 @@ export function runSexSelfDiagnosis(
   const scores = computeSexSelfScores(responses);
   const profileType = classifyProfile(scores);
   const profile = PROFILES[profileType];
-  const insights = generateSexSelfInsights(scores, profile, attachmentStyle, coreWound);
+  const pwrAnalysis = analyzePwrSubtype(responses, scores.PWR);
+  const insights = generateSexSelfInsights(scores, profile, attachmentStyle, coreWound, pwrAnalysis);
 
   const radarData = [
     { axis: '욕망', value: scores.DES },
@@ -293,6 +366,7 @@ export function runSexSelfDiagnosis(
     profileType,
     insights,
     radarData,
+    pwrAnalysis,
     completedAt: new Date().toISOString(),
   };
 }
