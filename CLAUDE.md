@@ -15,12 +15,60 @@ SELECT content FROM deepplot_core.protocols WHERE protocol_code = 'DEEPPLOT_MAST
 
 ---
 
+## 🔴 구현 여부 판단 원칙 (절대 준수)
+
+**문서·메모리의 ❌/⚠️/미구현 항목을 그대로 믿지 말 것.**
+
+`docs/veilor_integration_briefing.md`, `/memory/` 파일들은 항상 stale할 수 있다.
+구현 여부는 반드시 **코드를 직접 확인**해서 판단한다.
+
+- 작업 전 "미구현"이라고 되어 있는 항목 → 코드 grep/read로 직접 확인 후 진행
+- 확인 없이 문서만 보고 "미구현이니 구현해야 한다"고 판단하는 것은 금지
+- 코드가 truth source다. 문서는 참고용이다.
+
+---
+
 ## Supabase 접근 (필수 정보)
 
 - **project_id**: `qwiwotodwfgkpdasdhhl` (절대 변경 금지)
 - **platform**: `veilor`
 - **Python**: `/opt/homebrew/bin/python3.11` (3.9 사용 금지)
 - **supabase-client 경로**: `/Users/brandactivist/Desktop/DEEPPLOT/supabase-client`
+
+---
+
+## 🔴 스프린트 관리 — AOSIS 중앙 관리 (필수)
+
+VEILOR의 스프린트는 AOSIS가 중앙 관리한다. 스프린트 항목은 반드시 `aosis.sprint_items`에 `product = 'veilor'`으로 기록해야 한다.
+
+### sprint_items 작성 규칙 (위반 시 작업 무효)
+
+- 구현 항목이 추가/변경/완료될 때마다 즉시 `aosis.sprint_items` INSERT/UPDATE
+- 항목마다 `verification_query` 필수 — 실제 동작을 검증하는 SQL (빈 행 = FAIL)
+- 완료 시 `status = 'DONE'`, `verification_result`에 실행 결과 저장
+- 세션 끝나기 전 sprint_items 누락 여부 확인 필수 — 구현했는데 DB에 없으면 없는 것과 같다
+
+### INSERT 예시
+
+```sql
+INSERT INTO aosis.sprint_items (sprint_id, order_index, title, status, verification_query)
+VALUES (
+  '[sprint_id]',
+  0,
+  '[항목 제목]',
+  'DONE',
+  'SELECT 1 FROM [실제 동작을 검증하는 쿼리]'
+);
+```
+
+### 왜 AOSIS인가
+
+AOSIS `closeSprintAndNotify()`는 3단 gate로 스프린트 완료를 차단한다:
+1. DoD gate — 미완료 항목 있으면 차단
+2. verification_query 누락 gate — VQ 없는 항목 있으면 차단
+3. Double-check gate — VQ 실행 결과 빈 행이면 차단
+
+이 gate는 코드 레벨 강제화이므로 우회 불가.
 
 ---
 
