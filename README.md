@@ -1,73 +1,34 @@
-# Welcome to your Lovable project
+# VEILOR
 
-## Project info
+**멘탈 퍼포먼스 루틴 플랫폼**
 
-**URL**: https://lovable.dev/projects/4fc6e5d2-061a-41c4-95c4-e466fa2ee780
+엘리트 선수·아이돌·트레이니의 멘탈 상태를 일상 데이터로 추적하고, AI 코칭 어시스턴트 "엠버"와 함께 자기이해와 성장을 쌓는 플랫폼.
 
-## How can I edit this code?
+---
 
-There are several ways of editing your application.
+## 기술 스택
 
-**Use Lovable**
+- **Frontend**: React 18 + TypeScript + Vite
+- **Style**: Tailwind CSS + shadcn/ui
+- **Backend**: Supabase (PostgreSQL + Auth + Edge Functions + Realtime)
+- **결제**: Stripe
+- **음성**: Web Speech API
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/4fc6e5d2-061a-41c4-95c4-e466fa2ee780) and start prompting.
+## 로컬 개발
 
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```bash
+bun install
+bun dev
 ```
 
-**Edit a file directly in GitHub**
+## 문서
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+| 파일 | 내용 |
+|------|------|
+| [veilor_master.md](veilor_master.md) | 통합 현황 — 설계·구현·갭 분석 |
+| [veilor_b2b.md](veilor_b2b.md) | B2B 서비스 전략 전체 |
+| [veilor_ux_modes.md](veilor_ux_modes.md) | 3가지 UX 모드 설계 |
+| [veilor_systemmode_plan.md](veilor_systemmode_plan.md) | 시스템모드(Clear) 프론트엔드 기획 |
+| [veilor_systemmode_benchmark.md](veilor_systemmode_benchmark.md) | 경쟁사 6개 UX 벤치마킹 |
 
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/4fc6e5d2-061a-41c4-95c4-e466fa2ee780) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+과거 PRIPER 시절 문서는 [docs/archive/](docs/archive/) 에 보관.
