@@ -93,14 +93,28 @@ VALUES (
 );
 ```
 
+### managed_by 확인 (세션 충돌 방지)
+
+VEILOR product는 `managed_by = 'claude_code'`로 설정되어 있다.
+Claude Code 세션이 VEILOR 스프린트를 직접 관리한다.
+
+- AOSIS runtime managed_by=runtime product → Claude Code 세션 접근 차단 (DB 트리거 P0010)
+- VEILOR는 claude_code이므로 접근 가능
+
+```sql
+-- managed_by 확인
+SELECT product, managed_by FROM aosis.sprints WHERE product = 'veilor' LIMIT 1;
+```
+
 ### 왜 AOSIS인가
 
-AOSIS `closeSprintAndNotify()`는 3단 gate로 스프린트 완료를 차단한다:
-1. DoD gate — 미완료 항목 있으면 차단
-2. verification_query 누락 gate — VQ 없는 항목 있으면 차단
-3. Double-check gate — VQ 실행 결과 빈 행이면 차단
+AOSIS `closeSprintAndNotify()`는 4단 gate로 스프린트 완료를 차단한다:
+1. sprint_items 0개 gate — 항목 없으면 차단 (P0000)
+2. DoD gate — 미완료 항목 있으면 차단 (P0001)
+3. verification_query 누락 gate — VQ 없는 항목 있으면 차단 (P0002)
+4. Double-check gate — VQ 실행 결과 빈 행이면 차단 (P0003)
 
-이 gate는 코드 레벨 강제화이므로 우회 불가.
+이 gate는 DB 트리거 레벨 강제화이므로 우회 불가.
 
 ---
 
