@@ -1,5 +1,20 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { getCorsHeaders, handleCorsOptions } from "../_shared/cors.ts";
+
+// CORS 인라인 (_shared import 번들러 미지원)
+function getCorsHeaders(req: Request): Record<string, string> {
+  const origin = req.headers.get("origin") ?? "";
+  return {
+    "Access-Control-Allow-Origin": origin || "*",
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Vary": "Origin",
+  };
+}
+function handleCorsOptions(req: Request): Response | null {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: getCorsHeaders(req) });
+  }
+  return null;
+}
 
 const COMMUNITY_CONTENT: Record<string, string[]> = {
   반항자: [
@@ -129,13 +144,12 @@ const ALIASES = [
   "고요한 들판", "낮은 목소리", "차가운 달빛", "젖은 풀", "먼 산",
 ];
 
-// 실제 사람 활동 패턴을 모방한 시간대 가중치
 function weightedHour(): number {
   const r = Math.random();
-  if (r < 0.15) return 7 + Math.floor(Math.random() * 2);   // 7~8시 (아침)
-  if (r < 0.35) return 12 + Math.floor(Math.random() * 2);  // 12~13시 (점심)
-  if (r < 0.75) return 21 + Math.floor(Math.random() * 3);  // 21~23시 (저녁)
-  return Math.floor(Math.random() * 24);                      // 나머지 랜덤
+  if (r < 0.15) return 7 + Math.floor(Math.random() * 2);
+  if (r < 0.35) return 12 + Math.floor(Math.random() * 2);
+  if (r < 0.75) return 21 + Math.floor(Math.random() * 3);
+  return Math.floor(Math.random() * 24);
 }
 
 function todayTimestamp(): string {
@@ -154,19 +168,21 @@ Deno.serve(async (req: Request) => {
   const headers = { ...getCorsHeaders(req), "Content-Type": "application/json" };
 
   try {
+    // veilor 스키마를 기본 스키마로 지정
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+      { db: { schema: "veilor" } },
     );
 
     const body = await req.json().catch(() => ({}));
     const communityCount: number = body.community_count ?? 40;
     const codetalkCount: number = body.codetalk_count ?? 15;
 
-    // 가상유저 목록 조회
+    // 가상유저 목록 조회 (veilor.user_profiles — anon_alias 없음, nickname 사용)
     const { data: users, error: usersErr } = await supabase
       .from("user_profiles")
-      .select("user_id, primary_mask, anon_alias")
+      .select("user_id, primary_mask, nickname")
       .eq("onboarding_step", "completed")
       .not("primary_mask", "is", null)
       .limit(995);
@@ -195,7 +211,8 @@ Deno.serve(async (req: Request) => {
       .filter((u) => !alreadyPosted.has(u.user_id))
       .slice(0, communityCount);
 
-    const TAB_CONTEXTS = ["dig", "vent", "set", "get", "me"];
+    // tab_context 허용값: vent, dig, get, set, general
+    const TAB_CONTEXTS = ["dig", "vent", "set", "get", "general"];
 
     const communityRows = communityUsers.map((u) => {
       const mask = u.primary_mask as string;
@@ -229,11 +246,11 @@ Deno.serve(async (req: Request) => {
       .slice(0, codetalkCount);
 
     const codetalkRows = codetalkUsers.map((u) => {
-      const mask = u.primary_mask as string;
       const keyword = CODETALK_KEYWORDS[Math.floor(Math.random() * CODETALK_KEYWORDS.length)];
       const defs = CODETALK_DEFINITIONS[keyword] ?? ["나만의 방식으로 정의되는 것"];
       const definition = defs[Math.floor(Math.random() * defs.length)];
-      const alias = u.anon_alias ?? ALIASES[Math.floor(Math.random() * ALIASES.length)];
+      const alias = (u as Record<string, unknown>).nickname as string
+        ?? ALIASES[Math.floor(Math.random() * ALIASES.length)];
       const ts = todayTimestamp();
       return {
         user_id: u.user_id,
