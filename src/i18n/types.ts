@@ -407,6 +407,56 @@ export interface LocaleResource {
     saveErrorDesc: string;
     closeBanner: string;
   };
+  clear: {
+    dashboard: string;
+    healthScore: string;
+    scoreUnit: string;
+    weeklyRecord: string;
+    weekGoalFmt: string;
+    todayStatus: string;
+    todayStatusSub: string;
+    moodLabels: {
+      veryBad: string;
+      bad: string;
+      normal: string;
+      good: string;
+      veryGood: string;
+    };
+    moodMin: string;
+    moodMax: string;
+    saving: string;
+    record: string;
+    checkinDone: string;
+    checkinDoneLabel: string;
+    weekSnapshot: string;
+    insightFmt: string;
+    insightBetter: string;
+    insightWorse: string;
+    todayChallenge: string;
+    challengeDone: string;
+    challengeTryIt: string;
+    recoveryTitle: string;
+    recoveryDesc: string;
+    sexSelfTitle: string;
+    sexSelfDesc: string;
+    sexSelfStart: string;
+    sexSelfDetail: string;
+    sexSelfLabel: string;
+    sexSelfSafeMsg: string;
+    sexAxisLeading: string;
+    sexAxisExpressiveness: string;
+    sexAxisIntensity: string;
+    navPatterns: string;
+    navGrowth: string;
+    activities: {
+      relationship: string;
+      work: string;
+      exercise: string;
+      alone: string;
+      rest: string;
+      study: string;
+    };
+  };
 }
 
 /** Locale map keyed by supported language codes */
