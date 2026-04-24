@@ -7,7 +7,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { toast } from '@/hooks/use-toast';
-import { getVirtualPostsForCategory } from '@/lib/virtualUsers';
 import LearningMateCard from '@/components/community/LearningMateCard';
 import DiscussionBoard from '@/components/community/DiscussionBoard';
 import CohortCard from '@/components/community/CohortCard';
@@ -46,17 +45,47 @@ export default function CommunityPage() {
     },
   });
 
-  // 그룹별 게시글
+  // 그룹별 게시글 — 실제 게시글 + 가상유저 게시글(tab_context 기반) 병합
   const { data: posts } = useQuery({
-    queryKey: ['community-posts', selectedGroup?.id],
+    queryKey: ['community-posts', selectedGroup?.id, selectedGroup?.category],
     queryFn: async () => {
-      const { data } = await veilorDb.from('community_posts')
-        .select('*')
-        .eq('group_id', selectedGroup!.id as string)
-        .eq('is_deleted', false)
-        .order('created_at', { ascending: false })
-        .limit(30);
-      return data ?? [];
+      const cat = selectedGroup!.category as string | undefined;
+      // tab_context 매핑: community_groups.category → community_posts.tab_context
+      const TAB_MAP: Record<string, string> = {
+        communication: 'vent', crisis: 'vent', culture: 'general',
+        identity: 'get', relationship: 'dig', general: 'general',
+      };
+      const tabCtx = cat ? TAB_MAP[cat] ?? cat : undefined;
+
+      const [groupRes, virtualRes] = await Promise.all([
+        veilorDb.from('community_posts')
+          .select('*')
+          .eq('group_id', selectedGroup!.id as string)
+          .eq('is_deleted', false)
+          .order('created_at', { ascending: false })
+          .limit(20),
+        tabCtx
+          ? veilorDb.from('community_posts')
+              .select('id, content, is_anonymous, created_at, tab_context, upvotes, view_count')
+              .eq('tab_context', tabCtx)
+              .eq('is_deleted', false)
+              .is('group_id', null)
+              .order('created_at', { ascending: false })
+              .limit(15)
+          : Promise.resolve({ data: [] }),
+      ]);
+
+      const groupPosts = (groupRes.data ?? []).map(p => ({ ...p, is_virtual: false }));
+      const virtualPosts = ((virtualRes as { data: unknown[] | null }).data ?? []).map((p: unknown) => ({
+        ...(p as Record<string, unknown>),
+        title: ((p as Record<string, unknown>).content as string | null)?.slice(0, 30) ?? '익명의 이야기',
+        is_virtual: true,
+        is_anonymous: true,
+      }));
+      const all = [...groupPosts, ...virtualPosts].sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+      return all;
     },
     enabled: !!selectedGroup,
   });
@@ -218,10 +247,7 @@ export default function CommunityPage() {
         )}
 
         {(() => {
-          const virtualPosts = getVirtualPostsForCategory(selectedGroup.category ?? '');
-          const allPosts = [...(posts ?? []), ...virtualPosts].sort(
-            (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-          );
+          const allPosts = posts ?? [];
           return allPosts.length > 0 ? (
             <div className="space-y-3">
               {allPosts.map((p: Record<string, unknown>) => (

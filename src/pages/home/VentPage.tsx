@@ -260,6 +260,28 @@ export default function VentPage() {
     enabled: !!user,
   });
 
+  // 비슷한 고민을 가진 가상유저 수 — AI 패턴 컨텍스트 + Social Proof
+  const { data: similarCount } = useQuery({
+    queryKey: ['similar-concern-count', curEmo],
+    queryFn: async () => {
+      const EMOTION_TO_CONCERN: Record<string, string> = {
+        '불안해': 'attachment_anxiety', '슬퍼': 'post_breakup',
+        '화가 나': 'power_dynamics', '혼란스러워': 'pattern_repetition',
+        '외로워': 'post_breakup', '지쳐': 'power_dynamics',
+        '답답해': 'pattern_repetition', '상처받았어': 'attachment_anxiety',
+      };
+      const concern = EMOTION_TO_CONCERN[curEmo];
+      if (!concern) return 0;
+      const { count } = await veilorDb
+        .from('tab_conversations')
+        .select('id', { count: 'exact', head: true })
+        .eq('tab', 'vent');
+      return count ?? 0;
+    },
+    enabled: !!curEmo,
+    staleTime: 1000 * 60 * 10,
+  });
+
   function resumeSession(session: NonNullable<typeof lastSession>) {
     setCurEmo(session.emotion);
     setMsgs(session.messages || []);
@@ -371,6 +393,7 @@ export default function VentPage() {
           axisScores: axisScores ?? null, history: msgs.slice(-6),
           aiSettings: aiSettingsRef.current ?? undefined, tab: 'vent',
           userId: user?.id,
+          similarCount: similarCount ?? undefined,
         },
         abortControllerRef.current.signal,
       );
@@ -437,17 +460,28 @@ export default function VentPage() {
               onResumeSession={() => lastSession && resumeSession(lastSession)}
             />
           ) : (
-            <ChatView
-              curEmo={curEmo} msgs={msgs} msgCount={msgCount} msgVal={msgVal}
-              aiThinking={aiThinking} showSummary={showSummary}
-              sessionSaved={sessionSavedRef.current}
-              crisisLocked={crisisLevel === 'critical'}
-              emoData={EMO_DATA[curEmo]} greeting={greeting}
-              userId={user?.id}
-              onMsgValChange={setMsgVal} onSendMsg={sendMsg}
-              onFinishSession={finishSession}
-              onContinueChat={() => { setShowSummary(false); setMsgs(m => [...m, { role: 'ai', text: '물론이죠. 또 어떤 게 마음에 있어요?', tone: '여기 있어요 · 천천히' }]); }}
-            />
+            <>
+              {similarCount != null && similarCount > 0 && (
+                <div className="flex-shrink-0 mx-4 mt-3 mb-1">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px]"
+                    style={{ background: alpha(C.amber, 0.08), color: C.amber, border: `1px solid ${alpha(C.amber, 0.2)}` }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: C.amber, display: 'inline-block' }} />
+                    지금 {similarCount.toLocaleString()}명이 비슷한 이야기를 나눴어요
+                  </div>
+                </div>
+              )}
+              <ChatView
+                curEmo={curEmo} msgs={msgs} msgCount={msgCount} msgVal={msgVal}
+                aiThinking={aiThinking} showSummary={showSummary}
+                sessionSaved={sessionSavedRef.current}
+                crisisLocked={crisisLevel === 'critical'}
+                emoData={EMO_DATA[curEmo]} greeting={greeting}
+                userId={user?.id}
+                onMsgValChange={setMsgVal} onSendMsg={sendMsg}
+                onFinishSession={finishSession}
+                onContinueChat={() => { setShowSummary(false); setMsgs(m => [...m, { role: 'ai', text: '물론이죠. 또 어떤 게 마음에 있어요?', tone: '여기 있어요 · 천천히' }]); }}
+              />
+            </>
           )}
         </div>
       )}
