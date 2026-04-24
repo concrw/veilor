@@ -183,24 +183,16 @@ const Signup = () => {
             </div>
 
             <div className="flex items-start gap-2 py-2">
-              <button
-                type="button"
-                onClick={() => setAgreeToTerms(!agreeToTerms)}
+              <input
+                type="checkbox"
+                id="agree-terms"
+                checked={agreeToTerms}
+                onChange={() => setAgreeToTerms(!agreeToTerms)}
                 disabled={submitting}
-                className="flex-shrink-0 w-4 h-4 rounded mt-0.5 flex items-center justify-center transition-colors"
-                style={{
-                  background: agreeToTerms ? '#D4A574' : 'transparent',
-                  border: `1px solid ${agreeToTerms ? '#D4A574' : '#44403C'}`,
-                }}
-              >
-                {agreeToTerms && (
-                  <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                    <path d="M1 4L3.5 6.5L9 1" stroke="#1C1917" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                )}
-              </button>
+                className="flex-shrink-0 mt-0.5 cursor-pointer accent-[#D4A574]"
+              />
               <label
-                onClick={() => !submitting && setAgreeToTerms(!agreeToTerms)}
+                htmlFor="agree-terms"
                 className="text-xs leading-relaxed cursor-pointer"
                 style={{ color: '#A8A29E' }}
               >
