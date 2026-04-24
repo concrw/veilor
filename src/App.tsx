@@ -151,7 +151,11 @@ const RootRedirect = () => {
 };
 
 const App = () => {
-  useEffect(() => { growthbook.loadFeatures(); }, []);
+  useEffect(() => {
+    if (import.meta.env.VITE_GROWTHBOOK_CLIENT_KEY) {
+      growthbook.loadFeatures().catch(() => {});
+    }
+  }, []);
   return (
   <GrowthBookProvider growthbook={growthbook}>
   <QueryClientProvider client={queryClient}>
