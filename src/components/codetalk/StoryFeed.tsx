@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { C, alpha } from '@/lib/colors';
-import { KEYWORD_MAP, getParticipantCount, getVirtualFeedUpToDay } from '@/lib/virtualCodetalk';
+import { KEYWORD_MAP, getParticipantCount, getVirtualFeedUpToDay, getVirtualResonances } from '@/lib/virtualCodetalk';
 
 interface FeedEntry {
   anon_alias?: string;
@@ -63,39 +63,59 @@ export function StoryFeed({ keyword, currentDay, feedOpen, publicFeed, todayEntr
                   </p>
                   <span className="text-xs text-muted-foreground">{publicFeed.length}명 참여</span>
                 </div>
-                {publicFeed.map((e: FeedEntry, i: number) => (
-                  <div key={i} className="bg-card border rounded-xl p-4 space-y-2"
-                    style={{ borderLeftWidth: 3, borderLeftColor: e.is_virtual ? C.frost : C.amber }}>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium" style={{ color: C.amber }}>
-                        {e.anon_alias ?? '익명'}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {new Date(e.created_at).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}
-                      </span>
+                {publicFeed.map((e: FeedEntry, i: number) => {
+                  const resonances = !e.is_virtual
+                    ? getVirtualResonances(keyword?.day_number ?? 1, i, 2)
+                    : [];
+                  return (
+                    <div key={i} className="space-y-1">
+                      <div className="bg-card border rounded-xl p-4 space-y-2"
+                        style={{ borderLeftWidth: 3, borderLeftColor: e.is_virtual ? C.frost : C.amber }}>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-medium" style={{ color: e.is_virtual ? C.frost : C.amber }}>
+                            {e.anon_alias ?? '익명'}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {new Date(e.created_at).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}
+                          </span>
+                        </div>
+                        <div className="space-y-1.5">
+                          {e.definition && (
+                            <div>
+                              <span className="text-[10px] text-muted-foreground">정의</span>
+                              <p className="text-sm leading-relaxed line-clamp-2">{e.definition}</p>
+                            </div>
+                          )}
+                          {e.imprinting_moment && (
+                            <div>
+                              <span className="text-[10px] text-muted-foreground">각인</span>
+                              <p className="text-sm leading-relaxed line-clamp-2 text-muted-foreground">{e.imprinting_moment}</p>
+                            </div>
+                          )}
+                          {e.root_cause && (
+                            <div>
+                              <span className="text-[10px] text-muted-foreground">뿌리</span>
+                              <p className="text-sm leading-relaxed line-clamp-2 text-muted-foreground">{e.root_cause}</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      {resonances.length > 0 && (
+                        <div className="pl-3 space-y-1">
+                          {resonances.map((r, ri) => (
+                            <div key={ri} className="flex items-start gap-2 py-1 px-3 rounded-lg"
+                              style={{ backgroundColor: alpha(C.frost, 0.06) }}>
+                              <span className="text-[10px] font-medium shrink-0 mt-0.5" style={{ color: C.frost }}>
+                                {r.anon_alias}
+                              </span>
+                              <p className="text-[11px] text-muted-foreground leading-relaxed">{r.text}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    <div className="space-y-1.5">
-                      {e.definition && (
-                        <div>
-                          <span className="text-[10px] text-muted-foreground">정의</span>
-                          <p className="text-sm leading-relaxed line-clamp-2">{e.definition}</p>
-                        </div>
-                      )}
-                      {e.imprinting_moment && (
-                        <div>
-                          <span className="text-[10px] text-muted-foreground">각인</span>
-                          <p className="text-sm leading-relaxed line-clamp-2 text-muted-foreground">{e.imprinting_moment}</p>
-                        </div>
-                      )}
-                      {e.root_cause && (
-                        <div>
-                          <span className="text-[10px] text-muted-foreground">뿌리</span>
-                          <p className="text-sm leading-relaxed line-clamp-2 text-muted-foreground">{e.root_cause}</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="bg-card border rounded-xl p-4 text-center space-y-1">
