@@ -1,4 +1,5 @@
 import { Suspense, lazy, useEffect } from "react";
+import GuestLanding from "./pages/GuestLanding";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -47,6 +48,7 @@ const B2BGuardianApp      = lazy(() => import("./pages/b2b/GuardianApp"));
 const B2BCoachList        = lazy(() => import("./pages/b2b/CoachList"));
 const B2BCoachProfile     = lazy(() => import("./pages/b2b/CoachProfile"));
 const B2BCoachPortal      = lazy(() => import("./pages/b2b/CoachPortal"));
+
 
 // ── Main ─────────────────────────────────────────────────────────
 const HomeLayout  = lazy(() => import("./layouts/HomeLayout"));
@@ -135,7 +137,8 @@ const RootRedirect = () => {
   const { user, loading, onboardingStep } = useAuth();
   const { isFirstVisit, isReady } = useMode();
   if (loading || !isReady) return <PageLoader />;
-  if (!user) return <Navigate to="/auth/login" replace />;
+  // 비로그인 → 게스트 랜딩
+  if (!user) return <GuestLanding />;
   // 온보딩 완료 후 최초 진입 시 → 모드 선택 화면
   if (onboardingStep === 'completed' && isFirstVisit) {
     return <Navigate to="/onboarding/mode-select" replace />;
