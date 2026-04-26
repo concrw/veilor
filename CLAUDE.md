@@ -27,10 +27,11 @@ WHERE scope_ref = 'veilor' AND is_active = true;
 
 ## 스프린트 관리
 
-- **managed_by**: `claude_code`
 - 세션 시작 시 현재 스프린트 확인:
   ```sql
-  SELECT id, sprint_number, status, code FROM aosis.sprints
+  SELECT id, sprint_number, status, code, managed_by FROM aosis.sprints
   WHERE product = 'veilor' ORDER BY sprint_number DESC LIMIT 5;
   ```
-- `managed_by = 'runtime'`인 스프린트 ACTIVE → Claude Code 접근 불가
+
+## Code Quality Rules
+- Split a component when: (1) cyclomatic complexity > 20, (2) it has more than one reason to change, or (3) logic is reused in 2+ places

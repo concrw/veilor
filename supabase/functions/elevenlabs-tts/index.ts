@@ -8,7 +8,7 @@ const DEFAULT_VOICE_ID_KO   = Deno.env.get("ELEVENLABS_DEFAULT_VOICE_ID") ?? "";
 const DEFAULT_VOICE_ID_EN   = Deno.env.get("ELEVENLABS_DEFAULT_VOICE_ID_EN") ?? "";
 const SUPABASE_URL           = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_SERVICE_KEY   = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-const MODEL_ID               = "eleven_multilingual_v2";
+const MODEL_ID               = "eleven_flash_v2_5";
 
 // 분당 최대 TTS 요청 수 (유저별)
 const TTS_RATE_LIMIT = 20;

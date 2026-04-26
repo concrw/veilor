@@ -130,6 +130,14 @@ export interface LocaleResource {
       self: string;
       body: string;
     };
+    selector: {
+      prompt: string;
+      resumeHint: string;
+      resumeButton: string;
+      turns: string;
+      recentLabel: string;
+      quickCardsTitle: string;
+    };
     greetings: {
       earlyMorning: { title: string; placeholder: string };
       morning: { title: string; placeholder: string };
@@ -152,15 +160,35 @@ export interface LocaleResource {
       messageInput: string;
       sendMessage: string;
       speakToAmber: string;
+      crisisLocked: string;
+      crisisLockedSub: string;
+      saveErrorTitle: string;
+      saveErrorDesc: string;
+      aiErrorTitle: string;
+      aiErrorDesc: string;
+      yourPace: string;
+      continueResponse: string;
     };
     layers: {
       title: string;
       prompt: string;
+      activePrompt: string;
+      backButton: string;
       writePlaceholder: string;
+      desireHint: string;
       social: { label: string; sub: string; items: Record<string, string> };
       daily: { label: string; sub: string; items: Record<string, string> };
       secret: { label: string; sub: string; items: Record<string, string> };
       tags: { locked: string; sensitive: string; normal: string };
+      desireModal: {
+        title: string;
+        body1: string;
+        body2: string;
+        body3: string;
+        encrypted: string;
+        cancel: string;
+        open: string;
+      };
     };
     community: {
       subtitle: string;

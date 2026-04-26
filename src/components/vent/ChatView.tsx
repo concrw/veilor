@@ -2,6 +2,7 @@
 import { useRef, useEffect, useState } from 'react';
 import { C, alpha } from '@/lib/colors';
 import { veilorDb } from '@/integrations/supabase/client';
+import { useVentTranslations } from '@/hooks/useTranslation';
 
 const CHAT_AI_MSG_STYLE = { background: C.bg2, border: `1px solid ${C.border}`, borderRadius: '12px 12px 12px 3px', padding: '12px 14px' } as const;
 const CHAT_USER_MSG_STYLE = { background: alpha(C.amber, 0.05), border: `1px solid ${alpha(C.amber, 0.13)}`, borderRadius: '12px 12px 3px 12px', padding: '10px 14px' } as const;
@@ -33,6 +34,7 @@ export default function ChatView({
   emoData, greeting, userId,
   onMsgValChange, onSendMsg, onFinishSession, onContinueChat,
 }: ChatViewProps) {
+  const vent = useVentTranslations();
   const chatRef = useRef<HTMLDivElement>(null);
   // C6: 응답별 피드백 상태 (msgIndex → 'up'|'down')
   const [feedbacks, setFeedbacks] = useState<Record<number, 'up' | 'down'>>({});
@@ -62,7 +64,7 @@ export default function ChatView({
           <div className="flex items-center gap-[9px] rounded-[10px] mt-2" style={{ padding: '10px 13px', background: C.bg2, border: `1px solid ${C.border}` }}>
             <span className="w-[7px] h-[7px] rounded-full flex-shrink-0" style={{ background: C.amber, animation: 'ai-pulse 2.5s ease-in-out infinite' }} />
             <span className="text-[14px] font-light flex-1 break-keep" style={{ fontFamily: "'Cormorant Garamond', serif", color: C.text2 }}>
-              지금 비슷한 감정인 친구들이 {curEmo.toLowerCase()} 명 있어
+              {vent.chat.similarPeople.replace('{emotion}', String(emoData.count))}
             </span>
             <span className="text-[16px]" style={{ fontFamily: "'Cormorant Garamond', serif", color: C.amber }}>{emoData.count}</span>
           </div>
@@ -118,7 +120,7 @@ export default function ChatView({
               <div className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background: C.amber, animationDelay: '150ms' }} />
               <div className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background: C.amber, animationDelay: '300ms' }} />
             </div>
-            <span className="text-[10px] font-light" style={{ color: C.text4 }}>엠버가 듣고 있어요...</span>
+            <span className="text-[10px] font-light" style={{ color: C.text4 }}>{vent.chat.amberListening}</span>
           </div>
         )}
 
@@ -130,7 +132,7 @@ export default function ChatView({
               className="text-[12px] font-light px-5 py-2 rounded-full transition-all"
               style={{ border: `1px solid ${alpha(C.amber, 0.3)}`, color: C.amber, background: alpha(C.amber, 0.05) }}
             >
-              대화 마무리하기
+              {vent.chat.finishButton}
             </button>
           </div>
         )}
@@ -138,7 +140,7 @@ export default function ChatView({
         {/* 감정 요약 카드 */}
         {showSummary && curEmo && (
           <div className="vr-fade-in flex-shrink-0 rounded-[11px] mt-2" style={{ background: C.bg2, border: `1px solid ${alpha(C.amber, 0.13)}`, padding: '14px 15px' }}>
-            <p className="text-[10px] font-semibold tracking-[.08em] uppercase mb-[6px]" style={{ color: C.amber }}>지금 감정</p>
+            <p className="text-[10px] font-semibold tracking-[.08em] uppercase mb-[6px]" style={{ color: C.amber }}>{vent.chat.currentEmotion}</p>
             <div className="flex gap-[6px] flex-wrap mb-[10px]">
               <span className="text-[11px] font-light px-[10px] py-[3px] rounded-full" style={{ border: `1px solid ${alpha(C.amber, 0.2)}`, color: C.amber, background: alpha(C.amber, 0.04) }}>{curEmo}</span>
             </div>
@@ -147,12 +149,12 @@ export default function ChatView({
               <button onClick={onContinueChat}
                 className="flex-1 py-[9px] rounded-[9px] text-[11px] font-light cursor-pointer transition-all"
                 style={{ border: `1px solid ${alpha(C.amber, 0.27)}`, background: alpha(C.amber, 0.04), color: C.amber }}>
-                더 이야기할게요
+                {vent.chat.continueButton}
               </button>
               <button onClick={() => {}}
                 className="flex-1 py-[9px] rounded-[9px] text-[11px] font-light cursor-pointer transition-all"
                 style={{ border: `1px solid ${C.border}`, background: 'transparent', color: C.text4 }}>
-                이걸 해볼게요 →
+                {vent.chat.tryThisButton}
               </button>
             </div>
           </div>
@@ -165,10 +167,10 @@ export default function ChatView({
           <div className="flex-shrink-0" style={{ padding: '10px 16px 14px', borderTop: `1px solid ${C.border2}` }}>
             <div style={{ background: '#DC262615', border: '1px solid #DC262630', borderRadius: 10, padding: '10px 14px', textAlign: 'center' }}>
               <p style={{ fontSize: 12, color: '#DC2626', fontWeight: 500, margin: 0 }}>
-                지금은 전문가의 도움이 필요한 상황이에요.
+                {vent.chat.crisisLocked}
               </p>
               <p style={{ fontSize: 11, color: '#DC262699', marginTop: 4, margin: '4px 0 0' }}>
-                위의 전화번호로 연락해 주세요.
+                {vent.chat.crisisLockedSub}
               </p>
             </div>
           </div>

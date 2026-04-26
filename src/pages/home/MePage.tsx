@@ -1,429 +1,46 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { AmberBtn, FrostBtn } from '../../layouts/HomeLayout';
-import { useAmberAttention } from '../../hooks/useAmberAttention';
-import { supabase, veilorDb } from '../../integrations/supabase/client';
-import { useAuth } from '../../context/AuthContext';
-import { useUserMeData } from '../../hooks/useUserMeData';
-import { usePremiumTrigger } from '../../hooks/usePremiumTrigger';
-import UpgradeModal from '../../components/premium/UpgradeModal';
+import { useState } from 'react';
+import { AmberBtn, FrostBtn } from '@/layouts/HomeLayout';
+import { useAmberAttention } from '@/hooks/useAmberAttention';
+import { useAuth } from '@/context/AuthContext';
+import { useUserMeData } from '@/hooks/useUserMeData';
+import { usePremiumTrigger } from '@/hooks/usePremiumTrigger';
+import { useMePageState } from '@/hooks/useMePageState';
+import UpgradeModal from '@/components/premium/UpgradeModal';
 import { C } from '@/lib/colors';
-import { ZONES, TOTAL_ZONES, RADAR_DATA, PERSONAS, FRIENDS, SEED_STAGES } from '@/data/mePageData';
 import { useMode } from '@/context/ModeContext';
-import PersonaMap from '@/components/persona/PersonaMap';
-import RadarChart from '@/components/me/RadarChart';
-import MonthlyReportCard from '@/components/me/MonthlyReportCard';
-import CommunicationPatternCard from '@/components/me/CommunicationPatternCard';
-import PatternDeviationCard from '@/components/me/PatternDeviationCard';
-import ShareCard from '@/components/me/ShareCard';
-import FeedEvolutionBanner from '@/components/me/FeedEvolutionBanner';
-import ZoneToggle from '@/components/me/ZoneToggle';
-import EmotionWheel, { type EmotionScore } from '@/components/charts/EmotionWheel';
 import AISheet from '@/components/me/AISheet';
 import SettingsSheet from '@/components/me/SettingsSheet';
 import RenameSheet from '@/components/me/RenameSheet';
-import SeedCard from '@/components/me/SeedCard';
 import PeopleSection from '@/components/me/PeopleSection';
-import WeeklyReportSection from '@/components/me/WeeklyReportSection';
-import DiagnosisSection from '@/components/me/DiagnosisSection';
-import RelationshipTimeline from '@/components/me/RelationshipTimeline';
-import PersonaFragmentsSection from '@/components/me/PersonaFragmentsSection';
+import ClearMeView from '@/components/me/ClearMeView';
+import GrowthTab from '@/components/me/GrowthTab';
+import ZoneTab from '@/components/me/ZoneTab';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ClearMeView — 클리어 모드 Me 탭
-// ─────────────────────────────────────────────────────────────────────────────
-
-interface MonthCheckin {
-  mood_score: number;
-  created_at: string;
-}
-
-function getMonthRange(now: Date): { firstDay: string; lastDay: string } {
-  const y = now.getFullYear();
-  const m = now.getMonth();
-  const first = new Date(y, m, 1);
-  const last = new Date(y, m + 1, 0, 23, 59, 59, 999);
-  return {
-    firstDay: first.toISOString(),
-    lastDay: last.toISOString(),
-  };
-}
-
-function getMoodColor(score: number | null, solid = false): string {
-  if (score === null) return '#1e2a38';
-  const alpha = solid ? 'FF' : '33';
-  if (score <= 4) return `#F59E0B${alpha}`;
-  if (score <= 7) return `#4AAEFF${alpha}`;
-  return `#34C48B${alpha}`;
-}
-
-function getMoodBorderColor(score: number | null): string {
-  if (score === null) return '#1e2a38';
-  if (score <= 4) return '#F59E0B';
-  if (score <= 7) return '#4AAEFF';
-  return '#34C48B';
-}
-
-function ClearMeView({ userId }: { userId: string }) {
-  const [checkins, setCheckins] = useState<MonthCheckin[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [emotionScores, setEmotionScores] = useState<EmotionScore[]>([]);
-
-  const now = new Date();
-  const { firstDay, lastDay } = getMonthRange(now);
-
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    veilorDb
-      .from('tab_conversations')
-      .select('content, created_at')
-      .eq('user_id', userId)
-      .eq('tab', 'clear_checkin')
-      .gte('created_at', firstDay)
-      .lte('created_at', lastDay)
-      .order('created_at', { ascending: true })
-      .then(({ data }) => {
-        if (cancelled) return;
-        if (!data) { setCheckins([]); setLoading(false); return; }
-        // content는 JSON string: { mood_score, activities, checked_at }
-        const parsed: MonthCheckin[] = (data as { content: string; created_at: string }[])
-          .map(row => {
-            try {
-              const obj = JSON.parse(row.content) as { mood_score?: number };
-              return {
-                mood_score: typeof obj.mood_score === 'number' ? obj.mood_score : 0,
-                created_at: row.created_at,
-              };
-            } catch {
-              return null;
-            }
-          })
-          .filter((x): x is MonthCheckin => x !== null);
-        setCheckins(parsed);
-        setLoading(false);
-      })
-      .catch(() => {
-        if (cancelled) return;
-        setCheckins([]);
-        setLoading(false);
-      });
-    return () => { cancelled = true; };
-  }, [userId, firstDay, lastDay]);
-
-  useEffect(() => {
-    let cancelled = false;
-    veilorDb
-      .from('emotion_scores' as never)
-      .select('top_emotions')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .limit(5)
-      .then(({ data }) => {
-        if (cancelled || !data?.length) return;
-        const totals: Record<string, number> = {};
-        const counts: Record<string, number> = {};
-        for (const row of data as Array<{ top_emotions: Array<{ label: string; score: number }> }>) {
-          for (const { label, score } of row.top_emotions ?? []) {
-            totals[label] = (totals[label] ?? 0) + score;
-            counts[label] = (counts[label] ?? 0) + 1;
-          }
-        }
-        setEmotionScores(
-          Object.entries(totals).map(([emotion, total]) => ({
-            emotion,
-            score: total / counts[emotion],
-          }))
-        );
-      })
-      .catch(() => {});
-    return () => { cancelled = true; };
-  }, [userId]);
-
-  // 날짜별 최신 기록 맵 (YYYY-MM-DD → mood_score)
-  const dayMap = new Map<string, number>();
-  for (const c of checkins) {
-    const dateKey = c.created_at.slice(0, 10);
-    // 같은 날 여러 개면 가장 마지막(최신) 기록 사용 (ascending 정렬이므로 덮어쓰기)
-    dayMap.set(dateKey, c.mood_score);
-  }
-
-  // 이번 달 달력 데이터
-  const year = now.getFullYear();
-  const month = now.getMonth();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const firstDow = new Date(year, month, 1).getDay(); // 0=Sun
-  const todayStr = now.toISOString().slice(0, 10);
-
-  // 앞 빈칸 포함한 셀 배열
-  const calCells: (number | null)[] = [
-    ...Array(firstDow).fill(null),
-    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
-  ];
-  // 7의 배수로 맞추기
-  while (calCells.length % 7 !== 0) calCells.push(null);
-
-  // 수치 계산
-  const recordCount = dayMap.size;
-  const moodValues = [...dayMap.values()].filter(v => v > 0);
-  const avgScore = moodValues.length > 0
-    ? (moodValues.reduce((a, b) => a + b, 0) / moodValues.length).toFixed(1)
-    : '—';
-  const maxScore = moodValues.length > 0 ? Math.max(...moodValues) : null;
-
-  const MONTH_LABEL = `${month + 1}월`;
-
-  if (loading) {
-    return (
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#334155', fontSize: 12 }}>
-        불러오는 중…
-      </div>
-    );
-  }
-
-  return (
-    <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px 80px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-
-      {/* 이번 달 요약 카드 3개 */}
-      <div style={{ display: 'flex', gap: 8 }}>
-        {[
-          { label: '기록', value: `${recordCount}일` },
-          { label: '평균 점수', value: avgScore },
-          { label: '최고점', value: maxScore !== null ? String(maxScore) : '—' },
-        ].map(({ label, value }) => (
-          <div
-            key={label}
-            style={{
-              flex: 1,
-              background: '#111318',
-              border: '1px solid #4AAEFF22',
-              borderRadius: 14,
-              padding: '12px 8px',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: 4,
-            }}
-          >
-            <span style={{ fontSize: 24, fontWeight: 700, color: '#4AAEFF', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
-              {value}
-            </span>
-            <span style={{ fontSize: 11, color: '#64748b', fontWeight: 400 }}>{label}</span>
-          </div>
-        ))}
-      </div>
-
-      {/* 월간 캘린더 히트맵 */}
-      <div
-        style={{
-          background: '#111318',
-          border: '1px solid #4AAEFF22',
-          borderRadius: 16,
-          padding: '14px 12px',
-        }}
-      >
-        <p style={{ fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#475569', marginBottom: 10 }}>
-          {MONTH_LABEL} 기록
-        </p>
-
-        {/* 요일 헤더 */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginBottom: 4 }}>
-          {['일', '월', '화', '수', '목', '금', '토'].map(d => (
-            <div key={d} style={{ textAlign: 'center', fontSize: 9, color: '#334155', fontWeight: 400 }}>
-              {d}
-            </div>
-          ))}
-        </div>
-
-        {/* 날짜 셀 */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
-          {calCells.map((day, idx) => {
-            if (day === null) {
-              return <div key={`empty-${idx}`} style={{ width: 24, height: 24 }} />;
-            }
-            const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-            const score = dayMap.get(dateKey) ?? null;
-            const isToday = dateKey === todayStr;
-            const bgColor = getMoodColor(score);
-            const borderColor = isToday ? getMoodBorderColor(score) : 'transparent';
-            const textColor = score !== null
-              ? (score <= 4 ? '#FCD34D' : score <= 7 ? '#7DD3FC' : '#6EE7B7')
-              : '#475569';
-
-            return (
-              <div
-                key={dateKey}
-                style={{
-                  width: 24,
-                  height: 24,
-                  borderRadius: 6,
-                  background: bgColor,
-                  border: `1px solid ${borderColor}`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxSizing: 'border-box',
-                }}
-              >
-                <span style={{ fontSize: 10, color: textColor, lineHeight: 1 }}>{day}</span>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* 범례 */}
-        <div style={{ display: 'flex', gap: 12, marginTop: 12, justifyContent: 'flex-end', alignItems: 'center' }}>
-          {[
-            { color: '#F59E0B33', border: '#F59E0B', label: '1–4' },
-            { color: '#4AAEFF33', border: '#4AAEFF', label: '5–7' },
-            { color: '#34C48B33', border: '#34C48B', label: '8–10' },
-          ].map(({ color, border, label }) => (
-            <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-              <div style={{ width: 10, height: 10, borderRadius: 3, background: color, border: `1px solid ${border}44` }} />
-              <span style={{ fontSize: 9, color: '#475569' }}>{label}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* 감정 분포 휠 */}
-      {emotionScores.length > 0 && (
-        <div
-          style={{
-            background: '#111318',
-            border: '1px solid #4AAEFF22',
-            borderRadius: 16,
-            padding: '14px 12px',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-          }}
-        >
-          <p style={{ fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#475569', marginBottom: 12, alignSelf: 'flex-start' }}>
-            감정 분포
-          </p>
-          <EmotionWheel scores={emotionScores} size={200} />
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ── Pure helpers (outside component) ── */
-function getSeedTitle(pct: number): string {
-  if (pct < 40) return '씨앗을 심었어요';
-  if (pct < 65) return '패턴이 보이기 시작했어요';
-  if (pct < 85) return '뿌리를 내리는 중';
-  return '꽃이 피어나고 있어요';
-}
-
-function getStageStatus(pct: number, i: number, stages: { threshold: number }[]): 'done' | 'active' | 'none' {
-  const next = stages[i + 1]?.threshold ?? 101;
-  if (pct >= next) return 'done';
-  if (pct >= stages[i].threshold) return 'active';
-  return 'none';
-}
-
-function calcPrecision(zoneState: Record<string, boolean>, stats: { sessionCount: number; signalCount: number; patternAreaCount: number } | null | undefined): number {
-  const zoneOn = Object.values(zoneState).filter(Boolean).length;
-  const zonePct = zoneOn / TOTAL_ZONES;
-  const sessionScore = Math.min((stats?.sessionCount ?? 0) / 20, 1);
-  const signalScore = Math.min((stats?.signalCount ?? 0) / 50, 1);
-  const patternScore = Math.min((stats?.patternAreaCount ?? 0) / 5, 1);
-  return Math.min(Math.round(zonePct * 40 + sessionScore * 25 + signalScore * 20 + patternScore * 15), 100);
-}
-
-/* ── Extracted static styles ── */
-const PERSONA_TAG_STYLE = { fontSize: 9, padding: '2px 7px', borderRadius: 99, border: `1px solid ${C.border}`, color: C.text4 } as const;
-const RADAR_AXIS_ITEM_STYLE = { display: 'flex' as const, alignItems: 'center' as const, gap: 5, background: C.bg, borderRadius: 7, padding: '5px 8px' } as const;
-const RADAR_AXIS_LABEL_STYLE = { fontSize: 9, fontWeight: 300, color: C.text4, flex: 1 } as const;
-const RADAR_AXIS_VALUE_STYLE = { fontFamily: "'Cormorant Garamond', serif", fontWeight: 400, fontSize: 14, color: C.text } as const;
-const RADAR_BASELINE_STYLE = { fontSize: 10, fontWeight: 300, color: C.text5, marginLeft: 2 } as const;
-const FRIEND_CARD_STYLE = { background: C.bg, border: `1px solid ${C.border}`, borderRadius: 11, padding: '11px 13px', display: 'flex' as const, alignItems: 'center' as const, gap: 10 } as const;
-const FRIEND_NAME_STYLE = { fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 14, color: C.text, marginBottom: 2 } as const;
-const FRIEND_REASON_STYLE = { fontSize: 10, fontWeight: 300, color: C.text4, lineHeight: 1.4 } as const;
-const FRIEND_MATCH_STYLE = { fontSize: 9, padding: '2px 6px', borderRadius: 99, border: `1px solid ${C.amberGold}33`, color: C.amberGold, background: `${C.amberGold}08`, flexShrink: 0, whiteSpace: 'nowrap' as const } as const;
-const FRIEND_DM_BTN_STYLE = { width: 28, height: 28, borderRadius: '50%', border: `1px solid ${C.border}`, background: 'transparent', display: 'flex' as const, alignItems: 'center' as const, justifyContent: 'center' as const, cursor: 'pointer' as const, flexShrink: 0 } as const;
-const ZONE_ITEM_NAME_STYLE = { fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 13.5, color: C.text, marginBottom: 1 } as const;
-const ZONE_ITEM_DESC_STYLE = { fontSize: 10, fontWeight: 300, color: C.text4 } as const;
-const ZONE_SENSITIVE_BADGE_STYLE = { fontSize: 9, padding: '2px 6px', borderRadius: 99, border: `1px solid ${C.amberDim}33`, color: C.amberDim, background: `${C.amberDim}0A`, flexShrink: 0 } as const;
+type Tab = 'growth' | 'people' | 'zone';
+const TABS: { id: Tab; label: string }[] = [
+  { id: 'growth', label: '나의 성장' },
+  { id: 'people', label: '내 사람들' },
+  { id: 'zone', label: 'Zone' },
+];
 
 export default function MePage() {
-  type Tab = 'growth' | 'people' | 'zone';
   const { user } = useAuth();
   const { mode } = useMode();
   const meData = useUserMeData();
   const { modalOpen, activeTrigger, closeModal } = usePremiumTrigger();
-  const [tab, setTab] = useState<Tab>('growth');
-
-  // Zone state
-  const [zoneState, setZoneState] = useState<Record<string, boolean>>(() => {
-    const init: Record<string, boolean> = {};
-    ZONES.forEach(g => g.items.forEach(item => { init[item.id] = item.defaultOn; }));
-    return init;
-  });
-  const [, setZonesLoaded] = useState(false);
-
-  useEffect(() => {
-    if (!user) return;
-    supabase.from('persona_zones').select('sub_zone, is_enabled').eq('user_id', user.id)
-      .then(({ data }) => {
-        if (data && data.length > 0) {
-          const loaded: Record<string, boolean> = {};
-          (data as { sub_zone: string; is_enabled: boolean }[]).forEach(row => { loaded[row.sub_zone] = row.is_enabled; });
-          setZoneState(prev => ({ ...prev, ...loaded }));
-        }
-        setZonesLoaded(true);
-      });
-  }, [user]);
-
-  const toggleZone = useCallback(async (id: string) => {
-    if (!user) return;
-    const newVal = !zoneState[id];
-    setZoneState(prev => ({ ...prev, [id]: newVal }));
-    await supabase.from('persona_zones').upsert({
-      user_id: user.id, sub_zone: id, is_enabled: newVal,
-      layer: ZONES.find(g => g.items.some(i => i.id === id))?.layer ?? 'social',
-      enabled_at: new Date().toISOString(),
-    }, { onConflict: 'user_id,sub_zone' });
-  }, [user, zoneState]);
-
-  const navigate = useNavigate();
-  const [chartMode, setChartMode] = useState<'prev' | 'now'>('now');
-  const [openPersona, setOpenPersona] = useState<number | null>(null);
-  const [openGroups, setOpenGroups] = useState<Record<number, boolean>>({ 0: true, 1: true, 2: true });
-  const [aiSheet, setAiSheet] = useState<'amber' | 'frost' | null>(null);
   const amberFlash = useAmberAttention();
+  const { zoneState, toggleZone, pct, closedCount, seedTitle, stageStatus } = useMePageState(meData?.stats);
+
+  const [tab, setTab] = useState<Tab>('growth');
+  const [aiSheet, setAiSheet] = useState<'amber' | 'frost' | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [renameTarget, setRenameTarget] = useState<'amber' | 'frost' | null>(null);
   const [amberName, setAmberName] = useState('엠버');
   const [frostName, setFrostName] = useState('프로스트');
   const [lang, setLang] = useState('ko');
-  const [dmToast, setDmToast] = useState('');
-  const [shareToast, setShareToast] = useState(false);
-
-  const pct = useCallback(
-    () => calcPrecision(zoneState, meData?.stats),
-    [zoneState, meData?.stats],
-  )();
-  const closedCount = Object.values(zoneState).filter(v => !v).length;
-  const seedTitle = getSeedTitle(pct);
-  const stageStatus = (i: number) => getStageStatus(pct, i, SEED_STAGES);
-
-  const sendDM = (name: string) => {
-    setDmToast(`${name}에게 대화 신청을 보냈어요 💬`);
-    setTimeout(() => setDmToast(''), 2200);
-  };
-
-  const TABS: { id: Tab; label: string }[] = [
-    { id: 'growth', label: '나의 성장' },
-    { id: 'people', label: '내 사람들' },
-    { id: 'zone',   label: 'Zone'     },
-  ];
 
   return (
     <div style={{ fontFamily: "'DM Sans', sans-serif", background: C.bg, minHeight: '100%', display: 'flex', flexDirection: 'column' }}>
-      {/* Header */}
       <div style={{ padding: '10px 20px 9px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: `1px solid ${C.border2}`, flexShrink: 0 }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1 }}>
           <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 400, fontSize: 22, color: C.text, lineHeight: 1 }}>ME</span>
@@ -441,267 +58,31 @@ export default function MePage() {
         </div>
       </div>
 
-      {/* Clear 모드: ClearMeView 전용 렌더링 */}
-      {mode === 'clear' && user && (
-        <ClearMeView userId={user.id} />
-      )}
+      {mode === 'clear' && user && <ClearMeView userId={user.id} />}
 
-      {/* Clear 모드가 아닐 때만 탭 + 탭 콘텐츠 표시 */}
       {mode !== 'clear' && (
         <>
-      {/* Section tabs */}
-      <div style={{ display: 'flex', borderBottom: `1px solid ${C.border2}`, padding: '0 20px', flexShrink: 0 }}>
-        {TABS.map(t => (
-          <button key={t.id} onClick={() => setTab(t.id)}
-            style={{ fontSize: 11, fontWeight: tab === t.id ? 400 : 300, color: tab === t.id ? C.amberGold : C.text4, padding: '10px 0', marginRight: 20, background: 'transparent', border: 'none', borderBottom: `2px solid ${tab === t.id ? C.amberGold : 'transparent'}`, cursor: 'pointer', transition: 'all .2s' }}>
-            {t.label}
-          </button>
-        ))}
-      </div>
+          <div style={{ display: 'flex', borderBottom: `1px solid ${C.border2}`, padding: '0 20px', flexShrink: 0 }}>
+            {TABS.map(t => (
+              <button key={t.id} onClick={() => setTab(t.id)}
+                style={{ fontSize: 11, fontWeight: tab === t.id ? 400 : 300, color: tab === t.id ? C.amberGold : C.text4, padding: '10px 0', marginRight: 20, background: 'transparent', border: 'none', borderBottom: `2px solid ${tab === t.id ? C.amberGold : 'transparent'}`, cursor: 'pointer', transition: 'all .2s' }}>
+                {t.label}
+              </button>
+            ))}
+          </div>
 
-      {/* Growth tab */}
-      {tab === 'growth' && (
-        <div style={{ flex: 1, overflowY: 'auto', padding: '14px 20px 80px', display: 'flex', flexDirection: 'column', gap: 11 }}>
-          <SeedCard pct={pct} seedTitle={seedTitle} stats={meData.stats} stageStatus={stageStatus} />
-
-          {/* #59 피드 진화 알림 */}
-          <FeedEvolutionBanner />
-
-          {/* #28 패턴 이탈 감지 */}
-          <PatternDeviationCard />
-
-          {/* #26 소통 패턴 분석 */}
-          <CommunicationPatternCard />
-
-          {/* #57 월간 리포트 */}
-          <MonthlyReportCard />
-
-          {/* #58 공유 카드 */}
-          <ShareCard />
-
-          {/* Frost bar */}
-          {closedCount > 0 && (
-            <div className="vr-fade-in" style={{ background: `${C.frost}08`, border: `1px solid ${C.frost}22`, borderRadius: 10, padding: '9px 12px', display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-              <div style={{ width: 17, height: 17, borderRadius: '50%', background: `${C.frost}15`, border: `1px solid ${C.frost}44`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
-                <span style={{ width: 9, height: 9, borderRadius: '50%', background: C.frost, display: 'block' }} />
-              </div>
-              <p style={{ fontFamily: "'Cormorant Garamond', serif", fontStyle: 'italic', fontWeight: 300, fontSize: 12, color: C.text3, flex: 1, lineHeight: 1.5 }}>
-                "현재 정밀도 {pct}%. {closedCount}개 영역이 닫혀 있어요. 열면 더 정확해져요."
-              </p>
-              <span style={{ fontSize: 9, color: C.text5, flexShrink: 0, marginTop: 2 }}>Frost</span>
-            </div>
+          {tab === 'growth' && user && (
+            <GrowthTab meData={meData} pct={pct} closedCount={closedCount} seedTitle={seedTitle} stageStatus={stageStatus} userId={user.id} />
           )}
-
-          {user && <PersonaMap userId={user.id} />}
-
-          {/* 발견된 나 — 모순 감지 엔진 결과 */}
-          <PersonaFragmentsSection />
-
-          {/* Multi-persona */}
-          <div className="vr-fade-in" style={{ background: C.bg2, border: `1px solid ${C.border}`, borderRadius: 14, padding: '15px 17px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 11 }}>
-              <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 16, color: C.text }}>멀티페르소나</span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 9, fontWeight: 300, color: C.text4 }}>
-                  {meData.personasLoading ? '...' : `${meData.personas.length > 0 ? meData.personas.length : PERSONAS.length}개 발견됨`}
-                </span>
-                <button
-                  onClick={() => navigate('/personas')}
-                  style={{ fontSize: 9, padding: '3px 9px', borderRadius: 99, border: `1px solid ${C.amberGold}44`, color: C.amberGold, background: `${C.amberGold}08`, cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", whiteSpace: 'nowrap' }}
-                >
-                  전체 보기
-                </button>
-              </div>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-              {(meData.personas.length > 0 ? meData.personas : PERSONAS).map((p, i) => {
-                const isOpen = openPersona === i;
-                return (
-                  <div key={i} onClick={() => setOpenPersona(isOpen ? null : i)}
-                    style={{ background: isOpen ? `${C.amberGold}06` : C.bg, border: `1px solid ${isOpen ? `${C.amberGold}44` : C.border}`, borderRadius: 10, padding: '10px 12px', cursor: 'pointer', transition: 'all .2s' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-                      <span style={{ width: 8, height: 8, borderRadius: '50%', background: p.color, flexShrink: 0, display: 'block' }} />
-                      <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 14, color: C.text, flex: 1 }}>{p.name}</span>
-                      <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 99, border: `1px solid ${isOpen ? `${C.amberGold}33` : C.border}`, color: isOpen ? C.amberGold : C.text4 }}>{p.zone}</span>
-                    </div>
-                    {isOpen && (
-                      <div style={{ paddingTop: 9, marginTop: 9, borderTop: `1px solid ${C.border2}` }}>
-                        <p style={{ fontSize: 11, fontWeight: 300, color: C.text3, lineHeight: 1.55, marginBottom: 6 }}>{p.desc}</p>
-                        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 7 }}>
-                          {p.tags.map(tag => <span key={tag} style={PERSONA_TAG_STYLE}>{tag}</span>)}
-                        </div>
-                        <div style={{ background: `${C.amberGold}08`, border: `1px solid ${C.amberGold}22`, borderRadius: 7, padding: '7px 9px' }}>
-                          <p style={{ fontSize: 9, color: C.amberGold, marginBottom: 2, fontWeight: 400, letterSpacing: '.05em' }}>다른 페르소나와의 충돌</p>
-                          <p style={{ fontSize: 11, fontWeight: 300, color: C.text2, lineHeight: 1.5 }}>{p.conflict}</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Radar chart */}
-          {(() => {
-            const radarNow = meData.radar?.now ?? RADAR_DATA.now;
-            const radarPrev = meData.radar?.prev ?? RADAR_DATA.prev;
-            const radarCurrent = chartMode === 'now' ? radarNow : radarPrev;
-            return (
-              <div className="vr-fade-in" style={{ background: C.bg2, border: `1px solid ${C.border}`, borderRadius: 14, padding: '15px 17px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 11 }}>
-                  <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 16, color: C.text }}>관계 프로필 변화</span>
-                  <div style={{ display: 'flex', gap: 5 }}>
-                    {(['prev', 'now'] as const).map(m => (
-                      <button key={m} onClick={() => setChartMode(m)}
-                        disabled={m === 'prev' && !radarPrev}
-                        style={{ fontSize: 9, padding: '2px 8px', borderRadius: 99, border: `1px solid ${chartMode === m ? `${C.amberGold}44` : C.border}`, color: chartMode === m ? C.amberGold : C.text4, background: chartMode === m ? `${C.amberGold}08` : 'transparent', cursor: (m === 'prev' && !radarPrev) ? 'default' : 'pointer', opacity: (m === 'prev' && !radarPrev) ? 0.4 : 1, transition: 'all .15s' }}>
-                        {m === 'prev' ? '1개월 전' : '지금'}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}>
-                  <RadarChart mode={chartMode} data={radarCurrent} prev={radarPrev} />
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 5 }}>
-                  {radarCurrent.axes.map((axis, i) => {
-                    const nowVal = radarCurrent.vals[i];
-                    const prevVal = radarPrev?.vals[i] ?? nowVal;
-                    const delta = nowVal - prevVal;
-                    return (
-                      <div key={i} style={RADAR_AXIS_ITEM_STYLE}>
-                        <span style={RADAR_AXIS_LABEL_STYLE}>{axis}</span>
-                        <span style={RADAR_AXIS_VALUE_STYLE}>{nowVal}</span>
-                        {chartMode === 'now' && radarPrev
-                          ? <span style={{ fontSize: 9, fontWeight: 400, color: delta >= 0 ? C.amberGold : C.text4 }}>{delta >= 0 ? '+' : ''}{delta}</span>
-                          : <span style={RADAR_BASELINE_STYLE}>기준</span>}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })()}
-
-          <RelationshipTimeline />
-
-          <WeeklyReportSection weeklyReport={meData.weeklyReport} weeklyReportLoading={meData.weeklyReportLoading} />
-
-          {/* MonthlyReportCard는 growth 탭 상단으로 이동됨 */}
-
-          <DiagnosisSection diagnosis={meData.diagnosis} />
-
-          {/* Friend recommendations */}
-          <div className="vr-fade-in" style={{ background: C.bg2, border: `1px solid ${C.border}`, borderRadius: 14, padding: '14px 17px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 11 }}>
-              <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 16, color: C.text }}>대화가 잘 통할 것 같아요</span>
-              <span style={{ fontSize: 9, fontWeight: 300, color: C.text4 }}>패턴과 zone 교집합 기준</span>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {FRIENDS.map((f, i) => (
-                <div key={i} style={FRIEND_CARD_STYLE}>
-                  <div style={{ width: 36, height: 36, borderRadius: '50%', background: f.color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontFamily: "'Cormorant Garamond', serif", fontWeight: 400, fontSize: 14, color: C.bg }}>{f.av}</div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={FRIEND_NAME_STYLE}>{f.name}</p>
-                    <p style={FRIEND_REASON_STYLE}>{f.reason}</p>
-                  </div>
-                  <span style={FRIEND_MATCH_STYLE}>{f.match}</span>
-                  <button onClick={() => sendDM(f.name)} style={FRIEND_DM_BTN_STYLE}>
-                    <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M2 2h10v8H8l-3 2V10H2z" stroke={C.text4} strokeWidth="1.2" strokeLinejoin="round"/></svg>
-                  </button>
-                </div>
-              ))}
-            </div>
-            {dmToast && <p style={{ fontSize: 10, fontWeight: 300, color: C.amberGold, textAlign: 'center', marginTop: 6 }}>{dmToast}</p>}
-          </div>
-
-          {/* Share card */}
-          <div className="vr-fade-in" style={{ background: `linear-gradient(135deg,${C.amberGold}08,${C.bg})`, border: `1px solid ${C.amberGold}33`, borderRadius: 14, padding: '14px 17px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 7 }}>
-              <div style={{ width: 26, height: 26, borderRadius: 7, background: `${C.amberGold}15`, border: `1px solid ${C.amberGold}33`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 10l4-4 3 3 5-6" stroke={C.amberGold} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>
-              </div>
-              <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 15, color: C.text }}>나의 변화 공유하기</span>
-            </div>
-            <p style={{ fontSize: 11, fontWeight: 300, color: C.text4, lineHeight: 1.5, marginBottom: 9 }}>처음과 지금이 얼마나 달라졌는지 한 장으로.</p>
-            <button onClick={() => { setShareToast(true); setTimeout(() => setShareToast(false), 2500); }}
-              style={{ width: '100%', padding: '10px 0', borderRadius: 10, border: 'none', background: C.amberGold, fontFamily: "'DM Sans', sans-serif", fontSize: 12, fontWeight: 400, color: C.bg, cursor: 'pointer' }}>
-              공유 카드 만들기
-            </button>
-            {shareToast && <p style={{ textAlign: 'center', fontSize: 11, fontWeight: 300, color: C.amberGold, marginTop: 7 }}>준비 중이에요 — 곧 만들 수 있어요 🌱</p>}
-          </div>
-        </div>
-      )}
-
-      {/* People tab */}
-      {tab === 'people' && (
-        <PeopleSection people={meData.people} peopleLoading={meData.peopleLoading} />
-      )}
-
-      {/* Zone tab */}
-      {tab === 'zone' && (
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          <div style={{ flexShrink: 0, padding: '11px 20px 10px', borderBottom: `1px solid ${C.border2}` }}>
-            <p style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 16, color: C.text, marginBottom: 2 }}>탐색 범위 설정</p>
-            <p style={{ fontSize: 10, fontWeight: 300, color: C.text4 }}>열어둔 영역 안에서만 AI가 작동해요.</p>
-          </div>
-          <div style={{ flexShrink: 0, padding: '9px 20px', borderBottom: `1px solid ${C.border2}`, display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: 10, fontWeight: 300, color: C.text4, flexShrink: 0 }}>정밀도</span>
-            <div style={{ flex: 1, height: 3, background: C.border2, borderRadius: 99, overflow: 'hidden' }}>
-              <div style={{ height: '100%', borderRadius: 99, background: `linear-gradient(90deg,${C.amberGold},${C.amber})`, width: `${pct}%`, transition: 'width .4s ease' }} />
-            </div>
-            <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 400, fontSize: 14, color: C.amberGold, flexShrink: 0, minWidth: 34, textAlign: 'right' }}>{pct}%</span>
-          </div>
-          <div style={{ flex: 1, overflowY: 'auto', padding: '11px 20px 80px', display: 'flex', flexDirection: 'column', gap: 9 }}>
-            {closedCount > 0 && (
-              <div style={{ background: `${C.frost}08`, border: `1px solid ${C.frost}22`, borderRadius: 10, padding: '9px 12px', display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-                <div style={{ width: 17, height: 17, borderRadius: '50%', background: `${C.frost}15`, border: `1px solid ${C.frost}44`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
-                  <span style={{ width: 9, height: 9, borderRadius: '50%', background: C.frost, display: 'block' }} />
-                </div>
-                <p style={{ fontFamily: "'Cormorant Garamond', serif", fontStyle: 'italic', fontWeight: 300, fontSize: 12, color: C.text3, flex: 1, lineHeight: 1.5 }}>
-                  "현재 정밀도 {pct}%. {closedCount}개 영역이 닫혀 있어요."
-                </p>
-                <span style={{ fontSize: 9, color: C.text5, flexShrink: 0, marginTop: 2 }}>Frost</span>
-              </div>
-            )}
-            {ZONES.map((g, gi) => {
-              const groupOpen = openGroups[gi] !== false;
-              return (
-                <div key={gi} className="vr-fade-in" style={{ background: C.bg2, border: `1px solid ${C.border}`, borderRadius: 13, overflow: 'hidden' }}>
-                  <div onClick={() => setOpenGroups(prev => ({ ...prev, [gi]: !groupOpen }))}
-                    style={{ padding: '12px 15px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
-                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: g.color, flexShrink: 0, display: 'block' }} />
-                    <div style={{ flex: 1 }}>
-                      <p style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 15, color: C.text, marginBottom: 2 }}>{g.title}</p>
-                      <p style={{ fontSize: 10, fontWeight: 300, color: C.text4 }}>{g.sub}</p>
-                    </div>
-                    <span style={{ fontSize: 11, color: C.text5, transform: groupOpen ? 'rotate(90deg)' : 'none', transition: 'transform .2s', display: 'inline-block', flexShrink: 0 }}>›</span>
-                  </div>
-                  {groupOpen && (
-                    <div style={{ borderTop: `1px solid ${C.border2}` }}>
-                      {g.items.map((item, ii) => (
-                        <div key={item.id} style={{ padding: '10px 15px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: ii < g.items.length - 1 ? `1px solid ${C.border2}` : 'none' }}>
-                          <div style={{ flex: 1 }}>
-                            <p style={ZONE_ITEM_NAME_STYLE}>{item.name}</p>
-                            <p style={ZONE_ITEM_DESC_STYLE}>{item.desc}</p>
-                          </div>
-                          {item.sensitive && <span style={ZONE_SENSITIVE_BADGE_STYLE}>민감</span>}
-                          <ZoneToggle on={zoneState[item.id]} onToggle={() => toggleZone(item.id)} />
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
+          {tab === 'people' && (
+            <PeopleSection people={meData.people} peopleLoading={meData.peopleLoading} />
+          )}
+          {tab === 'zone' && (
+            <ZoneTab pct={pct} closedCount={closedCount} zoneState={zoneState} toggleZone={toggleZone} />
+          )}
         </>
       )}
 
-      {/* Sheets */}
       <AISheet open={aiSheet === 'amber'} type="amber" aiName={amberName} onClose={() => setAiSheet(null)} />
       <AISheet open={aiSheet === 'frost'} type="frost" aiName={frostName} onClose={() => setAiSheet(null)} />
       <SettingsSheet
