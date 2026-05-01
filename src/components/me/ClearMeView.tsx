@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { veilorDb } from '@/integrations/supabase/client';
 import EmotionWheel, { type EmotionScore } from '@/components/charts/EmotionWheel';
+import { useClearTranslations, useCommonTranslations } from '@/hooks/useTranslation';
+import { useLanguageContext } from '@/context/LanguageContext';
 
 interface MonthCheckin {
   mood_score: number;
@@ -16,7 +18,7 @@ function getMonthRange(now: Date): { firstDay: string; lastDay: string } {
   };
 }
 
-const DOW_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
+// DOW_LABELS injected via translations
 const LEGEND = [
   { color: '#F59E0B33', border: '#F59E0B', label: '1–4' },
   { color: '#4AAEFF33', border: '#4AAEFF', label: '5–7' },
@@ -38,6 +40,11 @@ function getMoodBorderColor(score: number | null): string {
 }
 
 export default function ClearMeView({ userId }: { userId: string }) {
+  const cl = useClearTranslations();
+  const common = useCommonTranslations();
+  const { language } = useLanguageContext();
+  const DOW_LABELS = cl.dowLabels;
+
   const [checkins, setCheckins] = useState<MonthCheckin[]>([]);
   const [loading, setLoading] = useState(true);
   const [emotionScores, setEmotionScores] = useState<EmotionScore[]>([]);
@@ -110,15 +117,15 @@ export default function ClearMeView({ userId }: { userId: string }) {
   while (calCells.length % 7 !== 0) calCells.push(null);
 
   const summaryItems = [
-    { label: '기록', value: `${dayMap.size}일` },
-    { label: '평균 점수', value: moodValues.length > 0 ? (moodValues.reduce((a, b) => a + b, 0) / moodValues.length).toFixed(1) : '—' },
-    { label: '최고점', value: moodValues.length > 0 ? String(Math.max(...moodValues)) : '—' },
+    { label: cl.summaryRecords, value: cl.summaryDaysFmt.replace('{count}', String(dayMap.size)) },
+    { label: cl.summaryAvg, value: moodValues.length > 0 ? (moodValues.reduce((a, b) => a + b, 0) / moodValues.length).toFixed(1) : '—' },
+    { label: cl.summaryBest, value: moodValues.length > 0 ? String(Math.max(...moodValues)) : '—' },
   ];
 
   if (loading) {
     return (
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#334155', fontSize: 12 }}>
-        불러오는 중…
+        {common.loading}
       </div>
     );
   }
@@ -136,7 +143,9 @@ export default function ClearMeView({ userId }: { userId: string }) {
 
       <div style={{ background: '#111318', border: '1px solid #4AAEFF22', borderRadius: 16, padding: '14px 12px' }}>
         <p style={{ fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#475569', marginBottom: 10 }}>
-          {month + 1}월 기록
+          {cl.calendarTitle.replace('{month}', language === 'en'
+            ? now.toLocaleString('en-US', { month: 'long' })
+            : String(month + 1))}
         </p>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginBottom: 4 }}>
           {DOW_LABELS.map(d => <div key={d} style={{ textAlign: 'center', fontSize: 9, color: '#334155' }}>{d}</div>)}
@@ -167,7 +176,7 @@ export default function ClearMeView({ userId }: { userId: string }) {
 
       {emotionScores.length > 0 && (
         <div style={{ background: '#111318', border: '1px solid #4AAEFF22', borderRadius: 16, padding: '14px 12px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <p style={{ fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#475569', marginBottom: 12, alignSelf: 'flex-start' }}>감정 분포</p>
+          <p style={{ fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#475569', marginBottom: 12, alignSelf: 'flex-start' }}>{cl.emotionDist}</p>
           <EmotionWheel scores={emotionScores} size={200} />
         </div>
       )}

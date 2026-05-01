@@ -1,5 +1,19 @@
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import { useLanguageContext } from "@/context/LanguageContext";
+
+const S = {
+  ko: {
+    previous: "이전",
+    next: "다음",
+    complete: "IKIGAI 최종 완성",
+  },
+  en: {
+    previous: "Previous",
+    next: "Next",
+    complete: "Complete IKIGAI",
+  },
+};
 
 interface Step {
   title: string;
@@ -26,21 +40,24 @@ export const StepNavigation = ({
   isLastStep,
   canGoNext = true
 }: StepNavigationProps) => {
+  const { language } = useLanguageContext();
+  const s = S[language] ?? S.ko;
+
   return (
     <>
       {/* Step Indicators */}
       <div className="mb-6">
         <div className="flex justify-between items-center">
           {steps.map((step, index) => (
-            <div 
-              key={index} 
+            <div
+              key={index}
               className={`text-center flex-1 ${
                 index <= currentStep ? 'text-primary' : 'text-muted-foreground'
               }`}
             >
               <div className={`w-5 h-5 rounded-full mx-auto mb-1 flex items-center justify-center text-xs font-medium ${
-                index <= currentStep 
-                  ? 'bg-primary text-primary-foreground' 
+                index <= currentStep
+                  ? 'bg-primary text-primary-foreground'
                   : 'bg-muted'
               }`}>
                 {index + 1}
@@ -54,27 +71,27 @@ export const StepNavigation = ({
 
       {/* Navigation Buttons */}
       <div className="flex justify-between mt-6">
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           onClick={onPrevious}
           disabled={currentStep === 0}
           className="text-xs"
         >
           <ArrowLeft className="w-3 h-3 mr-2" />
-          이전
+          {s.previous}
         </Button>
-        
+
         {isLastStep ? (
           <Button onClick={onComplete} className="text-xs">
-            IKIGAI 최종 완성
+            {s.complete}
           </Button>
         ) : (
-          <Button 
+          <Button
             onClick={onNext}
             disabled={!canGoNext}
             className="text-xs"
           >
-            다음
+            {s.next}
             <ArrowRight className="w-3 h-3 ml-2" />
           </Button>
         )}

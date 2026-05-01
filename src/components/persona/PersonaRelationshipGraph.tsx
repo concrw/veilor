@@ -10,6 +10,58 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, InfoIcon, Zap, AlertTriangle, Heart, Sparkles } from "lucide-react";
 import { ARCHETYPE_CONFIGS } from "@/integrations/supabase/persona-types";
+import { useLanguageContext } from "@/context/LanguageContext";
+
+const S = {
+  ko: {
+    analyzing: 'AI가 페르소나 관계를 분석 중...',
+    loading: '로딩 중...',
+    needMore: '페르소나 관계 분석은 2개 이상의 페르소나가 있을 때 사용할 수 있습니다.',
+    analysisNeeded: '관계 분석이 필요합니다',
+    analysisDesc: 'AI가 페르소나 간의 시너지와 충돌을 분석합니다',
+    startAnalysis: '관계 분석 시작하기',
+    graphTitle: '페르소나 관계 분석',
+    graphDescFmt: (personas: number, relations: number) => `${personas}개 페르소나 간 ${relations}개 관계 발견`,
+    reanalyze: '재분석',
+    synergy: '시너지',
+    neutral: '중립',
+    conflict: '충돌',
+    synergyRelation: '시너지',
+    conflictRelation: '충돌',
+    neutralRelation: '중립적 관계',
+    strengthFmt: (n: number) => `강도 ${n}%`,
+    commonKeywords: '공통 키워드',
+    aiInsight: 'AI 인사이트',
+    actionSuggestion: '💡 실행 제안',
+    synergyAction: '이 두 페르소나를 결합한 콘텐츠나 서비스를 기획해보세요. 시너지를 극대화할 수 있습니다.',
+    neutralAction: '각 페르소나를 독립적으로 브랜딩하되, 필요시 연결고리를 만들어 보완 관계로 발전시키세요.',
+    conflictAction: '명확한 타겟 세그먼테이션이 필요합니다. 각 페르소나에 맞는 별도 채널이나 콘텐츠 라인을 고려하세요.',
+  },
+  en: {
+    analyzing: 'AI is analyzing persona relationships...',
+    loading: 'Loading...',
+    needMore: 'Persona relationship analysis is available when you have 2 or more personas.',
+    analysisNeeded: 'Relationship Analysis Needed',
+    analysisDesc: 'AI analyzes synergies and conflicts between personas',
+    startAnalysis: 'Start Relationship Analysis',
+    graphTitle: 'Persona Relationship Analysis',
+    graphDescFmt: (personas: number, relations: number) => `${relations} relationships found across ${personas} personas`,
+    reanalyze: 'Re-analyze',
+    synergy: 'Synergy',
+    neutral: 'Neutral',
+    conflict: 'Conflict',
+    synergyRelation: 'Synergy',
+    conflictRelation: 'Conflict',
+    neutralRelation: 'Neutral Relation',
+    strengthFmt: (n: number) => `Strength ${n}%`,
+    commonKeywords: 'Common Keywords',
+    aiInsight: 'AI Insight',
+    actionSuggestion: '💡 Action Suggestion',
+    synergyAction: 'Plan content or services that combine these two personas. You can maximize their synergy.',
+    neutralAction: 'Brand each persona independently, but create connections where needed to develop a complementary relationship.',
+    conflictAction: 'Clear target segmentation is needed. Consider separate channels or content lines for each persona.',
+  },
+};
 
 type RelationshipType = "synergy" | "conflict" | "neutral";
 
@@ -25,6 +77,8 @@ interface DBRelationship {
 }
 
 export function PersonaRelationshipGraph() {
+  const { language } = useLanguageContext();
+  const s = S[language] ?? S.ko;
   const { data: personas, isLoading: personasLoading } = usePersonas();
   const { data: relationships, isLoading: relationshipsLoading } = usePersonaRelationships();
   const { mutate: analyzeRelationships, isPending: isAnalyzing } = useAnalyzePersonaRelationships();
@@ -44,7 +98,7 @@ export function PersonaRelationshipGraph() {
         <div className="text-center space-y-3">
           <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
           <p className="text-sm text-muted-foreground">
-            {isAnalyzing ? "AI가 페르소나 관계를 분석 중..." : "로딩 중..."}
+            {isAnalyzing ? s.analyzing : s.loading}
           </p>
         </div>
       </div>
@@ -56,7 +110,7 @@ export function PersonaRelationshipGraph() {
       <Alert>
         <InfoIcon className="h-4 w-4" />
         <AlertDescription>
-          페르소나 관계 분석은 2개 이상의 페르소나가 있을 때 사용할 수 있습니다.
+          {s.needMore}
         </AlertDescription>
       </Alert>
     );
@@ -67,13 +121,13 @@ export function PersonaRelationshipGraph() {
       <div className="text-center space-y-4 py-12">
         <InfoIcon className="w-12 h-12 mx-auto text-muted-foreground" />
         <div>
-          <h3 className="text-lg font-semibold mb-2">관계 분석이 필요합니다</h3>
+          <h3 className="text-lg font-semibold mb-2">{s.analysisNeeded}</h3>
           <p className="text-sm text-muted-foreground mb-4">
-            AI가 페르소나 간의 시너지와 충돌을 분석합니다
+            {s.analysisDesc}
           </p>
           <Button onClick={() => analyzeRelationships()} disabled={isAnalyzing}>
             <Sparkles className="w-4 h-4 mr-2" />
-            관계 분석 시작하기
+            {s.startAnalysis}
           </Button>
         </div>
       </div>
@@ -120,10 +174,10 @@ export function PersonaRelationshipGraph() {
         <div className="text-center flex-1 space-y-2">
           <h2 className="text-2xl font-bold flex items-center justify-center gap-2">
             <Zap className="w-6 h-6 text-primary" />
-            페르소나 관계 분석
+            {s.graphTitle}
           </h2>
           <p className="text-muted-foreground">
-            {personas.length}개 페르소나 간 {enrichedRelationships.length}개 관계 발견
+            {s.graphDescFmt(personas.length, enrichedRelationships.length)}
           </p>
         </div>
         <Button
@@ -133,7 +187,7 @@ export function PersonaRelationshipGraph() {
           disabled={isAnalyzing}
         >
           <Sparkles className="w-4 h-4 mr-2" />
-          재분석
+          {s.reanalyze}
         </Button>
       </div>
 
@@ -147,7 +201,7 @@ export function PersonaRelationshipGraph() {
                 {synergyRelations.length}
               </span>
             </div>
-            <p className="text-xs text-green-700">시너지</p>
+            <p className="text-xs text-green-700">{s.synergy}</p>
           </CardContent>
         </Card>
 
@@ -159,7 +213,7 @@ export function PersonaRelationshipGraph() {
                 {neutralRelations.length}
               </span>
             </div>
-            <p className="text-xs text-blue-700">중립</p>
+            <p className="text-xs text-blue-700">{s.neutral}</p>
           </CardContent>
         </Card>
 
@@ -171,7 +225,7 @@ export function PersonaRelationshipGraph() {
                 {conflictRelations.length}
               </span>
             </div>
-            <p className="text-xs text-orange-700">충돌</p>
+            <p className="text-xs text-orange-700">{s.conflict}</p>
           </CardContent>
         </Card>
       </div>
@@ -196,12 +250,12 @@ export function PersonaRelationshipGraph() {
                     <div className="flex items-center gap-2">
                       {getRelationshipIcon(relationship.relationship_type)}
                       <CardTitle className="text-lg">
-                        {relationship.relationship_type === "synergy" && "시너지"}
-                        {relationship.relationship_type === "conflict" && "충돌"}
-                        {relationship.relationship_type === "neutral" && "중립적 관계"}
+                        {relationship.relationship_type === "synergy" && s.synergyRelation}
+                        {relationship.relationship_type === "conflict" && s.conflictRelation}
+                        {relationship.relationship_type === "neutral" && s.neutralRelation}
                       </CardTitle>
                       <Badge variant="outline" className="text-xs">
-                        강도 {Math.round(relationship.strength_score)}%
+                        {s.strengthFmt(Math.round(relationship.strength_score))}
                       </Badge>
                     </div>
                   </div>
@@ -236,7 +290,7 @@ export function PersonaRelationshipGraph() {
 
                   {relationship.common_keywords && relationship.common_keywords.length > 0 && (
                     <div>
-                      <p className="text-xs font-medium mb-2">공통 키워드</p>
+                      <p className="text-xs font-medium mb-2">{s.commonKeywords}</p>
                       <div className="flex flex-wrap gap-1">
                         {relationship.common_keywords.map((keyword) => (
                           <Badge key={keyword} variant="secondary" className="text-xs">
@@ -252,7 +306,7 @@ export function PersonaRelationshipGraph() {
                     <div className="pt-2 border-t">
                       <div className="flex items-start gap-2 mb-2">
                         <Sparkles className="w-4 h-4 text-primary mt-0.5" />
-                        <p className="text-xs font-medium">AI 인사이트</p>
+                        <p className="text-xs font-medium">{s.aiInsight}</p>
                       </div>
                       <p className="text-xs text-muted-foreground">{relationship.ai_insights}</p>
                     </div>
@@ -260,14 +314,11 @@ export function PersonaRelationshipGraph() {
 
                   {/* Actionable insights */}
                   <div className="pt-2 border-t">
-                    <p className="text-xs font-medium mb-1">💡 실행 제안</p>
+                    <p className="text-xs font-medium mb-1">{s.actionSuggestion}</p>
                     <p className="text-xs text-muted-foreground">
-                      {relationship.relationship_type === "synergy" &&
-                        "이 두 페르소나를 결합한 콘텐츠나 서비스를 기획해보세요. 시너지를 극대화할 수 있습니다."}
-                      {relationship.relationship_type === "neutral" &&
-                        "각 페르소나를 독립적으로 브랜딩하되, 필요시 연결고리를 만들어 보완 관계로 발전시키세요."}
-                      {relationship.relationship_type === "conflict" &&
-                        "명확한 타겟 세그먼테이션이 필요합니다. 각 페르소나에 맞는 별도 채널이나 콘텐츠 라인을 고려하세요."}
+                      {relationship.relationship_type === "synergy" && s.synergyAction}
+                      {relationship.relationship_type === "neutral" && s.neutralAction}
+                      {relationship.relationship_type === "conflict" && s.conflictAction}
                     </p>
                   </div>
                 </CardContent>

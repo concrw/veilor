@@ -1,5 +1,11 @@
 import { useState } from "react";
 import { useAccessiblePersonas, useSetActivePersona } from "@/hooks/usePersonas";
+import { useLanguageContext } from "@/context/LanguageContext";
+
+const S = {
+  ko: { upgradeLabel: 'Pro로 업그레이드', manageLabel: '페르소나 관리', manageBtn: '관리' },
+  en: { upgradeLabel: 'Upgrade to Pro', manageLabel: 'Manage Personas', manageBtn: 'Manage' },
+};
 import {
   Select,
   SelectContent,
@@ -18,6 +24,8 @@ interface PersonaSwitcherProps {
 
 export function PersonaSwitcher({ activePersonaId }: PersonaSwitcherProps) {
   const navigate = useNavigate();
+  const { language } = useLanguageContext();
+  const s = S[language] ?? S.ko;
   const { data: personas, isLoading } = useAccessiblePersonas();
   const { mutate: setActive } = useSetActivePersona();
   const [paywallOpen, setPaywallOpen] = useState(false);
@@ -76,7 +84,7 @@ export function PersonaSwitcher({ activePersonaId }: PersonaSwitcherProps) {
                 <SelectItem value="upgrade" className="border-t">
                   <div className="flex items-center gap-2 text-primary">
                     <Lock className="w-3 h-3" />
-                    <span>Pro로 업그레이드</span>
+                    <span>{s.upgradeLabel}</span>
                   </div>
                 </SelectItem>
               </>
@@ -85,7 +93,7 @@ export function PersonaSwitcher({ activePersonaId }: PersonaSwitcherProps) {
             <SelectItem value="manage" className="border-t">
               <div className="flex items-center gap-2">
                 <Settings className="w-3 h-3" />
-                <span>페르소나 관리</span>
+                <span>{s.manageLabel}</span>
               </div>
             </SelectItem>
           </SelectContent>
@@ -93,7 +101,7 @@ export function PersonaSwitcher({ activePersonaId }: PersonaSwitcherProps) {
 
         {personas.length > 1 && (
           <Button variant="ghost" size="sm" onClick={() => navigate("/personas")}>
-            관리
+            {s.manageBtn}
           </Button>
         )}
       </div>

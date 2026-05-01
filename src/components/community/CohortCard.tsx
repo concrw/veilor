@@ -2,10 +2,30 @@
 import { useAuth } from '@/context/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { veilorDb } from '@/integrations/supabase/client';
+import { useLanguageContext } from '@/context/LanguageContext';
+
+const S = {
+  ko: {
+    inProgress: (memberCount: number, daysLeft: number) =>
+      `${memberCount}명과 함께 진행 중 · ${daysLeft}일 남음`,
+    joinTitle: '100일 코호트 참여하기',
+    joinDesc: '같은 목표를 가진 사람들과 100일간 함께해요',
+    join: '참여',
+  },
+  en: {
+    inProgress: (memberCount: number, daysLeft: number) =>
+      `In progress with ${memberCount} people · ${daysLeft} days left`,
+    joinTitle: 'Join a 100-Day Cohort',
+    joinDesc: 'Spend 100 days with people who share your goals',
+    join: 'Join',
+  },
+} as const;
 
 export default function CohortCard() {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const { language } = useLanguageContext();
+  const s = S[language] ?? S.ko;
 
   const { data: cohort } = useQuery({
     queryKey: ['my-cohort', user?.id],
@@ -73,7 +93,7 @@ export default function CohortCard() {
           <div className="h-1.5 bg-primary rounded-full" style={{ width: `${daysDone}%` }} />
         </div>
         <p className="text-xs text-muted-foreground">
-          {cohort.member_count ?? 0}명과 함께 진행 중 · {100 - daysDone}일 남음
+          {s.inProgress(cohort.member_count ?? 0, 100 - daysDone)}
         </p>
       </div>
     );
@@ -83,8 +103,8 @@ export default function CohortCard() {
 
   return (
     <div className="bg-card border rounded-2xl p-5 space-y-3">
-      <p className="text-sm font-medium">100일 코호트 참여하기</p>
-      <p className="text-xs text-muted-foreground">같은 목표를 가진 사람들과 100일간 함께해요</p>
+      <p className="text-sm font-medium">{s.joinTitle}</p>
+      <p className="text-xs text-muted-foreground">{s.joinDesc}</p>
       {availableCohorts.map((c: { id: string; name: string; member_count: number | null; max_members: number | null }) => (
         <div key={c.id} className="flex items-center justify-between bg-muted/30 rounded-xl p-3">
           <div>
@@ -96,7 +116,7 @@ export default function CohortCard() {
             disabled={joinMutation.isPending}
             className="text-xs text-primary font-medium px-3 py-1.5 rounded-lg border border-primary/30 hover:bg-primary/5"
           >
-            참여
+            {s.join}
           </button>
         </div>
       ))}

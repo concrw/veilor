@@ -9,6 +9,64 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { IkigaiIntersectionDialog } from "./IkigaiIntersectionDialog";
+import { useLanguageContext } from "@/context/LanguageContext";
+
+const S = {
+  ko: {
+    diagramTitle: "Ikigai 다이어그램",
+    completeness: (pct: string, complete: boolean) => `완성도: ${pct}%${complete ? " ✨ 완성!" : ""}`,
+    completeBadge: "완료",
+    notEntered: "아직 입력되지 않았습니다",
+    moreItems: (n: number) => `...외 ${n}개`,
+    centerLabel: "완성!",
+    circles: {
+      love: "좋아하는 것",
+      goodAt: "잘하는 것",
+      worldNeeds: "세상이 필요한 것",
+      paidFor: "돈 벌 수 있는 것",
+    },
+    intersections: {
+      loveGoodAt: "열정 (Passion)",
+      loveWorldNeeds: "사명 (Mission)",
+      goodAtPaidFor: "직업 (Profession)",
+      worldNeedsPaidFor: "천직 (Vocation)",
+      center: "IKIGAI",
+    },
+    legend: {
+      passion: "열정 (Passion): 좋아하면서 잘하는 것",
+      mission: "사명 (Mission): 좋아하면서 세상이 필요로 하는 것",
+      profession: "직업 (Profession): 잘하면서 돈을 벌 수 있는 것",
+      vocation: "천직 (Vocation): 세상이 필요로 하고 돈을 벌 수 있는 것",
+    },
+  },
+  en: {
+    diagramTitle: "Ikigai Diagram",
+    completeness: (pct: string, complete: boolean) => `Completeness: ${pct}%${complete ? " ✨ Complete!" : ""}`,
+    completeBadge: "Complete",
+    notEntered: "Not entered yet",
+    moreItems: (n: number) => `...${n} more`,
+    centerLabel: "Done!",
+    circles: {
+      love: "What you love",
+      goodAt: "What you're good at",
+      worldNeeds: "What the world needs",
+      paidFor: "What you can be paid for",
+    },
+    intersections: {
+      loveGoodAt: "Passion",
+      loveWorldNeeds: "Mission",
+      goodAtPaidFor: "Profession",
+      worldNeedsPaidFor: "Vocation",
+      center: "IKIGAI",
+    },
+    legend: {
+      passion: "Passion: What you love and are good at",
+      mission: "Mission: What you love and the world needs",
+      profession: "Profession: What you're good at and can be paid for",
+      vocation: "Vocation: What the world needs and you can be paid for",
+    },
+  },
+};
 
 type IntersectionType = "passion" | "mission" | "profession" | "vocation" | "ikigai";
 
@@ -27,52 +85,20 @@ interface IkigaiVennDiagramProps {
 }
 
 // Circle positions and colors
-const CIRCLES = {
-  love: {
-    cx: 250,
-    cy: 200,
-    r: 150,
-    fill: "#FF6B9D",
-    fillOpacity: 0.3,
-    label: "좋아하는 것",
-    position: { x: 250, y: 100 },
-  },
-  goodAt: {
-    cx: 350,
-    cy: 200,
-    r: 150,
-    fill: "#4ECDC4",
-    fillOpacity: 0.3,
-    label: "잘하는 것",
-    position: { x: 450, y: 100 },
-  },
-  worldNeeds: {
-    cx: 250,
-    cy: 300,
-    r: 150,
-    fill: "#95E1D3",
-    fillOpacity: 0.3,
-    label: "세상이 필요한 것",
-    position: { x: 150, y: 400 },
-  },
-  paidFor: {
-    cx: 350,
-    cy: 300,
-    r: 150,
-    fill: "#FFE66D",
-    fillOpacity: 0.3,
-    label: "돈 벌 수 있는 것",
-    position: { x: 450, y: 400 },
-  },
+const CIRCLE_CONFIG = {
+  love:       { cx: 250, cy: 200, r: 150, fill: "#FF6B9D", fillOpacity: 0.3, position: { x: 250, y: 100 } },
+  goodAt:     { cx: 350, cy: 200, r: 150, fill: "#4ECDC4", fillOpacity: 0.3, position: { x: 450, y: 100 } },
+  worldNeeds: { cx: 250, cy: 300, r: 150, fill: "#95E1D3", fillOpacity: 0.3, position: { x: 150, y: 400 } },
+  paidFor:    { cx: 350, cy: 300, r: 150, fill: "#FFE66D", fillOpacity: 0.3, position: { x: 450, y: 400 } },
 };
 
-// Intersection labels
-const INTERSECTIONS = {
-  loveGoodAt: { x: 300, y: 150, label: "열정 (Passion)" },
-  loveWorldNeeds: { x: 200, y: 250, label: "사명 (Mission)" },
-  goodAtPaidFor: { x: 400, y: 250, label: "직업 (Profession)" },
-  worldNeedsPaidFor: { x: 300, y: 350, label: "천직 (Vocation)" },
-  center: { x: 300, y: 250, label: "IKIGAI", highlight: true },
+// Intersection positions
+const INTERSECTION_POS = {
+  loveGoodAt:        { x: 300, y: 150, highlight: false },
+  loveWorldNeeds:    { x: 200, y: 250, highlight: false },
+  goodAtPaidFor:     { x: 400, y: 250, highlight: false },
+  worldNeedsPaidFor: { x: 300, y: 350, highlight: false },
+  center:            { x: 300, y: 250, highlight: true  },
 };
 
 export function IkigaiVennDiagram({
@@ -81,12 +107,30 @@ export function IkigaiVennDiagram({
   size = "md",
   showLabels = true,
 }: IkigaiVennDiagramProps) {
-  const [hoveredCircle, setHoveredCircle] = useState<keyof typeof CIRCLES | null>(null);
-  const [hoveredIntersection, setHoveredIntersection] = useState<keyof typeof INTERSECTIONS | null>(
-    null
-  );
+  const { language } = useLanguageContext();
+  const s = S[language] ?? S.ko;
+
+  const [hoveredCircle, setHoveredCircle] = useState<keyof typeof CIRCLE_CONFIG | null>(null);
+  const [hoveredIntersection, setHoveredIntersection] = useState<keyof typeof INTERSECTION_POS | null>(null);
   const [selectedIntersection, setSelectedIntersection] = useState<IntersectionType | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  // Build circles with translated labels
+  const CIRCLES = useMemo(() => ({
+    love:       { ...CIRCLE_CONFIG.love,       label: s.circles.love       },
+    goodAt:     { ...CIRCLE_CONFIG.goodAt,     label: s.circles.goodAt     },
+    worldNeeds: { ...CIRCLE_CONFIG.worldNeeds, label: s.circles.worldNeeds },
+    paidFor:    { ...CIRCLE_CONFIG.paidFor,    label: s.circles.paidFor    },
+  }), [s]);
+
+  // Build intersections with translated labels
+  const INTERSECTIONS = useMemo(() => ({
+    loveGoodAt:        { ...INTERSECTION_POS.loveGoodAt,        label: s.intersections.loveGoodAt        },
+    loveWorldNeeds:    { ...INTERSECTION_POS.loveWorldNeeds,    label: s.intersections.loveWorldNeeds    },
+    goodAtPaidFor:     { ...INTERSECTION_POS.goodAtPaidFor,     label: s.intersections.goodAtPaidFor     },
+    worldNeedsPaidFor: { ...INTERSECTION_POS.worldNeedsPaidFor, label: s.intersections.worldNeedsPaidFor },
+    center:            { ...INTERSECTION_POS.center,            label: s.intersections.center            },
+  }), [s]);
 
   const handleIntersectionClick = (type: IntersectionType) => {
     setSelectedIntersection(type);
@@ -111,11 +155,14 @@ export function IkigaiVennDiagram({
   // Calculate completeness percentage
   const completeness = useMemo(() => {
     const sections = [data.love, data.goodAt, data.worldNeeds, data.paidFor];
-    const filled = sections.filter((s) => s.length > 0).length;
+    const filled = sections.filter((sec) => sec.length > 0).length;
     return (filled / 4) * 100;
   }, [data]);
 
-  const getCircleClassName = (circle: keyof typeof CIRCLES) => {
+  // suppress unused warning
+  void hoveredIntersection;
+
+  const getCircleClassName = (circle: keyof typeof CIRCLE_CONFIG) => {
     if (!interactive) return "";
     return hoveredCircle === circle
       ? "cursor-pointer opacity-100"
@@ -124,28 +171,20 @@ export function IkigaiVennDiagram({
       : "cursor-pointer opacity-80 hover:opacity-100";
   };
 
-  const getIntersectionClassName = (intersection: keyof typeof INTERSECTIONS) => {
-    if (!interactive) return "";
-    return hoveredIntersection === intersection
-      ? "fill-primary opacity-100"
-      : "opacity-0 hover:opacity-30";
-  };
-
   return (
     <Card className="p-6">
       <div className="space-y-4">
         {/* Progress indicator */}
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-lg font-semibold">Ikigai 다이어그램</h3>
+            <h3 className="text-lg font-semibold">{s.diagramTitle}</h3>
             <p className="text-sm text-muted-foreground">
-              완성도: {completeness.toFixed(0)}%
-              {isComplete && " ✨ 완성!"}
+              {s.completeness(completeness.toFixed(0), isComplete)}
             </p>
           </div>
           {isComplete && (
             <Badge variant="default" className="bg-green-500">
-              완료
+              {s.completeBadge}
             </Badge>
           )}
         </div>
@@ -162,25 +201,25 @@ export function IkigaiVennDiagram({
             {/* Define gradients */}
             <defs>
               <radialGradient id="loveGradient">
-                <stop offset="0%" stopColor={CIRCLES.love.fill} stopOpacity="0.5" />
-                <stop offset="100%" stopColor={CIRCLES.love.fill} stopOpacity="0.2" />
+                <stop offset="0%" stopColor={CIRCLE_CONFIG.love.fill} stopOpacity="0.5" />
+                <stop offset="100%" stopColor={CIRCLE_CONFIG.love.fill} stopOpacity="0.2" />
               </radialGradient>
               <radialGradient id="goodAtGradient">
-                <stop offset="0%" stopColor={CIRCLES.goodAt.fill} stopOpacity="0.5" />
-                <stop offset="100%" stopColor={CIRCLES.goodAt.fill} stopOpacity="0.2" />
+                <stop offset="0%" stopColor={CIRCLE_CONFIG.goodAt.fill} stopOpacity="0.5" />
+                <stop offset="100%" stopColor={CIRCLE_CONFIG.goodAt.fill} stopOpacity="0.2" />
               </radialGradient>
               <radialGradient id="worldNeedsGradient">
-                <stop offset="0%" stopColor={CIRCLES.worldNeeds.fill} stopOpacity="0.5" />
-                <stop offset="100%" stopColor={CIRCLES.worldNeeds.fill} stopOpacity="0.2" />
+                <stop offset="0%" stopColor={CIRCLE_CONFIG.worldNeeds.fill} stopOpacity="0.5" />
+                <stop offset="100%" stopColor={CIRCLE_CONFIG.worldNeeds.fill} stopOpacity="0.2" />
               </radialGradient>
               <radialGradient id="paidForGradient">
-                <stop offset="0%" stopColor={CIRCLES.paidFor.fill} stopOpacity="0.5" />
-                <stop offset="100%" stopColor={CIRCLES.paidFor.fill} stopOpacity="0.2" />
+                <stop offset="0%" stopColor={CIRCLE_CONFIG.paidFor.fill} stopOpacity="0.5" />
+                <stop offset="100%" stopColor={CIRCLE_CONFIG.paidFor.fill} stopOpacity="0.2" />
               </radialGradient>
             </defs>
 
             {/* Circles */}
-            {Object.entries(CIRCLES).map(([key, circle]) => (
+            {(Object.entries(CIRCLES) as [keyof typeof CIRCLES, typeof CIRCLES.love][]).map(([key, circle]) => (
               <Tooltip key={key}>
                 <TooltipTrigger asChild>
                   <circle
@@ -190,8 +229,8 @@ export function IkigaiVennDiagram({
                     fill={`url(#${key}Gradient)`}
                     stroke={circle.fill}
                     strokeWidth="2"
-                    className={getCircleClassName(key as keyof typeof CIRCLES)}
-                    onMouseEnter={() => interactive && setHoveredCircle(key as keyof typeof CIRCLES)}
+                    className={getCircleClassName(key)}
+                    onMouseEnter={() => interactive && setHoveredCircle(key)}
                     onMouseLeave={() => interactive && setHoveredCircle(null)}
                   />
                 </TooltipTrigger>
@@ -205,12 +244,12 @@ export function IkigaiVennDiagram({
                         ))}
                         {data[key as keyof IkigaiData].length > 5 && (
                           <li className="text-muted-foreground">
-                            ...외 {data[key as keyof IkigaiData].length - 5}개
+                            {s.moreItems(data[key as keyof IkigaiData].length - 5)}
                           </li>
                         )}
                       </ul>
                     ) : (
-                      <p className="text-xs text-muted-foreground">아직 입력되지 않았습니다</p>
+                      <p className="text-xs text-muted-foreground">{s.notEntered}</p>
                     )}
                   </div>
                 </TooltipContent>
@@ -222,43 +261,53 @@ export function IkigaiVennDiagram({
               <>
                 {/* Passion: love + goodAt */}
                 <circle
-                  cx={INTERSECTIONS.loveGoodAt.x}
-                  cy={INTERSECTIONS.loveGoodAt.y}
+                  cx={INTERSECTION_POS.loveGoodAt.x}
+                  cy={INTERSECTION_POS.loveGoodAt.y}
                   r={40}
                   className="fill-pink-400 opacity-0 hover:opacity-30 cursor-pointer"
+                  onMouseEnter={() => setHoveredIntersection('loveGoodAt')}
+                  onMouseLeave={() => setHoveredIntersection(null)}
                   onClick={() => handleIntersectionClick("passion")}
                 />
                 {/* Mission: love + worldNeeds */}
                 <circle
-                  cx={INTERSECTIONS.loveWorldNeeds.x}
-                  cy={INTERSECTIONS.loveWorldNeeds.y}
+                  cx={INTERSECTION_POS.loveWorldNeeds.x}
+                  cy={INTERSECTION_POS.loveWorldNeeds.y}
                   r={40}
                   className="fill-green-400 opacity-0 hover:opacity-30 cursor-pointer"
+                  onMouseEnter={() => setHoveredIntersection('loveWorldNeeds')}
+                  onMouseLeave={() => setHoveredIntersection(null)}
                   onClick={() => handleIntersectionClick("mission")}
                 />
                 {/* Profession: goodAt + paidFor */}
                 <circle
-                  cx={INTERSECTIONS.goodAtPaidFor.x}
-                  cy={INTERSECTIONS.goodAtPaidFor.y}
+                  cx={INTERSECTION_POS.goodAtPaidFor.x}
+                  cy={INTERSECTION_POS.goodAtPaidFor.y}
                   r={40}
                   className="fill-blue-400 opacity-0 hover:opacity-30 cursor-pointer"
+                  onMouseEnter={() => setHoveredIntersection('goodAtPaidFor')}
+                  onMouseLeave={() => setHoveredIntersection(null)}
                   onClick={() => handleIntersectionClick("profession")}
                 />
                 {/* Vocation: worldNeeds + paidFor */}
                 <circle
-                  cx={INTERSECTIONS.worldNeedsPaidFor.x}
-                  cy={INTERSECTIONS.worldNeedsPaidFor.y}
+                  cx={INTERSECTION_POS.worldNeedsPaidFor.x}
+                  cy={INTERSECTION_POS.worldNeedsPaidFor.y}
                   r={40}
                   className="fill-yellow-400 opacity-0 hover:opacity-30 cursor-pointer"
+                  onMouseEnter={() => setHoveredIntersection('worldNeedsPaidFor')}
+                  onMouseLeave={() => setHoveredIntersection(null)}
                   onClick={() => handleIntersectionClick("vocation")}
                 />
                 {/* IKIGAI: center */}
                 {isComplete && (
                   <circle
-                    cx={INTERSECTIONS.center.x}
-                    cy={INTERSECTIONS.center.y}
+                    cx={INTERSECTION_POS.center.x}
+                    cy={INTERSECTION_POS.center.y}
                     r={50}
                     className="fill-purple-400 opacity-0 hover:opacity-20 cursor-pointer"
+                    onMouseEnter={() => setHoveredIntersection('center')}
+                    onMouseLeave={() => setHoveredIntersection(null)}
                     onClick={() => handleIntersectionClick("ikigai")}
                   />
                 )}
@@ -269,7 +318,7 @@ export function IkigaiVennDiagram({
             {showLabels && (
               <>
                 {/* Circle labels */}
-                {Object.entries(CIRCLES).map(([key, circle]) => (
+                {(Object.entries(CIRCLES) as [string, typeof CIRCLES.love][]).map(([key, circle]) => (
                   <text
                     key={key}
                     x={circle.position.x}
@@ -283,7 +332,7 @@ export function IkigaiVennDiagram({
                 ))}
 
                 {/* Intersection labels */}
-                {Object.entries(INTERSECTIONS).map(([key, intersection]) => (
+                {(Object.entries(INTERSECTIONS) as [string, typeof INTERSECTIONS.center][]).map(([key, intersection]) => (
                   <text
                     key={key}
                     x={intersection.x}
@@ -314,7 +363,7 @@ export function IkigaiVennDiagram({
                   IKIGAI
                 </text>
                 <text x="300" y="262" textAnchor="middle" className="text-xs fill-green-600">
-                  완성!
+                  {s.centerLabel}
                 </text>
               </g>
             )}
@@ -323,7 +372,7 @@ export function IkigaiVennDiagram({
 
         {/* Legend */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4">
-          {Object.entries(CIRCLES).map(([key, circle]) => (
+          {(Object.entries(CIRCLES) as [keyof IkigaiData, typeof CIRCLES.love][]).map(([key, circle]) => (
             <div key={key} className="flex items-center gap-2">
               <div
                 className="w-4 h-4 rounded-full"
@@ -331,7 +380,7 @@ export function IkigaiVennDiagram({
               />
               <span className="text-xs font-medium">{circle.label}</span>
               <Badge variant="outline" className="ml-auto text-xs">
-                {data[key as keyof IkigaiData].length}
+                {data[key].length}
               </Badge>
             </div>
           ))}
@@ -341,16 +390,16 @@ export function IkigaiVennDiagram({
         {isComplete && (
           <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
             <div className="p-3 bg-muted rounded-lg">
-              <strong>열정 (Passion):</strong> 좋아하면서 잘하는 것
+              <strong>{s.intersections.loveGoodAt}:</strong> {s.legend.passion.split(": ")[1]}
             </div>
             <div className="p-3 bg-muted rounded-lg">
-              <strong>사명 (Mission):</strong> 좋아하면서 세상이 필요로 하는 것
+              <strong>{s.intersections.loveWorldNeeds}:</strong> {s.legend.mission.split(": ")[1]}
             </div>
             <div className="p-3 bg-muted rounded-lg">
-              <strong>직업 (Profession):</strong> 잘하면서 돈을 벌 수 있는 것
+              <strong>{s.intersections.goodAtPaidFor}:</strong> {s.legend.profession.split(": ")[1]}
             </div>
             <div className="p-3 bg-muted rounded-lg">
-              <strong>천직 (Vocation):</strong> 세상이 필요로 하고 돈을 벌 수 있는 것
+              <strong>{s.intersections.worldNeedsPaidFor}:</strong> {s.legend.vocation.split(": ")[1]}
             </div>
           </div>
         )}

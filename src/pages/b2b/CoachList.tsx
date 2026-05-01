@@ -6,10 +6,41 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCoachList } from '@/hooks/useB2BCoach';
 import type { B2BCoach } from '@/integrations/supabase/veilor-types';
+import { useLanguageContext } from '@/context/LanguageContext';
+
+// ─────────────────────────────────────────────
+// 이중언어 문자열
+// ─────────────────────────────────────────────
+const S = {
+  ko: {
+    back: '← 뒤로',
+    title: '코치 소개',
+    subtitle: '전문 코치와 함께 성장하세요',
+    allFilter: '전체',
+    sessionCount: (n: number) => `세션 ${n}회`,
+    available: '상담 가능',
+    full: '마감',
+    loadError: '코치 목록을 불러오지 못했습니다',
+    noCoaches: '등록된 코치가 없습니다',
+    noDomainCoaches: (domain: string) => `'${domain}' 도메인 코치가 없습니다`,
+  },
+  en: {
+    back: '← Back',
+    title: 'Meet Our Coaches',
+    subtitle: 'Grow with expert coaches',
+    allFilter: 'All',
+    sessionCount: (n: number) => `${n} sessions`,
+    available: 'Available',
+    full: 'Full',
+    loadError: 'Failed to load coach list',
+    noCoaches: 'No coaches registered',
+    noDomainCoaches: (domain: string) => `No coaches in '${domain}' domain`,
+  },
+} as const;
 
 // ── 코치 카드 ──────────────────────────────────────────────────────────
 
-function CoachCard({ coach, onClick }: { coach: B2BCoach; onClick: () => void }) {
+function CoachCard({ coach, onClick, s }: { coach: B2BCoach; onClick: () => void; s: typeof S['ko'] }) {
   const available = coach.current_members < coach.max_members;
 
   return (
@@ -36,7 +67,7 @@ function CoachCard({ coach, onClick }: { coach: B2BCoach; onClick: () => void })
               {coach.display_name}
             </p>
             <p className="text-[12px]" style={{ color: '#78716C' }}>
-              세션 {coach.session_count}회
+              {s.sessionCount(coach.session_count)}
             </p>
           </div>
         </div>
@@ -56,7 +87,7 @@ function CoachCard({ coach, onClick }: { coach: B2BCoach; onClick: () => void })
               color: available ? '#4ADE80' : '#78716C',
             }}
           >
-            {available ? '상담 가능' : '마감'}
+            {available ? s.available : s.full}
           </span>
         </div>
       </div>
@@ -106,14 +137,17 @@ function CoachCard({ coach, onClick }: { coach: B2BCoach; onClick: () => void })
 export default function CoachList() {
   const navigate = useNavigate();
   const { data: coaches, isLoading, error } = useCoachList();
-  const [domainFilter, setDomainFilter] = useState<string>('전체');
+  const { language } = useLanguageContext();
+  const s = S[language] ?? S.ko;
+
+  const [domainFilter, setDomainFilter] = useState<string>(s.allFilter);
 
   // 전체 도메인 집합 추출
-  const allDomains = ['전체', ...Array.from(
+  const allDomains = [s.allFilter, ...Array.from(
     new Set((coaches ?? []).flatMap((c) => c.domains))
   )];
 
-  const filtered = domainFilter === '전체'
+  const filtered = domainFilter === s.allFilter
     ? (coaches ?? [])
     : (coaches ?? []).filter((c) => c.domains.includes(domainFilter));
 
@@ -122,6 +156,7 @@ export default function CoachList() {
       className="min-h-screen"
       style={{ background: '#1C1917', fontFamily: "'DM Sans', sans-serif" }}
     >
+      <div className="max-w-4xl mx-auto">
       {/* 헤더 */}
       <div
         className="sticky top-0 z-10 px-5 pt-12 pb-4"
@@ -132,13 +167,13 @@ export default function CoachList() {
           className="mb-4 text-[13px]"
           style={{ color: '#78716C' }}
         >
-          ← 뒤로
+          {s.back}
         </button>
         <h1 className="text-[20px] font-medium mb-1" style={{ color: '#E7E5E4' }}>
-          코치 소개
+          {s.title}
         </h1>
         <p className="text-[13px]" style={{ color: '#78716C' }}>
-          전문 코치와 함께 성장하세요
+          {s.subtitle}
         </p>
 
         {/* 도메인 필터 */}
@@ -172,7 +207,7 @@ export default function CoachList() {
         {error && (
           <div className="text-center py-16">
             <p className="text-[14px]" style={{ color: '#78716C' }}>
-              코치 목록을 불러오지 못했습니다
+              {s.loadError}
             </p>
           </div>
         )}
@@ -180,7 +215,7 @@ export default function CoachList() {
         {!isLoading && !error && filtered.length === 0 && (
           <div className="text-center py-16">
             <p className="text-[14px]" style={{ color: '#78716C' }}>
-              {domainFilter === '전체' ? '등록된 코치가 없습니다' : `'${domainFilter}' 도메인 코치가 없습니다`}
+              {domainFilter === s.allFilter ? s.noCoaches : s.noDomainCoaches(domainFilter)}
             </p>
           </div>
         )}
@@ -190,10 +225,12 @@ export default function CoachList() {
             <CoachCard
               key={coach.id}
               coach={coach}
+              s={s}
               onClick={() => navigate(`/b2b/coaches/${coach.id}`)}
             />
           ))}
         </div>
+      </div>
       </div>
     </div>
   );

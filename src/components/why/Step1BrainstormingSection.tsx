@@ -1,6 +1,7 @@
 import { useRef, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { useLanguageContext } from '@/context/LanguageContext';
 
 // Utilities
 const DURATION_SECONDS = 600; // 10 minutes
@@ -8,6 +9,21 @@ const formatTime = (totalSeconds: number) => {
   const m = Math.floor(totalSeconds / 60).toString().padStart(2, "0");
   const s = Math.floor(totalSeconds % 60).toString().padStart(2, "0");
   return `${m}:${s}`;
+};
+
+const S = {
+  ko: {
+    currentCount: '현재 {count}개',
+    edit: '수정',
+    done: '완료',
+    placeholder: '이곳에 알고 있는 모든 직업명을 써주세요.\n쉼표(,) 또는 줄바꿈으로 구분해서 입력하세요.\n10분이 경과 되면 자동으로 다음 단계로 넘어갑니다.',
+  },
+  en: {
+    currentCount: 'Current: {count}',
+    edit: 'Edit',
+    done: 'Done',
+    placeholder: 'Write all career names you know here.\nSeparate them with commas (,) or line breaks.\nYou will automatically move to the next step after 10 minutes.',
+  },
 };
 
 interface Step1BrainstormingSectionProps {
@@ -27,6 +43,9 @@ export const Step1BrainstormingSection = ({
   onFinalize,
   sessionEnded
 }: Step1BrainstormingSectionProps) => {
+  const { language } = useLanguageContext();
+  const s = S[language] ?? S.ko;
+
   const memoRef = useRef<HTMLTextAreaElement | null>(null);
   const [memoHeight, setMemoHeight] = useState<number | null>(null);
 
@@ -57,23 +76,25 @@ export const Step1BrainstormingSection = ({
 
   return (
     <section className="space-y-4" data-step-visible="1">
-      <Textarea 
-        ref={memoRef} 
-        value={memoText} 
-        onChange={e => setMemoText(e.target.value)} 
-        placeholder={`이곳에 알고 있는 모든 직업명을 써주세요.\n쉼표(,) 또는 줄바꿈으로 구분해서 입력하세요.\n10분이 경과 되면 자동으로 다음 단계로 넘어갑니다.`} 
-        className="resize-y min-h-40 bg-transparent mb-4" 
-        style={{ height: memoHeight ?? undefined }} 
+      <Textarea
+        ref={memoRef}
+        value={memoText}
+        onChange={e => setMemoText(e.target.value)}
+        placeholder={s.placeholder}
+        className="resize-y min-h-40 bg-transparent mb-4"
+        style={{ height: memoHeight ?? undefined }}
       />
-      
+
       <div className="mt-6 flex items-center justify-between">
         <span className="text-sm tabular-nums">{formatTime(secondsLeft)}</span>
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">현재 {currentJobCount}개</span>
-          <Button 
-            size="sm" 
-            variant="secondary" 
-            className="h-6 px-2 text-xs" 
+          <span className="text-sm text-muted-foreground">
+            {s.currentCount.replace('{count}', String(currentJobCount))}
+          </span>
+          <Button
+            size="sm"
+            variant="secondary"
+            className="h-6 px-2 text-xs"
             onClick={() => {
               memoRef.current?.focus();
               memoRef.current?.scrollIntoView({
@@ -82,14 +103,14 @@ export const Step1BrainstormingSection = ({
               });
             }}
           >
-            수정
+            {s.edit}
           </Button>
-          <Button 
-            size="sm" 
-            className="h-6 px-2 text-xs" 
+          <Button
+            size="sm"
+            className="h-6 px-2 text-xs"
             onClick={onFinalize}
           >
-            완료
+            {s.done}
           </Button>
         </div>
       </div>

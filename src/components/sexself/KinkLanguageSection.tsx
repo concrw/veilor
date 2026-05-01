@@ -3,11 +3,25 @@
 
 import { C, alpha } from '@/lib/colors';
 import type { KinkLanguageResult } from '@/lib/kinkLanguageAlgorithm';
+import { useLanguageContext } from '@/context/LanguageContext';
 
 interface Props {
   kinkResult: KinkLanguageResult;
   sha: number;
 }
+
+const S = {
+  ko: {
+    sectionTitle: '나의 성적 언어',
+    shameTitle: '먼저 확인해 주세요',
+    shameDesc: '수치심이 성적 탐색을 막고 있을 수 있어요. 아래 취향 언어는 참고용이며, 판단 없이 나를 알아가는 첫 단계로 봐주세요. 원하는 것을 원하는 것은 이상한 일이 아닙니다.',
+  },
+  en: {
+    sectionTitle: 'My Sexual Language',
+    shameTitle: 'Please check first',
+    shameDesc: 'Shame may be blocking your sexual exploration. The preference language below is for reference — treat it as a first step to understanding yourself without judgment. Wanting what you want is not wrong.',
+  },
+};
 
 // Intensity(-1~+1) → 강도 바 색상
 function intensityColor(intensity: number): string {
@@ -17,6 +31,9 @@ function intensityColor(intensity: number): string {
 }
 
 export default function KinkLanguageSection({ kinkResult, sha }: Props) {
+  const { language } = useLanguageContext();
+  const s = S[language] ?? S.ko;
+
   if (kinkResult.isAnxietyFrozen) return null;
 
   const { roleLabel, kinkTags, summaryText, sexAxes } = kinkResult;
@@ -30,7 +47,7 @@ export default function KinkLanguageSection({ kinkResult, sha }: Props) {
     <div className="space-y-4">
       {/* 섹션 제목 */}
       <p className="text-xs uppercase tracking-widest" style={{ color: C.text4 }}>
-        나의 성적 언어
+        {s.sectionTitle}
       </p>
 
       {/* SHA 수치심 안내 카드 (SHA < 40) */}
@@ -40,12 +57,10 @@ export default function KinkLanguageSection({ kinkResult, sha }: Props) {
           style={{ background: alpha('#ec4899', 0.06), border: `1px solid ${alpha('#ec4899', 0.2)}` }}
         >
           <p className="text-xs font-medium mb-1.5" style={{ color: '#ec4899' }}>
-            먼저 확인해 주세요
+            {s.shameTitle}
           </p>
           <p className="text-xs font-light leading-relaxed" style={{ color: C.text2 }}>
-            수치심이 성적 탐색을 막고 있을 수 있어요. 아래 취향 언어는 참고용이며,
-            판단 없이 나를 알아가는 첫 단계로 봐주세요.
-            원하는 것을 원하는 것은 이상한 일이 아닙니다.
+            {s.shameDesc}
           </p>
         </div>
       )}

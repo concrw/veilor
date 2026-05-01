@@ -2,9 +2,27 @@ import { useAuth } from '@/context/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { veilorDb } from '@/integrations/supabase/client';
 import { MASK_PROFILES } from '@/lib/vfileAlgorithm';
+import { useLanguageContext } from '@/context/LanguageContext';
+
+const S = {
+  ko: {
+    title: '추천 매칭',
+    subtitle: 'V-File 기반 보완적/유사 유형',
+    anonymous: '익명',
+    compat: '호환',
+  },
+  en: {
+    title: 'Recommended Matches',
+    subtitle: 'Complementary/similar types based on V-File',
+    anonymous: 'Anonymous',
+    compat: 'Compat',
+  },
+};
 
 export default function MatchSuggestion() {
   const { user, primaryMask, axisScores } = useAuth();
+  const { language } = useLanguageContext();
+  const s = S[language] ?? S.ko;
 
   const { data: suggestions } = useQuery({
     queryKey: ['match-suggestions', user?.id],
@@ -43,22 +61,22 @@ export default function MatchSuggestion() {
 
   return (
     <div className="bg-card border rounded-2xl p-5 space-y-3">
-      <p className="text-sm font-medium">추천 매칭</p>
-      <p className="text-xs text-muted-foreground">V-File 기반 보완적/유사 유형</p>
+      <p className="text-sm font-medium">{s.title}</p>
+      <p className="text-xs text-muted-foreground">{s.subtitle}</p>
       <div className="space-y-2">
-        {suggestions.map((s) => (
-          <div key={s.user_id} className="flex items-center gap-3 bg-muted/30 rounded-xl p-3">
+        {suggestions.map((item) => (
+          <div key={item.user_id} className="flex items-center gap-3 bg-muted/30 rounded-xl p-3">
             <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
-              style={{ backgroundColor: (s.profile?.color ?? '#6366f1') + '20', color: s.profile?.color }}>
-              {(s.nickname ?? '?')[0]}
+              style={{ backgroundColor: (item.profile?.color ?? '#6366f1') + '20', color: item.profile?.color }}>
+              {(item.nickname ?? '?')[0]}
             </div>
             <div className="flex-1">
-              <p className="text-xs font-medium">{s.nickname ?? '익명'}</p>
-              <p className="text-[10px] text-muted-foreground">{s.profile?.nameKo} · {s.msk_code}</p>
+              <p className="text-xs font-medium">{item.nickname ?? s.anonymous}</p>
+              <p className="text-[10px] text-muted-foreground">{item.profile?.nameKo} · {item.msk_code}</p>
             </div>
             <div className="text-right">
-              <p className="text-xs font-bold text-primary">{s.compatibility}%</p>
-              <p className="text-[10px] text-muted-foreground">호환</p>
+              <p className="text-xs font-bold text-primary">{item.compatibility}%</p>
+              <p className="text-[10px] text-muted-foreground">{s.compat}</p>
             </div>
           </div>
         ))}

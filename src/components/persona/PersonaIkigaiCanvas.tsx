@@ -1,4 +1,20 @@
 import { useEffect, useState } from "react";
+import { useLanguageContext } from "@/context/LanguageContext";
+
+const S = {
+  ko: {
+    emptyDesc: 'Vent, Dig, Codetalk에서 대화를 나누면 자동으로 페르소나가 감지됩니다.',
+    mainBadge: '메인',
+    strengthFmt: (n: number) => `💪 강도: ${n}%`,
+    keywordsFmt: (kws: string) => `키워드: ${kws}`,
+  },
+  en: {
+    emptyDesc: 'Chat in Vent, Dig, or Codetalk and personas will be detected automatically.',
+    mainBadge: 'Main',
+    strengthFmt: (n: number) => `💪 Strength: ${n}%`,
+    keywordsFmt: (kws: string) => `Keywords: ${kws}`,
+  },
+};
 import { useSearchParams } from "react-router-dom";
 import { usePersonas } from "@/hooks/usePersonas";
 import { PersonaWithDetails } from "@/integrations/supabase/persona-types";
@@ -13,6 +29,8 @@ interface PersonaIkigaiCanvasProps {
 }
 
 export function PersonaIkigaiCanvas({ children }: PersonaIkigaiCanvasProps) {
+  const { language } = useLanguageContext();
+  const s = S[language] ?? S.ko;
   const [searchParams] = useSearchParams();
   const { data: personas, isLoading } = usePersonas();
   const [activePersona, setActivePersona] = useState<PersonaWithDetails | null>(null);
@@ -49,7 +67,7 @@ export function PersonaIkigaiCanvas({ children }: PersonaIkigaiCanvasProps) {
       <Alert>
         <User className="h-4 w-4" />
         <AlertDescription>
-          페르소나가 아직 생성되지 않았습니다. Why 분석을 완료하면 자동으로 페르소나가 감지됩니다.
+          {s.emptyDesc}
         </AlertDescription>
       </Alert>
     );
@@ -86,7 +104,7 @@ export function PersonaIkigaiCanvas({ children }: PersonaIkigaiCanvasProps) {
                   {archetypeConfig?.name || activePersona.persona_archetype}
                 </Badge>
                 {activePersona.rank_order === 1 && (
-                  <Badge variant="default">메인</Badge>
+                  <Badge variant="default">{s.mainBadge}</Badge>
                 )}
               </div>
               <CardDescription className="text-sm">
@@ -97,12 +115,12 @@ export function PersonaIkigaiCanvas({ children }: PersonaIkigaiCanvasProps) {
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <span>💪 강도: {Math.round(activePersona.strength_score || 0)}%</span>
+            <span>{s.strengthFmt(Math.round(activePersona.strength_score || 0))}</span>
             {activePersona.persona_keywords && activePersona.persona_keywords.length > 0 && (
               <>
                 <span>•</span>
                 <span>
-                  키워드: {activePersona.persona_keywords.slice(0, 3).map((kw) => kw.keyword).join(", ")}
+                  {s.keywordsFmt(activePersona.persona_keywords.slice(0, 3).map((kw) => kw.keyword).join(", "))}
                 </span>
               </>
             )}

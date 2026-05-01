@@ -68,14 +68,15 @@ test.describe('GetPage', () => {
 
   test('브랜드 탭 진입 — 컨텐츠 확인', async ({ page }) => {
     await page.getByRole('button', { name: '브랜드' }).click();
-    await page.waitForTimeout(1_000);
+    await page.waitForTimeout(1_500);
     // 에러 없음 확인
     const hasError = await page.getByText(/Something went wrong|연결 오류/i).isVisible().catch(() => false);
     expect(hasError).toBe(false);
-    // 브랜드 탭 내용 (AI 생성 버튼 또는 기존 데이터)
-    await expect(
-      page.getByText(/브랜드|퍼스널 브랜딩|AI 브랜드|Brand/i).first()
-    ).toBeVisible({ timeout: 3_000 });
+    // 브랜드 탭 내용 — brand 없을 때 "AI로 브랜드 전략 생성" 버튼 또는 데이터 표시
+    const hasAiBtn   = await page.getByRole('button', { name: /AI로 브랜드 전략 생성/i }).isVisible({ timeout: 3_000 }).catch(() => false);
+    const hasEditBtn = await page.getByRole('button', { name: /수정|직접 작성/i }).first().isVisible({ timeout: 1_000 }).catch(() => false);
+    const hasData    = await page.getByText(/브랜드 이름|태그라인|핵심 가치/i).first().isVisible({ timeout: 1_000 }).catch(() => false);
+    expect(hasAiBtn || hasEditBtn || hasData).toBe(true);
   });
 
   test('관계 탭 진입 — CoupleAnalysis 로드', async ({ page }) => {

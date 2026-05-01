@@ -1,6 +1,18 @@
 import { useRef } from 'react';
 import { useVoiceVisualizer, VoiceVisualizer } from 'react-voice-visualizer';
 import { C } from '@/lib/colors';
+import { useLanguageContext } from '@/context/LanguageContext';
+
+const S = {
+  ko: {
+    ariaStop: '녹음 중지',
+    ariaStart: '녹음 시작',
+  },
+  en: {
+    ariaStop: 'Stop recording',
+    ariaStart: 'Start recording',
+  },
+};
 
 interface VoiceRecorderProps {
   onRecordingComplete?: (blob: Blob) => void;
@@ -19,6 +31,9 @@ export default function VoiceRecorder({ onRecordingComplete, onStart, onStop }: 
     stopRecording,
     clearCanvas,
   } = recorderControls;
+
+  const { language } = useLanguageContext();
+  const s = S[language] ?? S.ko;
 
   // 녹음 완료 시 콜백 전달
   const prevBlobRef = useRef<Blob | null>(null);
@@ -67,7 +82,7 @@ export default function VoiceRecorder({ onRecordingComplete, onStart, onStop }: 
       {/* 녹음 토글 버튼 */}
       <button
         onClick={handleToggle}
-        aria-label={isRecordingInProgress ? '녹음 중지' : '녹음 시작'}
+        aria-label={isRecordingInProgress ? s.ariaStop : s.ariaStart}
         style={{
           width: 48, height: 48, borderRadius: '50%',
           background: isRecordingInProgress ? '#ef4444' : C.amberGold,

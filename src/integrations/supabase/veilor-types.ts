@@ -15,8 +15,24 @@ export interface VeilorUserProfile {
   codetalk_day?: number | null;
   streak_count?: number | null;
   persona_contexts_completed?: string[] | null;
+  languages?: string[] | null;
+  auto_translate?: boolean | null;
   created_at?: string | null;
   updated_at?: string | null;
+}
+
+export interface VeilorUserCredits {
+  user_id: string;
+  balance: number;
+  updated_at?: string | null;
+}
+
+export interface VeilorCreditTransaction {
+  id?: string;
+  user_id: string;
+  amount: number;
+  reason: string;
+  created_at?: string | null;
 }
 
 export interface VeilorDmRoom {
@@ -47,6 +63,8 @@ export interface VeilorTabConversation {
   stage?: string | null;
   role?: string | null;
   content?: string | null;
+  lang?: string | null;
+  translated_content?: Json | null;
   created_at?: string | null;
 }
 
@@ -55,12 +73,16 @@ export interface VeilorCodetalkKeyword {
   keyword: string;
   day_number?: number | null;
   description?: string | null;
+  category?: string | null;
+  rel_tags?: string[] | null;
+  psych_tags?: string[] | null;
+  lang?: string | null;
 }
 
 export interface VeilorCodetalkEntry {
   id?: string;
   user_id: string;
-  keyword_id: string;
+  keyword_id?: string | null;
   keyword?: string | null;
   definition?: string | null;
   content?: string | null;
@@ -70,7 +92,9 @@ export interface VeilorCodetalkEntry {
   is_public?: boolean | null;
   anon_alias?: string | null;
   entry_date?: string | null;
+  lang?: string | null;
   created_at?: string | null;
+  updated_at?: string | null;
   codetalk_keywords?: Pick<VeilorCodetalkKeyword, 'keyword' | 'day_number'> | null;
 }
 
@@ -570,6 +594,42 @@ export type VeilorDatabase = {
         Update: Partial<Omit<DPBudgetLog, 'id'>>;
         Relationships: [];
       };
+      couple_talk_cards: {
+        Row: CoupleTalkCard;
+        Insert: Omit<CoupleTalkCard, 'id' | 'created_at'>;
+        Update: Partial<Omit<CoupleTalkCard, 'id'>>;
+        Relationships: [];
+      };
+      couple_talk_sessions: {
+        Row: CoupleTalkSession;
+        Insert: Omit<CoupleTalkSession, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<CoupleTalkSession, 'id'>>;
+        Relationships: [];
+      };
+      couple_talk_answers: {
+        Row: CoupleTalkAnswer;
+        Insert: Omit<CoupleTalkAnswer, 'id' | 'created_at'>;
+        Update: Partial<Omit<CoupleTalkAnswer, 'id'>>;
+        Relationships: [];
+      };
+      couple_codetalk_sessions: {
+        Row: CoupleCodetalkSession;
+        Insert: Omit<CoupleCodetalkSession, 'id' | 'created_at'>;
+        Update: Partial<Omit<CoupleCodetalkSession, 'id'>>;
+        Relationships: [];
+      };
+      user_credits: {
+        Row: VeilorUserCredits;
+        Insert: VeilorUserCredits;
+        Update: Partial<VeilorUserCredits>;
+        Relationships: [];
+      };
+      credit_transactions: {
+        Row: VeilorCreditTransaction;
+        Insert: Omit<VeilorCreditTransaction, 'id' | 'created_at'>;
+        Update: Partial<Omit<VeilorCreditTransaction, 'id'>>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -839,6 +899,52 @@ export interface B2BCoachPost {
   updated_at?: string | null;
 }
 
+// ── CoupleTalk 타입 ──────────────────────────────────────────────────
+
+export type CoupleTalkCategory = 'story' | 'heart' | 'future' | 'desire' | 'sex';
+
+export interface CoupleTalkCard {
+  id: string;
+  category: CoupleTalkCategory;
+  question_text: string;
+  question_order: number;
+  is_active: boolean;
+  created_at?: string;
+}
+
+export interface CoupleTalkSession {
+  id: string;
+  user_a_id: string;
+  user_b_id?: string | null;
+  invite_token?: string | null;
+  invite_token_expires_at?: string | null;
+  sex_deck_consent_a: boolean;
+  sex_deck_consent_b: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface CoupleTalkAnswer {
+  id: string;
+  session_id: string;
+  card_id: string;
+  user_id: string;
+  answer_text: string;
+  created_at?: string;
+}
+
+export interface CoupleCodetalkSession {
+  id: string;
+  keyword_id: string;
+  keyword: string;
+  user_a_id: string;
+  user_b_id: string;
+  entry_a_id?: string | null;
+  entry_b_id?: string | null;
+  revealed_at?: string | null;
+  created_at?: string | null;
+}
+
 // ── 코치 포털 전용 타입 ──────────────────────────────────────────────
 
 // 코치 관점 멤버 요약 (클라이언트 목록용)
@@ -859,4 +965,83 @@ export interface B2BCoachSessionDetail extends B2BCoachingSession {
   member_name?: string;
   org_name?: string;
   trigger_checkin?: Pick<B2BCheckinSession, 'c_avg' | 'risk_level' | 'routing_result'> | null;
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Work Domain (S025)
+// ──────────────────────────────────────────────────────────────────────────────
+
+export interface WorkTask {
+  id: string;
+  user_id: string;
+  title: string;
+  category: string;
+  estimated_minutes: number | null;
+  actual_minutes: number | null;
+  status: 'todo' | 'in_progress' | 'done' | 'rolled_over';
+  pause_count: number;
+  mental_snapshot: { energy?: number; mood?: number; focus?: number };
+  lang: string;
+  started_at: string | null;
+  completed_at: string | null;
+  rolled_over_from: string | null;
+  created_at: string;
+}
+
+export interface WorkSprint {
+  id: string;
+  user_id: string;
+  week_start: string;
+  goals: { title: string; done: boolean }[];
+  tbqc_accuracy: number | null;
+  completion_rate: number | null;
+  mental_avg: Record<string, number>;
+  created_at: string;
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Relation Domain (S026)
+// ──────────────────────────────────────────────────────────────────────────────
+
+export interface RelationCheckin {
+  id: string;
+  user_id: string;
+  person_name: string;
+  warmth_score: number;   // 1~10
+  energy_balance: number; // -5~5
+  note: string | null;
+  lang: string;
+  created_at: string;
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// B2B S027: 초대 토큰 + TBQC 집계
+// ──────────────────────────────────────────────────────────────────────────────
+
+export type B2BInviteStatus = 'pending' | 'accepted' | 'expired';
+export type SubscriptionTier = 'free' | 'pro' | 'elite';
+
+export interface B2BInviteToken {
+  id: string;
+  org_id: string;
+  email: string;
+  token: string;
+  member_type: B2BMemberType;
+  birth_year: number | null;
+  status: B2BInviteStatus;
+  expires_at: string;
+  accepted_at: string | null;
+  user_id: string | null;
+  created_at: string;
+}
+
+export interface OrgWorkAggregate {
+  org_id: string;
+  week_start: string;
+  total_tasks: number;
+  done_tasks: number;
+  completion_rate: number | null;
+  avg_tbqc_accuracy: number | null;
+  rollover_count: number;
+  active_member_count: number;
 }

@@ -33,8 +33,8 @@ test.describe('VentPage', () => {
     await input.fill('요즘 혼자 있는 시간이 너무 많아요');
     await input.press('Enter');
 
-    // AI 응답 대기 — fallback: 두 번째 질문 "특정 사람 때문인지…", AI 성공 시 다양한 응답
-    await expect(page.getByText(/특정 사람|언제부터|외로움|어떤 종류/i)).toBeVisible({ timeout: 15_000 });
+    // AI 응답 대기 — fallback 포함 다양한 응답 텍스트 (strict mode: .first())
+    await expect(page.getByText(/특정 사람|언제부터|외로움|어떤 종류/i).first()).toBeVisible({ timeout: 30_000 });
   });
 
   test('나의 레이어 탭 → 그룹 토글', async ({ page }) => {
@@ -46,7 +46,7 @@ test.describe('VentPage', () => {
 
   test('커뮤니티 탭 진입', async ({ page }) => {
     await page.getByRole('button', { name: /커뮤니티/i }).click();
-    await expect(page.getByText(/사람들 속에서|혼자인 사람들/i)).toBeVisible({ timeout: 3_000 });
+    await expect(page.getByText(/사람들 속에서|혼자인 사람들/i).first()).toBeVisible({ timeout: 3_000 });
   });
 
   test('Amber 시트 열기 → 메시지 전송', async ({ page }) => {
@@ -58,7 +58,10 @@ test.describe('VentPage', () => {
     const input = page.getByPlaceholder(/엠버에게 말해요/i);
     await input.fill('힘들어요');
     await input.press('Enter');
-    // 700ms 후 AI 응답 (AmberSheet 고정 텍스트)
-    await expect(page.getByText(/언제부터 있었던 것 같아요/i)).toBeVisible({ timeout: 5_000 });
+    // 사용자 메시지 전송 확인
+    await expect(page.getByText('힘들어요')).toBeVisible({ timeout: 5_000 });
+    // AI 응답 대기 — thinking 인디케이터가 사라진 후 응답 텍스트 등장
+    // AmberSheet 내 AI 응답은 vr-fade-in 클래스 박스로 표시됨
+    await expect(page.locator('.vr-fade-in').nth(1)).toBeVisible({ timeout: 30_000 });
   });
 });

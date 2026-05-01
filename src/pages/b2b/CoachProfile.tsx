@@ -6,10 +6,45 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useCoachProfile, useCoachPosts } from '@/hooks/useB2BCoach';
 import type { B2BCoachPost } from '@/integrations/supabase/veilor-types';
+import { useLanguageContext } from '@/context/LanguageContext';
+
+// ─────────────────────────────────────────────
+// 이중언어 문자열
+// ─────────────────────────────────────────────
+const S = {
+  ko: {
+    back: '← 뒤로',
+    notFound: '코치를 찾을 수 없습니다',
+    sessionCount: (n: number) => `세션 ${n}회`,
+    memberCount: (cur: number, max: number) => `담당 ${cur}/${max}명`,
+    certifications: (certs: string) => `자격증: ${certs}`,
+    pinBadge: '📌 고정 게시글',
+    expand: '더 보기',
+    collapse: '접기',
+    postFeedLabel: (count: number | null) => count ? `코치 포스트 · ${count}개` : '코치 포스트',
+    noPosts: '아직 작성된 포스트가 없습니다',
+    bookSession: '세션 예약하기',
+    fullSession: '현재 상담 마감',
+  },
+  en: {
+    back: '← Back',
+    notFound: 'Coach not found',
+    sessionCount: (n: number) => `${n} sessions`,
+    memberCount: (cur: number, max: number) => `${cur}/${max} assigned`,
+    certifications: (certs: string) => `Certifications: ${certs}`,
+    pinBadge: '📌 Pinned',
+    expand: 'Show more',
+    collapse: 'Show less',
+    postFeedLabel: (count: number | null) => count ? `Coach Posts · ${count}` : 'Coach Posts',
+    noPosts: 'No posts yet',
+    bookSession: 'Book a Session',
+    fullSession: 'Currently Full',
+  },
+} as const;
 
 // ── 포스트 카드 ────────────────────────────────────────────────────────
 
-function PostCard({ post }: { post: B2BCoachPost }) {
+function PostCard({ post, s, locale }: { post: B2BCoachPost; s: typeof S['ko']; locale: string }) {
   const [expanded, setExpanded] = useState(false);
   const isLong = post.body.length > 200;
 
@@ -23,7 +58,7 @@ function PostCard({ post }: { post: B2BCoachPost }) {
           className="text-[11px] px-2 py-0.5 rounded-full mb-2 inline-block"
           style={{ background: '#D4A57420', color: '#D4A574' }}
         >
-          📌 고정 게시글
+          {s.pinBadge}
         </span>
       )}
       {post.title && (
@@ -43,7 +78,7 @@ function PostCard({ post }: { post: B2BCoachPost }) {
           className="text-[12px] mt-2"
           style={{ color: '#D4A574' }}
         >
-          {expanded ? '접기' : '더 보기'}
+          {expanded ? s.collapse : s.expand}
         </button>
       )}
       {post.tags && post.tags.length > 0 && (
@@ -60,7 +95,7 @@ function PostCard({ post }: { post: B2BCoachPost }) {
         </div>
       )}
       <p className="text-[11px] mt-3" style={{ color: '#57534E' }}>
-        {new Date(post.created_at).toLocaleDateString('ko-KR')}
+        {new Date(post.created_at).toLocaleDateString(locale === 'en' ? 'en-US' : 'ko-KR')}
       </p>
     </div>
   );
@@ -71,6 +106,8 @@ function PostCard({ post }: { post: B2BCoachPost }) {
 export default function CoachProfile() {
   const { coachId } = useParams<{ coachId: string }>();
   const navigate = useNavigate();
+  const { language } = useLanguageContext();
+  const s = S[language] ?? S.ko;
 
   const { data: coach, isLoading: loadingCoach } = useCoachProfile(coachId ?? '');
   const { data: posts, isLoading: loadingPosts } = useCoachPosts(coachId ?? '');
@@ -86,7 +123,7 @@ export default function CoachProfile() {
   if (!coach) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: '#1C1917' }}>
-        <p className="text-[14px]" style={{ color: '#78716C' }}>코치를 찾을 수 없습니다</p>
+        <p className="text-[14px]" style={{ color: '#78716C' }}>{s.notFound}</p>
       </div>
     );
   }
@@ -105,6 +142,7 @@ export default function CoachProfile() {
       className="min-h-screen"
       style={{ background: '#1C1917', fontFamily: "'DM Sans', sans-serif" }}
     >
+      <div className="max-w-4xl mx-auto">
       {/* 헤더 */}
       <div className="sticky top-0 z-10 px-5 pt-12 pb-3" style={{ background: '#1C1917' }}>
         <button
@@ -112,7 +150,7 @@ export default function CoachProfile() {
           className="text-[13px]"
           style={{ color: '#78716C' }}
         >
-          ← 뒤로
+          {s.back}
         </button>
       </div>
 
@@ -141,7 +179,7 @@ export default function CoachProfile() {
                 )}
               </div>
               <p className="text-[12px] mt-0.5" style={{ color: '#78716C' }}>
-                세션 {coach.session_count}회 · 담당 {coach.current_members}/{coach.max_members}명
+                {s.sessionCount(coach.session_count)} · {s.memberCount(coach.current_members, coach.max_members)}
               </p>
             </div>
           </div>
@@ -164,13 +202,13 @@ export default function CoachProfile() {
           {/* 자격 / 전문분야 */}
           {coach.specialties && coach.specialties.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mb-3">
-              {coach.specialties.map((s) => (
+              {coach.specialties.map((sp) => (
                 <span
-                  key={s}
+                  key={sp}
                   className="text-[11px] px-2 py-0.5 rounded-full"
                   style={{ background: '#2A2624', color: '#A8A29E' }}
                 >
-                  {s}
+                  {sp}
                 </span>
               ))}
             </div>
@@ -179,7 +217,7 @@ export default function CoachProfile() {
           {/* 자격증 */}
           {coach.certifications && coach.certifications.length > 0 && (
             <p className="text-[12px] mb-3" style={{ color: '#78716C' }}>
-              자격증: {coach.certifications.join(', ')}
+              {s.certifications(coach.certifications.join(', '))}
             </p>
           )}
 
@@ -201,7 +239,7 @@ export default function CoachProfile() {
         {/* 포스트 피드 */}
         <div className="mb-4">
           <p className="text-[13px] mb-3 px-1" style={{ color: '#57534E' }}>
-            코치 포스트 {sortedPosts.length > 0 ? `· ${sortedPosts.length}개` : ''}
+            {s.postFeedLabel(sortedPosts.length > 0 ? sortedPosts.length : null)}
           </p>
 
           {loadingPosts && (
@@ -216,14 +254,14 @@ export default function CoachProfile() {
               style={{ background: '#242220', border: '1px solid #2E2B28' }}
             >
               <p className="text-[13px]" style={{ color: '#57534E' }}>
-                아직 작성된 포스트가 없습니다
+                {s.noPosts}
               </p>
             </div>
           )}
 
           <div className="flex flex-col gap-3">
             {sortedPosts.map((post) => (
-              <PostCard key={post.id} post={post} />
+              <PostCard key={post.id} post={post} s={s} locale={language} />
             ))}
           </div>
         </div>
@@ -243,8 +281,9 @@ export default function CoachProfile() {
             opacity: available ? 1 : 0.6,
           }}
         >
-          {available ? '세션 예약하기' : '현재 상담 마감'}
+          {available ? s.bookSession : s.fullSession}
         </button>
+      </div>
       </div>
     </div>
   );

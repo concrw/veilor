@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
 import { supabase, veilorDb } from '@/integrations/supabase/client';
@@ -16,12 +16,13 @@ import EmotionSelector from '@/components/vent/EmotionSelector';
 import ChatView from '@/components/vent/ChatView';
 import VentLayerView from '@/components/vent/VentLayerView';
 import AmberSheet from '@/components/vent/AmberSheet';
-import { EMOTIONS, EMO_DATA, QUICK_CARDS, LAYER_GROUPS, COMM_GROUPS, getTimeGreeting } from '@/components/vent/ventData';
 import { useVentTranslations } from '@/hooks/useTranslation';
+import { useVentData } from '@/hooks/useVentData';
 
 export default function VentPage() {
   const { user, axisScores, primaryMask } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const prefillText = (location.state as { prefillText?: string } | null)?.prefillText ?? '';
   const qc = useQueryClient();
   const [section, setSection] = useState<'vent' | 'layer' | 'community'>('vent');
@@ -50,9 +51,10 @@ export default function VentPage() {
   const transitionTimerRef = useRef<number | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const { saveLocal, loadLocal: _loadLocal, clearLocal } = useLocalChatHistory(user?.id);
-  const greeting = getTimeGreeting();
   const vent = useVentTranslations();
-  const aiName = '엠버';
+  const { EMOTIONS, EMO_DATA, QUICK_CARDS, LAYER_GROUPS, COMM_GROUPS, getTimeGreeting } = useVentData();
+  const greeting = getTimeGreeting();
+  const aiName = vent.amberName;
   const amberFlash = useAmberAttention();
 
   const { data: lastSession } = useQuery({
@@ -79,16 +81,35 @@ export default function VentPage() {
     enabled: !!user,
   });
 
+  const { data: sexselfData } = useQuery({
+    queryKey: ['sexself-vent-ctx', user?.id],
+    queryFn: async () => {
+      const { data } = await veilorDb.from('cq_responses')
+        .select('question_key, response_value')
+        .eq('user_id', user!.id)
+        .in('question_key', ['sexself_profile', 'sexself_sha']);
+      if (!data || data.length === 0) return null;
+      return Object.fromEntries(data.map(r => [r.question_key, r.response_value]));
+    },
+    enabled: !!user,
+    staleTime: 1000 * 60 * 10,
+  });
+
+  const hasSexSelfResult = !!sexselfData?.sexself_profile;
+
   const { data: similarCount } = useQuery({
     queryKey: ['similar-concern-count', curEmo],
     queryFn: async () => {
-      const EMOTION_TO_CONCERN: Record<string, string> = {
-        '불안해': 'attachment_anxiety', '슬퍼': 'post_breakup',
-        '화가 나': 'power_dynamics', '혼란스러워': 'pattern_repetition',
-        '외로워': 'post_breakup', '지쳐': 'power_dynamics',
-        '답답해': 'pattern_repetition', '상처받았어': 'attachment_anxiety',
+      const EMOTION_CONCERN_MAP: Record<string, string> = {
+        [vent.emotions.anxious]: 'attachment_anxiety',
+        [vent.emotions.sad]: 'post_breakup',
+        [vent.emotions.angry]: 'power_dynamics',
+        [vent.emotions.confused]: 'pattern_repetition',
+        [vent.emotions.lonely]: 'post_breakup',
+        [vent.emotions.tired]: 'power_dynamics',
+        [vent.emotions.hurt]: 'attachment_anxiety',
       };
-      const concern = EMOTION_TO_CONCERN[curEmo];
+      const concern = EMOTION_CONCERN_MAP[curEmo];
       if (!concern) return 0;
       const { count } = await veilorDb.from('tab_conversations').select('id', { count: 'exact', head: true }).eq('tab', 'vent');
       return count ?? 0;
@@ -130,7 +151,7 @@ export default function VentPage() {
       transitionTimerRef.current = null;
       setPhase('chat');
       setMsgs([
-        { role: 'ai', text: vent.chat.amberIntro, tone: '함께예요' },
+        { role: 'ai', text: vent.chat.amberIntro, tone: vent.chat.toneWith },
         { role: 'ai', text: data.questions[0][0], tone: data.questions[0][1] },
       ]);
       setMsgCount(0); setQIdx(0); setShowSummary(false);
@@ -189,7 +210,14 @@ export default function VentPage() {
 
     try {
       const aiData = await invokeHeldChat(
-        { emotion: curEmo, text: txt, mask: primaryMask ?? undefined, axisScores: axisScores ?? null, history: msgs.slice(-6), aiSettings: aiSettingsRef.current ?? undefined, tab: 'vent', userId: user?.id, similarCount: similarCount ?? undefined },
+        {
+          emotion: curEmo, text: txt, mask: primaryMask ?? undefined,
+          axisScores: axisScores ?? null, history: msgs.slice(-6),
+          aiSettings: aiSettingsRef.current ?? undefined, tab: 'vent',
+          userId: user?.id, similarCount: similarCount ?? undefined,
+          sexselfProfile: sexselfData?.sexself_profile ?? null,
+          sexselfSha: sexselfData?.sexself_sha ? Number(sexselfData.sexself_sha) : null,
+        },
         abortControllerRef.current.signal,
       );
       if (aiData?.response) { aiText = aiData.response; aiTone = vent.chat.amberListening.replace('...', ''); }
@@ -211,10 +239,75 @@ export default function VentPage() {
     }
   }
 
+  // PC 우측 패널 — 최근 감정 히스토리 + 커뮤니티 그룹
+  const RightPanel = () => (
+    <aside
+      className="hidden lg:flex flex-col gap-5 overflow-y-auto flex-shrink-0"
+      style={{ width: 280, borderLeft: `1px solid ${C.border2}`, padding: '20px 16px', background: C.bg }}
+    >
+      {/* 최근 감정 */}
+      {recentEmotions && recentEmotions.length > 0 && (
+        <div>
+          <p className="text-[11px] mb-2" style={{ color: C.text4, fontFamily: "'DM Sans', sans-serif", letterSpacing: '0.04em' }}>
+            {vent.selector.recentLabel}
+          </p>
+          <div className="flex flex-col gap-1.5">
+            {recentEmotions.map((e, i) => (
+              <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-[8px]"
+                style={{ background: C.bg2 }}>
+                <span className="text-[11px] font-light" style={{ color: C.text2, fontFamily: "'DM Sans', sans-serif" }}>{e.emotion}</span>
+                <span className="ml-auto text-[10px]" style={{ color: C.text4 }}>
+                  {new Date(e.created_at).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' })}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 빠른 시작 카드 */}
+      {phase === 'select' && (
+        <div>
+          <p className="text-[11px] mb-2" style={{ color: C.text4, fontFamily: "'DM Sans', sans-serif", letterSpacing: '0.04em' }}>
+            {vent.selector.quickCardsTitle}
+          </p>
+          <div className="flex flex-col gap-1.5">
+            {QUICK_CARDS.map(card => (
+              <button key={card.key} onClick={() => pickEmotion(card.emo)}
+                className="text-left px-3 py-2.5 rounded-[8px] transition-colors"
+                style={{ background: C.bg2, border: `1px solid ${C.border2}` }}>
+                <span className="text-[11px] font-light leading-relaxed" style={{ color: C.text2, fontFamily: "'DM Sans', sans-serif" }}>
+                  {card.text}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 커뮤니티 그룹 */}
+      <div>
+        <p className="text-[11px] mb-2" style={{ color: C.text4, fontFamily: "'DM Sans', sans-serif", letterSpacing: '0.04em' }}>
+          {vent.community.subtitle}
+        </p>
+        <div className="flex flex-col gap-1.5">
+          {COMM_GROUPS.map((g, i) => (
+            <div key={i} className="px-3 py-2.5 rounded-[8px]" style={{ background: C.bg2 }}>
+              <p className="text-[11px] font-light mb-0.5" style={{ color: C.text, fontFamily: "'DM Sans', sans-serif" }}>{g.title}</p>
+              <p className="text-[10px]" style={{ color: C.text4, fontFamily: "'DM Sans', sans-serif" }}>{g.desc}</p>
+              <p className="text-[10px] mt-1" style={{ color: C.amber }}>{g.count}{vent.community.people}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </aside>
+  );
+
   return (
     <div className="flex flex-col" style={{ background: C.bg, minHeight: '100%', position: 'relative', overflow: 'hidden' }}>
       {crisisLevel && <CrisisBanner severity={crisisLevel} onDismiss={() => setCrisisLevel(null)} />}
 
+      {/* 헤더 */}
       <div className="flex-shrink-0 flex items-center gap-[10px] px-5 py-2" style={{ borderBottom: `1px solid ${C.border2}` }}>
         <div className="flex flex-col gap-[2px] flex-shrink-0">
           <span className="text-[22px] leading-none tracking-[.01em]" style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 400, color: C.text }}>{vent.header}</span>
@@ -224,6 +317,7 @@ export default function VentPage() {
         <AmberBtn onClick={() => setAmberOpen(true)} flash={amberFlash} />
       </div>
 
+      {/* 섹션 탭 */}
       <div className="flex-shrink-0 flex px-[22px]" style={{ borderBottom: `1px solid ${C.border2}` }}>
         {(['vent', 'layer', 'community'] as const).map((s, i) => {
           const labels = [vent.sections.mood, vent.sections.layer, vent.sections.community];
@@ -238,52 +332,63 @@ export default function VentPage() {
         })}
       </div>
 
-      {section === 'vent' && (
-        <div className="flex flex-col flex-1 overflow-hidden min-h-0" style={{ position: 'relative' }}>
-          {phase === 'select' ? (
-            <EmotionSelector
-              greeting={greeting} curEmo={curEmo}
-              lastSession={lastSession ? { emotion: lastSession.emotion, turn_count: lastSession.turn_count } : null}
-              recentEmotions={recentEmotions ?? null}
-              emotions={EMOTIONS} quickCards={QUICK_CARDS}
-              onPickEmotion={pickEmotion}
-              onResumeSession={() => lastSession && resumeSession(lastSession)}
-            />
-          ) : (
-            <>
-              {similarCount != null && similarCount > 0 && (
-                <div className="flex-shrink-0 mx-4 mt-3 mb-1">
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px]"
-                    style={{ background: alpha(C.amber, 0.08), color: C.amber, border: `1px solid ${alpha(C.amber, 0.2)}` }}>
-                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: C.amber, display: 'inline-block' }} />
-                    지금 {similarCount.toLocaleString()}명이 비슷한 이야기를 나눴어요
-                  </div>
-                </div>
+      {/* 2컬럼 바디 (PC) / 단일 컬럼 (모바일) */}
+      <div className="flex flex-1 overflow-hidden min-h-0">
+        {/* 좌측: 메인 콘텐츠 */}
+        <div className="flex flex-col flex-1 overflow-hidden min-h-0">
+          {section === 'vent' && (
+            <div className="flex flex-col flex-1 overflow-hidden min-h-0" style={{ position: 'relative' }}>
+              {phase === 'select' ? (
+                <EmotionSelector
+                  greeting={greeting} curEmo={curEmo}
+                  lastSession={lastSession ? { emotion: lastSession.emotion, turn_count: lastSession.turn_count } : null}
+                  recentEmotions={recentEmotions ?? null}
+                  emotions={EMOTIONS} quickCards={QUICK_CARDS}
+                  onPickEmotion={pickEmotion}
+                  onResumeSession={() => lastSession && resumeSession(lastSession)}
+                />
+              ) : (
+                <>
+                  {similarCount != null && similarCount > 0 && (
+                    <div className="flex-shrink-0 mx-4 mt-3 mb-1">
+                      <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px]"
+                        style={{ background: alpha(C.amber, 0.08), color: C.amber, border: `1px solid ${alpha(C.amber, 0.2)}` }}>
+                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: C.amber, display: 'inline-block' }} />
+                        {vent.chat.similarPeople.replace('{emotion}', similarCount.toLocaleString())}
+                      </div>
+                    </div>
+                  )}
+                  <ChatView
+                    curEmo={curEmo} msgs={msgs} msgCount={msgCount} msgVal={msgVal}
+                    aiThinking={aiThinking} showSummary={showSummary}
+                    sessionSaved={sessionSavedRef.current}
+                    crisisLocked={crisisLevel === 'critical'}
+                    emoData={EMO_DATA[curEmo]} greeting={greeting}
+                    userId={user?.id}
+                    hasSexSelfResult={hasSexSelfResult ?? false}
+                    onMsgValChange={setMsgVal} onSendMsg={sendMsg}
+                    onFinishSession={finishSession}
+                    onContinueChat={() => { setShowSummary(false); setMsgs(m => [...m, { role: 'ai', text: vent.chat.continueResponse, tone: vent.chat.toneContinue }]); }}
+                    onNavigateToSexSelf={() => navigate('/home/sexself/questions')}
+                  />
+                </>
               )}
-              <ChatView
-                curEmo={curEmo} msgs={msgs} msgCount={msgCount} msgVal={msgVal}
-                aiThinking={aiThinking} showSummary={showSummary}
-                sessionSaved={sessionSavedRef.current}
-                crisisLocked={crisisLevel === 'critical'}
-                emoData={EMO_DATA[curEmo]} greeting={greeting}
-                userId={user?.id}
-                onMsgValChange={setMsgVal} onSendMsg={sendMsg}
-                onFinishSession={finishSession}
-                onContinueChat={() => { setShowSummary(false); setMsgs(m => [...m, { role: 'ai', text: vent.chat.continueResponse, tone: '여기 있어요 · 천천히' }]); }}
-              />
-            </>
+            </div>
+          )}
+
+          {(section === 'layer' || section === 'community') && (
+            <VentLayerView
+              section={section} layerGroups={LAYER_GROUPS} commGroups={COMM_GROUPS}
+              expandedGroups={expandedGroups} layerActive={layerActive}
+              onToggleGroup={(id) => setExpandedGroups(g => ({ ...g, [id]: !g[id] }))}
+              onSetLayerActive={setLayerActive}
+            />
           )}
         </div>
-      )}
 
-      {(section === 'layer' || section === 'community') && (
-        <VentLayerView
-          section={section} layerGroups={LAYER_GROUPS} commGroups={COMM_GROUPS}
-          expandedGroups={expandedGroups} layerActive={layerActive}
-          onToggleGroup={(id) => setExpandedGroups(g => ({ ...g, [id]: !g[id] }))}
-          onSetLayerActive={setLayerActive}
-        />
-      )}
+        {/* 우측 패널 — PC 전용 */}
+        <RightPanel />
+      </div>
 
       <AmberSheet open={amberOpen} onClose={() => setAmberOpen(false)} aiName={aiName} />
     </div>

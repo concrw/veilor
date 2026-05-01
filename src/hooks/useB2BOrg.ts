@@ -11,6 +11,7 @@ import type {
   B2BMemberInviteInput,
   B2BCheckinInput,
   B2BCheckinSession,
+  OrgWorkAggregate,
 } from '@/integrations/supabase/veilor-types';
 
 // ─────────────────────────────────────────────
@@ -104,7 +105,7 @@ export function useMyOrg() {
 }
 
 // ─────────────────────────────────────────────
-// 멤버 초대 (이메일 기반 — Supabase invite)
+// 멤버 초대 (토큰 기반 — b2b_invite_tokens)
 // ─────────────────────────────────────────────
 export function useInviteMembers(orgId: string) {
   const [loading, setLoading] = useState(false);
@@ -120,19 +121,14 @@ export function useInviteMembers(orgId: string) {
 
     for (const m of members) {
       try {
-        // Supabase auth.admin.inviteUserByEmail은 서버사이드 전용.
-        // 클라이언트에서는 초대 레코드를 pending 상태로 DB에 저장하고
-        // Edge Function이 이메일 발송을 처리한다.
         const { error: invErr } = await veilorDb
-          .from('b2b_org_members')
-          .upsert({
+          .from('b2b_invite_tokens')
+          .insert({
             org_id: orgId,
-            // user_id는 초대 수락 후 채워짐 — 임시로 placeholder uuid 사용
-            // 실제로는 초대 토큰 테이블로 분리하거나 Edge Function 처리
+            email: m.email,
+            token: crypto.randomUUID(),
             member_type: m.member_type,
             birth_year: m.birth_year ?? null,
-            status: 'inactive',
-            meta: { invited_email: m.email, invite_pending: true },
           });
 
         if (invErr) throw new Error(invErr.message);
@@ -149,6 +145,81 @@ export function useInviteMembers(orgId: string) {
   };
 
   return { inviteMembers, loading, error, results };
+}
+
+// ─────────────────────────────────────────────
+// 초대 토큰 수락 → Pro 자동 부여
+// ─────────────────────────────────────────────
+export function useAcceptB2BInvite(token: string) {
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const acceptInvite = async (): Promise<boolean> => {
+    if (!user) { setError('로그인 후 수락 가능합니다.'); return false; }
+    setLoading(true);
+    setError(null);
+    try {
+      const { data: inv, error: fetchErr } = await veilorDb
+        .from('b2b_invite_tokens')
+        .select('*')
+        .eq('token', token)
+        .eq('status', 'pending')
+        .gt('expires_at', new Date().toISOString())
+        .single();
+
+      if (fetchErr || !inv) throw new Error('유효하지 않거나 만료된 초대입니다.');
+
+      await veilorDb.from('b2b_org_members').insert({
+        org_id: inv.org_id,
+        user_id: user.id,
+        member_type: inv.member_type,
+        birth_year: inv.birth_year ?? null,
+        status: 'active',
+      });
+
+      await veilorDb
+        .from('user_profiles')
+        .update({ subscription_tier: 'pro' })
+        .eq('user_id', user.id);
+
+      await veilorDb
+        .from('b2b_invite_tokens')
+        .update({ status: 'accepted', accepted_at: new Date().toISOString(), user_id: user.id })
+        .eq('id', inv.id);
+
+      return true;
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '초대 수락 중 오류');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { acceptInvite, loading, error };
+}
+
+// ─────────────────────────────────────────────
+// 조직 TBQC Work 집계 조회 (어드민 대시보드용)
+// ─────────────────────────────────────────────
+export function useOrgWorkAggregate(orgId: string, weeks = 4) {
+  const [data, setData] = useState<OrgWorkAggregate[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const fetchWorkAggregate = async () => {
+    setLoading(true);
+    const { data: rows } = await veilorDb
+      .from('b2b_org_work_aggregate')
+      .select('*')
+      .eq('org_id', orgId)
+      .order('week_start', { ascending: false })
+      .limit(weeks);
+    setData((rows ?? []) as OrgWorkAggregate[]);
+    setLoading(false);
+  };
+
+  return { data, fetchWorkAggregate, loading };
 }
 
 // ─────────────────────────────────────────────

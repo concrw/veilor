@@ -8,6 +8,8 @@ import {
 } from 'react';
 import type { SupportedLanguage } from '@/i18n/types';
 import { safeGetItem, safeSetItem } from '@/lib/storage';
+import { veilorDb } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 
 interface LanguageContextValue {
   language: SupportedLanguage;
@@ -28,12 +30,12 @@ function getInitialLanguage(): SupportedLanguage {
   } catch {
     // SSR or localStorage unavailable
   }
-  // Fall back to browser language
+  // 브라우저 언어 감지 (localStorage 미설정 시)
   if (typeof navigator !== 'undefined') {
     const browserLang = navigator.language?.slice(0, 2);
     if (browserLang === 'en') return 'en';
   }
-  return 'ko'; // default
+  return 'ko';
 }
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
@@ -42,23 +44,41 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   );
   const [isLoading, setIsLoading] = useState(true);
 
+  // 로그인 상태에서 DB preferred_lang 로드 → localStorage보다 우선
   useEffect(() => {
-    // Mark loading complete after initial render
-    setIsLoading(false);
+    let cancelled = false;
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (cancelled || !user) { setIsLoading(false); return; }
+      const { data } = await veilorDb
+        .from('user_profiles')
+        .select('preferred_lang')
+        .eq('user_id', user.id)
+        .single();
+      if (cancelled) return;
+      if (data?.preferred_lang === 'ko' || data?.preferred_lang === 'en') {
+        setLanguageState(data.preferred_lang as SupportedLanguage);
+        safeSetItem(STORAGE_KEY, data.preferred_lang);
+      }
+      setIsLoading(false);
+    });
+    return () => { cancelled = true; };
   }, []);
 
   const setLanguage = useCallback((lang: SupportedLanguage) => {
     setLanguageState(lang);
-    try {
-      safeSetItem(STORAGE_KEY, lang);
-    } catch {
-      // ignore write failures
-    }
-    // Update html lang attribute
+    safeSetItem(STORAGE_KEY, lang);
     document.documentElement.lang = lang;
+    // 로그인 상태면 DB에도 저장
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+      veilorDb
+        .from('user_profiles')
+        .update({ preferred_lang: lang, updated_at: new Date().toISOString() })
+        .eq('user_id', user.id)
+        .then(() => {});
+    });
   }, []);
 
-  // Set html lang on mount
   useEffect(() => {
     document.documentElement.lang = language;
   }, [language]);

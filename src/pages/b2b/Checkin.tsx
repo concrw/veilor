@@ -1,45 +1,114 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { veilorDb } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { useSubmitCheckin } from '@/hooks/useB2BOrg';
 import type { B2BOrgEvent } from '@/integrations/supabase/veilor-types';
+import { useLanguageContext } from '@/context/LanguageContext';
+
+// ─────────────────────────────────────────────
+// 이중언어 문자열
+// ─────────────────────────────────────────────
+const S = {
+  ko: {
+    saveError: '저장 실패',
+    saveErrorDesc: '다시 시도해주세요.',
+    completedTitle: '오늘 체크인 완료',
+    avgLabel: (avg: string) => `평균 4C: ${avg} / 10`,
+    highAlert: '⚠ 담당 코치에게 알림이 발송되었습니다.',
+    highAlertDesc: '힘드신 경우 즉시 상담 연결을 요청하거나 자살예방상담전화 1393으로 연락하세요.',
+    mediumAlert: '담당 코치가 24시간 내에 연락드릴 예정입니다.',
+    coachingRec: '코칭 세션을 예약하는 것을 추천합니다.',
+    bookSession: '코치 세션 예약',
+    toDashboard: '대시보드로',
+    optionalInput: '선택 입력',
+    freeTextTitle: '지금 하고 싶은 말이 있나요?',
+    freeTextDesc: '입력하지 않아도 됩니다. 소속사에는 공개되지 않습니다.',
+    freeTextPlaceholder: '자유롭게 적어보세요...',
+    prev: '이전',
+    saving: '저장 중...',
+    done: '완료',
+    next: '다음',
+    last: '마지막으로',
+    questions: {
+      c_control: {
+        question: '지금 이 순간, 내 감정과 상황을 내가 조절하고 있다',
+        low: '전혀 그렇지 않다',
+        high: '완전히 그렇다',
+      },
+      c_commitment: {
+        question: '지금 내 목표를 향한 의지가 흔들리지 않는다',
+        low: '흔들리고 있다',
+        high: '확고하다',
+      },
+      c_challenge: {
+        question: '지금 내가 마주한 어려움이 성장의 기회로 느껴진다',
+        low: '위협으로 느껴진다',
+        high: '기회로 느껴진다',
+      },
+      c_confidence: {
+        question: '지금 내 능력과 판단을 스스로 신뢰하고 있다',
+        low: '자신이 없다',
+        high: '자신 있다',
+      },
+    },
+  },
+  en: {
+    saveError: 'Save failed',
+    saveErrorDesc: 'Please try again.',
+    completedTitle: "Today's Check-in Complete",
+    avgLabel: (avg: string) => `Avg 4C: ${avg} / 10`,
+    highAlert: '⚠ Your coach has been notified.',
+    highAlertDesc: 'If you are in distress, please request immediate counseling or call the Suicide Prevention Hotline at 1393.',
+    mediumAlert: 'Your coach will contact you within 24 hours.',
+    coachingRec: 'We recommend scheduling a coaching session.',
+    bookSession: 'Book a Coaching Session',
+    toDashboard: 'Go to Dashboard',
+    optionalInput: 'Optional',
+    freeTextTitle: 'Anything you want to share?',
+    freeTextDesc: "You don't have to write anything. This will not be shared with your organization.",
+    freeTextPlaceholder: 'Write freely...',
+    prev: 'Previous',
+    saving: 'Saving...',
+    done: 'Done',
+    next: 'Next',
+    last: 'Last one',
+    questions: {
+      c_control: {
+        question: 'Right now, I am in control of my emotions and situation.',
+        low: 'Not at all',
+        high: 'Completely',
+      },
+      c_commitment: {
+        question: 'My commitment to my goals is unwavering right now.',
+        low: 'Wavering',
+        high: 'Firm',
+      },
+      c_challenge: {
+        question: 'The challenges I face right now feel like opportunities for growth.',
+        low: 'Feels like a threat',
+        high: 'Feels like an opportunity',
+      },
+      c_confidence: {
+        question: 'I trust my own abilities and judgment right now.',
+        low: 'Not confident',
+        high: 'Confident',
+      },
+    },
+  },
+} as const;
 
 // ─────────────────────────────────────────────
 // 4C 축 정의 (성인 기본 언어)
 // org_type별 언어 오버라이드는 meta에서 불러오거나 추후 확장
 // ─────────────────────────────────────────────
 const C_AXES = [
-  {
-    key: 'c_control' as const,
-    label: 'Control',
-    question: '지금 이 순간, 내 감정과 상황을 내가 조절하고 있다',
-    low: '전혀 그렇지 않다',
-    high: '완전히 그렇다',
-  },
-  {
-    key: 'c_commitment' as const,
-    label: 'Commitment',
-    question: '지금 내 목표를 향한 의지가 흔들리지 않는다',
-    low: '흔들리고 있다',
-    high: '확고하다',
-  },
-  {
-    key: 'c_challenge' as const,
-    label: 'Challenge',
-    question: '지금 내가 마주한 어려움이 성장의 기회로 느껴진다',
-    low: '위협으로 느껴진다',
-    high: '기회로 느껴진다',
-  },
-  {
-    key: 'c_confidence' as const,
-    label: 'Confidence',
-    question: '지금 내 능력과 판단을 스스로 신뢰하고 있다',
-    low: '자신이 없다',
-    high: '자신 있다',
-  },
+  { key: 'c_control' as const,    label: 'Control' },
+  { key: 'c_commitment' as const, label: 'Commitment' },
+  { key: 'c_challenge' as const,  label: 'Challenge' },
+  { key: 'c_confidence' as const, label: 'Confidence' },
 ] as const;
 
 type CKey = typeof C_AXES[number]['key'];
@@ -50,6 +119,8 @@ export default function Checkin() {
   const { user } = useAuth();
   const { toast } = useToast();
   const { submitCheckin, loading } = useSubmitCheckin();
+  const { language } = useLanguageContext();
+  const s = S[language] ?? S.ko;
 
   const [step, setStep] = useState<number>(0);         // 0~3: 4C 입력, 4: 텍스트, 5: 완료
   const [scores, setScores] = useState<Record<CKey, number>>({
@@ -78,11 +149,11 @@ export default function Checkin() {
 
   const handleScore = (val: number) => {
     if (!currentAxis) return;
-    setScores(s => ({ ...s, [currentAxis.key]: val }));
+    setScores(prev => ({ ...prev, [currentAxis.key]: val }));
   };
 
-  const handleNext = () => setStep(s => s + 1);
-  const handleBack = () => setStep(s => s - 1);
+  const handleNext = () => setStep(prev => prev + 1);
+  const handleBack = () => setStep(prev => prev - 1);
 
   const handleSubmit = async () => {
     if (!orgId) return;
@@ -111,7 +182,7 @@ export default function Checkin() {
       setResult({ risk_level: res.risk_level, routing_result: res.routing_result ?? 'self_care' });
       setStep(5);
     } else {
-      toast({ title: '저장 실패', description: '다시 시도해주세요.', variant: 'destructive' });
+      toast({ title: s.saveError, description: s.saveErrorDesc, variant: 'destructive' });
     }
   };
 
@@ -119,43 +190,44 @@ export default function Checkin() {
   if (step === 5 && result) {
     const isRisk = result.risk_level === 'medium' || result.risk_level === 'high';
     const needsCoaching = result.routing_result === 'coaching' || result.routing_result === 'counseling';
+    const avgScore = ((scores.c_control + scores.c_commitment + scores.c_challenge + scores.c_confidence) / 4).toFixed(1);
 
     return (
       <div className="min-h-screen bg-background flex items-center justify-center px-4">
         <div className="w-full max-w-sm space-y-6 text-center">
           <div className="text-4xl">{isRisk ? '🌧' : '☀️'}</div>
           <div>
-            <h1 className="text-xl font-bold">오늘 체크인 완료</h1>
+            <h1 className="text-xl font-bold">{s.completedTitle}</h1>
             <p className="text-muted-foreground text-sm mt-1">
-              평균 4C: {((scores.c_control + scores.c_commitment + scores.c_challenge + scores.c_confidence) / 4).toFixed(1)} / 10
+              {s.avgLabel(avgScore)}
             </p>
           </div>
 
           {result.risk_level === 'high' && (
             <div className="rounded-lg bg-red-50 border border-red-200 p-4 text-sm text-red-700 text-left space-y-2">
-              <p className="font-semibold">⚠ 담당 코치에게 알림이 발송되었습니다.</p>
-              <p>힘드신 경우 즉시 상담 연결을 요청하거나 자살예방상담전화 <strong>1393</strong>으로 연락하세요.</p>
+              <p className="font-semibold">{s.highAlert}</p>
+              <p>{s.highAlertDesc}</p>
             </div>
           )}
 
           {result.risk_level === 'medium' && (
             <div className="rounded-lg bg-amber-50 border border-amber-200 p-4 text-sm text-amber-700">
-              담당 코치가 24시간 내에 연락드릴 예정입니다.
+              {s.mediumAlert}
             </div>
           )}
 
           {needsCoaching && result.risk_level !== 'high' && result.risk_level !== 'medium' && (
-            <p className="text-sm text-muted-foreground">코칭 세션을 예약하는 것을 추천합니다.</p>
+            <p className="text-sm text-muted-foreground">{s.coachingRec}</p>
           )}
 
           <div className="flex gap-3">
             {needsCoaching && (
               <Button variant="outline" onClick={() => navigate(`/b2b/coach-match/${orgId}`)} className="flex-1">
-                코치 세션 예약
+                {s.bookSession}
               </Button>
             )}
             <Button onClick={() => navigate(`/b2b/dashboard/${orgId}`)} className="flex-1">
-              대시보드로
+              {s.toDashboard}
             </Button>
           </div>
         </div>
@@ -169,23 +241,23 @@ export default function Checkin() {
       <div className="min-h-screen bg-background flex items-center justify-center px-4">
         <div className="w-full max-w-sm space-y-6">
           <div>
-            <p className="text-xs text-muted-foreground mb-1">선택 입력</p>
-            <h1 className="text-xl font-bold">지금 하고 싶은 말이 있나요?</h1>
-            <p className="text-sm text-muted-foreground mt-1">입력하지 않아도 됩니다. 소속사에는 공개되지 않습니다.</p>
+            <p className="text-xs text-muted-foreground mb-1">{s.optionalInput}</p>
+            <h1 className="text-xl font-bold">{s.freeTextTitle}</h1>
+            <p className="text-sm text-muted-foreground mt-1">{s.freeTextDesc}</p>
           </div>
 
           <textarea
             value={freeText}
             onChange={e => setFreeText(e.target.value)}
-            placeholder="자유롭게 적어보세요..."
+            placeholder={s.freeTextPlaceholder}
             rows={5}
             className="w-full border rounded-xl p-3 text-sm bg-background resize-none focus:outline-none focus:ring-1 focus:ring-primary"
           />
 
           <div className="flex gap-3">
-            <Button variant="outline" onClick={handleBack} className="flex-1">이전</Button>
+            <Button variant="outline" onClick={handleBack} className="flex-1">{s.prev}</Button>
             <Button onClick={handleSubmit} disabled={loading} className="flex-1">
-              {loading ? '저장 중...' : '완료'}
+              {loading ? s.saving : s.done}
             </Button>
           </div>
         </div>
@@ -198,6 +270,7 @@ export default function Checkin() {
 
   const progress = step + 1;
   const currentScore = scores[currentAxis.key];
+  const axisQ = s.questions[currentAxis.key];
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
@@ -226,14 +299,14 @@ export default function Checkin() {
         {/* 질문 */}
         <div className="space-y-1">
           <p className="text-xs font-medium text-primary uppercase tracking-wider">{currentAxis.label}</p>
-          <h1 className="text-lg font-semibold leading-snug">{currentAxis.question}</h1>
+          <h1 className="text-lg font-semibold leading-snug">{axisQ.question}</h1>
         </div>
 
         {/* 슬라이더 */}
         <div className="space-y-4">
           <div className="flex justify-between text-xs text-muted-foreground">
-            <span>{currentAxis.low}</span>
-            <span>{currentAxis.high}</span>
+            <span>{axisQ.low}</span>
+            <span>{axisQ.high}</span>
           </div>
 
           {/* 점수 버튼 (1~10) */}
@@ -259,10 +332,10 @@ export default function Checkin() {
         {/* 하단 버튼 */}
         <div className="flex gap-3">
           {step > 0 && (
-            <Button variant="outline" onClick={handleBack} className="flex-1">이전</Button>
+            <Button variant="outline" onClick={handleBack} className="flex-1">{s.prev}</Button>
           )}
           <Button onClick={handleNext} className="flex-1">
-            {step < 3 ? '다음' : '마지막으로'}
+            {step < 3 ? s.next : s.last}
           </Button>
         </div>
       </div>

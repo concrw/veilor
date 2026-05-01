@@ -3,6 +3,7 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useGetTranslations } from '@/hooks/useTranslation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase, veilorDb } from '@/integrations/supabase/client';
 import { ErrorState } from '@/components/ErrorState';
@@ -20,6 +21,7 @@ type Tab = 'identity' | 'why' | 'ikigai' | 'brand' | 'couple';
 export default function GetPage() {
   const { user, primaryMask, axisScores } = useAuth();
   const qc = useQueryClient();
+  const get = useGetTranslations();
   const { isPro, modalOpen, activeTrigger, tryAccess, closeModal } = usePremiumTrigger();
   const [tab, setTab] = useState<Tab>('identity');
 
@@ -76,22 +78,22 @@ export default function GetPage() {
       await veilorDb.from('prime_perspectives').upsert({ user_id: user!.id, ikigai }, { onConflict: 'user_id' });
     },
     onSuccess: () => {
-      toast({ title: 'Ikigai 저장 완료' });
+      toast({ title: get.ikigai.savedToast });
       setIkigaiEdit(false);
       qc.invalidateQueries({ queryKey: ['prime-perspective', user?.id] });
     },
   });
 
   const handleIkigaiAiInsight = async () => {
-    if (!ikigai) { toast({ title: 'Ikigai를 먼저 작성해 주세요.', variant: 'destructive' }); return; }
+    if (!ikigai) { toast({ title: get.ikigai.notYet, variant: 'destructive' }); return; }
     setIkigaiAiLoading(true); setIkigaiAiInsight('');
     try {
       const { data, error } = await supabase.functions.invoke('generate-ikigai', { body: {} });
       if (error) throw error;
       if (data?.final_ikigai) setIkigaiAiInsight(data.final_ikigai);
-      else if (data?.ikigai_intersections) setIkigaiAiInsight(`${data.ikigai_intersections.Passion?.join(', ') ?? ''} — 열정과 사명이 만나는 지점`);
-      toast({ title: 'AI 인사이트 생성 완료' });
-    } catch { toast({ title: 'AI 생성 실패', description: '잠시 후 다시 시도해 주세요.', variant: 'destructive' }); }
+      else if (data?.ikigai_intersections) setIkigaiAiInsight(`${data.ikigai_intersections.Passion?.join(', ') ?? ''}`);
+      toast({ title: get.ikigai.aiInsight });
+    } catch { toast({ title: get.brand.aiFailToast, description: get.brand.aiFailDesc, variant: 'destructive' }); }
     finally { setIkigaiAiLoading(false); }
   };
 
@@ -106,7 +108,7 @@ export default function GetPage() {
       await veilorDb.from('prime_perspectives').upsert({ user_id: user!.id, brand_identity }, { onConflict: 'user_id' });
     },
     onSuccess: () => {
-      toast({ title: '브랜드 정체성 저장 완료' });
+      toast({ title: get.brand.savedToast });
       setBrandEdit(false);
       qc.invalidateQueries({ queryKey: ['prime-perspective', user?.id] });
     },
@@ -129,70 +131,93 @@ export default function GetPage() {
         }));
         setBrandEdit(true);
       }
-      toast({ title: 'AI 브랜드 전략 생성 완료', description: '결과를 검토하고 저장하세요.' });
-    } catch { toast({ title: 'AI 생성 실패', description: '잠시 후 다시 시도해 주세요.', variant: 'destructive' }); }
+      toast({ title: get.brand.aiCompleteToast });
+    } catch { toast({ title: get.brand.aiFailToast, description: get.brand.aiFailDesc, variant: 'destructive' }); }
     finally { setBrandAiLoading(false); }
   };
 
   const ikigai = pp?.ikigai as Record<string, unknown> | null;
   const brand = pp?.brand_identity as Record<string, unknown> | null;
 
-  const tabs: [Tab, string][] = [['identity', '정체성'], ['why', 'Why'], ['ikigai', 'Ikigai'], ['brand', '브랜드'], ['couple', '관계']];
+  const tabs: [Tab, string][] = [
+    ['identity', get.tabs.identity],
+    ['why', get.tabs.why],
+    ['ikigai', get.tabs.ikigai],
+    ['brand', get.tabs.brand],
+    ['couple', get.tabs.couple],
+  ];
 
-  if (ppError) return <ErrorState title="Get 데이터를 불러오지 못했습니다" onRetry={() => refetchPp()} />;
+  if (ppError) return <ErrorState title={get.errors.loadFailed} onRetry={() => refetchPp()} />;
 
   return (
-    <div className="px-4 py-6 space-y-5">
-      <div>
-        <h2 className="text-lg font-semibold">Get</h2>
-        <p className="text-sm text-muted-foreground mt-1">나를 이루는 구조를 봐요.</p>
-      </div>
-
-      {/* 탭 */}
-      <div className="bg-card border rounded-2xl p-1 flex">
+    <div className="flex flex-col lg:flex-row min-h-full">
+      {/* PC 전용 좌측 탭 내비 */}
+      <nav className="hidden lg:flex flex-col flex-shrink-0 py-6 px-3 border-r border-border" style={{ width: 140 }}>
+        <p className="text-xs text-muted-foreground mb-4 px-2 tracking-wide">{get.header}</p>
         {tabs.map(([t, label]) => (
           <button key={t} onClick={() => setTab(t)}
-            className={`flex-1 py-2 rounded-xl text-xs font-medium transition-colors
-              ${tab === t ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}>
+            className={`text-left px-3 py-2.5 rounded-xl text-sm mb-1 transition-colors
+              ${tab === t ? 'bg-card text-foreground font-medium' : 'text-muted-foreground hover:text-foreground'}`}>
             {label}
           </button>
         ))}
+      </nav>
+
+      {/* 콘텐츠 */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="px-4 py-6 space-y-5 max-w-3xl">
+          <div>
+            <h2 className="text-lg font-semibold">{get.header}</h2>
+            <p className="text-sm text-muted-foreground mt-1">{get.subtitle}</p>
+          </div>
+
+          {/* 모바일 탭 바 */}
+          <div className="lg:hidden bg-card border rounded-2xl p-1 flex">
+            {tabs.map(([t, label]) => (
+              <button key={t} onClick={() => setTab(t)}
+                className={`flex-1 py-2 rounded-xl text-xs font-medium transition-colors
+                  ${tab === t ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}>
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {tab === 'identity' && (
+            <IdentityTab
+              primaryMask={primaryMask} axisScores={axisScores} pp={pp}
+              isPro={isPro} tryAccess={tryAccess}
+              totalSessions={totalSessions} ventCount={ventCount} digCount={digCount} setCount={setCount}
+              topEmotions={topEmotions} topDomain={topDomain} recentKeywords={recentKeywords}
+              signalTotal={patternSummary?.signal_total ?? 0}
+            />
+          )}
+
+          {tab === 'why' && <WhyFlow />}
+
+          {tab === 'ikigai' && (
+            <IkigaiTab
+              isPro={isPro} tryAccess={tryAccess} ikigai={ikigai}
+              ikigaiEdit={ikigaiEdit} ikigaiForm={ikigaiForm}
+              ikigaiAiLoading={ikigaiAiLoading} ikigaiAiInsight={ikigaiAiInsight}
+              ikigaiSavePending={ikigaiSave.isPending}
+              onSetIkigaiEdit={setIkigaiEdit} onSetIkigaiForm={setIkigaiForm}
+              onIkigaiSave={() => ikigaiSave.mutate()} onIkigaiAiInsight={handleIkigaiAiInsight}
+            />
+          )}
+
+          {tab === 'brand' && (
+            <BrandTab
+              isPro={isPro} tryAccess={tryAccess} brand={brand}
+              brandEdit={brandEdit} brandForm={brandForm}
+              brandAiLoading={brandAiLoading} brandSavePending={brandSave.isPending}
+              onSetBrandEdit={setBrandEdit} onSetBrandForm={setBrandForm}
+              onBrandSave={() => brandSave.mutate()} onBrandAiGenerate={handleBrandAiGenerate}
+            />
+          )}
+
+          {tab === 'couple' && <CoupleAnalysis />}
+        </div>
       </div>
-
-      {tab === 'identity' && (
-        <IdentityTab
-          primaryMask={primaryMask} axisScores={axisScores} pp={pp}
-          isPro={isPro} tryAccess={tryAccess}
-          totalSessions={totalSessions} ventCount={ventCount} digCount={digCount} setCount={setCount}
-          topEmotions={topEmotions} topDomain={topDomain} recentKeywords={recentKeywords}
-          signalTotal={patternSummary?.signal_total ?? 0}
-        />
-      )}
-
-      {tab === 'why' && <WhyFlow />}
-
-      {tab === 'ikigai' && (
-        <IkigaiTab
-          isPro={isPro} tryAccess={tryAccess} ikigai={ikigai}
-          ikigaiEdit={ikigaiEdit} ikigaiForm={ikigaiForm}
-          ikigaiAiLoading={ikigaiAiLoading} ikigaiAiInsight={ikigaiAiInsight}
-          ikigaiSavePending={ikigaiSave.isPending}
-          onSetIkigaiEdit={setIkigaiEdit} onSetIkigaiForm={setIkigaiForm}
-          onIkigaiSave={() => ikigaiSave.mutate()} onIkigaiAiInsight={handleIkigaiAiInsight}
-        />
-      )}
-
-      {tab === 'brand' && (
-        <BrandTab
-          isPro={isPro} tryAccess={tryAccess} brand={brand}
-          brandEdit={brandEdit} brandForm={brandForm}
-          brandAiLoading={brandAiLoading} brandSavePending={brandSave.isPending}
-          onSetBrandEdit={setBrandEdit} onSetBrandForm={setBrandForm}
-          onBrandSave={() => brandSave.mutate()} onBrandAiGenerate={handleBrandAiGenerate}
-        />
-      )}
-
-      {tab === 'couple' && <CoupleAnalysis />}
 
       <UpgradeModal open={modalOpen} onClose={closeModal} trigger={activeTrigger} />
     </div>

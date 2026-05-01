@@ -8,6 +8,56 @@ import { useAuth } from '@/context/AuthContext';
 import { veilorDb } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { C, alpha } from '@/lib/colors';
+import { useLanguageContext } from '@/context/LanguageContext';
+
+const S = {
+  ko: {
+    inputTitle: '나의 욕구 지도',
+    inputSub: '각 욕구가 얼마나 원해지는지, 얼마나 채워지는지 슬라이더로 표시해 주세요.',
+    layerPrefix: 'Layer — ',
+    sliderDesired: '원하는 정도',
+    sliderSatisfied: '채워진 정도',
+    btnAnalyze: '욕구 지도 보기',
+    resultLabel: '결과',
+    resultTitle: '나의 욕구 지도',
+    gapChartTitle: '12욕구 결핍 현황',
+    top3Title: '지금 가장 채워지지 않는 욕구',
+    anxietyFrozenTitle: '성욕구 결핍 조정 적용됨',
+    anxietyFrozenBody: 'SexSelf 진단 결과를 바탕으로 BIO-SEX 충족도가 자동 조정되었습니다.\n지금 느끼는 욕구의 동결 상태는 자연스러운 보호 반응일 수 있습니다.',
+    moderateCTATitle: '성적 자아 탐색 권유',
+    moderateCTABody: '성욕구 충족도에 개선 여지가 있습니다. SexSelf 진단으로 더 자세히 살펴볼 수 있어요.',
+    moderateCTABtn: '탐색해보기 →',
+    severeCTATitle: '성적 자아 탐색 강권 안내',
+    severeCTABody: '성욕구 결핍이 크게 감지됩니다. 지금의 상태를 더 잘 이해하려면 SexSelf 진단이\n중요한 첫걸음이 될 수 있습니다. 결과는 오직 나만 볼 수 있습니다.',
+    severeCTABtn: '성적 자아 진단 시작하기 →',
+    btnReset: '다시 입력',
+    btnSaving: '저장 중…',
+    btnSave: '저장하기',
+  },
+  en: {
+    inputTitle: 'My Need Map',
+    inputSub: 'Use the sliders to indicate how much each need is desired and how much it is being met.',
+    layerPrefix: 'Layer — ',
+    sliderDesired: 'Desired',
+    sliderSatisfied: 'Satisfied',
+    btnAnalyze: 'View my need map',
+    resultLabel: 'Results',
+    resultTitle: 'My Need Map',
+    gapChartTitle: '12-need deficit overview',
+    top3Title: 'Needs least fulfilled right now',
+    anxietyFrozenTitle: 'Sexual need deficit adjustment applied',
+    anxietyFrozenBody: 'BIO-SEX satisfaction has been automatically adjusted based on your SexSelf diagnosis results.\nThe frozen state of desire you are experiencing may be a natural protective response.',
+    moderateCTATitle: 'Sexual self-exploration suggested',
+    moderateCTABody: 'There is room for improvement in sexual need fulfillment. You can explore this further with the SexSelf diagnosis.',
+    moderateCTABtn: 'Explore →',
+    severeCTATitle: 'Sexual self-exploration strongly recommended',
+    severeCTABody: 'A significant sexual need deficit has been detected. The SexSelf diagnosis can be\nan important first step to better understanding your current state. Only you can see the results.',
+    severeCTABtn: 'Start Sexual Self diagnosis →',
+    btnReset: 'Re-enter',
+    btnSaving: 'Saving…',
+    btnSave: 'Save',
+  },
+};
 import {
   analyzeNeedProfile,
   createEmptyNeedResponses,
@@ -45,7 +95,7 @@ function NeedSlider({
   onChange,
   color,
 }: {
-  label: string;
+  label: string;  // caller passes translated label
   value: number;
   onChange: (v: number) => void;
   color: string;
@@ -84,6 +134,8 @@ function NeedCard({
   satisfied,
   onDesiredChange,
   onSatisfiedChange,
+  labelDesired,
+  labelSatisfied,
 }: {
   code: NeedCode;
   layer: NeedLayer;
@@ -91,6 +143,8 @@ function NeedCard({
   satisfied: number;
   onDesiredChange: (v: number) => void;
   onSatisfiedChange: (v: number) => void;
+  labelDesired: string;
+  labelSatisfied: string;
 }) {
   const layerColor = LAYER_COLORS[layer];
   const gap = Math.max(0, desired - satisfied);
@@ -124,8 +178,8 @@ function NeedCard({
           </span>
         )}
       </div>
-      <NeedSlider label="원하는 정도" value={desired} onChange={onDesiredChange} color={layerColor} />
-      <NeedSlider label="채워진 정도" value={satisfied} onChange={onSatisfiedChange} color={`${layerColor}99`} />
+      <NeedSlider label={labelDesired} value={desired} onChange={onDesiredChange} color={layerColor} />
+      <NeedSlider label={labelSatisfied} value={satisfied} onChange={onSatisfiedChange} color={`${layerColor}99`} />
     </div>
   );
 }
@@ -166,6 +220,8 @@ function GapBarChart({ profile }: { profile: NeedProfile }) {
 export default function NeedAssessment() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { language } = useLanguageContext();
+  const s = S[language] ?? S.ko;
 
   const [responses, setResponses] = useState<NeedResponses>(createEmptyNeedResponses);
   const [profile, setProfile] = useState<NeedProfile | null>(null);
@@ -213,7 +269,7 @@ export default function NeedAssessment() {
   if (step === 'input') {
     return (
       <div className="min-h-screen pb-24 px-4 pt-8" style={{ background: C.bg }}>
-        <div className="max-w-sm mx-auto space-y-6">
+        <div className="max-w-2xl mx-auto space-y-6">
 
           {/* 헤더 */}
           <div>
@@ -221,10 +277,10 @@ export default function NeedAssessment() {
               V-NEED
             </p>
             <h1 className="text-xl font-light" style={{ color: C.text }}>
-              나의 욕구 지도
+              {s.inputTitle}
             </h1>
             <p className="text-xs mt-1 leading-relaxed" style={{ color: C.text4 }}>
-              각 욕구가 얼마나 원해지는지, 얼마나 채워지는지 슬라이더로 표시해 주세요.
+              {s.inputSub}
             </p>
           </div>
 
@@ -235,7 +291,7 @@ export default function NeedAssessment() {
                 className="text-[11px] font-medium tracking-wider uppercase px-1"
                 style={{ color: LAYER_COLORS[layer] }}
               >
-                Layer — {LAYER_LABELS[layer]}
+                {s.layerPrefix}{LAYER_LABELS[layer]}
               </div>
               {codes.map(code => (
                 <NeedCard
@@ -246,6 +302,8 @@ export default function NeedAssessment() {
                   satisfied={responses[code].satisfied}
                   onDesiredChange={v => handleChange(code, 'desired', v)}
                   onSatisfiedChange={v => handleChange(code, 'satisfied', v)}
+                  labelDesired={s.sliderDesired}
+                  labelSatisfied={s.sliderSatisfied}
                 />
               ))}
             </div>
@@ -256,7 +314,7 @@ export default function NeedAssessment() {
             className="w-full h-12 text-sm font-medium"
             style={{ background: '#4AAEFF', color: '#fff' }}
           >
-            욕구 지도 보기
+            {s.btnAnalyze}
           </Button>
         </div>
       </div>
@@ -271,15 +329,15 @@ export default function NeedAssessment() {
 
   return (
     <div className="min-h-screen pb-24 px-4 pt-8" style={{ background: C.bg }}>
-      <div className="max-w-sm mx-auto space-y-5">
+      <div className="max-w-2xl mx-auto space-y-5">
 
         {/* 헤더 */}
         <div>
           <p className="text-[11px] tracking-widest uppercase mb-1" style={{ color: C.text4 }}>
-            결과
+            {s.resultLabel}
           </p>
           <h1 className="text-xl font-light" style={{ color: C.text }}>
-            나의 욕구 지도
+            {s.resultTitle}
           </h1>
         </div>
 
@@ -288,7 +346,7 @@ export default function NeedAssessment() {
           className="rounded-xl p-4"
           style={{ background: C.bg2, border: `1px solid ${C.border}` }}
         >
-          <p className="text-xs font-medium mb-3" style={{ color: C.text4 }}>12욕구 결핍 현황</p>
+          <p className="text-xs font-medium mb-3" style={{ color: C.text4 }}>{s.gapChartTitle}</p>
           <GapBarChart profile={profile} />
         </div>
 
@@ -297,7 +355,7 @@ export default function NeedAssessment() {
           className="rounded-xl p-4 space-y-2"
           style={{ background: C.bg2, border: `1px solid ${C.border}` }}
         >
-          <p className="text-xs font-medium mb-2" style={{ color: C.text4 }}>지금 가장 채워지지 않는 욕구</p>
+          <p className="text-xs font-medium mb-2" style={{ color: C.text4 }}>{s.top3Title}</p>
           {profile.top3Deficits.map((code, i) => {
             const gap = profile.gaps.find(g => g.code === code)!;
             const color = GAP_LEVEL_COLORS[gap.level];
@@ -346,11 +404,12 @@ export default function NeedAssessment() {
             style={{ background: alpha('#6366f1', 0.08), border: `1px solid ${alpha('#6366f1', 0.2)}` }}
           >
             <p className="text-xs font-medium mb-1.5" style={{ color: '#6366f1' }}>
-              성욕구 결핍 조정 적용됨
+              {s.anxietyFrozenTitle}
             </p>
             <p className="text-xs leading-relaxed" style={{ color: C.text2 }}>
-              SexSelf 진단 결과를 바탕으로 BIO-SEX 충족도가 자동 조정되었습니다.
-              지금 느끼는 욕구의 동결 상태는 자연스러운 보호 반응일 수 있습니다.
+              {s.anxietyFrozenBody.split('\n').map((line, i) => (
+                <span key={i}>{line}{i === 0 && <br />}</span>
+              ))}
             </p>
           </div>
         )}
@@ -362,17 +421,17 @@ export default function NeedAssessment() {
             style={{ background: alpha('#ec4899', 0.05), border: `1px solid ${alpha('#ec4899', 0.12)}` }}
           >
             <p className="text-xs font-medium mb-1.5" style={{ color: alpha('#ec4899', 0.85) }}>
-              성적 자아 탐색 권유
+              {s.moderateCTATitle}
             </p>
             <p className="text-xs leading-relaxed mb-2" style={{ color: C.text2 }}>
-              성욕구 충족도에 개선 여지가 있습니다. SexSelf 진단으로 더 자세히 살펴볼 수 있어요.
+              {s.moderateCTABody}
             </p>
             <button
               onClick={() => navigate('/home/sexself/questions')}
               className="text-xs"
               style={{ color: alpha('#ec4899', 0.8) }}
             >
-              탐색해보기 →
+              {s.moderateCTABtn}
             </button>
           </div>
         )}
@@ -384,18 +443,19 @@ export default function NeedAssessment() {
             style={{ background: alpha('#ec4899', 0.08), border: `1px solid ${alpha('#ec4899', 0.2)}` }}
           >
             <p className="text-xs font-medium mb-1.5" style={{ color: '#ec4899' }}>
-              성적 자아 탐색 강권 안내
+              {s.severeCTATitle}
             </p>
             <p className="text-xs leading-relaxed mb-3" style={{ color: C.text2 }}>
-              성욕구 결핍이 크게 감지됩니다. 지금의 상태를 더 잘 이해하려면 SexSelf 진단이
-              중요한 첫걸음이 될 수 있습니다. 결과는 오직 나만 볼 수 있습니다.
+              {s.severeCTABody.split('\n').map((line, i) => (
+                <span key={i}>{line}{i === 0 && <br />}</span>
+              ))}
             </p>
             <button
               onClick={() => navigate('/home/sexself/questions')}
               className="text-xs font-medium underline"
               style={{ color: '#ec4899' }}
             >
-              성적 자아 진단 시작하기 →
+              {s.severeCTABtn}
             </button>
           </div>
         )}
@@ -408,7 +468,7 @@ export default function NeedAssessment() {
             className="flex-1 h-11 text-sm"
             style={{ borderColor: C.border, color: C.text2 }}
           >
-            다시 입력
+            {s.btnReset}
           </Button>
           <Button
             onClick={handleSave}
@@ -416,7 +476,7 @@ export default function NeedAssessment() {
             className="flex-1 h-11 text-sm font-medium"
             style={{ background: '#4AAEFF', color: '#fff' }}
           >
-            {saving ? '저장 중…' : '저장하기'}
+            {saving ? s.btnSaving : s.btnSave}
           </Button>
         </div>
       </div>

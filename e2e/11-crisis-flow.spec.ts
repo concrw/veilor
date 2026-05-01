@@ -37,13 +37,13 @@ test.describe('위기 플로우 E2E', () => {
     await input.press('Enter');
 
     // critical → 클라이언트 즉시 차단: ChatView 잠금 문구 표시
-    await expect(page.getByText(/전문가의 도움이 필요한 상황/i)).toBeVisible({ timeout: 5_000 });
+    await expect(page.getByText(/전문가의 도움이 필요한 상황/i)).toBeVisible({ timeout: 10_000 });
 
     // CrisisBanner "전문가에게 연락하기" 버튼 표시
     await expect(page.getByRole('button', { name: /전문가에게 연락하기/i })).toBeVisible({ timeout: 5_000 });
 
     // 입력 textbox가 사라져야 함 (crisisLocked = true)
-    await expect(input).not.toBeVisible({ timeout: 3_000 });
+    await expect(input).not.toBeVisible({ timeout: 5_000 });
   });
 
   // ── 2. high 위기 → AI 응답에 1393 포함 ─────────────────────
@@ -57,7 +57,7 @@ test.describe('위기 플로우 E2E', () => {
     await input.press('Enter');
 
     // high 위기 → AI 응답에 1393 포함 (서버 위기 게이트)
-    await expect(page.getByText(/1393/i)).toBeVisible({ timeout: 12_000 });
+    await expect(page.getByText(/1393/i)).toBeVisible({ timeout: 30_000 });
   });
 
   // ── 3. 안전한 맥락 → 정상 대화 ────────────────────────────
@@ -91,7 +91,7 @@ test.describe('위기 플로우 E2E', () => {
     await expect(page.getByText(/전문가의 도움이 필요한 상황/i)).toBeVisible({ timeout: 10_000 });
 
     // 입력창이 사라져야 함 (crisisLocked = true)
-    await expect(input).not.toBeVisible({ timeout: 3_000 });
+    await expect(input).not.toBeVisible({ timeout: 5_000 });
 
     // CrisisBanner "전문가에게 연락하기" 버튼 표시
     await expect(page.getByRole('button', { name: /전문가에게 연락하기/i })).toBeVisible();

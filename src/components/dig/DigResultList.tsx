@@ -1,4 +1,5 @@
 import type { PatternProfile } from './DigHistory';
+import { useDigTranslations } from '@/hooks/useTranslation';
 
 interface MatchResult {
   question: string;
@@ -28,9 +29,11 @@ export function DigResultList({
   interpretation, interpreting,
   onBack, onSelectResult,
 }: DigResultListProps) {
+  const dig = useDigTranslations();
+
   return (
     <div className="px-4 py-6 max-w-sm mx-auto space-y-5">
-      <button onClick={onBack} className="text-xs text-muted-foreground">← 돌아가기</button>
+      <button onClick={onBack} className="text-xs text-muted-foreground">{dig.goBack}</button>
 
       {/* 반복 패턴 배너 */}
       {selected.domain && (domainCounts[selected.domain] ?? 0) >= 2 && (() => {
@@ -38,15 +41,19 @@ export function DigResultList({
         const comboKey = `${selected.domain}::${situation}`;
         const comboCount = comboPatternCounts[comboKey] ?? 0;
         const profile = patternProfiles.find(p => p.pattern_axis === selected.domain);
-        const trendLabel = profile?.trend === 'rising' ? '증가 추세' : profile?.trend === 'declining' ? '감소 추세' : '유지 중';
+        const trendLabel = profile?.trend === 'rising'
+          ? dig.trendLabels.rising
+          : profile?.trend === 'declining'
+          ? dig.trendLabels.declining
+          : dig.trendLabels.stable;
         return (
           <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl px-4 py-3 space-y-2">
             <div className="flex items-center justify-between">
               <div className="text-xs">
                 <span className="font-medium text-amber-700 dark:text-amber-400">
-                  이번 달 {count}번째
+                  {dig.patternBanner.nthTime.replace('{count}', String(count))}
                 </span>
-                <span className="text-amber-600 dark:text-amber-500"> — "{selected.domain}" 패턴이 반복되고 있어요.</span>
+                <span className="text-amber-600 dark:text-amber-500"> — {dig.patternBanner.patternRepeating.replace('{domain}', selected.domain)}</span>
               </div>
               {profile && (
                 <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 whitespace-nowrap">
@@ -56,7 +63,7 @@ export function DigResultList({
             </div>
             {comboCount >= 2 && situation && (
               <p className="text-[11px] text-amber-600 dark:text-amber-500">
-                "{situation}" 상황에서만 {comboCount}회 반복 — 특정 관계에서 패턴이 작동하고 있어요.
+                {dig.patternBanner.comboRepeat.replace('{situation}', situation).replace('{count}', String(comboCount))}
               </p>
             )}
           </div>
@@ -65,11 +72,11 @@ export function DigResultList({
 
       {/* AI 패턴 해석 */}
       <div className="bg-card border rounded-2xl p-5 space-y-3">
-        <p className="text-xs text-muted-foreground">패턴 해석</p>
+        <p className="text-xs text-muted-foreground">{dig.patternInterpretation}</p>
         {interpreting ? (
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-            분석 중...
+            {dig.analyzing}
           </div>
         ) : interpretation ? (
           <p className="text-sm leading-relaxed">{interpretation}</p>
@@ -92,7 +99,7 @@ export function DigResultList({
               const color = pct >= 70 ? 'text-emerald-500 bg-emerald-500/10' : pct >= 40 ? 'text-amber-500 bg-amber-500/10' : 'text-muted-foreground bg-muted/40';
               return (
                 <span className={`ml-auto text-[10px] px-2 py-0.5 rounded-full font-medium ${color}`}>
-                  연관도 {pct}%
+                  {dig.relevance.replace('{pct}', String(pct))}
                 </span>
               );
             })()}
@@ -105,13 +112,13 @@ export function DigResultList({
         </div>
         {/* C8: 경향성 면책 문구 */}
         <p className="text-[10px] text-muted-foreground/60 leading-relaxed border-t pt-3">
-          이 결과는 고정된 진단이 아니라, 지금 가장 자주 활성화되는 심리적 경향입니다. 상황과 맥락에 따라 달라질 수 있어요.
+          {dig.tendencyDisclaimer}
         </p>
       </div>
 
       {results.length > 1 && (
         <div className="space-y-2">
-          <p className="text-xs text-muted-foreground">다른 관련 답변</p>
+          <p className="text-xs text-muted-foreground">{dig.otherAnswers}</p>
           {results.slice(1).map((r, i) => (
             <button key={i} onClick={() => onSelectResult(r)}
               className="w-full text-left bg-card border rounded-xl p-3 text-xs hover:border-primary/50 transition-colors">

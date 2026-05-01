@@ -8,9 +8,12 @@ import {
 import { C } from '@/lib/colors';
 import { supabase } from '@/integrations/supabase/client';
 import { MonthlyReportData, PsychTrendPoint, OutcomeMetrics } from '@/types/persona';
+import { useMeTranslations } from '@/hooks/useTranslation';
 
 const MonthlyReportCard = memo(function MonthlyReportCard({ userId, onTriggerUpgrade }: { userId: string; onTriggerUpgrade?: () => boolean }) {
   const [expanded, setExpanded] = useState(false);
+  const me = useMeTranslations();
+  const t = me.monthlyReport;
 
   const { data, isLoading, error } = useQuery<MonthlyReportData>({
     queryKey: ['monthly-report', userId],
@@ -30,7 +33,7 @@ const MonthlyReportCard = memo(function MonthlyReportCard({ userId, onTriggerUpg
   const changeColor = (v: number) => v > 0 ? C.amberGold : v < 0 ? '#C08070' : C.text4;
 
   const now = new Date();
-  const monthLabel = `${now.getMonth() + 1}월`;
+  const monthLabel = t.badge.replace('{month}', String(now.getMonth() + 1));
 
   const summary = data?.monthly_summary;
   const comparison = data?.comparison;
@@ -39,16 +42,15 @@ const MonthlyReportCard = memo(function MonthlyReportCard({ userId, onTriggerUpg
   const psychTrend = data?.psych_trend ?? [];
   const outcome = data?.outcome_metrics;
 
-  // 4축 중 가장 큰 변화가 있는 축 찾기
   const psychHighlight = (() => {
     if (psychTrend.length < 2) return null;
     const first = psychTrend[0];
     const last = psychTrend[psychTrend.length - 1];
     const axes: { key: keyof PsychTrendPoint; label: string }[] = [
-      { key: 'attachment', label: '애착' },
-      { key: 'communication', label: '소통' },
-      { key: 'desire', label: '욕구' },
-      { key: 'role', label: '역할' },
+      { key: 'attachment', label: t.axisLabels.attachment },
+      { key: 'communication', label: t.axisLabels.communication },
+      { key: 'desire', label: t.axisLabels.desire },
+      { key: 'role', label: t.axisLabels.role },
     ];
     let maxDelta = 0;
     let maxAxis = axes[0];
@@ -63,7 +65,6 @@ const MonthlyReportCard = memo(function MonthlyReportCard({ userId, onTriggerUpg
     <div
       onClick={() => {
         if (!expanded && onTriggerUpgrade) {
-          // 상세 보기 시도 시 프리미엄 체크
           const allowed = onTriggerUpgrade();
           if (!allowed) return;
         }
@@ -79,7 +80,7 @@ const MonthlyReportCard = memo(function MonthlyReportCard({ userId, onTriggerUpg
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 7 }}>
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '2px 8px', borderRadius: 99, border: `1px solid ${C.amberGold}33`, background: `${C.amberGold}08` }}>
           <span style={{ width: 4, height: 4, borderRadius: '50%', background: C.amberGold, display: 'block' }} />
-          <span style={{ fontSize: 9, fontWeight: 400, color: C.amberGold }}>{monthLabel} 월간 리포트</span>
+          <span style={{ fontSize: 9, fontWeight: 400, color: C.amberGold }}>{monthLabel}</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           {!expanded && onTriggerUpgrade && (
@@ -90,19 +91,19 @@ const MonthlyReportCard = memo(function MonthlyReportCard({ userId, onTriggerUpg
       </div>
 
       <p style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 15, color: C.text, marginBottom: 4, lineHeight: 1.4 }}>
-        이번 달 활동 요약
+        {t.activitySummary}
       </p>
 
-      {isLoading && <p style={{ fontSize: 11, fontWeight: 300, color: C.text4 }}>데이터를 불러오는 중...</p>}
-      {error && <p style={{ fontSize: 11, fontWeight: 300, color: '#C08070' }}>리포트를 불러올 수 없어요.</p>}
+      {isLoading && <p style={{ fontSize: 11, fontWeight: 300, color: C.text4 }}>{t.loading}</p>}
+      {error && <p style={{ fontSize: 11, fontWeight: 300, color: '#C08070' }}>{t.error}</p>}
 
       {summary && (
         <>
           <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
             {[
-              { label: 'Vent', value: `${summary.vent_count}회`, change: comparison?.vent },
-              { label: 'Dig', value: `${summary.dig_count}회`, change: comparison?.dig },
-              { label: 'Codetalk', value: `${summary.codetalk_days}일`, change: comparison?.codetalk },
+              { label: 'Vent', value: `${summary.vent_count}`, change: comparison?.vent },
+              { label: 'Dig', value: `${summary.dig_count}`, change: comparison?.dig },
+              { label: 'Codetalk', value: `${summary.codetalk_days}`, change: comparison?.codetalk },
             ].map(item => (
               <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 4, background: C.bg, border: `1px solid ${C.border}`, borderRadius: 7, padding: '5px 8px' }}>
                 <span style={{ fontSize: 9, fontWeight: 300, color: C.text4 }}>{item.label}</span>
@@ -120,7 +121,7 @@ const MonthlyReportCard = memo(function MonthlyReportCard({ userId, onTriggerUpg
             <div onClick={e => e.stopPropagation()} style={{ paddingTop: 12, marginTop: 10, borderTop: `1px solid ${C.border2}` }}>
               {chartData && chartData.length > 0 && (
                 <div style={{ marginBottom: 14 }}>
-                  <p style={{ fontSize: 9, fontWeight: 400, letterSpacing: '.07em', textTransform: 'uppercase', color: C.text4, marginBottom: 8 }}>3개월 비교</p>
+                  <p style={{ fontSize: 9, fontWeight: 400, letterSpacing: '.07em', textTransform: 'uppercase', color: C.text4, marginBottom: 8 }}>{t.threeMonthCompare}</p>
                   <div style={{ width: '100%', height: 160 }}>
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
@@ -128,26 +129,22 @@ const MonthlyReportCard = memo(function MonthlyReportCard({ userId, onTriggerUpg
                         <XAxis dataKey="month" tick={{ fontSize: 10, fill: C.text4 }} axisLine={false} tickLine={false} />
                         <YAxis tick={{ fontSize: 10, fill: C.text4 }} axisLine={false} tickLine={false} />
                         <Tooltip contentStyle={{ background: C.bg2, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 11, color: C.text2 }} />
-                        <Legend wrapperStyle={{ fontSize: 9, color: C.text4 }} formatter={(value: string) => {
-                          const labels: Record<string, string> = { vent: 'Vent', dig: 'Dig', codetalk: 'Codetalk' };
-                          return labels[value] || value;
-                        }} />
-                        <Bar dataKey="vent" name="vent" fill={C.amber} radius={[3, 3, 0, 0]} barSize={14} />
-                        <Bar dataKey="dig" name="dig" fill={C.frost} radius={[3, 3, 0, 0]} barSize={14} />
-                        <Bar dataKey="codetalk" name="codetalk" fill={C.amberGold} radius={[3, 3, 0, 0]} barSize={14} />
+                        <Legend wrapperStyle={{ fontSize: 9, color: C.text4 }} />
+                        <Bar dataKey="vent" name="Vent" fill={C.amber} radius={[3, 3, 0, 0]} barSize={14} />
+                        <Bar dataKey="dig" name="Dig" fill={C.frost} radius={[3, 3, 0, 0]} barSize={14} />
+                        <Bar dataKey="codetalk" name="Codetalk" fill={C.amberGold} radius={[3, 3, 0, 0]} barSize={14} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
                 </div>
               )}
 
-              {/* ── 3개월 심리 축 추이 차트 ── */}
               {psychTrend.length >= 3 ? (
                 <div style={{ marginBottom: 14 }}>
-                  <p style={{ fontSize: 9, fontWeight: 400, letterSpacing: '.07em', textTransform: 'uppercase', color: C.text4, marginBottom: 4 }}>4축 심리 추이 (3개월)</p>
+                  <p style={{ fontSize: 9, fontWeight: 400, letterSpacing: '.07em', textTransform: 'uppercase', color: C.text4, marginBottom: 4 }}>{t.psychTrendTitle}</p>
                   {psychHighlight && (
                     <p style={{ fontSize: 11, fontWeight: 300, color: psychHighlight.delta > 0 ? C.amberGold : '#C08070', marginBottom: 8, lineHeight: 1.4 }}>
-                      가장 큰 변화: <span style={{ fontWeight: 500 }}>{psychHighlight.label}</span> {psychHighlight.delta > 0 ? '+' : ''}{psychHighlight.delta}pt
+                      {t.psychTrendHighlight.replace('{axis}', psychHighlight.label).replace('{delta}', `${psychHighlight.delta > 0 ? '+' : ''}${psychHighlight.delta}`)}
                     </p>
                   )}
                   <div style={{ width: '100%', height: 180 }}>
@@ -158,15 +155,9 @@ const MonthlyReportCard = memo(function MonthlyReportCard({ userId, onTriggerUpg
                         <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: C.text4 }} axisLine={false} tickLine={false} />
                         <Tooltip
                           contentStyle={{ background: C.bg2, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 11, color: C.text2 }}
-                          formatter={(value: number, name: string) => {
-                            const labels: Record<string, string> = { attachment: '애착', communication: '소통', desire: '욕구', role: '역할' };
-                            return [`${value}pt`, labels[name] || name];
-                          }}
+                          formatter={(value: number, name: string) => [`${value}pt`, t.axisLabels[name] || name]}
                         />
-                        <Legend wrapperStyle={{ fontSize: 9, color: C.text4 }} formatter={(value: string) => {
-                          const labels: Record<string, string> = { attachment: '애착', communication: '소통', desire: '욕구', role: '역할' };
-                          return labels[value] || value;
-                        }} />
+                        <Legend wrapperStyle={{ fontSize: 9, color: C.text4 }} formatter={(value: string) => t.axisLabels[value] || value} />
                         <Line type="monotone" dataKey="attachment" name="attachment" stroke={C.amber} strokeWidth={2} dot={{ r: 3, fill: C.amber }} />
                         <Line type="monotone" dataKey="communication" name="communication" stroke={C.frost} strokeWidth={2} dot={{ r: 3, fill: C.frost }} />
                         <Line type="monotone" dataKey="desire" name="desire" stroke={C.amberGold} strokeWidth={2} dot={{ r: 3, fill: C.amberGold }} />
@@ -178,14 +169,14 @@ const MonthlyReportCard = memo(function MonthlyReportCard({ userId, onTriggerUpg
               ) : (
                 <div style={{ marginBottom: 14, padding: '12px 14px', background: C.bg, border: `1px solid ${C.border2}`, borderRadius: 10 }}>
                   <p style={{ fontSize: 11, fontWeight: 300, color: C.text4, lineHeight: 1.5 }}>
-                    3개월 이상 사용 시 심리 축 비교 차트가 생겨요.
+                    {t.psychTrendNeed}
                   </p>
                 </div>
               )}
 
               {topPatterns.length > 0 && (
                 <div>
-                  <p style={{ fontSize: 9, fontWeight: 400, letterSpacing: '.07em', textTransform: 'uppercase', color: C.text4, marginBottom: 6 }}>자주 나온 패턴 키워드</p>
+                  <p style={{ fontSize: 9, fontWeight: 400, letterSpacing: '.07em', textTransform: 'uppercase', color: C.text4, marginBottom: 6 }}>{t.topPatterns}</p>
                   <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
                     {topPatterns.map((kw, i) => (
                       <span key={i} style={{
@@ -204,15 +195,14 @@ const MonthlyReportCard = memo(function MonthlyReportCard({ userId, onTriggerUpg
 
               {topPatterns.length === 0 && !isLoading && (
                 <p style={{ fontSize: 11, fontWeight: 300, color: C.text4, lineHeight: 1.5 }}>
-                  아직 충분한 데이터가 없어요. Vent, Dig, Codetalk 탭을 사용하면 패턴이 나타나기 시작해요.
+                  {t.noData}
                 </p>
               )}
 
-              {/* ── 아웃컴 측정: V-File 진단 변화 ── */}
               {outcome && outcome.sessionCount >= 2 && outcome.axisChange && (
                 <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${C.border2}` }}>
                   <p style={{ fontSize: 9, fontWeight: 400, letterSpacing: '.07em', textTransform: 'uppercase', color: C.text4, marginBottom: 8 }}>
-                    성장 측정 ({outcome.sessionCount}회 진단)
+                    {t.growthMeasure.replace('{count}', String(outcome.sessionCount))}
                   </p>
                   {outcome.maskChanged && outcome.firstMask && outcome.latestMask && (
                     <p style={{ fontSize: 11, fontWeight: 300, color: C.text3, marginBottom: 8, lineHeight: 1.4 }}>
@@ -223,12 +213,11 @@ const MonthlyReportCard = memo(function MonthlyReportCard({ userId, onTriggerUpg
                   )}
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
                     {['A', 'B', 'C', 'D'].map(k => {
-                      const AXIS_KO: Record<string, string> = { A: '애착', B: '소통', C: '욕구표현', D: '역할' };
                       const delta = outcome.axisChange![k] ?? 0;
                       const color = delta > 0 ? C.amberGold : delta < 0 ? '#C08070' : C.text5;
                       return (
                         <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 6, background: C.bg, border: `1px solid ${C.border}`, borderRadius: 8, padding: '6px 10px' }}>
-                          <span style={{ fontSize: 10, color: C.text4, flex: 1 }}>{AXIS_KO[k]}</span>
+                          <span style={{ fontSize: 10, color: C.text4, flex: 1 }}>{t.axisShortLabels[k]}</span>
                           <span style={{ fontSize: 12, fontWeight: 500, color, fontFamily: "'Cormorant Garamond', serif" }}>
                             {delta > 0 ? `+${delta}` : delta === 0 ? '±0' : delta}
                           </span>

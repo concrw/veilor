@@ -4,10 +4,10 @@
 // 6단계: 직접 경험 여부 → 7단계: 1차 AI 분석 → 8단계: 2차 분석 →
 // 9단계: 가치관 매핑 → 10단계: Prime Perspective 도출
 
-import { STEP_LABELS } from '@/types/why';
 import { useWhySession } from '@/hooks/useWhySession';
 import { useWhyJobs } from '@/hooks/useWhyJobs';
 import { useWhyFlowAnalysis } from '@/hooks/useWhyFlowAnalysis';
+import { useLanguageContext } from '@/context/LanguageContext';
 import { StepReady } from './steps/StepReady';
 import { StepBrainstorm } from './steps/StepBrainstorm';
 import { StepDefinition } from './steps/StepDefinition';
@@ -20,7 +20,42 @@ import { StepImprint8 } from './steps/StepImprint8';
 import { StepValueMap9 } from './steps/StepValueMap9';
 import { StepPrimePerspective } from './steps/StepPrimePerspective';
 
+const S = {
+  ko: {
+    stepLabels: [
+      '준비',
+      '직업 브레인스토밍',
+      '직업 정의',
+      '각인 순간',
+      '행복/고통 분류',
+      '이유 작성',
+      '경험 여부',
+      '1차 분석',
+      '각인 연결',
+      '가치관 매핑',
+      'Prime Perspective',
+    ] as string[],
+  },
+  en: {
+    stepLabels: [
+      'Ready',
+      'Career Brainstorming',
+      'Career Definition',
+      'Imprint Moment',
+      'Happy/Pain Classification',
+      'Write Reason',
+      'Experience Check',
+      'Phase 1 Analysis',
+      'Imprint Connection',
+      'Value Mapping',
+      'Prime Perspective',
+    ] as string[],
+  },
+};
+
 export default function WhyFlow() {
+  const { language } = useLanguageContext();
+  const loc = S[language] ?? S.ko;
   const s = useWhySession();
   const j = useWhyJobs({
     user: s.user,
@@ -71,7 +106,7 @@ export default function WhyFlow() {
       {s.step > 0 && (
         <div className="space-y-1">
           <div className="flex justify-between text-xs text-muted-foreground">
-            <span>{STEP_LABELS[s.step]}</span>
+            <span>{loc.stepLabels[s.step]}</span>
             <span>{s.progressPct}%</span>
           </div>
           <div className="h-1 bg-muted rounded-full">

@@ -4,6 +4,7 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSetTranslations } from '@/hooks/useTranslation';
 import { useAuth } from '@/context/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { veilorDb, supabase } from '@/integrations/supabase/client';
@@ -11,8 +12,9 @@ import type { VeilorUserBoundary, VeilorConsentChecklist } from '@/integrations/
 import { toast } from '@/hooks/use-toast';
 import { saveSetSignal } from '@/hooks/useSignalPipeline';
 import CodetalkTab from '@/components/set/CodetalkTab';
-import BoundaryTab, { ALL_AX_MERCER_KEYS, AX_MERCER_SECTIONS, type BoundaryCategory } from '@/components/set/BoundaryTab';
-import AxMercerTab from '@/components/set/AxMercerTab';
+import CoupleTalkTab from '@/components/set/CoupleTalkTab';
+import BoundaryTab, { ALL_AX_MERCER_KEYS, BOUNDARY_CATEGORY_KEYS, type BoundaryCategory } from '@/components/set/BoundaryTab';
+import StoryFeedTab from '@/components/set/StoryFeedTab';
 import MiniToolsCard from '@/components/set/MiniToolsCard';
 import ConcernRouter from '@/components/set/ConcernRouter';
 import PersonaBranding from '@/components/set/PersonaBranding';
@@ -20,7 +22,7 @@ import RelationshipSimulation from '@/components/set/RelationshipSimulation';
 import RelationshipCoaching from '@/components/set/RelationshipCoaching';
 import ExperientialContent from '@/components/content/ExperientialContent';
 
-type Tab = 'codetalk' | 'boundary' | 'feed' | 'tools' | 'practice';
+type Tab = 'codetalk' | 'boundary' | 'feed' | 'tools' | 'practice' | 'us';
 
 type ConditionKey = 'no_cross_boundary' | 'safe_to_speak' | 'can_withdraw';
 
@@ -28,6 +30,7 @@ export default function SetPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const set = useSetTranslations();
   const [tab, setTab] = useState<Tab>('codetalk');
   const [entry, setEntry] = useState('');
   const [isPublic, setIsPublic] = useState(false);
@@ -35,8 +38,10 @@ export default function SetPage() {
   const [aiInsightLoading, setAiInsightLoading] = useState(false);
 
   // --- 경계 설정 로컬 상태 ---
-  const [boundaryTexts, setBoundaryTexts] = useState<Record<string, string>>({
-    emotional: '', physical: '', time: '', digital: '',
+  const [boundaryTexts, setBoundaryTexts] = useState<Record<string, string>>(() => {
+    const init: Record<string, string> = {};
+    BOUNDARY_CATEGORY_KEYS.forEach(k => { init[k] = ''; });
+    return init;
   });
   const [checkedConditions, setCheckedConditions] = useState<Record<string, boolean>>({
     no_cross_boundary: false, safe_to_speak: false, can_withdraw: false,
@@ -90,11 +95,12 @@ export default function SetPage() {
       const { data, error } = await supabase.functions.invoke('codetalk-ai-insights', {
         body: { entry_id: todayEntry.id, user_id: user.id },
       });
-      if (!error && data?.insight) {
-        setAiInsight(data.insight);
+      if (!error && data?.insights) {
+        const { insight, pattern, growth, affirmation } = data.insights;
+        setAiInsight([insight, pattern, growth, affirmation].filter(Boolean).join('\n\n'));
       }
     } catch {
-      toast({ title: 'AI 인사이트를 생성하지 못했어요', variant: 'destructive' });
+      toast({ title: set.insightError, variant: 'destructive' });
     } finally {
       setAiInsightLoading(false);
     }
@@ -190,7 +196,7 @@ export default function SetPage() {
   const saveMutation = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error('Not authenticated');
-      if (!keyword) throw new Error('오늘의 키워드를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.');
+      if (!keyword) throw new Error(set.insightError);
       const today = new Date().toLocaleDateString('sv-SE');
       await veilorDb.from('codetalk_entries').upsert({
         user_id: user.id,
@@ -218,7 +224,7 @@ export default function SetPage() {
         }).catch(err => console.error('[SetPage] saveSetSignal failed:', err));
       }
 
-      toast({ title: '기록 저장 완료 ✓' });
+      toast({ title: set.codetalk.savedToast });
       setEntry('');
       qc.invalidateQueries({ queryKey: ['codetalk-today'] });
       qc.invalidateQueries({ queryKey: ['codetalk-history'] });
@@ -240,7 +246,7 @@ export default function SetPage() {
       );
     },
     onSuccess: () => {
-      toast({ title: '경계 저장 완료 ✓' });
+      toast({ title: set.boundary.savedToast });
       qc.invalidateQueries({ queryKey: ['user-boundaries'] });
     },
   });
@@ -263,7 +269,7 @@ export default function SetPage() {
     },
     onSuccess: ({ conditionKey, newChecked }) => {
       setCheckedConditions(prev => ({ ...prev, [conditionKey]: newChecked }));
-      toast({ title: newChecked ? '약속을 확인했어요 ✓' : '약속을 해제했어요' });
+      toast({ title: newChecked ? set.boundary.consentChecked : set.boundary.consentUnchecked });
       qc.invalidateQueries({ queryKey: ['consent-checklist'] });
     },
   });
@@ -297,10 +303,12 @@ export default function SetPage() {
 
   // Ax Mercer 완료율 계산
   const getAxMercerProgress = (sectionId: string) => {
-    const section = AX_MERCER_SECTIONS.find(s => s.id === sectionId);
-    if (!section) return { checked: 0, total: 0, pct: 0 };
-    const total = section.items.length;
-    const checked = section.items.filter(i => axMercerChecks[i.key]).length;
+    const prefixMap: Record<string, string> = { boundary: 'bnd_', consent: 'cns_', communication: 'com_' };
+    const prefix = prefixMap[sectionId];
+    if (!prefix) return { checked: 0, total: 0, pct: 0 };
+    const sectionKeys = ALL_AX_MERCER_KEYS.filter(k => k.startsWith(prefix));
+    const total = sectionKeys.length;
+    const checked = sectionKeys.filter(k => axMercerChecks[k]).length;
     return { checked, total, pct: total > 0 ? Math.round((checked / total) * 100) : 0 };
   };
 
@@ -310,31 +318,58 @@ export default function SetPage() {
     return { checked, total, pct: total > 0 ? Math.round((checked / total) * 100) : 0 };
   })();
 
-  if (isLoading) return (
-    <div className="flex items-center justify-center h-64">
-      <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-    </div>
-  );
+  const SET_TABS: [Tab, string][] = [
+    ['codetalk', set.tabs.codetalk],
+    ['boundary', set.tabs.boundary],
+    ['us', set.tabs2.us],
+    ['tools', set.tabs2.tools],
+    ['practice', set.tabs2.practice],
+    ['feed', set.tabs.feed],
+  ];
 
   return (
-    <div className="px-4 py-6 space-y-5">
-      <div>
-        <h2 className="text-lg font-semibold">Set</h2>
-        <p className="text-sm text-muted-foreground mt-1">오늘의 언어로 나를 재설정해요.</p>
-      </div>
-
-      {/* 탭 */}
-      <div className="bg-card border rounded-2xl p-1 flex">
-        {([['codetalk', '키워드'], ['boundary', '경계'], ['tools', '도구'], ['practice', '실천'], ['feed', '스토리']] as [Tab, string][]).map(([t, label]) => (
+    <div className="flex flex-col lg:flex-row min-h-full">
+      {/* PC: 세로 탭 사이드바 */}
+      <nav className="hidden lg:flex flex-col flex-shrink-0 border-r border-border"
+        style={{ width: 140, padding: '24px 12px', gap: 4 }}>
+        <div className="mb-4 px-2">
+          <h2 className="text-base font-semibold">{set.header}</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">{set.sidebarSubtitle}</p>
+        </div>
+        {SET_TABS.map(([t, label]) => (
           <button key={t} onClick={() => setTab(t)}
-            className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors
-              ${tab === t ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}>
+            className={`text-left px-3 py-2.5 rounded-xl text-sm transition-colors
+              ${tab === t ? 'bg-primary text-primary-foreground font-medium' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}>
             {label}
           </button>
         ))}
+      </nav>
+
+      {/* 모바일: 가로 탭바 */}
+      <div className="lg:hidden px-4 pt-5 pb-0">
+        <div>
+          <h2 className="text-lg font-semibold">{set.header}</h2>
+          <p className="text-sm text-muted-foreground mt-1">{set.subtitle}</p>
+        </div>
+        <div className="bg-card border rounded-2xl p-1 flex mt-4">
+          {SET_TABS.map(([t, label]) => (
+            <button key={t} onClick={() => setTab(t)}
+              className={`flex-1 py-2 px-0.5 rounded-xl text-xs font-medium transition-colors truncate
+                ${tab === t ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}>
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
+      {/* 콘텐츠 영역 */}
+      <div className="flex-1 px-4 py-5 lg:py-6 space-y-5 overflow-y-auto max-w-3xl">
       {tab === 'codetalk' ? (
+        isLoading ? (
+          <div className="flex items-center justify-center h-64">
+            <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : (
         <CodetalkTab
           keyword={keyword}
           todayEntry={todayEntry}
@@ -348,6 +383,7 @@ export default function SetPage() {
           aiInsightLoading={aiInsightLoading}
           onRequestInsight={requestCodetalkInsight}
         />
+        )
       ) : tab === 'boundary' ? (
         <>
           {/* SexSelf 진입 배너 — 경계 탭 상단에 위치 */}
@@ -364,7 +400,7 @@ export default function SetPage() {
                 <div className="flex items-center gap-2">
                   <span className="text-base">🌸</span>
                   <span className="text-sm font-medium" style={{ color: '#ec4899' }}>
-                    성적 자아 탐색
+                    {set.sexSelfBanner.title}
                   </span>
                   <span className="text-[10px] px-2 py-0.5 rounded-full"
                     style={{ background: 'rgba(236,72,153,0.1)', color: '#ec4899', border: '1px solid rgba(236,72,153,0.2)' }}>
@@ -372,7 +408,7 @@ export default function SetPage() {
                   </span>
                 </div>
                 <p className="text-xs font-light" style={{ color: 'rgba(236,72,153,0.7)' }}>
-                  나는 어떤 성적 존재인가 — 욕구 패턴·수치심·표현 능력 진단
+                  {set.sexSelfBanner.desc}
                 </p>
               </div>
               <span style={{ color: 'rgba(236,72,153,0.5)', fontSize: 18 }}>›</span>
@@ -390,6 +426,8 @@ export default function SetPage() {
           getAxMercerProgress={getAxMercerProgress}
         />
         </>
+      ) : tab === 'us' ? (
+        <CoupleTalkTab />
       ) : tab === 'tools' ? (
         <div className="space-y-4">
           <MiniToolsCard />
@@ -403,11 +441,12 @@ export default function SetPage() {
           <ExperientialContent />
         </div>
       ) : (
-        <AxMercerTab
+        <StoryFeedTab
           keyword={keyword}
           publicFeed={publicFeed}
         />
       )}
+      </div>
     </div>
   );
 }

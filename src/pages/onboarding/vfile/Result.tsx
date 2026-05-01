@@ -8,12 +8,56 @@ import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer } fro
 import { veilorDb } from '@/integrations/supabase/client';
 import UpgradeModal from '@/components/premium/UpgradeModal';
 import { useVeilorSubscription } from '@/hooks/useVeilorSubscription';
+import { useLanguageContext } from '@/context/LanguageContext';
+
+const S = {
+  ko: {
+    subtitle: 'V-File 진단 결과',
+    sidebarHeading: '당신의 관계 가면이\n이름을 얻었습니다',
+    sidebarSubtext: '이 결과는 탐색의 시작입니다.\nVEILOR와 함께 더 깊이 들어가 보세요.',
+    yourVFile: '당신의 V-File',
+    complexSuffix: '복합형',
+    radarAxes: { A: '애착', B: '소통', C: '욕구표현', D: '역할' },
+    declaration: [
+      '지금 보이는 것은 윤곽입니다.',
+      '모든 사람에게는 보이는 얼굴과\n아직 이름 붙여지지 않은 얼굴들이 있습니다.',
+      '당신에 대해 안다고 말하기엔 아직 이릅니다.\n당신 자신도 마찬가지일 수 있어요.',
+      'VEILOR는 그 안으로 함께 들어갑니다.',
+      '준비가 되셨다면.',
+    ],
+    btnStart: '여정 시작 →',
+    btnDone: '결과 확인 완료',
+    btnPremium: 'Premium 분석 보기',
+    disclaimer: '이 결과는 자기탐색을 위한 참고 자료이며, 심리 진단이 아닙니다.\n정확한 평가를 원하시면 전문 심리상담사와 상담해 주세요.',
+  },
+  en: {
+    subtitle: 'V-File Diagnosis Result',
+    sidebarHeading: "Your relational mask\nhas been named",
+    sidebarSubtext: 'This result is the beginning of exploration.\nGo deeper with VEILOR.',
+    yourVFile: 'Your V-File',
+    complexSuffix: 'Complex',
+    radarAxes: { A: 'Attachment', B: 'Communication', C: 'Expression', D: 'Role' },
+    declaration: [
+      'What you see now is an outline.',
+      'Everyone has a visible face\nand faces not yet named.',
+      "It is too early to say we know you.\nYou yourself may feel the same.",
+      'VEILOR walks with you into that space.',
+      'If you are ready.',
+    ],
+    btnStart: 'Begin the journey →',
+    btnDone: 'Done',
+    btnPremium: 'View Premium analysis',
+    disclaimer: 'This result is a reference for self-exploration, not a clinical diagnosis.\nFor a thorough evaluation, please consult a licensed therapist.',
+  },
+};
 
 export default function PriperResult() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, completePriper } = useAuth();
   const { isPro } = useVeilorSubscription();
+  const { language } = useLanguageContext();
+  const s = S[language] ?? S.ko;
   const [result, setResult] = useState<DiagnosisResult | null>(null);
   const [revealed, setRevealed] = useState(false);
   const [paywallOpen, setPaywallOpen] = useState(false);
@@ -153,14 +197,33 @@ export default function PriperResult() {
   }
 
   const radarData = [
-    { axis: '애착', value: result.scores.A },
-    { axis: '소통', value: result.scores.B },
-    { axis: '욕구표현', value: result.scores.C },
-    { axis: '역할', value: result.scores.D },
+    { axis: s.radarAxes.A, value: result.scores.A },
+    { axis: s.radarAxes.B, value: result.scores.B },
+    { axis: s.radarAxes.C, value: result.scores.C },
+    { axis: s.radarAxes.D, value: result.scores.D },
   ];
 
   return (
-    <div className="min-h-screen flex flex-col px-6 py-10" style={{ background: '#1C1917', fontFamily: "'DM Sans', sans-serif" }}>
+    <div className="min-h-screen flex" style={{ background: '#1C1917', fontFamily: "'DM Sans', sans-serif" }}>
+      {/* 좌측 브랜드 패널 — PC 전용 */}
+      <div className="hidden lg:flex flex-col justify-between flex-1 px-16 py-14" style={{ borderRight: '1px solid #2A2624' }}>
+        <div>
+          <h1 className="text-4xl font-bold tracking-widest mb-3" style={{ color: '#D4A574', letterSpacing: '0.2em' }}>VEILOR</h1>
+          <p className="text-base font-light" style={{ color: '#A8A29E' }}>{s.subtitle}</p>
+        </div>
+        <div className="space-y-4">
+          <p className="text-2xl font-light leading-snug" style={{ color: '#F5F5F4' }}>
+            {s.sidebarHeading.split('\n').map((line, i) => <span key={i}>{line}{i === 0 && <br />}</span>)}
+          </p>
+          <p className="text-sm leading-relaxed" style={{ color: '#78716C' }}>
+            {s.sidebarSubtext.split('\n').map((line, i) => <span key={i}>{line}{i === 0 && <br />}</span>)}
+          </p>
+        </div>
+        <p className="text-xs" style={{ color: '#44403C' }}>© 2026 VEILOR</p>
+      </div>
+
+      {/* 우측 결과 영역 */}
+      <div className="flex flex-col flex-1 lg:flex-none lg:w-[520px] overflow-y-auto px-6 py-10">
       <div className="max-w-sm w-full mx-auto space-y-8">
         {/* 가면 공개 */}
         <div className={`text-center space-y-2 transition-all duration-700 ${revealed ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
@@ -169,7 +232,7 @@ export default function PriperResult() {
             🎭
           </div>
           <p className="text-xs uppercase tracking-widest" style={{ color: '#A8A29E' }}>
-            {context !== 'general' ? `${contextLabel.icon} ${contextLabel.ko}` : '당신의 V-File'}
+            {context !== 'general' ? `${contextLabel.icon} ${contextLabel.ko}` : s.yourVFile}
           </p>
           <h1 className="text-3xl font-bold" style={{ color: result.primary.color }}>
             {result.primary.nameKo}
@@ -177,7 +240,7 @@ export default function PriperResult() {
           <p className="text-sm" style={{ color: '#A8A29E' }}>{result.primary.archetype}</p>
           {result.isComplex && (
             <p className="text-xs" style={{ color: '#A8A29E' }}>
-              + <span style={{ color: result.secondary.color }}>{result.secondary.nameKo}</span> 복합형
+              + <span style={{ color: result.secondary.color }}>{result.secondary.nameKo}</span> {s.complexSuffix}
             </p>
           )}
         </div>
@@ -222,21 +285,19 @@ export default function PriperResult() {
             }}
           >
             <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '1.05rem', fontWeight: 300, color: '#F5F5F4', lineHeight: 1.6 }}>
-              지금 보이는 것은 윤곽입니다.
+              {s.declaration[0]}
             </p>
             <p style={{ fontSize: '0.8rem', fontWeight: 300, color: '#A8A29E', lineHeight: 1.8 }}>
-              모든 사람에게는 보이는 얼굴과<br />
-              아직 이름 붙여지지 않은 얼굴들이 있습니다.
+              {s.declaration[1].split('\n').map((line, i) => <span key={i}>{line}{i === 0 && <br />}</span>)}
             </p>
             <p style={{ fontSize: '0.8rem', fontWeight: 300, color: '#A8A29E', lineHeight: 1.8 }}>
-              당신에 대해 안다고 말하기엔 아직 이릅니다.<br />
-              당신 자신도 마찬가지일 수 있어요.
+              {s.declaration[2].split('\n').map((line, i) => <span key={i}>{line}{i === 0 && <br />}</span>)}
             </p>
             <p style={{ fontSize: '0.8rem', fontWeight: 300, color: '#A8A29E', lineHeight: 1.8 }}>
-              VEILOR는 그 안으로 함께 들어갑니다.
+              {s.declaration[3]}
             </p>
             <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '0.95rem', fontWeight: 300, color: result.primary.color, lineHeight: 1.6, paddingTop: '2px' }}>
-              준비가 되셨다면.
+              {s.declaration[4]}
             </p>
           </div>
         </div>
@@ -246,7 +307,7 @@ export default function PriperResult() {
           className="w-full h-12 text-base rounded-xl font-medium transition-opacity"
           style={{ background: '#D4A574', color: '#1C1917', fontFamily: "'DM Sans', sans-serif" }}
         >
-          {isOnboarding ? '여정 시작 →' : '결과 확인 완료'}
+          {isOnboarding ? s.btnStart : s.btnDone}
         </button>
 
         {!isPro && (
@@ -255,13 +316,12 @@ export default function PriperResult() {
             className="w-full text-xs underline underline-offset-2 py-1"
             style={{ color: '#A8A29E' }}
           >
-            Premium 분석 보기
+            {s.btnPremium}
           </button>
         )}
 
         <p className="text-[10px] leading-relaxed text-center px-2" style={{ color: '#57534E' }}>
-          이 결과는 자기탐색을 위한 참고 자료이며, 심리 진단이 아닙니다.
-          정확한 평가를 원하시면 전문 심리상담사와 상담해 주세요.
+          {s.disclaimer.split('\n').map((line, i) => <span key={i}>{line}{i === 0 && ' '}</span>)}
         </p>
       </div>
 
@@ -270,6 +330,7 @@ export default function PriperResult() {
         onClose={() => setPaywallOpen(false)}
         trigger={isOnboarding ? 'onboarding_complete' : 'priper_result'}
       />
+      </div>
     </div>
   );
 }

@@ -42,7 +42,7 @@ export default function ClearHome() {
       <div className="mb-6">
         <p className="text-[11px] tracking-[0.2em] uppercase text-slate-500 mb-1">CLEAR</p>
         <h1 className="text-lg font-semibold text-slate-100">
-          {profile?.nickname ? `${profile.nickname}님의 ${c.dashboard}` : c.dashboard}
+          {profile?.nickname ? c.dashboardGreetingFmt(profile.nickname) : c.dashboard}
         </h1>
         <p className="text-xs text-slate-600 mt-0.5">
           {today.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'long' })}
@@ -79,7 +79,7 @@ export default function ClearHome() {
           className="mb-3 rounded-2xl border p-5"
           style={{ background: '#111318', borderColor: '#4AAEFF22' }}
         >
-          <p className="text-[11px] tracking-[0.2em] uppercase text-slate-500 mb-4">감정 분포</p>
+          <p className="text-[11px] tracking-[0.2em] uppercase text-slate-500 mb-4">{c.emotionDist}</p>
           <div className="flex justify-center">
             <EmotionWheel scores={emotionScores} size={220} />
           </div>

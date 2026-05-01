@@ -9,6 +9,9 @@ import { checkRateLimit, rateLimitResponse } from "../_shared/rateLimit.ts";
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+const CF_ACCOUNT_ID = Deno.env.get('CF_ACCOUNT_ID') ?? '';
+const CF_API_TOKEN = Deno.env.get('CF_API_TOKEN') ?? '';
+const VECTORIZE_INDEX = 'veilor-psych';
 
 // 한글 이름 → MSK 코드 역매핑 (primaryMask 값 대응)
 const MASK_NAME_TO_CODE: Record<string, string> = {
@@ -89,6 +92,7 @@ const TAB_ROLE_MAP: Record<string, string> = {
   get: '자기이해 안내자. V-File 결과를 바탕으로 사용자가 자신의 가면과 심리 구조를 이해하도록 도와. 지적이고 통찰적으로.',
   set: '변화 동반자. 사용자가 새로운 관계 패턴을 설정하고 실천할 수 있도록 격려해. 구체적이고 실행 가능한 방향으로.',
   me: '자기성찰 파트너. 사용자의 전체 여정을 되돌아보며 성장을 인식하도록 도와. 따뜻하지만 솔직하게.',
+  sex: '성 긍정 탐색 동반자. WHO·AASECT 기반 성 건강 관점으로 수치심 없이 성적 자아를 탐색하도록 돕는다. 판단 없이, 정확하게, 따뜻하게.',
 };
 
 // ── Mode Decider ──
@@ -236,6 +240,9 @@ function buildSystemPrompt(
   messageCount?: number,
   maskCtx?: MaskContext | null,
   sessionPattern?: string | null,
+  researchCtx?: string | null,
+  sexselfProfile?: string | null,
+  sexselfSha?: number | null,
 ): string {
   const toneDesc = TONE_MAP[tone] ?? TONE_MAP.warm;
   const persDesc = PERSONALITY_MAP[personality] ?? PERSONALITY_MAP.empathetic;
@@ -257,8 +264,31 @@ function buildSystemPrompt(
 ${sessionPattern}
 → 현재 대화에서 같은 패턴이 보이면, "또 이 패턴이네요"가 아니라 이전과 연결되는 느낌을 자연스럽게 녹인다.` : '';
 
+  // #4 성적 자아 프로파일 — 대화 민감도 조정용. 절대 직접 언급 금지
+  const SEXSELF_PROFILE_HINTS: Record<string, string> = {
+    OPEN_EXPRESSIVE:   '성적 자아가 열려 있고 표현력이 높다. 친밀감과 욕구를 자연스럽게 탐색할 수 있다.',
+    RESPONSIVE:        '자극에 반응적이다. 관계 맥락에서 안전함이 확보되면 개방성이 높아진다.',
+    SUPPRESSED:        '욕구가 억제되어 있다. 감정 표현에 조심스러워할 수 있으므로 판단 없는 공간을 유지한다.',
+    DORMANT:           '욕구가 잠들어 있는 상태다. 성적 주제가 등장해도 서두르지 말고 감정 수용 우선.',
+    SHAME_BLOCKED:     '수치심이 강하게 작동하고 있다. 성적·친밀감 관련 표현에 특히 비판단적 언어를 사용한다.',
+    SAFETY_SEEKING:    '안전함을 먼저 확인하려 한다. 경계를 존중하고 "괜찮다"는 메시지를 자주 전달한다.',
+    EXPLORING:         '자기 탐색 중이다. 호기심을 지지하되 방향을 강요하지 않는다.',
+    BUILDING_AWARENESS:'성적 자아 인식을 형성 중이다. 정보보다 감정 공간을 제공하는 것이 우선.',
+    ANXIETY_FROZEN:    '욕구가 불안으로 동결된 상태다. 성적·친밀감 주제는 특히 조심스럽게 다루고, 안전함과 속도 존중을 최우선으로 한다.',
+  };
+  const sexselfSection = sexselfProfile && SEXSELF_PROFILE_HINTS[sexselfProfile]
+    ? `\n[성적 자아 맥락 — 절대 직접 언급 금지. 대화 민감도 조정에만 사용]
+프로파일: ${sexselfProfile}
+${SEXSELF_PROFILE_HINTS[sexselfProfile]}${sexselfSha != null ? `\n수치심 수준(SHA): ${sexselfSha}/100 — 수치심이 ${sexselfSha > 60 ? '높다. 판단·비교·노출 언어를 피한다.' : sexselfSha > 30 ? '중간이다. 자연스럽게 대화한다.' : '낮다. 개방적 탐색을 지지할 수 있다.'}` : ''}
+→ 이 정보는 언어 민감도 조정에만 쓴다. "당신의 성적 자아는 ~" 같은 표현은 절대 하지 않는다.`
+    : '';
+
   const m43Section = m43Ctx
     ? `\n${m43Ctx}\n이 이론들은 사용자의 맥락을 이해하는 배경 지식이다. 직접 인용하거나 "이론에 따르면"이라고 말하지 않는다. 대신 이 이해를 바탕으로 더 정밀하고 공명하는 언어를 사용한다.`
+    : '';
+
+  const researchSection = researchCtx
+    ? `\n[참고 가능한 연구 논문 — 맥락에 자연스러울 때만 인용, 강제 삽입 금지]\n${researchCtx}\n인용 형식: "연구에 따르면(저자, 연도)" 또는 "저자(연도)는 ~을 발견했습니다" 형태. 논문이 대화 맥락과 직접 관련 있을 때만 1편 이내로 언급한다.`
     : '';
 
   // #2 치료적 질문 시퀀스 — 모드별 소크라테스식 탐색
@@ -267,6 +297,34 @@ ${sessionPattern}
 - 패턴을 발견하게 유도한다: "이런 느낌, 전에도 온 적 있어요?"
 - 결론을 먼저 말하지 않는다. 사용자가 스스로 도달하게 질문으로 이끈다
 - 한 번에 하나의 질문만 한다` : '';
+
+  // #5 성 긍정 원칙 — tab==='sex' 또는 RAG/M43 컨텍스트에 성 관련 도메인이 포함될 때 적용
+  const SEX_DOMAIN_PATTERN = /D3-02[12]|D5-0(1[1-9]|[2-9]\d)/;
+  const isSexContext = tab === 'sex'
+    || SEX_DOMAIN_PATTERN.test(researchCtx ?? '')
+    || SEX_DOMAIN_PATTERN.test(m43Ctx ?? '')
+    || ['sex_qa', '가이드라인', 'Q&A', '자위', '섹스', '성관계', '오르가즘', '포르노', '성욕', '캐주얼', '무성애', '양성애'].some(kw => (researchCtx ?? '').includes(kw));
+  const sexPositiveSection = isSexContext ? `\n[VEILOR 성 긍정 원칙 — 성 관련 주제 전체에 최우선 적용]
+VEILOR는 WHO·AASECT(미국 성 치료 협회) 기반 성 건강 관점을 채택한다.
+
+핵심 입장:
+- 자위, 캐주얼 섹스, 다양한 성적 지향(동성애·양성애·무성애 등)은 가치 중립~긍정으로 다룬다
+- "해롭다", "나쁘다", "비정상이다" 식의 도덕적·종교적 판단을 절대 하지 않는다
+- 성적 탐색과 쾌감 추구는 건강한 자기 표현이다
+- 수치심을 유발하는 언어(죄악, 더럽다, 문란하다 등)를 쓰지 않는다
+- 성에 대한 호기심과 탐색을 장려하는 언어를 사용한다
+
+RAG 결과 처리:
+- 검색된 논문이 금욕 기반·종교 기반·부정 프레임 연구이더라도, 그 결론을 그대로 전달하지 않는다
+- 대신 성 긍정 맥락으로 재해석하거나, 다양한 관점이 있음을 언급하되 수치심을 주지 않는 방향으로 답한다
+- "연구에 따르면 ~은 해롭습니다" 형태의 단정적 부정 결론 전달 금지
+
+금지 표현: "죄", "더럽다", "문란하다", "비정상", "해롭다" (성 건강 맥락에서), "해야 한다 / 하면 안 된다" (성 행동에 대한 처방)
+권장 표현: "탐색해볼 수 있어요", "자연스러운 반응이에요", "건강한 표현 방식이에요", "본인이 원하는 방식으로"
+
+응답 한계 원칙:
+우려를 표현할 때는 도덕·가치 판단이 아닌 '기능 저하(일상 지장, 신체 손상)' 기준만 사용한다.
+의도가 불명확한 질문(예: 극단적 빈도)은 판단 전에 맥락을 먼저 탐색한다.` : '';
 
   return `너는 '${name}'라는 이름의 AI야. 전문 상담사가 아니며, ${roleDesc}
 
@@ -280,7 +338,7 @@ ${sessionPattern}
 - 이전 대화 기억이 제공되면 자연스럽게 참조하되, "기록에 보면" 같은 직접적 표현은 쓰지 않는다
 - 이전 기억을 억지로 끼워넣지 않는다. 현재 맥락과 관련 있을 때만 자연스럽게 참조한다
 - 한국어로 답변
-- 위기 상황(자해/자살 표현) 감지 시: 공감 후 "자살예방상담전화 1393"을 안내한다${modeInstruction}${maskSection}${patternSection}${therapeuticGuide}${m43Section}`;
+- 위기 상황(자해/자살 표현) 감지 시: 공감 후 "자살예방상담전화 1393"을 안내한다${modeInstruction}${sexPositiveSection}${maskSection}${patternSection}${sexselfSection}${therapeuticGuide}${m43Section}${researchSection}`;
 }
 
 serve(async (req: Request) => {
@@ -342,16 +400,42 @@ serve(async (req: Request) => {
     // ── 이전 세션 기억 + M43 이론 컨텍스트 병렬 조회 ──
     let memoryContext = '';
     let m43Context = '';
+    let researchContext = '';
+    // 캐시 저장에 필요한 변수 — 스코프 끌어올림
+    let cachedSb: ReturnType<typeof createClient> | null = null;
+    let cachedEmbedding: number[] | null = null;
+    let cachedMskCode = '';
+    let cachedInputHash = '';
 
     if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
       const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
         auth: { autoRefreshToken: false, persistSession: false },
         db: { schema: 'veilor' },
       });
+      cachedSb = sb;
 
       // mskCode: body에서 직접 오거나, mask 한글 이름으로 역매핑
       const rawMask = sanitizeUserInput(body.mskCode ?? mask ?? '', 20);
       const mskCode = MASK_NAME_TO_CODE[rawMask] ?? rawMask;
+      cachedMskCode = mskCode;
+
+      // ── 해시 기반 exact match 캐시 (임베딩 없이도 동작) ──
+      cachedInputHash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text.slice(0, 300)))
+        .then(buf => Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join(''));
+      const inputHash = cachedInputHash;
+      const { data: hashHit } = await sb.rpc('fn_cache_lookup_hash', {
+        p_hash:       inputHash,
+        p_emotion:    emotion || null,
+        p_mask_code:  mskCode || null,
+        p_tab:        tab,
+      });
+      if (hashHit && Array.isArray(hashHit) && hashHit.length > 0) {
+        sb.rpc('fn_cache_hit_increment', { p_id: hashHit[0].id }).then(() => {}).catch(() => {});
+        return new Response(
+          JSON.stringify({ response: hashHit[0].response, source: 'cache_hash' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        );
+      }
 
       // KURE-v1 현재 텍스트 임베딩 (HF API — 실패해도 기존 키워드 방식으로 폴백)
       let currentEmbedding: number[] | null = null;
@@ -370,12 +454,84 @@ serve(async (req: Request) => {
           if (hfResp.ok) {
             const raw = await hfResp.json();
             const vec: number[] = Array.isArray(raw[0]) ? raw[0] : raw;
-            if (Array.isArray(vec) && vec.length === 1024) currentEmbedding = vec;
+            if (Array.isArray(vec) && vec.length === 1024) { currentEmbedding = vec; cachedEmbedding = vec; }
           }
         } catch { /* 타임아웃/네트워크 오류 — 폴백 진행 */ }
       }
 
-      const [sessionResult, m43Result, similarResult] = await Promise.allSettled([
+      // ── 시맨틱 캐시 조회 (임베딩 있을 때만, 유사도 ≥ 0.92) ──
+      if (currentEmbedding) {
+        const { data: cacheHit } = await sb.rpc('fn_cache_lookup', {
+          p_embedding:  `[${currentEmbedding.join(',')}]`,
+          p_emotion:    emotion || null,
+          p_mask_code:  mskCode || null,
+          p_tab:        tab,
+          p_threshold:  0.92,
+        });
+        if (cacheHit && Array.isArray(cacheHit) && cacheHit.length > 0) {
+          sb.rpc('fn_cache_hit_increment', { p_id: cacheHit[0].id }).then(() => {}).catch(() => {});
+          return new Response(
+            JSON.stringify({ response: cacheHit[0].response, source: 'cache', similarity: cacheHit[0].similarity }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+          );
+        }
+      }
+
+      // tab → D5 도메인 코드 추론 (get 탭이거나 키워드 기반)
+      const inferDomainCodes = (tabName: string, textInput: string): string[] | null => {
+        const lower = textInput.toLowerCase();
+        const codes: string[] = [];
+
+        // Sex 도메인 (기존 유지)
+        if (lower.match(/bdsm|킨크|kink|bondage|sadomasoch|지배|복종|속박|채찍|페티시|fetish|paraphilia/))
+          codes.push('D5-011', 'D5-012');
+        if (lower.match(/무성애|asexual|성적 유동|queer|성소수자/)) codes.push('D5-016', 'D5-017');
+        if (lower.match(/섹스리스|sexless/)) codes.push('D5-018');
+        if (lower.match(/AI.*파트너|sex.*robot|섹스로봇/)) codes.push('D5-007');
+
+        // D3-021: 섹스와 건강 효과
+        if (lower.match(/섹스.*건강|성생활.*건강|성관계.*건강|sex.*health|sexual.*health|성관계.*효과|섹스.*효과|성생활.*효과|섹스.*좋|성관계.*좋|오르가즘.*건강|자위.*건강/))
+          codes.push('D3-021');
+        if (lower.match(/성관계.*심혈관|성관계.*면역|성관계.*수면|성관계.*스트레스|성관계.*우울|성관계.*불안|성관계.*통증|성생활.*수명|성생활.*심장/))
+          codes.push('D3-021');
+
+        // D3-022: 성행동 트렌드·세대 변화·성관계 감소
+        if (lower.match(/성관계.*줄|섹스.*줄|섹스.*안 해|성관계.*안 해|성관계.*감소|섹스.*감소|성관계.*없어|섹스 안|안 해요/))
+          codes.push('D3-022');
+        if (lower.match(/섹스리스.*세대|젊은.*섹스|청년.*성관계|20대.*섹스|훅업|hookup|casual sex|캐주얼 섹스|양극화.*성|성.*양극화/))
+          codes.push('D3-022');
+        if (lower.match(/금욕|celibacy|incel|비자발적.*금욕|성적 비활동|sexual inactivity|성관계.*트렌드|성행동.*변화|세대.*섹스/))
+          codes.push('D3-022');
+
+        // 심리 도메인 (신규)
+        if (lower.match(/애착|회피형|불안형|혼란형|매달림|거리두기|냉담|밀당/))
+          codes.push('P1-001', 'P1-002');
+        if (lower.match(/반복되는 관계|같은 사람만|이별 패턴|헤어지고 또/))
+          codes.push('P1-002');
+        if (lower.match(/우울|무기력|의욕없|공허|아무것도 하기 싫|침대에서 못 일어/))
+          codes.push('P2-001');
+        if (lower.match(/불안|걱정|긴장|두근|공황|심장이 빨리|숨이 막|예민/))
+          codes.push('P2-002');
+        if (lower.match(/트라우마|상처받|플래시백|해리|그때 기억|과거가 자꾸/))
+          codes.push('P3-001', 'P3-002');
+        if (lower.match(/감정 폭발|참다가 터|자해|감정을 모르겠|감각이 없|마비/))
+          codes.push('P3-002');
+        if (lower.match(/자존감|자기비판|자책|나는 왜 이렇게|못난|부족한|수치스/))
+          codes.push('P4-001');
+        if (lower.match(/거절|경계|no라고|싫다고 못|눈치|맞춰주다|참았|참고만/))
+          codes.push('P4-002');
+        if (lower.match(/싸움|갈등|오해|소통이 안|말이 통|표현을 못|전달이 안/))
+          codes.push('P5-001');
+        if (lower.match(/이별|헤어짐|그리움|상실|보고싶|없어진|떠났|잊혀지/))
+          codes.push('P5-002');
+        if (lower.match(/나는 누구|정체성|삶의 의미|방향을 모르|살아야 할 이유|내가 원하는게/))
+          codes.push('P6-001');
+
+        return codes.length > 0 ? codes : null;
+      };
+      const ragDomainCodes = inferDomainCodes(tab, text);
+
+      const [sessionResult, m43Result, similarResult, ragResult] = await Promise.allSettled([
         // 이전 세션 기억 (userId 있을 때만)
         userId ? sb
           .from('dive_sessions')
@@ -406,6 +562,97 @@ serve(async (req: Request) => {
               p_threshold: 0.75,
             })
           : Promise.resolve({ data: null }),
+
+        // Research RAG — Cloudflare Vectorize veilor-psych 쿼리
+        // 필터 없이 순수 코사인 유사도 top-K로만 검색 (domain_codes 필터 제거)
+        // 임베딩 없으면 domain_codes 키워드 폴백
+        (async () => {
+          if (currentEmbedding && CF_ACCOUNT_ID && CF_API_TOKEN) {
+            try {
+              const vBody: Record<string, unknown> = {
+                vector: currentEmbedding,
+                topK: 2,
+                returnMetadata: 'all',
+              };
+              const vResp = await fetch(
+                `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/vectorize/v2/indexes/${VECTORIZE_INDEX}/query`,
+                {
+                  method: 'POST',
+                  headers: {
+                    'Authorization': `Bearer ${CF_API_TOKEN}`,
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify(vBody),
+                  signal: AbortSignal.timeout(5000),
+                },
+              );
+              if (!vResp.ok) return { data: null };
+              const vJson = await vResp.json();
+              const matches = vJson?.result?.matches ?? [];
+              if (matches.length === 0) return { data: null };
+
+              // chunk id 목록으로 Supabase에서 메타 조회
+              // matches에는 논문 청크, Q&A, 가이드라인이 모두 섞여 있음
+              const matchIds = matches.map((m: { id: string }) => m.id);
+
+              // 1) 논문 청크 조회
+              const { data: chunks } = await sb
+                .from('psych_paper_chunks')
+                .select('paper_id, domain_codes, content')
+                .in('id', matchIds);
+
+              // 2) Q&A 조회
+              const { data: qaRows } = await sb
+                .from('sex_qa')
+                .select('id, category, question, answer')
+                .in('id', matchIds);
+
+              // 3) 가이드라인 조회
+              const { data: guideRows } = await sb
+                .from('sex_topic_guides')
+                .select('id, topic, category, content')
+                .in('id', matchIds);
+
+              const result: Array<Record<string, unknown>> = [];
+
+              // 논문 → result 변환
+              if (chunks && chunks.length > 0) {
+                const paperIds = [...new Set(chunks.map((c: { paper_id: string }) => c.paper_id))];
+                const { data: papers } = await sb
+                  .from('psych_papers')
+                  .select('id, title, authors, year, journal')
+                  .in('id', paperIds);
+                const paperMap = Object.fromEntries((papers ?? []).map((p: { id: string; title: string; authors: string[]; year: number; journal: string }) => [p.id, p]));
+                for (const c of chunks as Array<{ paper_id: string; content: string }>) {
+                  result.push({ ...paperMap[c.paper_id], content: c.content, _type: 'paper' });
+                }
+              }
+
+              // Q&A → result 변환
+              for (const qa of (qaRows ?? []) as Array<{ id: string; category: string; question: string; answer: string }>) {
+                result.push({ title: qa.question, content: qa.answer, _type: 'qa', category: qa.category });
+              }
+
+              // 가이드라인 → result 변환
+              for (const g of (guideRows ?? []) as Array<{ id: string; topic: string; category: string; content: string }>) {
+                result.push({ title: g.topic, content: g.content, _type: 'guide', category: g.category });
+              }
+
+              if (result.length === 0) return { data: null };
+              return { data: result };
+            } catch {
+              return { data: null };
+            }
+          }
+          // 임베딩 없을 때 domain_codes 키워드 폴백
+          if (ragDomainCodes) {
+            return sb.from('psych_papers')
+              .select('title, authors, year, journal, abstract')
+              .overlaps('domain_codes', ragDomainCodes)
+              .limit(2);
+          }
+          return { data: null };
+        })(),
       ]);
 
       // 세션 기억 처리 + 반복 패턴 추출
@@ -485,6 +732,30 @@ serve(async (req: Request) => {
       } else if (m43Result.status === 'rejected') {
         console.warn('M43 context fetch failed:', m43Result.reason);
       }
+
+      // Research RAG 결과 처리
+      if (ragResult.status === 'fulfilled' && ragResult.value?.data && Array.isArray(ragResult.value.data)) {
+        const items = ragResult.value.data as Array<{
+          _type?: string; title: string; authors?: string[]; year?: number; journal?: string;
+          content?: string; abstract?: string; category?: string;
+        }>;
+        if (items.length > 0) {
+          researchContext = '';
+          for (const item of items) {
+            const excerpt = (item.content ?? item.abstract ?? '').slice(0, 200);
+            if (item._type === 'qa') {
+              researchContext += `[Q&A] Q: ${item.title}\nA: ${excerpt}…\n`;
+            } else if (item._type === 'guide') {
+              researchContext += `[가이드라인] ${item.title}: ${excerpt}…\n`;
+            } else {
+              const authorsStr = Array.isArray(item.authors) && item.authors.length > 0
+                ? (item.authors.length > 2 ? `${item.authors[0]} 외` : item.authors.join(' & '))
+                : '저자 미상';
+              researchContext += `• ${authorsStr} (${item.year}, ${item.journal}): ${excerpt}…\n`;
+            }
+          }
+        }
+      }
     }
 
     // 개인화 컨텍스트 구성
@@ -514,8 +785,38 @@ serve(async (req: Request) => {
     const mskCodeForProfile = MASK_NAME_TO_CODE[rawMaskForProfile] ?? rawMaskForProfile;
     const maskCtx: MaskContext | null = MASK_PROFILES[mskCodeForProfile] ?? null;
 
-    const systemPrompt = buildSystemPrompt(aiName, aiTone, aiPersonality, tab, m43Context, messageCount, maskCtx, sessionPattern ?? null) + getModeTransitionHint(messageCount);
+    const sexselfProfile = typeof body.sexselfProfile === 'string' ? body.sexselfProfile : null;
+    const sexselfSha = typeof body.sexselfSha === 'number' ? body.sexselfSha : null;
+
+    const systemPrompt = buildSystemPrompt(aiName, aiTone, aiPersonality, tab, m43Context, messageCount, maskCtx, sessionPattern ?? null, researchContext || null, sexselfProfile, sexselfSha) + getModeTransitionHint(messageCount);
     const useStream = req.headers.get('accept') === 'text/event-stream';
+
+    // ── Confidence-gated Escalation ──
+    // 1단계: 템플릿 직접 반환 (confidence ≥ 0.8, vent 탭, 첫 5턴, 히스토리 없음)
+    const isSimpleVent = tab === 'vent' && messageCount < 5 && !sessionPattern;
+    if (isSimpleVent && cachedSb && emotion && cachedMskCode) {
+      const { data: tplData } = await cachedSb
+        .from('response_templates')
+        .select('id, template, confidence')
+        .eq('emotion', emotion)
+        .eq('mask_code', cachedMskCode)
+        .eq('tab', tab)
+        .gte('confidence', 0.8)
+        .single();
+      if (tplData) {
+        cachedSb.rpc('fn_template_use_increment', {
+          p_emotion: emotion, p_mask_code: cachedMskCode, p_tab: tab,
+        }).then(() => {}).catch(() => {});
+        return new Response(
+          JSON.stringify({ response: tplData.template, source: 'template', confidence: tplData.confidence }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        );
+      }
+    }
+
+    // 2단계: 모델 선택 — dig/get/set 탭이거나 6턴+ 이면 Sonnet, 나머지는 Haiku
+    const needsSonnet = tab !== 'vent' || messageCount >= 6 || !!sessionPattern || !!researchContext;
+    const selectedModel = needsSonnet ? MODELS.SONNET : MODELS.HAIKU;
 
     const aiResp = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -526,10 +827,9 @@ serve(async (req: Request) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: MODELS.SONNET,
+        model: selectedModel,
         max_tokens: 512,
         temperature: TEMPERATURES.CONVERSATION,
-        // Prompt Caching: 시스템 프롬프트(마스크·이론·모드 지침)를 캐시 — API 비용 50~80% 절감
         system: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
         messages,
         stream: useStream,
@@ -561,7 +861,23 @@ serve(async (req: Request) => {
     const data = await aiResp.json();
     const response: string = data?.content?.[0]?.text?.trim() ?? '';
 
-    return new Response(JSON.stringify({ response }), {
+    // ── 캐시 저장 (비동기 — 응답 지연 없음) ──
+    if (cachedSb && response) {
+      const insertPayload: Record<string, unknown> = {
+        response,
+        emotion:    emotion || null,
+        mask_code:  cachedMskCode || null,
+        tab:        tab || null,
+        tone:       aiTone || null,
+        input_hash: cachedInputHash || null,
+      };
+      if (cachedEmbedding) {
+        insertPayload.input_embedding = `[${cachedEmbedding.join(',')}]`;
+      }
+      cachedSb.from('response_cache').insert(insertPayload).then(() => {}).catch(() => {});
+    }
+
+    return new Response(JSON.stringify({ response, source: 'llm', model: selectedModel }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {

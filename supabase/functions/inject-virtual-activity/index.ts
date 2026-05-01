@@ -109,6 +109,128 @@ const CODETALK_KEYWORDS = [
   "집착", "통제", "회피", "감정", "관계", "공감", "선택", "변화",
 ];
 
+// 영어 커뮤니티 콘텐츠 (마스크별)
+const COMMUNITY_CONTENT_EN: Record<string, string[]> = {
+  반항자: [
+    "No matter how good a relationship is, if I lose myself in it, it means nothing.",
+    "When I spoke my boundaries, the relationship actually became easier. I was scared at first.",
+    "When I said I'd live my own way, someone left. But I think I made the right choice.",
+    "I'm practicing not collapsing in front of people who try to control me.",
+    "When someone gets angry at my refusal, I ask myself if this relationship is right for me.",
+  ],
+  구원자: [
+    "I helped them, but they took it for granted. It's exhausting when this keeps repeating.",
+    "Reaching out first has become a habit — I've been wondering when that started.",
+    "Even when they say they're fine, worry comes first. What should I do?",
+    "Sometimes I can't tell if I'm helping out of sincerity or fear.",
+    "It feels strange to take care of myself. Does anyone else feel this way?",
+  ],
+  돌보는자: [
+    "The more I take care of others, the more I feel like I'm disappearing.",
+    "When someone looks troubled, I feel their feelings before my own.",
+    "Today I made time for myself. It felt more awkward than I expected.",
+    "Reaching out first became natural — but when I stopped, there was silence.",
+    "How do I avoid burning out? I'm genuinely curious.",
+  ],
+  거울: [
+    "It's exhausting when my whole day shifts based on how others react.",
+    "Praise calms me, silence makes me anxious. How do I deal with this?",
+    "Sometimes I don't know who I am. It gets worse when I'm alone.",
+    "I can't tell if I'm acting to be recognized or acting from the heart.",
+    "I want to stop reading people so much, but it doesn't work the way I want.",
+  ],
+  승인자: [
+    "I couldn't say no, so I kept adjusting — and now I've hit a limit.",
+    "I always held back, afraid that refusing would break the relationship.",
+    "Today I said what I really felt for the first time. It was scary but I did it.",
+    "Trying to be good for everyone, I ended up honest with no one.",
+    "I have a pattern of apologizing first whenever there's any conflict.",
+  ],
+  매혹자: [
+    "When I'm getting attention, I feel alive. Without it, I feel like I disappear.",
+    "When I showed the real me, they liked me even more. I was surprised.",
+    "We connected through attraction, but deepening it feels frightening.",
+    "I wondered if I still feel like myself when no one is watching.",
+    "The relationships where I don't have to think about how I look — those are the most comfortable.",
+  ],
+  유희자: [
+    "I don't understand why getting serious feels so uncomfortable. I find myself avoiding it.",
+    "I brushed things off with humor, but later realized it had been a wound.",
+    "Keeping things light is comfortable, but sometimes I miss deeper conversations.",
+    "I tried to lighten the mood with a joke, but the other person took it seriously.",
+    "I can't tell if finding joy is growth or avoidance.",
+  ],
+  통제자: [
+    "The need to be in control comes out in relationships too.",
+    "When I feel the urge to correct someone's mistake, I try to hold back.",
+    "Trying to be perfect, the other person got tired. I only saw it then.",
+    "I watched how my feelings rise in situations I can't control.",
+    "I'm practicing trusting and letting go. It's harder than I thought.",
+  ],
+  회피자: [
+    "When people get too close, I feel like I might lose something — so I keep a distance.",
+    "I delayed contact and the relationship became distant.",
+    "Time alone is recharging for me, but the other person read it as rejection.",
+    "Silence is my habit in conflict — and I know it's hard on the other person.",
+    "I want to get closer, but when I do, I want to run.",
+  ],
+  탐험자: [
+    "I want various connections, but sometimes I feel lonely.",
+    "I enjoy meeting new people, but deepening a relationship feels like a burden.",
+    "Staying in one relationship too long makes me feel like I'm stagnating.",
+    "I connect widely, but sometimes I wonder if I really have anyone close.",
+    "I can't tell if constantly seeking new things is growth or avoidance.",
+  ],
+  의존자: [
+    "When a reply is late, I run through the worst-case scenarios in my head. Is it just me?",
+    "I'm scared to decide alone, so I always check with someone.",
+    "I have a pattern of clinging first because I'm afraid of being abandoned. I know it, but it keeps happening.",
+    "Being together brings relief — I can't tell if it's dependence or love.",
+    "I'm practicing being alone. It's more manageable than I thought.",
+  ],
+  공허자: [
+    "Some days I feel nothing at all. I wonder if this is numbness.",
+    "I want to connect but don't know how. When I get close, I feel emptier.",
+    "When I don't know if I'm feeling or not, I try to just stay with it.",
+  ],
+};
+
+// 영어 코드탁 정의
+const CODETALK_DEFINITIONS_EN: Record<string, string[]> = {
+  boundary: ["A line I need to draw so I don't break down", "Not pushing others away, but protecting myself"],
+  rejection: ["Feeling like my existence was denied when turned down", "An old sensation that rises when I don't get what I want"],
+  conflict: ["The moment two different desires collide", "Something that grows when avoided and shrinks when faced"],
+  gratitude: ["The ability to recognize what I've received", "Something that appears when even small things feel enough"],
+  distance: ["The space I need to breathe", "Something I create when I'm afraid closeness will make it disappear"],
+  expectation: ["The hope that someone will understand my heart", "Wanting to be understood without having to say it"],
+  self: ["Something I don't want to lose within a relationship", "Whatever must remain no matter who I'm with"],
+  conversation: ["Something where listening is more than speaking", "The process of confirming each other's differences"],
+  fear: ["The paradoxical feeling that grows as closeness increases", "A signal that I now have something to lose"],
+  love: ["A relationship that lets me be myself", "A space where it's safe to fall apart"],
+  wound: ["A sensation that lingers longer than memory", "Something that hurts when touched even when it seems healed"],
+  communication: ["Understanding passing between people, not just words", "A moment when I need to confirm I'm not wrong"],
+  trust: ["Something that makes you try again even after betrayal", "Takes long to build, breaks in an instant"],
+  loneliness: ["Something felt even in the presence of others", "A signal that I want to connect"],
+  dependence: ["What comes from believing I'm incomplete alone", "When I can't tell if it's love or fear"],
+  separation: ["Not an end, but a new starting point", "The moment I discover what I truly wanted"],
+  selfesteem: ["My center that doesn't waver in relationships", "Something that exists independent of others' evaluations"],
+  obsession: ["Anxiety wearing the clothes of love", "The fear that letting go means losing it"],
+  control: ["A way to find safety in unpredictable situations", "What comes out when I can't trust"],
+  avoidance: ["A defense formed from fear of getting hurt by closeness", "An old strategy to avoid being wounded"],
+  emotion: ["Something that accumulates even when ignored", "Proof that I'm alive"],
+  relationship: ["A mirror that reflects me", "Something that shows me what I can't know alone"],
+  empathy: ["Confirmation that my feelings aren't wrong", "Feeling together, not solving together"],
+  choice: ["Something that comes with letting go", "The why of choosing matters more than what"],
+  change: ["Where fear and excitement coexist", "Something that takes longer when resisted"],
+};
+
+const ALIASES_EN = [
+  "Quiet Moon", "Dawn Forest", "Red Sand", "White Wave", "Small Star",
+  "Deep River", "Distant Cloud", "Blue Mist", "Warm Stone", "Empty Chair",
+  "Still Lake", "West Wind", "Ancient Tree", "First Snow", "Dark Sea",
+  "Silent Field", "Low Voice", "Cold Moonlight", "Wet Grass", "Far Mountain",
+];
+
 const CODETALK_DEFINITIONS: Record<string, string[]> = {
   경계: ["내가 무너지지 않기 위해 그어야 하는 선", "상대를 밀어내는 게 아니라 나를 지키는 것"],
   거부: ["거절당했을 때 내 존재가 부정된 것 같은 느낌", "원하는 것을 못 받았을 때 올라오는 오래된 감각"],
@@ -214,21 +336,26 @@ Deno.serve(async (req: Request) => {
     // tab_context 허용값: vent, dig, get, set, general
     const TAB_CONTEXTS = ["dig", "vent", "set", "get", "general"];
 
-    const communityRows = communityUsers.map((u) => {
+    // ko + en 양쪽 행 생성 (가상유저는 크레딧 없이 직접 이중 삽입)
+    const communityRows: Record<string, unknown>[] = [];
+    communityUsers.forEach((u) => {
       const mask = u.primary_mask as string;
-      const pool = COMMUNITY_CONTENT[mask] ?? COMMUNITY_CONTENT["거울"];
-      const content = pool[Math.floor(Math.random() * pool.length)];
+      const poolKo = COMMUNITY_CONTENT[mask] ?? COMMUNITY_CONTENT["거울"];
+      const poolEn = COMMUNITY_CONTENT_EN[mask] ?? COMMUNITY_CONTENT_EN["거울"];
+      const idx = Math.floor(Math.random() * poolKo.length);
       const tab = TAB_CONTEXTS[Math.floor(Math.random() * TAB_CONTEXTS.length)];
-      return {
+      const ts = todayTimestamp();
+      const base = {
         user_id: u.user_id,
-        content,
         is_anonymous: true,
         tab_context: tab,
         upvotes: Math.floor(Math.random() * 8),
         view_count: Math.floor(Math.random() * 30) + 1,
-        created_at: todayTimestamp(),
+        created_at: ts,
         updated_at: new Date().toISOString(),
       };
+      communityRows.push({ ...base, content: poolKo[idx], lang: "ko" });
+      communityRows.push({ ...base, content: poolEn[idx] ?? poolEn[Math.floor(Math.random() * poolEn.length)], lang: "en" });
     });
 
     let communityInserted = 0;
@@ -240,28 +367,42 @@ Deno.serve(async (req: Request) => {
       communityInserted = communityRows.length;
     }
 
-    // 코드탁 엔트리 삽입
+    // 코드탁 엔트리 ko + en 이중 삽입
     const codetalkUsers = shuffled
       .filter((u) => !alreadyCodetalk.has(u.user_id))
       .slice(0, codetalkCount);
 
-    const codetalkRows = codetalkUsers.map((u) => {
+    const KEYWORD_EN_MAP: Record<string, string> = {
+      "경계": "boundary", "거부": "rejection", "갈등": "conflict", "감사": "gratitude",
+      "거리": "distance", "기대": "expectation", "나": "self", "대화": "conversation",
+      "두려움": "fear", "사랑": "love", "상처": "wound", "소통": "communication",
+      "신뢰": "trust", "외로움": "loneliness", "의존": "dependence", "이별": "separation",
+      "자존감": "selfesteem", "집착": "obsession", "통제": "control", "회피": "avoidance",
+      "감정": "emotion", "관계": "relationship", "공감": "empathy", "선택": "choice", "변화": "change",
+    };
+
+    const codetalkRows: Record<string, unknown>[] = [];
+    codetalkUsers.forEach((u) => {
       const keyword = CODETALK_KEYWORDS[Math.floor(Math.random() * CODETALK_KEYWORDS.length)];
-      const defs = CODETALK_DEFINITIONS[keyword] ?? ["나만의 방식으로 정의되는 것"];
-      const definition = defs[Math.floor(Math.random() * defs.length)];
-      const alias = (u as Record<string, unknown>).nickname as string
+      const defsKo = CODETALK_DEFINITIONS[keyword] ?? ["나만의 방식으로 정의되는 것"];
+      const keywordEn = KEYWORD_EN_MAP[keyword] ?? "relationship";
+      const defsEn = CODETALK_DEFINITIONS_EN[keywordEn] ?? ["Something defined in my own way"];
+      const defKo = defsKo[Math.floor(Math.random() * defsKo.length)];
+      const defEn = defsEn[Math.floor(Math.random() * defsEn.length)];
+      const aliasKo = (u as Record<string, unknown>).nickname as string
         ?? ALIASES[Math.floor(Math.random() * ALIASES.length)];
+      const aliasEn = ALIASES_EN[Math.floor(Math.random() * ALIASES_EN.length)];
       const ts = todayTimestamp();
-      return {
+      const base = {
         user_id: u.user_id,
         keyword,
-        definition,
         is_public: true,
-        anon_alias: alias,
         entry_date: today,
         created_at: ts,
         updated_at: ts,
       };
+      codetalkRows.push({ ...base, definition: defKo, anon_alias: aliasKo, lang: "ko" });
+      codetalkRows.push({ ...base, definition: defEn, anon_alias: aliasEn, lang: "en" });
     });
 
     let codetalkInserted = 0;

@@ -100,7 +100,22 @@ export const useCrisisTranslations = () => {
   return translations.crisis;
 };
 
+export const useClearTranslations = () => {
+  const { translations } = useTranslation();
+  return translations.clear;
+};
+
 export const useErrorTranslations = () => {
   const { translations } = useTranslation();
   return translations.errors;
+};
+
+export const useCommunityTranslations = () => {
+  const { translations } = useTranslation();
+  return translations.community;
+};
+
+export const useRelationTranslations = () => {
+  const { translations } = useTranslation();
+  return translations.relation;
 };

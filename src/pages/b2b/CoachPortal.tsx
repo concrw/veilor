@@ -15,6 +15,75 @@ import {
   useCoachPosts,
 } from '@/hooks/useB2BCoach';
 import type { B2BCoachPost, B2BCoachingSession } from '@/integrations/supabase/veilor-types';
+import { useLanguageContext } from '@/context/LanguageContext';
+
+// ─────────────────────────────────────────────
+// 이중언어 문자열
+// ─────────────────────────────────────────────
+const S = {
+  ko: {
+    back: '← 뒤로',
+    notCoach: '코치 계정이 아닙니다',
+    goBack: '돌아가기',
+    responsibleCount: (cur: number, max: number) => `담당 ${cur}/${max}명`,
+    tabs: { members: '담당 멤버', sessions: '세션 관리', posts: '내 포스트' },
+    noMembers: '담당 멤버가 없습니다',
+    noSessions: '세션이 없습니다',
+    memberId: (id: string) => `${id}…`,
+    sessionCount: (n: number) => `세션 ${n}회`,
+    latestCheckin: (date: string) => ` · 최근 체크인 ${date}`,
+    cIndex: (v: string) => ` · C지수 ${v}`,
+    statusLabels: { scheduled: '예정', completed: '완료', cancelled: '취소', no_show: '노쇼' } as Record<string, string>,
+    memberId2: (id: string) => `멤버 ID: ${id}…`,
+    markDone: '완료 처리',
+    cancelSession: '취소',
+    coachNotes: '코치 메모 (선택)',
+    confirm: '확인',
+    newPost: '+ 새 포스트 작성',
+    noPost: '작성된 포스트가 없습니다',
+    editPost: '수정',
+    deletePost: '삭제',
+    deleteConfirm: '포스트를 삭제할까요?',
+    postEditorTitle: (isEditing: boolean) => isEditing ? '포스트 수정' : '새 포스트 작성',
+    titlePlaceholder: '제목 (선택)',
+    bodyPlaceholder: '내용을 입력하세요',
+    tagsPlaceholder: '태그 (쉼표로 구분)',
+    pinLabel: '상단 고정',
+    saving: '저장 중...',
+    savePost: (isEditing: boolean) => isEditing ? '수정 완료' : '게시하기',
+  },
+  en: {
+    back: '← Back',
+    notCoach: 'This is not a coach account.',
+    goBack: 'Go Back',
+    responsibleCount: (cur: number, max: number) => `Assigned ${cur}/${max}`,
+    tabs: { members: 'My Members', sessions: 'Sessions', posts: 'My Posts' },
+    noMembers: 'No assigned members',
+    noSessions: 'No sessions',
+    memberId: (id: string) => `${id}…`,
+    sessionCount: (n: number) => `${n} sessions`,
+    latestCheckin: (date: string) => ` · Last check-in ${date}`,
+    cIndex: (v: string) => ` · C-index ${v}`,
+    statusLabels: { scheduled: 'Scheduled', completed: 'Completed', cancelled: 'Cancelled', no_show: 'No-show' } as Record<string, string>,
+    memberId2: (id: string) => `Member ID: ${id}…`,
+    markDone: 'Mark as Done',
+    cancelSession: 'Cancel',
+    coachNotes: 'Coach notes (optional)',
+    confirm: 'Confirm',
+    newPost: '+ New Post',
+    noPost: 'No posts yet',
+    editPost: 'Edit',
+    deletePost: 'Delete',
+    deleteConfirm: 'Delete this post?',
+    postEditorTitle: (isEditing: boolean) => isEditing ? 'Edit Post' : 'New Post',
+    titlePlaceholder: 'Title (optional)',
+    bodyPlaceholder: 'Write your content here',
+    tagsPlaceholder: 'Tags (comma-separated)',
+    pinLabel: 'Pin to top',
+    saving: 'Saving...',
+    savePost: (isEditing: boolean) => isEditing ? 'Save Changes' : 'Publish',
+  },
+} as const;
 
 // ── 탭 타입 ──────────────────────────────────────────────────────────
 type PortalTab = 'members' | 'sessions' | 'posts';
@@ -26,9 +95,10 @@ interface PostEditorProps {
   userId: string;
   post?: B2BCoachPost;
   onClose: () => void;
+  s: typeof S['ko'];
 }
 
-function PostEditor({ coachId, userId, post, onClose }: PostEditorProps) {
+function PostEditor({ coachId, userId, post, onClose, s }: PostEditorProps) {
   const [title, setTitle] = useState(post?.title ?? '');
   const [body, setBody] = useState(post?.body ?? '');
   const [tags, setTags] = useState((post?.tags ?? []).join(', '));
@@ -77,7 +147,7 @@ function PostEditor({ coachId, userId, post, onClose }: PostEditorProps) {
       >
         <div className="flex items-center justify-between">
           <h2 className="text-[16px] font-medium" style={{ color: '#E7E5E4' }}>
-            {isEditing ? '포스트 수정' : '새 포스트 작성'}
+            {s.postEditorTitle(isEditing)}
           </h2>
           <button onClick={onClose} className="text-[20px]" style={{ color: '#57534E' }}>×</button>
         </div>
@@ -85,7 +155,7 @@ function PostEditor({ coachId, userId, post, onClose }: PostEditorProps) {
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="제목 (선택)"
+          placeholder={s.titlePlaceholder}
           className="w-full bg-transparent border-b py-2 text-[14px] outline-none"
           style={{ borderColor: '#3C3835', color: '#E7E5E4' }}
         />
@@ -93,7 +163,7 @@ function PostEditor({ coachId, userId, post, onClose }: PostEditorProps) {
         <textarea
           value={body}
           onChange={(e) => setBody(e.target.value)}
-          placeholder="내용을 입력하세요"
+          placeholder={s.bodyPlaceholder}
           rows={6}
           className="w-full bg-transparent text-[14px] outline-none resize-none"
           style={{ color: '#E7E5E4' }}
@@ -102,7 +172,7 @@ function PostEditor({ coachId, userId, post, onClose }: PostEditorProps) {
         <input
           value={tags}
           onChange={(e) => setTags(e.target.value)}
-          placeholder="태그 (쉼표로 구분)"
+          placeholder={s.tagsPlaceholder}
           className="w-full bg-transparent border-b py-2 text-[13px] outline-none"
           style={{ borderColor: '#3C3835', color: '#A8A29E' }}
         />
@@ -115,7 +185,7 @@ function PostEditor({ coachId, userId, post, onClose }: PostEditorProps) {
               onChange={(e) => setIsPinned(e.target.checked)}
               className="accent-amber-400"
             />
-            <span className="text-[13px]" style={{ color: '#A8A29E' }}>상단 고정</span>
+            <span className="text-[13px]" style={{ color: '#A8A29E' }}>{s.pinLabel}</span>
           </label>
         )}
 
@@ -128,7 +198,7 @@ function PostEditor({ coachId, userId, post, onClose }: PostEditorProps) {
             color: body.trim() && !isPending ? '#1C1917' : '#57534E',
           }}
         >
-          {isPending ? '저장 중...' : isEditing ? '수정 완료' : '게시하기'}
+          {isPending ? s.saving : s.savePost(isEditing)}
         </button>
       </div>
     </div>
@@ -137,17 +207,11 @@ function PostEditor({ coachId, userId, post, onClose }: PostEditorProps) {
 
 // ── 세션 행 ───────────────────────────────────────────────────────────
 
-function SessionRow({ session, coachId }: { session: B2BCoachingSession; coachId: string }) {
+function SessionRow({ session, coachId, s, locale }: { session: B2BCoachingSession; coachId: string; s: typeof S['ko']; locale: string }) {
   const update = useUpdateSessionStatus();
   const [showNotes, setShowNotes] = useState(false);
   const [notes, setNotes] = useState('');
 
-  const statusLabel: Record<string, string> = {
-    scheduled: '예정',
-    completed: '완료',
-    cancelled: '취소',
-    no_show: '노쇼',
-  };
   const statusColor: Record<string, string> = {
     scheduled: '#D4A574',
     completed: '#4ADE80',
@@ -162,16 +226,16 @@ function SessionRow({ session, coachId }: { session: B2BCoachingSession; coachId
     >
       <div className="flex items-center justify-between mb-1">
         <p className="text-[13px]" style={{ color: '#E7E5E4' }}>
-          {new Date(session.scheduled_at).toLocaleString('ko-KR', {
+          {new Date(session.scheduled_at).toLocaleString(locale === 'en' ? 'en-US' : 'ko-KR', {
             month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
           })}
         </p>
         <span className="text-[11px]" style={{ color: statusColor[session.status] }}>
-          {statusLabel[session.status]}
+          {s.statusLabels[session.status]}
         </span>
       </div>
       <p className="text-[12px]" style={{ color: '#78716C' }}>
-        멤버 ID: {session.member_id.slice(0, 8)}…
+        {s.memberId2(session.member_id.slice(0, 8))}
       </p>
       {session.status === 'scheduled' && (
         <div className="flex gap-2 mt-3">
@@ -180,14 +244,14 @@ function SessionRow({ session, coachId }: { session: B2BCoachingSession; coachId
             className="flex-1 py-1.5 rounded-lg text-[12px]"
             style={{ background: '#D4A57420', color: '#D4A574' }}
           >
-            완료 처리
+            {s.markDone}
           </button>
           <button
             onClick={() => update.mutate({ sessionId: session.id, coachId, status: 'cancelled' })}
             className="flex-1 py-1.5 rounded-lg text-[12px]"
             style={{ background: '#3C3835', color: '#78716C' }}
           >
-            취소
+            {s.cancelSession}
           </button>
         </div>
       )}
@@ -196,7 +260,7 @@ function SessionRow({ session, coachId }: { session: B2BCoachingSession; coachId
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="코치 메모 (선택)"
+            placeholder={s.coachNotes}
             rows={3}
             className="w-full text-[12px] rounded-lg p-2 outline-none resize-none"
             style={{ background: '#1C1917', color: '#A8A29E', border: '1px solid #3C3835' }}
@@ -214,7 +278,7 @@ function SessionRow({ session, coachId }: { session: B2BCoachingSession; coachId
             className="py-1.5 rounded-lg text-[12px]"
             style={{ background: '#D4A574', color: '#1C1917' }}
           >
-            확인
+            {s.confirm}
           </button>
         </div>
       )}
@@ -224,7 +288,7 @@ function SessionRow({ session, coachId }: { session: B2BCoachingSession; coachId
 
 // ── 포스트 관리 목록 ───────────────────────────────────────────────────
 
-function PostManageList({ coachId, userId }: { coachId: string; userId: string }) {
+function PostManageList({ coachId, userId, s }: { coachId: string; userId: string; s: typeof S['ko'] }) {
   const { data: posts } = useCoachPosts(coachId);
   const deletePost = useDeleteCoachPost();
   const [editTarget, setEditTarget] = useState<B2BCoachPost | null>(null);
@@ -243,12 +307,12 @@ function PostManageList({ coachId, userId }: { coachId: string; userId: string }
         className="w-full py-3 rounded-xl text-[14px] font-medium mb-4"
         style={{ background: '#D4A574', color: '#1C1917' }}
       >
-        + 새 포스트 작성
+        {s.newPost}
       </button>
 
       {sorted.length === 0 && (
         <p className="text-center py-8 text-[13px]" style={{ color: '#57534E' }}>
-          작성된 포스트가 없습니다
+          {s.noPost}
         </p>
       )}
 
@@ -276,18 +340,18 @@ function PostManageList({ coachId, userId }: { coachId: string; userId: string }
                 className="flex-1 py-1.5 rounded-lg text-[12px]"
                 style={{ background: '#3C3835', color: '#A8A29E' }}
               >
-                수정
+                {s.editPost}
               </button>
               <button
                 onClick={() => {
-                  if (confirm('포스트를 삭제할까요?')) {
+                  if (confirm(s.deleteConfirm)) {
                     deletePost.mutate({ id: post.id, coach_id: coachId });
                   }
                 }}
                 className="flex-1 py-1.5 rounded-lg text-[12px]"
                 style={{ background: '#3C383520', color: '#EF4444' }}
               >
-                삭제
+                {s.deletePost}
               </button>
             </div>
           </div>
@@ -298,6 +362,7 @@ function PostManageList({ coachId, userId }: { coachId: string; userId: string }
         <PostEditor
           coachId={coachId}
           userId={userId}
+          s={s}
           onClose={() => setShowCreate(false)}
         />
       )}
@@ -306,6 +371,7 @@ function PostManageList({ coachId, userId }: { coachId: string; userId: string }
           coachId={coachId}
           userId={userId}
           post={editTarget}
+          s={s}
           onClose={() => setEditTarget(null)}
         />
       )}
@@ -318,6 +384,9 @@ function PostManageList({ coachId, userId }: { coachId: string; userId: string }
 export default function CoachPortal() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<PortalTab>('members');
+  const { language } = useLanguageContext();
+  const s = S[language] ?? S.ko;
+  const locale = language === 'en' ? 'en-US' : 'ko-KR';
 
   const { data: myProfile, isLoading: loadingProfile } = useMyCoachProfile();
   const coachId = myProfile?.id ?? '';
@@ -326,10 +395,10 @@ export default function CoachPortal() {
   const { data: members, isLoading: loadingMembers } = useMyCoachMembers(coachId);
   const { data: sessions, isLoading: loadingSessions } = useMyCoachSessions(coachId);
 
-  const tabs: { id: PortalTab; label: string }[] = [
-    { id: 'members', label: '담당 멤버' },
-    { id: 'sessions', label: '세션 관리' },
-    { id: 'posts', label: '내 포스트' },
+  const tabList: { id: PortalTab; label: string }[] = [
+    { id: 'members', label: s.tabs.members },
+    { id: 'sessions', label: s.tabs.sessions },
+    { id: 'posts', label: s.tabs.posts },
   ];
 
   if (loadingProfile) {
@@ -345,14 +414,14 @@ export default function CoachPortal() {
       <div className="min-h-screen flex items-center justify-center px-5" style={{ background: '#1C1917' }}>
         <div className="text-center">
           <p className="text-[14px] mb-4" style={{ color: '#78716C' }}>
-            코치 계정이 아닙니다
+            {s.notCoach}
           </p>
           <button
             onClick={() => navigate(-1)}
             className="text-[13px]"
             style={{ color: '#D4A574' }}
           >
-            돌아가기
+            {s.goBack}
           </button>
         </div>
       </div>
@@ -364,6 +433,7 @@ export default function CoachPortal() {
       className="min-h-screen"
       style={{ background: '#1C1917', fontFamily: "'DM Sans', sans-serif" }}
     >
+      <div className="max-w-5xl mx-auto">
       {/* 헤더 */}
       <div
         className="sticky top-0 z-10 px-5 pt-12 pb-3"
@@ -374,7 +444,7 @@ export default function CoachPortal() {
           className="mb-3 text-[13px]"
           style={{ color: '#78716C' }}
         >
-          ← 뒤로
+          {s.back}
         </button>
         <div className="flex items-center gap-3 mb-3">
           <div
@@ -388,7 +458,7 @@ export default function CoachPortal() {
               {myProfile.display_name}
             </h1>
             <p className="text-[12px]" style={{ color: '#78716C' }}>
-              담당 {myProfile.current_members}/{myProfile.max_members}명 ·{' '}
+              {s.responsibleCount(myProfile.current_members, myProfile.max_members)} ·{' '}
               ★ {myProfile.avg_rating.toFixed(1)}
             </p>
           </div>
@@ -396,7 +466,7 @@ export default function CoachPortal() {
 
         {/* 탭 */}
         <div className="flex gap-1">
-          {tabs.map((t) => (
+          {tabList.map((t) => (
             <button
               key={t.id}
               onClick={() => setActiveTab(t.id)}
@@ -424,7 +494,7 @@ export default function CoachPortal() {
             )}
             {!loadingMembers && (members ?? []).length === 0 && (
               <p className="text-center py-10 text-[13px]" style={{ color: '#57534E' }}>
-                담당 멤버가 없습니다
+                {s.noMembers}
               </p>
             )}
             <div className="flex flex-col gap-3">
@@ -457,9 +527,9 @@ export default function CoachPortal() {
                     )}
                   </div>
                   <p className="text-[12px]" style={{ color: '#78716C' }}>
-                    세션 {m.sessions_count}회
-                    {m.latest_checkin_at ? ` · 최근 체크인 ${new Date(m.latest_checkin_at).toLocaleDateString('ko-KR')}` : ''}
-                    {m.latest_c_avg != null ? ` · C지수 ${m.latest_c_avg.toFixed(1)}` : ''}
+                    {s.sessionCount(m.sessions_count)}
+                    {m.latest_checkin_at ? s.latestCheckin(new Date(m.latest_checkin_at).toLocaleDateString(locale)) : ''}
+                    {m.latest_c_avg != null ? s.cIndex(m.latest_c_avg.toFixed(1)) : ''}
                   </p>
                 </div>
               ))}
@@ -477,12 +547,12 @@ export default function CoachPortal() {
             )}
             {!loadingSessions && (sessions ?? []).length === 0 && (
               <p className="text-center py-10 text-[13px]" style={{ color: '#57534E' }}>
-                세션이 없습니다
+                {s.noSessions}
               </p>
             )}
             <div className="flex flex-col gap-3">
-              {(sessions ?? []).map((s) => (
-                <SessionRow key={s.id} session={s} coachId={coachId} />
+              {(sessions ?? []).map((sess) => (
+                <SessionRow key={sess.id} session={sess} coachId={coachId} s={s} locale={language} />
               ))}
             </div>
           </div>
@@ -490,8 +560,9 @@ export default function CoachPortal() {
 
         {/* 포스트 관리 */}
         {activeTab === 'posts' && coachId && (
-          <PostManageList coachId={coachId} userId={userId} />
+          <PostManageList coachId={coachId} userId={userId} s={s} />
         )}
+      </div>
       </div>
     </div>
   );

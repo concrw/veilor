@@ -90,6 +90,11 @@ export default function VentLayerView({
   const navigate = useNavigate();
   const vent = useVentTranslations();
   const [desireModalOpen, setDesireModalOpen] = useState(false);
+  const [partnerLayerText, setPartnerLayerText] = useState('');
+  const [showPartnerNudge, setShowPartnerNudge] = useState(false);
+  const partnerNudgeShownRef = useState(false);
+
+  const isPartnerLayer = layerActive === 'daily_partner';
 
   const handleItemClick = (item: LayerItem) => {
     if (item.locked) {
@@ -122,14 +127,53 @@ export default function VentLayerView({
 
           {layerActive ? (
             <div className="flex flex-col gap-[7px]">
-              <button onClick={() => onSetLayerActive('')} className="text-[11px] font-light text-left mb-1" style={{ color: C.text4, background: 'none', border: 'none', cursor: 'pointer' }}>← {vent.layers.backButton}</button>
+              <button onClick={() => { onSetLayerActive(''); setPartnerLayerText(''); setShowPartnerNudge(false); }} className="text-[11px] font-light text-left mb-1" style={{ color: C.text4, background: 'none', border: 'none', cursor: 'pointer' }}>← {vent.layers.backButton}</button>
               <div className="inline-flex items-center px-[10px] py-[3px] rounded-full mb-2" style={{ border: `1px solid ${alpha(C.amber, 0.2)}`, color: C.amber, background: alpha(C.amber, 0.04), fontSize: 10, letterSpacing: '.07em', textTransform: 'uppercase' }}>{vent.layers.title}</div>
               <p className="text-[14px] font-light break-keep" style={{ fontFamily: "'Cormorant Garamond', serif", color: C.text2 }}>{vent.layers.activePrompt}</p>
               <div className="rounded-[11px] mt-2" style={{ background: C.bg2, border: `1px solid ${C.border}` }}>
-                <textarea className="w-full bg-transparent border-none outline-none resize-none text-[15px] font-light leading-[1.6] break-keep p-4"
+                <textarea
+                  className="w-full bg-transparent border-none outline-none resize-none text-[15px] font-light leading-[1.6] break-keep p-4"
                   style={{ fontFamily: "'Cormorant Garamond', serif", color: C.text, minHeight: 100 }}
-                  placeholder={vent.layers.writePlaceholder} />
+                  placeholder={vent.layers.writePlaceholder}
+                  value={isPartnerLayer ? partnerLayerText : undefined}
+                  onChange={isPartnerLayer ? (e) => {
+                    setPartnerLayerText(e.target.value);
+                    if (e.target.value.length >= 20 && !partnerNudgeShownRef[0]) {
+                      partnerNudgeShownRef[0] = true;
+                      setShowPartnerNudge(true);
+                    }
+                  } : undefined}
+                />
               </div>
+
+              {/* 파트너 레이어 작성 후 SexSelf 넛지 */}
+              {isPartnerLayer && showPartnerNudge && (
+                <div
+                  className="rounded-[11px] p-4 space-y-3"
+                  style={{ background: alpha('#ec4899', 0.04), border: `1px solid ${alpha('#ec4899', 0.2)}` }}
+                >
+                  <p className="text-[13px] font-light leading-relaxed break-keep" style={{ fontFamily: "'Cormorant Garamond', serif", color: C.text2 }}>
+                    {vent.chat.partnerNudge}
+                  </p>
+                  <p className="text-[10px]" style={{ color: alpha('#ec4899', 0.6) }}>{vent.chat.partnerNudgePrivate}</p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => navigate('/home/sexself/questions')}
+                      className="flex-1 py-[8px] rounded-[9px] text-[11px] font-light"
+                      style={{ background: alpha('#ec4899', 0.08), border: `1px solid ${alpha('#ec4899', 0.3)}`, color: '#ec4899' }}
+                    >
+                      {vent.chat.partnerNudgeExplore}
+                    </button>
+                    <button
+                      onClick={() => setShowPartnerNudge(false)}
+                      className="flex-1 py-[8px] rounded-[9px] text-[11px] font-light"
+                      style={{ border: `1px solid ${C.border}`, background: 'transparent', color: C.text4 }}
+                    >
+                      {vent.chat.partnerNudgeSkip}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             layerGroups.map(group => {

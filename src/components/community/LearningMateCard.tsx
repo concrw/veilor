@@ -3,6 +3,26 @@ import { useAuth } from '@/context/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { veilorDb } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
+import { useLanguageContext } from '@/context/LanguageContext';
+
+const S = {
+  ko: {
+    title: '러닝메이트',
+    sameMask: '같은 가면',
+    desc: (mask: string) => `"${mask}" 가면을 가진 분들이에요. 함께 탐색하면 더 깊어져요.`,
+    anon: '익명',
+    defaultAliases: ['익명의 탐험자', '조용한 달', '깊은 안개'],
+    connect: '연결',
+  },
+  en: {
+    title: 'Learning Mates',
+    sameMask: 'Same mask',
+    desc: (mask: string) => `These people share the "${mask}" mask. Exploring together goes deeper.`,
+    anon: 'Anonymous',
+    defaultAliases: ['Anonymous Explorer', 'Quiet Moon', 'Deep Mist'],
+    connect: 'Connect',
+  },
+} as const;
 
 interface Mate {
   user_id: string;
@@ -30,6 +50,8 @@ const VIRTUAL_NICKNAMES: Record<string, string[]> = {
 export default function LearningMateCard() {
   const { user, primaryMask } = useAuth();
   const navigate = useNavigate();
+  const { language } = useLanguageContext();
+  const s = S[language] ?? S.ko;
 
   const { data: mates } = useQuery({
     queryKey: ['learning-mates', user?.id, primaryMask],
@@ -49,7 +71,7 @@ export default function LearningMateCard() {
       // 실제 유저가 3명 미만이면 가상유저로 채움
       if (real.length < 3) {
         const needed = 3 - real.length;
-        const aliases = (VIRTUAL_NICKNAMES[primaryMask] ?? ['익명의 탐험자', '조용한 달', '깊은 안개'])
+        const aliases = (VIRTUAL_NICKNAMES[primaryMask] ?? s.defaultAliases)
           .slice(0, needed);
         // msk_code는 primary_mask로 역조회
         const MSK_CODE_MAP: Record<string, string> = {
@@ -79,11 +101,11 @@ export default function LearningMateCard() {
   return (
     <div className="bg-card border rounded-2xl p-5 space-y-3">
       <div className="flex items-center justify-between">
-        <p className="text-sm font-medium">러닝메이트</p>
-        <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary">같은 가면</span>
+        <p className="text-sm font-medium">{s.title}</p>
+        <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary">{s.sameMask}</span>
       </div>
       <p className="text-xs text-muted-foreground">
-        "{primaryMask}" 가면을 가진 분들이에요. 함께 탐색하면 더 깊어져요.
+        {s.desc(primaryMask ?? '')}
       </p>
       <div className="space-y-2">
         {mates.map((mate) => (
@@ -92,7 +114,7 @@ export default function LearningMateCard() {
               {(mate.nickname ?? '?')[0]}
             </div>
             <div className="flex-1">
-              <p className="text-sm font-medium">{mate.nickname ?? '익명'}</p>
+              <p className="text-sm font-medium">{mate.nickname ?? s.anon}</p>
               <p className="text-[10px] text-muted-foreground font-mono">{mate.msk_code}</p>
             </div>
             {!mate.is_virtual && (
@@ -100,7 +122,7 @@ export default function LearningMateCard() {
                 onClick={() => navigate('/home/community')}
                 className="text-[10px] text-primary font-medium"
               >
-                연결
+                {s.connect}
               </button>
             )}
           </div>

@@ -1,3 +1,5 @@
+import { useDigTranslations } from '@/hooks/useTranslation';
+
 export interface PatternProfile {
   id: string;
   pattern_axis: string;
@@ -28,19 +30,21 @@ export function DigHistory({
   digHistory, domainCounts, comboPatternCounts,
   historyPatternIndex, patternProfiles,
 }: DigHistoryProps) {
+  const dig = useDigTranslations();
+
   if (digHistory.length === 0) return null;
 
   return (
     <div className="space-y-3 pt-2">
       <div className="flex items-center justify-between">
-        <p className="text-sm font-medium text-muted-foreground">지난 분석 기록</p>
-        <span className="text-xs text-muted-foreground">{digHistory.length}건</span>
+        <p className="text-sm font-medium text-muted-foreground">{dig.historyTitle}</p>
+        <span className="text-xs text-muted-foreground">{dig.historyCount.replace('{count}', String(digHistory.length))}</span>
       </div>
 
       {/* 반복 패턴 요약 */}
       {Object.entries(domainCounts).filter(([, c]) => c >= 2).length > 0 && (
         <div className="bg-muted/50 rounded-xl px-3 py-2.5 space-y-2">
-          <p className="text-xs font-medium text-muted-foreground">이번 달 반복 패턴</p>
+          <p className="text-xs font-medium text-muted-foreground">{dig.monthlyPatterns}</p>
           <div className="flex flex-wrap gap-1.5">
             {Object.entries(domainCounts)
               .filter(([, c]) => c >= 2)

@@ -2,14 +2,17 @@
 import { useAuth } from '@/context/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { veilorDb } from '@/integrations/supabase/client';
+import { C } from '@/lib/colors';
+import { useMeTranslations } from '@/hooks/useTranslation';
 
 export default function PatternDeviationCard() {
   const { user } = useAuth();
+  const me = useMeTranslations();
+  const t = me.patternDeviation;
 
   const { data: deviation } = useQuery({
     queryKey: ['pattern-deviation', user?.id],
     queryFn: async () => {
-      // 최근 7일 vs 이전 30일 감정 비교
       const now = new Date();
       const week = new Date(now.getTime() - 7 * 86400000).toISOString();
       const month = new Date(now.getTime() - 30 * 86400000).toISOString();
@@ -29,7 +32,6 @@ export default function PatternDeviationCard() {
 
       if (!recent?.length || !baseline?.length) return null;
 
-      // 감정 안정도 비교
       const recentStability = recent
         .filter(r => r.emotional_stability != null)
         .reduce((s, r) => s + (r.emotional_stability ?? 50), 0) / Math.max(recent.length, 1);
@@ -39,7 +41,6 @@ export default function PatternDeviationCard() {
 
       const stabilityDiff = Math.round(recentStability - baseStability);
 
-      // 새로운 감정 출현
       const baseEmotions = new Set(baseline.map(b => b.emotion).filter(Boolean));
       const newEmotions = recent
         .map(r => r.emotion)
@@ -57,32 +58,35 @@ export default function PatternDeviationCard() {
   if (!deviation) return null;
 
   const isPositive = deviation.stabilityDiff > 0;
+  const borderColor = isPositive ? `rgba(16,185,129,0.2)` : `rgba(245,158,11,0.2)`;
+  const bgColor = isPositive ? `rgba(16,185,129,0.05)` : `rgba(245,158,11,0.05)`;
+  const accentColor = isPositive ? '#10B981' : '#F59E0B';
+
+  const deltaStr = isPositive ? `+${deviation.stabilityDiff}` : String(deviation.stabilityDiff);
+  const stabilityLine = t.stabilityChangeFmt
+    .replace('{delta}', `<b style="color:${accentColor}">${deltaStr}</b>`)
+    .replace('{current}', String(deviation.recentStability));
 
   return (
-    <div className={`border rounded-2xl p-5 space-y-2 ${
-      isPositive ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-amber-500/5 border-amber-500/20'
-    }`}>
-      <div className="flex items-center gap-2">
-        <span className="text-base">{isPositive ? '📈' : '📉'}</span>
-        <p className="text-xs font-medium">패턴 변화 감지</p>
+    <div className="vr-fade-in" style={{ background: bgColor, border: `1px solid ${borderColor}`, borderRadius: 14, padding: '14px 17px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+        <span style={{ fontSize: 18 }}>{isPositive ? '📈' : '📉'}</span>
+        <p style={{ fontSize: 12, fontWeight: 500, color: C.text }}>{t.title}</p>
       </div>
-      <p className="text-sm leading-relaxed">
-        최근 7일 감정 안정도가{' '}
-        <span className={`font-semibold ${isPositive ? 'text-emerald-600' : 'text-amber-600'}`}>
-          {isPositive ? `+${deviation.stabilityDiff}` : deviation.stabilityDiff}
-        </span>
-        {' '}변화했어요 (현재 {deviation.recentStability}%)
-      </p>
+      <p
+        style={{ fontSize: 13, fontWeight: 300, color: C.text2, lineHeight: 1.6, marginBottom: deviation.newEmotions.length > 0 ? 8 : 0 }}
+        dangerouslySetInnerHTML={{ __html: stabilityLine }}
+      />
       {deviation.newEmotions.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          <span className="text-[10px] text-muted-foreground">새로 나타난 감정:</span>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, alignItems: 'center', marginBottom: 8 }}>
+          <span style={{ fontSize: 10, color: C.text4 }}>{t.newEmotionsLabel}</span>
           {deviation.newEmotions.map(e => (
-            <span key={e} className="text-[10px] bg-amber-500/10 text-amber-600 px-2 py-0.5 rounded-full">{e}</span>
+            <span key={e} style={{ fontSize: 10, padding: '2px 8px', borderRadius: 99, background: `${C.amberGold}10`, color: C.amberGold, border: `1px solid ${C.amberGold}33` }}>{e}</span>
           ))}
         </div>
       )}
-      <p className="text-[10px] text-muted-foreground">
-        {isPositive ? '좋은 방향으로 변화하고 있어요!' : '마음에 변화가 있는 것 같아요. Vent에서 이야기해볼까요?'}
+      <p style={{ fontSize: 10, fontWeight: 300, color: C.text4 }}>
+        {isPositive ? t.positive : t.negative}
       </p>
     </div>
   );

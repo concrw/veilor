@@ -6,6 +6,7 @@ import { useSpeechSynthesis } from '@/hooks/useSpeechSynthesis';
 import { useAuth } from '@/context/AuthContext';
 import { invokeHeldChatStream } from '@/lib/heldChatClient';
 import { veilorDb } from '@/integrations/supabase/client';
+import { useLanguageContext } from '@/context/LanguageContext';
 
 const FOCUS_TRAP_SELECTOR = 'button:not([disabled]), [href], input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])';
 
@@ -44,32 +45,85 @@ function WaveForm({ active }: { active: boolean }) {
   );
 }
 
-// ── 탭별 AI 첫 마디 ───────────────────────────────────────────────────────────
-const TAB_GREETINGS: Record<string, string> = {
-  vent: '지금 어떤 감정인지 말해줄래요?',
-  dig:  '패턴을 더 깊이 들여다볼까요?',
-  get:  '당신에 대해 더 알아보고 싶어요.',
-  set:  '오늘 어떤 선택을 해볼까요?',
-  me:   '변화를 함께 돌아볼까요?',
+const AI_STRINGS = {
+  ko: {
+    tabGreetings: {
+      vent: '지금 어떤 감정인지 말해줄래요?',
+      dig:  '패턴을 더 깊이 들여다볼까요?',
+      get:  '당신에 대해 더 알아보고 싶어요.',
+      set:  '오늘 어떤 선택을 해볼까요?',
+      me:   '변화를 함께 돌아볼까요?',
+    } as Record<string, string>,
+    defaultGreeting: '무엇이든 말해줄래요?',
+    sttErrors: {
+      'no-speech':   { tts: '아무 말씀도 안 들렸어요. 다시 말씀해주시거나 화면 아래 텍스트 입력을 사용해주세요.', aria: '음성이 감지되지 않았어요. 다시 시도하거나 텍스트로 입력해주세요.' },
+      'not-allowed': { tts: '마이크 접근이 거부되었어요. 화면 아래 텍스트 입력을 사용해주세요.', aria: '마이크 권한이 거부되었어요. 텍스트로 입력해주세요.' },
+      'network':     { tts: '네트워크 연결을 확인해주세요.', aria: '네트워크 오류가 발생했어요.' },
+    } as Record<string, { tts: string; aria: string }>,
+    statusListening: '듣고 있어요. 말씀해주세요.',
+    statusThinking: (name: string) => `${name}가 생각하고 있어요.`,
+    statusStopped: '음성 입력이 중지되었어요.',
+    statusReadStopped: '읽기가 중지되었어요.',
+    fallbackText: '연결이 불안정해요. 다시 말해줄래요?',
+    connError: '연결 오류가 발생했어요. 다시 시도해주세요.',
+    sttGenericError: '음성 인식 중 오류가 발생했어요.',
+    swipeHint: '아래로 스와이프하면 돌아가요',
+    dialogLabel: (name: string) => `${name} 음성 대화 — 음성 또는 텍스트로 대화할 수 있어요`,
+    chatLogLabel: '대화 기록',
+    inputLabel: 'AI에게 보낼 메시지를 입력해요. 음성 대신 텍스트로도 대화할 수 있어요.',
+    inputPlaceholderThinking: (name: string) => `${name}가 생각하고 있어요...`,
+    inputPlaceholderListening: '말하거나 직접 입력해도 돼요...',
+    inputPlaceholderIdle: '또는 여기에 적어요...',
+    sendLabel: '메시지 전송',
+    micLabelListening: '음성 입력 중지',
+    micLabelThinking: '응답 대기 중, 잠시 기다려주세요',
+    micLabelStart: '음성 입력 시작',
+    micLabelUnsupported: '음성 인식을 지원하지 않는 브라우저입니다',
+    stopReadLabel: '읽기 중지',
+    closeLabel: '대화 모드 닫기',
+    sttUnsupported: '이 브라우저는 음성 인식을 지원하지 않아요. 텍스트로 대화해주세요.',
+    speakerMe: '나:',
+  },
+  en: {
+    tabGreetings: {
+      vent: 'How are you feeling right now?',
+      dig:  'Shall we look deeper into the patterns?',
+      get:  "I'd like to learn more about you.",
+      set:  "What choices shall we explore today?",
+      me:   "Let's reflect on your changes together.",
+    } as Record<string, string>,
+    defaultGreeting: 'Tell me anything.',
+    sttErrors: {
+      'no-speech':   { tts: "I didn't hear anything. Please try again or use the text input below.", aria: "No speech detected. Please try again or type instead." },
+      'not-allowed': { tts: 'Microphone access was denied. Please use the text input below.', aria: 'Microphone permission denied. Please type instead.' },
+      'network':     { tts: 'Please check your network connection.', aria: 'A network error occurred.' },
+    } as Record<string, { tts: string; aria: string }>,
+    statusListening: "Listening. Go ahead.",
+    statusThinking: (name: string) => `${name} is thinking.`,
+    statusStopped: 'Voice input stopped.',
+    statusReadStopped: 'Reading stopped.',
+    fallbackText: "Connection is unstable. Could you say that again?",
+    connError: 'A connection error occurred. Please try again.',
+    sttGenericError: 'A speech recognition error occurred.',
+    swipeHint: 'Swipe down to go back',
+    dialogLabel: (name: string) => `${name} voice chat — you can talk by voice or text`,
+    chatLogLabel: 'Conversation log',
+    inputLabel: 'Type a message to the AI. You can also chat by text instead of voice.',
+    inputPlaceholderThinking: (name: string) => `${name} is thinking...`,
+    inputPlaceholderListening: 'Speak or type here...',
+    inputPlaceholderIdle: 'Or type here...',
+    sendLabel: 'Send message',
+    micLabelListening: 'Stop voice input',
+    micLabelThinking: 'Waiting for response, please wait',
+    micLabelStart: 'Start voice input',
+    micLabelUnsupported: 'This browser does not support speech recognition',
+    stopReadLabel: 'Stop reading',
+    closeLabel: 'Close voice chat',
+    sttUnsupported: "This browser doesn't support speech recognition. Please chat by text.",
+    speakerMe: 'Me:',
+  },
 };
 
-// ── 에러 메시지 ───────────────────────────────────────────────────────────────
-const STT_ERROR_MESSAGES: Record<string, { tts: string; aria: string }> = {
-  'no-speech':   {
-    tts:  '아무 말씀도 안 들렸어요. 다시 말씀해주시거나 화면 아래 텍스트 입력을 사용해주세요.',
-    aria: '음성이 감지되지 않았어요. 다시 시도하거나 텍스트로 입력해주세요.',
-  },
-  'not-allowed': {
-    tts:  '마이크 접근이 거부되었어요. 화면 아래 텍스트 입력을 사용해주세요.',
-    aria: '마이크 권한이 거부되었어요. 텍스트로 입력해주세요.',
-  },
-  'network':     {
-    tts:  '네트워크 연결을 확인해주세요.',
-    aria: '네트워크 오류가 발생했어요.',
-  },
-};
-
-// ── 메인 컴포넌트 ─────────────────────────────────────────────────────────────
 export default function AILeadOverlay({
   open,
   onClose,
@@ -77,6 +131,8 @@ export default function AILeadOverlay({
   currentTab,
 }: AILeadOverlayProps) {
   const { user, primaryMask, axisScores } = useAuth();
+  const { language } = useLanguageContext();
+  const ai = AI_STRINGS[language] ?? AI_STRINGS.ko;
 
   const [message,        setMessage]        = useState('');
   const [history,        setHistory]        = useState<ChatMessage[]>([]);
@@ -109,18 +165,18 @@ export default function AILeadOverlay({
   const startY      = useRef(0);
   const abortRef    = useRef<AbortController | null>(null);
 
-  const greeting = TAB_GREETINGS[currentTab ?? ''] ?? '무엇이든 말해줄래요?';
+  const greeting = ai.tabGreetings[currentTab ?? ''] ?? ai.defaultGreeting;
+  const ttsLang = language === 'en' ? 'en-US' : 'ko-KR';
+  const sttLang = language === 'en' ? 'en-US' : 'ko-KR';
 
-  // ── TTS ───────────────────────────────────────────────────────────────────
   const tts = useSpeechSynthesis({
-    lang:    'ko-KR',
+    lang:    ttsLang,
     rate:    0.92,
-    voiceId: userVoiceId,  // 사용자 클론 Voice ID — 없으면 기본 Ohana
+    voiceId: userVoiceId,
     onEnd: () => {
-      // TTS 끝나면 자동으로 다시 듣기 시작 (핸즈프리 루프)
       if (open) {
         setVoiceState('listening');
-        setStatusAnnounce('듣고 있어요. 말씀해주세요.');
+        setStatusAnnounce(ai.statusListening);
         stt.start();
       }
     },
@@ -134,13 +190,12 @@ export default function AILeadOverlay({
     const userMsg: ChatMessage = { role: 'user', text: text.trim() };
     setHistory(prev => [...prev, userMsg]);
     setVoiceState('thinking');
-    setStatusAnnounce('엠버가 생각하고 있어요.');
+    setStatusAnnounce(ai.statusThinking(aiName));
     setErrorAnnounce('');
 
     abortRef.current?.abort();
     abortRef.current = new AbortController();
 
-    // 스트리밍 응답을 담을 임시 버블을 미리 history에 추가
     const streamingPlaceholder: ChatMessage = { role: 'ai', text: '' };
     setHistory(prev => [...prev, streamingPlaceholder]);
 
@@ -159,7 +214,6 @@ export default function AILeadOverlay({
         },
         (delta) => {
           accumulated += delta;
-          // 마지막 버블(스트리밍 중)의 텍스트를 실시간 업데이트
           setHistory(prev => {
             const next = [...prev];
             next[next.length - 1] = { role: 'ai', text: accumulated };
@@ -170,7 +224,6 @@ export default function AILeadOverlay({
       );
 
       const aiText = data?.response || accumulated || '...';
-      // 최종 완성 텍스트로 버블 확정
       setHistory(prev => {
         const next = [...prev];
         next[next.length - 1] = { role: 'ai', text: aiText };
@@ -182,60 +235,55 @@ export default function AILeadOverlay({
       tts.speak(aiText);
     } catch (err: unknown) {
       if (err instanceof Error && err.name === 'AbortError') return;
-      const fallbackText = '연결이 불안정해요. 다시 말해줄래요?';
+      const fallbackText = ai.fallbackText;
       setHistory(prev => {
         const next = [...prev];
         next[next.length - 1] = { role: 'ai', text: fallbackText };
         return next;
       });
       setLatestAiMessage(fallbackText);
-      setErrorAnnounce('연결 오류가 발생했어요. 다시 시도해주세요.');
+      setErrorAnnounce(ai.connError);
       setVoiceState('speaking');
       tts.speak(fallbackText);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [history, primaryMask, axisScores, currentTab, user?.id]);
+  }, [history, primaryMask, axisScores, currentTab, user?.id, ai, aiName]);
 
-  // ── STT ───────────────────────────────────────────────────────────────────
   const stt = useSpeechRecognition({
-    lang:     'ko-KR',
+    lang:     sttLang,
     onResult: (transcript) => {
       sendToAI(transcript);
     },
     onEnd: () => {
-      // onEnd는 정상 종료(stop() 호출 후)에도 발생
-      // voiceState는 sendToAI 안에서 이미 'thinking'으로 변경됨
-      // 여기서는 idle만 처리
       setVoiceState(prev => prev === 'listening' ? 'idle' : prev);
     },
     onError: (error) => {
-      const msg = STT_ERROR_MESSAGES[error];
+      const msg = ai.sttErrors[error];
       if (msg) {
         setVoiceState('idle');
         setErrorAnnounce(msg.aria);
         tts.speak(msg.tts);
       } else if (error !== 'aborted') {
         setVoiceState('idle');
-        setErrorAnnounce('음성 인식 중 오류가 발생했어요.');
+        setErrorAnnounce(ai.sttGenericError);
       }
     },
   });
 
-  // ── 마이크 토글 ───────────────────────────────────────────────────────────
   const toggleMic = useCallback(() => {
     if (voiceState === 'thinking') return;
     if (voiceState === 'listening') {
       stt.stop();
       setVoiceState('idle');
-      setStatusAnnounce('음성 입력이 중지되었어요.');
+      setStatusAnnounce(ai.statusStopped);
     } else {
       tts.stop();
       stt.start();
       setVoiceState('listening');
-      setStatusAnnounce('듣고 있어요. 말씀해주세요.');
+      setStatusAnnounce(ai.statusListening);
       setErrorAnnounce('');
     }
-  }, [voiceState, stt, tts]);
+  }, [voiceState, stt, tts, ai]);
 
   // ── 텍스트 전송 ───────────────────────────────────────────────────────────
   const handleTextSend = useCallback(() => {
@@ -319,12 +367,11 @@ export default function AILeadOverlay({
     return () => { document.body.style.overflow = ''; };
   }, [open]);
 
-  // ── 상태별 사람이 읽을 수 있는 레이블 ────────────────────────────────────
   const micAriaLabel =
-    voiceState === 'listening' ? '음성 입력 중지' :
-    voiceState === 'thinking'  ? '응답 대기 중, 잠시 기다려주세요' :
-    stt.supported              ? '음성 입력 시작' :
-                                 '음성 인식을 지원하지 않는 브라우저입니다';
+    voiceState === 'listening' ? ai.micLabelListening :
+    voiceState === 'thinking'  ? ai.micLabelThinking :
+    stt.supported              ? ai.micLabelStart :
+                                 ai.micLabelUnsupported;
 
   const isListening = voiceState === 'listening';
 
@@ -335,7 +382,7 @@ export default function AILeadOverlay({
       key="ai-overlay"
       ref={overlayRef}
       role="dialog"
-      aria-label={`${aiName} 음성 대화 — 음성 또는 텍스트로 대화할 수 있어요`}
+      aria-label={ai.dialogLabel(aiName)}
       aria-modal="true"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
@@ -392,7 +439,7 @@ export default function AILeadOverlay({
         aria-hidden="true"
         style={{ textAlign: 'center', fontSize: 10, color: C.text5, margin: '6px 0 0', fontFamily: "'DM Sans', sans-serif" }}
       >
-        아래로 스와이프하면 돌아가요
+        {ai.swipeHint}
       </p>
 
       {/* ── 대화 기록 — role="log": 순서 있는 대화 컨테이너 ──────────────
@@ -403,7 +450,7 @@ export default function AILeadOverlay({
       <div
         ref={chatLogRef}
         role="log"
-        aria-label="대화 기록"
+        aria-label={ai.chatLogLabel}
         aria-live="polite"
         aria-relevant="additions text"
         tabIndex={0}
@@ -459,7 +506,7 @@ export default function AILeadOverlay({
             }}
           >
             <span className="sr-only">
-              {msg.role === 'ai' ? `${aiName}:` : '나:'}
+              {msg.role === 'ai' ? `${aiName}:` : ai.speakerMe}
             </span>
             {msg.role === 'ai' && (
               <p aria-hidden="true" style={{ fontSize: 9, color: C.amberGold, marginBottom: 4, fontWeight: 400 }}>
@@ -527,14 +574,14 @@ export default function AILeadOverlay({
           background: C.bg2, border: `1px solid ${C.border}`, borderRadius: 12, padding: '10px 14px',
         }}>
           <input
-            aria-label="AI에게 보낼 메시지를 입력해요. 음성 대신 텍스트로도 대화할 수 있어요."
+            aria-label={ai.inputLabel}
             aria-describedby="voice-status"
             value={message}
             onChange={e => setMessage(e.target.value)}
             placeholder={
-              voiceState === 'thinking' ? '엠버가 생각하고 있어요...' :
-              voiceState === 'listening' ? '말하거나 직접 입력해도 돼요...' :
-              '또는 여기에 적어요...'
+              voiceState === 'thinking' ? ai.inputPlaceholderThinking(aiName) :
+              voiceState === 'listening' ? ai.inputPlaceholderListening :
+              ai.inputPlaceholderIdle
             }
             disabled={voiceState === 'thinking'}
             style={{
@@ -545,7 +592,7 @@ export default function AILeadOverlay({
           />
           {message.trim() && (
             <button
-              aria-label="메시지 전송"
+              aria-label={ai.sendLabel}
               onClick={handleTextSend}
               style={{
                 width: 28, height: 28, borderRadius: '50%',
@@ -568,8 +615,8 @@ export default function AILeadOverlay({
           {/* TTS 중지 버튼 — 읽는 중일 때만 표시, 항상 포커스 가능 */}
           {voiceState === 'speaking' && (
             <button
-              aria-label="읽기 중지"
-              onClick={() => { tts.stop(); setVoiceState('idle'); setStatusAnnounce('읽기가 중지되었어요.'); }}
+              aria-label={ai.stopReadLabel}
+              onClick={() => { tts.stop(); setVoiceState('idle'); setStatusAnnounce(ai.statusReadStopped); }}
               style={{
                 width: 44, height: 44, borderRadius: '50%',
                 background: C.bg2, border: `1px solid ${C.border}`, cursor: 'pointer',
@@ -617,7 +664,7 @@ export default function AILeadOverlay({
           {/* 닫기 버튼 — 항상 마지막 탭 순서 */}
           <button
             onClick={onClose}
-            aria-label="대화 모드 닫기"
+            aria-label={ai.closeLabel}
             style={{
               width: 44, height: 44, borderRadius: '50%',
               background: C.bg2, border: `1px solid ${C.border}`, cursor: 'pointer',
@@ -636,7 +683,7 @@ export default function AILeadOverlay({
             role="note"
             style={{ fontSize: 10, color: C.text5, textAlign: 'center' }}
           >
-            이 브라우저는 음성 인식을 지원하지 않아요. 텍스트로 대화해주세요.
+            {ai.sttUnsupported}
           </p>
         )}
       </div>

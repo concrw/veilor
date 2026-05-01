@@ -2,6 +2,26 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import type { AuthError, Session, User } from "@supabase/supabase-js";
 import { supabase, veilorDb } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { useLanguageContext } from "@/context/LanguageContext";
+
+const S = {
+  ko: {
+    sessionExpiredTitle: '세션 만료',
+    sessionExpiredDesc: '다시 로그인해 주세요.',
+    googleLoginFailTitle: 'Google 로그인 실패',
+    signOutTitle: '로그아웃',
+    signOutDesc: '다음에 또 만나요!',
+    profileSyncFail: '프로필 동기화 실패',
+  },
+  en: {
+    sessionExpiredTitle: 'Session Expired',
+    sessionExpiredDesc: 'Please log in again.',
+    googleLoginFailTitle: 'Google Sign-In Failed',
+    signOutTitle: 'Signed Out',
+    signOutDesc: 'See you next time!',
+    profileSyncFail: 'Profile sync failed',
+  },
+} as const;
 
 export type OnboardingStep = 'welcome' | 'cq' | 'priper' | 'completed';
 
@@ -36,6 +56,9 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  const { language } = useLanguageContext();
+  const s = S[language] ?? S.ko;
+
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
@@ -58,7 +81,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // PGRST116 = "no rows returned" — 신규 유저, 정상 케이스
       if (error.code !== 'PGRST116') {
         console.error('[AuthContext] syncOnboarding failed:', error.message);
-        setAuthError(`프로필 동기화 실패: ${error.message}`);
+        setAuthError(`${s.profileSyncFail}: ${error.message}`);
       }
       return;
     }
@@ -79,7 +102,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (event === 'TOKEN_REFRESHED' && !sess) {
         console.warn('Token refresh returned no session — signing out');
         await supabase.auth.signOut();
-        toast({ title: '세션 만료', description: '다시 로그인해 주세요.', variant: 'destructive' });
+        toast({ title: s.sessionExpiredTitle, description: s.sessionExpiredDesc, variant: 'destructive' });
         setSession(null);
         setUser(null);
         setLoading(false);
@@ -195,7 +218,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       provider: 'google',
       options: { redirectTo: `${window.location.origin}/` },
     });
-    if (error) toast({ title: 'Google 로그인 실패', description: error.message, variant: 'destructive' });
+    if (error) toast({ title: s.googleLoginFailTitle, description: error.message, variant: 'destructive' });
     return { error };
   };
 
@@ -207,7 +230,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setSecondaryMask(null);
     setAxisScores(null);
     setPersonaContextsCompleted([]);
-    toast({ title: '로그아웃', description: '다음에 또 만나요!' });
+    toast({ title: s.signOutTitle, description: s.signOutDesc });
   };
 
   const value = useMemo<AuthContextValue>(() => ({

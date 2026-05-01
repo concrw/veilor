@@ -1,7 +1,69 @@
 import { useState, memo } from 'react';
 import { C } from '@/lib/colors';
 import { usePersonaMapData } from '@/hooks/usePersonaMapData';
+import { useLanguageContext } from '@/context/LanguageContext';
 import type { PersonaInstance, PatternProfile, PersonaContradiction } from '@/types/persona';
+
+const S = {
+  ko: {
+    mapTitle: '페르소나 맵',
+    loading: '불러오는 중...',
+    emptyTitle: '아직 발견된 페르소나가 없어요',
+    emptyDesc: 'Vent, Dig, Codetalk에서 대화를 나누면\n패턴이 감지되고 페르소나가 생겨나요.',
+    activeFmt: (active: number, suppressed: number, conflict: number) => {
+      let s = `활성 ${active}개`;
+      if (suppressed > 0) s += ` · 억압 후보 ${suppressed}개`;
+      if (conflict > 0) s += ` · 충돌 ${conflict}개`;
+      return s;
+    },
+    patternBasis: 'PatternProfile 기반',
+    meBadge: '나',
+    statusLabels: { active: '활성', dormant: '잠재', suppressed: '억압 후보' },
+    conflict: '충돌',
+    patternAxis: '패턴 축',
+    activeness: '활성도',
+    descLabel: '설명',
+    suppressedCandidate: '억압된 자아 후보',
+    suppressedDesc: '이 자아는 억눌려 있어요. 표현되지 못한 욕구나 감정이 숨어 있을 수 있어요.',
+    detectedSignals: '감지된 시그널',
+    signalSummary: '관련 시그널 요약',
+    noContent: '(내용 없음)',
+    conflictRelation: '충돌 관계',
+    unknownPersona: '(알 수 없음)',
+    contributingPatterns: '기여 패턴',
+    confidence: '신뢰도',
+    signalCount: '신호 수',
+  },
+  en: {
+    mapTitle: 'Persona Map',
+    loading: 'Loading...',
+    emptyTitle: 'No personas discovered yet',
+    emptyDesc: 'Chat in Vent, Dig, or Codetalk and\npatterns will be detected to form personas.',
+    activeFmt: (active: number, suppressed: number, conflict: number) => {
+      let s = `${active} active`;
+      if (suppressed > 0) s += ` · ${suppressed} suppressed`;
+      if (conflict > 0) s += ` · ${conflict} conflicts`;
+      return s;
+    },
+    patternBasis: 'PatternProfile-based',
+    meBadge: 'Me',
+    statusLabels: { active: 'Active', dormant: 'Dormant', suppressed: 'Suppressed' },
+    conflict: 'Conflict',
+    patternAxis: 'Pattern Axis',
+    activeness: 'Activeness',
+    descLabel: 'Description',
+    suppressedCandidate: 'Suppressed Self Candidate',
+    suppressedDesc: 'This self is suppressed. There may be hidden unmet needs or emotions.',
+    detectedSignals: 'Detected Signals',
+    signalSummary: 'Related Signal Summary',
+    noContent: '(no content)',
+    conflictRelation: 'Conflict Relation',
+    unknownPersona: '(unknown)',
+    contributingPatterns: 'Contributing Patterns',
+    confidence: 'Confidence',
+    signalCount: 'Signal Count',
+  },
+};
 
 const getStatusStyle = (status: string) => {
   switch (status) {
@@ -16,17 +78,8 @@ const getStatusStyle = (status: string) => {
   }
 };
 
-const getStatusLabel = (status: string) => {
-  switch (status) {
-    case 'active': return '\uD65C\uC131';
-    case 'dormant': return '\uC7A0\uC7AC';
-    case 'suppressed': return '\uC5B5\uC555\uB41C \uC790\uC544 \uD6C4\uBCF4';
-    default: return status;
-  }
-};
-
 const getTrendIcon = (trend: string) => {
-  switch (trend) { case 'rising': return '\u2191'; case 'declining': return '\u2193'; default: return '\u2192'; }
+  switch (trend) { case 'rising': return '↑'; case 'declining': return '↓'; default: return '→'; }
 };
 
 const getTrendColor = (trend: string) => {
@@ -43,12 +96,14 @@ const getNodePosition = (index: number, total: number) => {
 const PersonaMap = memo(function PersonaMap({ userId }: { userId: string }) {
   const { personas, patterns, contradictions, loading, getSignalSummary } = usePersonaMapData(userId);
   const [selectedPersona, setSelectedPersona] = useState<string | null>(null);
+  const { language } = useLanguageContext();
+  const s = S[language] ?? S.ko;
 
   if (loading) {
     return (
       <div className="vr-fade-in" style={{ background: C.bg2, border: `1px solid ${C.border}`, borderRadius: 14, padding: '17px 19px' }}>
-        <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 16, color: C.text }}>페르소나 맵</span>
-        <p style={{ fontSize: 11, color: C.text4, marginTop: 8, textAlign: 'center', padding: '20px 0' }}>불러오는 중...</p>
+        <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 16, color: C.text }}>{s.mapTitle}</span>
+        <p style={{ fontSize: 11, color: C.text4, marginTop: 8, textAlign: 'center', padding: '20px 0' }}>{s.loading}</p>
       </div>
     );
   }
@@ -56,13 +111,17 @@ const PersonaMap = memo(function PersonaMap({ userId }: { userId: string }) {
   if (personas.length === 0) {
     return (
       <div className="vr-fade-in" style={{ background: C.bg2, border: `1px solid ${C.border}`, borderRadius: 14, padding: '17px 19px' }}>
-        <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 16, color: C.text }}>페르소나 맵</span>
+        <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 16, color: C.text }}>{s.mapTitle}</span>
         <div style={{ textAlign: 'center', padding: '24px 0 16px' }}>
           <div style={{ width: 48, height: 48, borderRadius: '50%', border: `2px dashed ${C.border}`, margin: '0 auto 10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <span style={{ fontSize: 20, color: C.text5 }}>?</span>
           </div>
-          <p style={{ fontSize: 12, fontWeight: 300, color: C.text3, lineHeight: 1.5, marginBottom: 4 }}>아직 발견된 페르소나가 없어요</p>
-          <p style={{ fontSize: 10, fontWeight: 300, color: C.text5, lineHeight: 1.4 }}>Vent, Dig, Codetalk에서 대화를 나누면<br />패턴이 감지되고 페르소나가 생겨나요.</p>
+          <p style={{ fontSize: 12, fontWeight: 300, color: C.text3, lineHeight: 1.5, marginBottom: 4 }}>{s.emptyTitle}</p>
+          <p style={{ fontSize: 10, fontWeight: 300, color: C.text5, lineHeight: 1.4 }}>
+            {s.emptyDesc.split('\n').map((line, i, arr) => (
+              <span key={i}>{line}{i < arr.length - 1 && <br />}</span>
+            ))}
+          </p>
         </div>
       </div>
     );
@@ -81,19 +140,19 @@ const PersonaMap = memo(function PersonaMap({ userId }: { userId: string }) {
       <div className="vr-fade-in" style={{ background: C.bg2, border: `1px solid ${C.border}`, borderRadius: 14, padding: '17px 19px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 13 }}>
           <div>
-            <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 16, color: C.text }}>페르소나 맵</span>
+            <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 16, color: C.text }}>{s.mapTitle}</span>
             <p style={{ fontSize: 10, fontWeight: 300, color: C.text4, marginTop: 2 }}>
-              활성 {activeCount}개{suppressedCount > 0 ? ` \xB7 억압 후보 ${suppressedCount}개` : ''}{contradictionCount > 0 ? ` \xB7 충돌 ${contradictionCount}개` : ''}
+              {s.activeFmt(activeCount, suppressedCount, contradictionCount)}
             </p>
           </div>
-          <span style={{ fontSize: 9, fontWeight: 300, color: C.text4 }}>PatternProfile 기반</span>
+          <span style={{ fontSize: 9, fontWeight: 300, color: C.text4 }}>{s.patternBasis}</span>
         </div>
 
         {/* Cluster visualization */}
         <div style={{ position: 'relative', width: '100%', paddingBottom: '100%', marginBottom: 12 }}>
           <div style={{ position: 'absolute', inset: 0 }}>
             <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', width: 40, height: 40, borderRadius: '50%', background: `${C.amberGold}08`, border: `1px solid ${C.amberGold}22`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ fontSize: 9, color: C.amberGold, fontWeight: 400 }}>나</span>
+              <span style={{ fontSize: 9, color: C.amberGold, fontWeight: 400 }}>{s.meBadge}</span>
             </div>
 
             <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} viewBox="0 0 100 100">
@@ -145,19 +204,19 @@ const PersonaMap = memo(function PersonaMap({ userId }: { userId: string }) {
 
         {/* Status legend */}
         <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 8 }}>
-          {[{ status: 'active', label: '활성' }, { status: 'dormant', label: '잠재' }, { status: 'suppressed', label: '억압 후보' }].map(item => {
-            const st = getStatusStyle(item.status);
+          {(['active', 'dormant', 'suppressed'] as const).map(status => {
+            const st = getStatusStyle(status);
             return (
-              <div key={item.status} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <div key={status} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                 <div style={{ width: 8, height: 8, borderRadius: '50%', border: st.border, background: st.background }} />
-                <span style={{ fontSize: 9, color: C.text4 }}>{item.label}</span>
+                <span style={{ fontSize: 9, color: C.text4 }}>{s.statusLabels[status]}</span>
               </div>
             );
           })}
           {contradictionCount > 0 && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
               <div style={{ width: 12, height: 0, borderTop: '1.5px dashed #C08070' }} />
-              <span style={{ fontSize: 9, color: C.text4 }}>충돌</span>
+              <span style={{ fontSize: 9, color: C.text4 }}>{s.conflict}</span>
             </div>
           )}
         </div>
@@ -165,7 +224,7 @@ const PersonaMap = memo(function PersonaMap({ userId }: { userId: string }) {
         {/* Pattern profiles summary */}
         {patterns.length > 0 && (
           <div style={{ borderTop: `1px solid ${C.border2}`, paddingTop: 10, marginTop: 4 }}>
-            <p style={{ fontSize: 9, fontWeight: 400, letterSpacing: '.07em', textTransform: 'uppercase', color: C.text5, marginBottom: 6 }}>패턴 축</p>
+            <p style={{ fontSize: 9, fontWeight: 400, letterSpacing: '.07em', textTransform: 'uppercase', color: C.text5, marginBottom: 6 }}>{s.patternAxis}</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {patterns.map(pt => (
                 <div key={pt.id} style={{ background: C.bg, borderRadius: 7, padding: '7px 10px' }}>
@@ -205,18 +264,18 @@ const PersonaMap = memo(function PersonaMap({ userId }: { userId: string }) {
                 <div>
                   <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 400, fontSize: 17, color: C.text }}>{selected.persona_label}</span>
                   <div style={{ display: 'flex', gap: 6, marginTop: 2 }}>
-                    <span style={{ fontSize: 9, padding: '1px 6px', borderRadius: 99, border: `1px solid ${selSt.color}44`, color: selSt.color, background: selSt.background }}>{getStatusLabel(selected.status)}</span>
+                    <span style={{ fontSize: 9, padding: '1px 6px', borderRadius: 99, border: `1px solid ${selSt.color}44`, color: selSt.color, background: selSt.background }}>{s.statusLabels[selected.status as keyof typeof s.statusLabels] ?? selected.status}</span>
                     {selected.persona_layer && <span style={{ fontSize: 9, padding: '1px 6px', borderRadius: 99, border: `1px solid ${C.border}`, color: C.text4 }}>{selected.persona_layer}</span>}
                   </div>
                 </div>
               </div>
-              <button onClick={() => setSelectedPersona(null)} style={{ width: 26, height: 26, borderRadius: '50%', border: `1px solid ${C.border}`, background: 'transparent', cursor: 'pointer', color: C.text4, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{'\u2715'}</button>
+              <button onClick={() => setSelectedPersona(null)} style={{ width: 26, height: 26, borderRadius: '50%', border: `1px solid ${C.border}`, background: 'transparent', cursor: 'pointer', color: C.text4, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{'✕'}</button>
             </div>
 
             <div style={{ flex: 1, overflowY: 'auto', padding: '12px 20px 24px', display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <span style={{ fontSize: 9, color: C.text4 }}>활성도</span>
+                  <span style={{ fontSize: 9, color: C.text4 }}>{s.activeness}</span>
                   <span style={{ fontSize: 9, color: selSt.color }}>{selected.activation_score}/100</span>
                 </div>
                 <div style={{ height: 4, background: C.border2, borderRadius: 99, overflow: 'hidden' }}>
@@ -226,18 +285,18 @@ const PersonaMap = memo(function PersonaMap({ userId }: { userId: string }) {
 
               {selected.description && (
                 <div style={{ background: C.bg2, border: `1px solid ${C.border}`, borderRadius: 10, padding: '10px 12px' }}>
-                  <p style={{ fontSize: 9, fontWeight: 400, letterSpacing: '.06em', textTransform: 'uppercase', color: C.text5, marginBottom: 4 }}>설명</p>
+                  <p style={{ fontSize: 9, fontWeight: 400, letterSpacing: '.06em', textTransform: 'uppercase', color: C.text5, marginBottom: 4 }}>{s.descLabel}</p>
                   <p style={{ fontSize: 11, fontWeight: 300, color: C.text2, lineHeight: 1.55 }}>{selected.description}</p>
                 </div>
               )}
 
               {selected.status === 'suppressed' && (
                 <div style={{ background: '#C080700A', border: '1px dashed #C0807044', borderRadius: 10, padding: '10px 12px' }}>
-                  <p style={{ fontSize: 9, fontWeight: 400, letterSpacing: '.06em', color: '#C08070', marginBottom: 4 }}>억압된 자아 후보</p>
-                  <p style={{ fontSize: 11, fontWeight: 300, color: C.text3, lineHeight: 1.55, marginBottom: 6 }}>이 자아는 억눌려 있어요. 표현되지 못한 욕구나 감정이 숨어 있을 수 있어요.</p>
+                  <p style={{ fontSize: 9, fontWeight: 400, letterSpacing: '.06em', color: '#C08070', marginBottom: 4 }}>{s.suppressedCandidate}</p>
+                  <p style={{ fontSize: 11, fontWeight: 300, color: C.text3, lineHeight: 1.55, marginBottom: 6 }}>{s.suppressedDesc}</p>
                   {selected.detected_signals && selected.detected_signals.length > 0 && (
                     <div style={{ borderTop: '1px solid #C0807022', paddingTop: 6, marginTop: 2 }}>
-                      <p style={{ fontSize: 9, color: '#C08070', marginBottom: 4, opacity: 0.8 }}>감지된 시그널</p>
+                      <p style={{ fontSize: 9, color: '#C08070', marginBottom: 4, opacity: 0.8 }}>{s.detectedSignals}</p>
                       {selected.detected_signals.slice(0, 3).map((sig, si) => (
                         <div key={si} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
                           <span style={{ fontSize: 8, padding: '1px 5px', borderRadius: 4, background: '#C0807015', color: '#C08070', border: '1px solid #C0807022' }}>{sig.source}</span>
@@ -251,14 +310,14 @@ const PersonaMap = memo(function PersonaMap({ userId }: { userId: string }) {
 
               {selected.status === 'suppressed' && signals && (signals.vent_signals.length > 0 || signals.dig_signals.length > 0) && (
                 <div style={{ background: C.bg2, border: `1px solid ${C.border}`, borderRadius: 10, padding: '10px 12px' }}>
-                  <p style={{ fontSize: 9, fontWeight: 400, letterSpacing: '.06em', textTransform: 'uppercase', color: C.text5, marginBottom: 6 }}>관련 시그널 요약</p>
+                  <p style={{ fontSize: 9, fontWeight: 400, letterSpacing: '.06em', textTransform: 'uppercase', color: C.text5, marginBottom: 6 }}>{s.signalSummary}</p>
                   {signals.vent_signals.length > 0 && (
                     <div style={{ marginBottom: signals.dig_signals.length > 0 ? 8 : 0 }}>
                       <p style={{ fontSize: 8, color: C.amber, marginBottom: 4, letterSpacing: '.05em' }}>VENT</p>
                       {signals.vent_signals.slice(0, 3).map((vs, vi) => (
                         <div key={vi} style={{ display: 'flex', alignItems: 'flex-start', gap: 6, marginBottom: 4, paddingLeft: 6, borderLeft: `2px solid ${C.amber}22` }}>
                           <div style={{ flex: 1 }}>
-                            <p style={{ fontSize: 10, color: C.text3, lineHeight: 1.4 }}>{vs.text || '(내용 없음)'}</p>
+                            <p style={{ fontSize: 10, color: C.text3, lineHeight: 1.4 }}>{vs.text || s.noContent}</p>
                             {vs.emotion && <span style={{ fontSize: 8, color: C.text5, marginTop: 1, display: 'inline-block' }}>{vs.emotion}</span>}
                           </div>
                         </div>
@@ -271,7 +330,7 @@ const PersonaMap = memo(function PersonaMap({ userId }: { userId: string }) {
                       {signals.dig_signals.slice(0, 3).map((ds, di) => (
                         <div key={di} style={{ display: 'flex', alignItems: 'flex-start', gap: 6, marginBottom: 4, paddingLeft: 6, borderLeft: `2px solid ${C.frost}22` }}>
                           <div style={{ flex: 1 }}>
-                            <p style={{ fontSize: 10, color: C.text3, lineHeight: 1.4 }}>{ds.text || '(내용 없음)'}</p>
+                            <p style={{ fontSize: 10, color: C.text3, lineHeight: 1.4 }}>{ds.text || s.noContent}</p>
                             {ds.layer && <span style={{ fontSize: 8, color: C.text5, marginTop: 1, display: 'inline-block' }}>{ds.layer}</span>}
                           </div>
                         </div>
@@ -283,7 +342,7 @@ const PersonaMap = memo(function PersonaMap({ userId }: { userId: string }) {
 
               {relContra.length > 0 && (
                 <div style={{ background: C.bg2, border: '1px solid #C0807022', borderRadius: 10, padding: '10px 12px' }}>
-                  <p style={{ fontSize: 9, fontWeight: 400, letterSpacing: '.06em', textTransform: 'uppercase', color: '#C08070', marginBottom: 6 }}>충돌 관계</p>
+                  <p style={{ fontSize: 9, fontWeight: 400, letterSpacing: '.06em', textTransform: 'uppercase', color: '#C08070', marginBottom: 6 }}>{s.conflictRelation}</p>
                   {relContra.map((rc) => {
                     const otherId = rc.persona_a_id === selected.id ? rc.persona_b_id : rc.persona_a_id;
                     const other = personas.find(p => p.id === otherId);
@@ -294,7 +353,7 @@ const PersonaMap = memo(function PersonaMap({ userId }: { userId: string }) {
                         </div>
                         <div style={{ flex: 1 }}>
                           <p style={{ fontSize: 10, color: C.text2, lineHeight: 1.3 }}>
-                            {other?.persona_label ?? '(알 수 없음)'}
+                            {other?.persona_label ?? s.unknownPersona}
                             <span style={{ fontSize: 8, color: C.text5, marginLeft: 4 }}>{rc.contradiction_type}</span>
                           </p>
                           {rc.description && <p style={{ fontSize: 9, color: C.text4, lineHeight: 1.4, marginTop: 2 }}>{rc.description}</p>}
@@ -308,7 +367,7 @@ const PersonaMap = memo(function PersonaMap({ userId }: { userId: string }) {
 
               {selected.contributing_patterns.length > 0 && (
                 <div>
-                  <p style={{ fontSize: 9, fontWeight: 400, letterSpacing: '.06em', textTransform: 'uppercase', color: C.text5, marginBottom: 6 }}>기여 패턴</p>
+                  <p style={{ fontSize: 9, fontWeight: 400, letterSpacing: '.06em', textTransform: 'uppercase', color: C.text5, marginBottom: 6 }}>{s.contributingPatterns}</p>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                     {selected.contributing_patterns.map((cp, i) => {
                       const matched = patterns.find(pt => pt.pattern_axis === cp.axis);
@@ -336,11 +395,11 @@ const PersonaMap = memo(function PersonaMap({ userId }: { userId: string }) {
 
               <div style={{ display: 'flex', gap: 8 }}>
                 <div style={{ flex: 1, background: C.bg2, border: `1px solid ${C.border}`, borderRadius: 8, padding: '8px 10px', textAlign: 'center' }}>
-                  <p style={{ fontSize: 9, color: C.text5, marginBottom: 2 }}>신뢰도</p>
+                  <p style={{ fontSize: 9, color: C.text5, marginBottom: 2 }}>{s.confidence}</p>
                   <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18, color: C.text }}>{selected.confidence_score}<span style={{ fontSize: 10, color: C.text4 }}>%</span></p>
                 </div>
                 <div style={{ flex: 1, background: C.bg2, border: `1px solid ${C.border}`, borderRadius: 8, padding: '8px 10px', textAlign: 'center' }}>
-                  <p style={{ fontSize: 9, color: C.text5, marginBottom: 2 }}>신호 수</p>
+                  <p style={{ fontSize: 9, color: C.text5, marginBottom: 2 }}>{s.signalCount}</p>
                   <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18, color: C.text }}>{selected.signal_count}</p>
                 </div>
               </div>

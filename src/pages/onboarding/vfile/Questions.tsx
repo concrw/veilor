@@ -4,12 +4,34 @@ import { VFILE_QUESTIONS } from '@/data/vfileQuestions';
 import { VFILE_CONTEXT_LABELS } from '@/lib/vfileAlgorithm';
 import type { VFileContext } from '@/lib/vfileAlgorithm';
 import { Slider } from '@/components/ui/slider';
+import { useLanguageContext } from '@/context/LanguageContext';
+
+const S = {
+  ko: {
+    subtitle: 'V-File 진단',
+    progressLabel: '진행률',
+    honestHint: '질문에 솔직하게 답할수록\n더 정확한 결과를 얻습니다',
+    axisLabels: { A: '애착', B: '소통', C: '욕구표현', D: '역할' },
+    btnNext: '다음',
+    btnPrev: '이전 문항으로',
+  },
+  en: {
+    subtitle: 'V-File Diagnosis',
+    progressLabel: 'Progress',
+    honestHint: 'The more honest your answers,\nthe more accurate your results',
+    axisLabels: { A: 'Attachment', B: 'Communication', C: 'Expression', D: 'Role' },
+    btnNext: 'Next',
+    btnPrev: 'Previous question',
+  },
+};
 
 const STORAGE_KEY = 'veilor:priper-progress';
 
 export default function PriperQuestions() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { language } = useLanguageContext();
+  const s = S[language] ?? S.ko;
   const context = ((location.state as Record<string, unknown>)?.context as VFileContext) ?? 'general';
   const storageKey = context === 'general' ? STORAGE_KEY : `${STORAGE_KEY}-${context}`;
 
@@ -81,9 +103,35 @@ export default function PriperQuestions() {
 
   return (
     <div
-      className="min-h-screen flex flex-col px-6 py-8"
+      className="min-h-screen flex"
       style={{ background: '#1C1917', fontFamily: "'DM Sans', sans-serif" }}
     >
+      {/* 좌측 진행 패널 — PC 전용 */}
+      <div className="hidden lg:flex flex-col justify-between flex-1 px-16 py-14" style={{ borderRight: '1px solid #2A2624' }}>
+        <div>
+          <h1 className="text-4xl font-bold tracking-widest mb-3" style={{ color: '#D4A574', letterSpacing: '0.2em' }}>VEILOR</h1>
+          <p className="text-base font-light" style={{ color: '#A8A29E' }}>{s.subtitle}</p>
+        </div>
+        <div className="space-y-6">
+          <div>
+            <div className="flex justify-between text-xs mb-3" style={{ color: '#A8A29E' }}>
+              <span>{s.progressLabel}</span>
+              <span>{progress}%</span>
+            </div>
+            <div className="h-1.5 rounded-full" style={{ background: '#292524' }}>
+              <div className="h-1.5 rounded-full transition-all" style={{ width: `${progress}%`, background: '#D4A574' }} />
+            </div>
+          </div>
+          <p className="text-2xl font-light leading-snug" style={{ color: '#F5F5F4' }}>
+            {current + 1} / {VFILE_QUESTIONS.length}<br />
+            <span className="text-sm font-normal" style={{ color: '#78716C' }}>{s.honestHint.split('\n').map((line, i) => <span key={i}>{line}{i === 0 && <br />}</span>)}</span>
+          </p>
+        </div>
+        <p className="text-xs" style={{ color: '#44403C' }}>© 2026 VEILOR</p>
+      </div>
+
+      {/* 우측 질문 영역 */}
+      <div className="flex flex-col flex-1 lg:flex-none lg:w-[520px] px-6 py-8 justify-center">
       <div className="max-w-sm w-full mx-auto flex-1 flex flex-col">
         {/* 맥락 배지 */}
         {context !== 'general' && (
@@ -117,7 +165,7 @@ export default function PriperQuestions() {
             className="text-xs px-2 py-0.5 rounded-full font-medium"
             style={{ background: '#D4A57415', color: '#D4A574' }}
           >
-            {q.axis === 'A' ? '애착' : q.axis === 'B' ? '소통' : q.axis === 'C' ? '욕구표현' : '역할'}
+            {s.axisLabels[q.axis as 'A' | 'B' | 'C' | 'D'] ?? q.axis}
           </span>
         </div>
 
@@ -161,7 +209,7 @@ export default function PriperQuestions() {
               className="w-full py-3 rounded-xl text-sm font-medium"
               style={{ background: '#D4A574', color: '#1C1917', fontFamily: "'DM Sans', sans-serif" }}
             >
-              다음
+              {s.btnNext}
             </button>
           </div>
         )}
@@ -189,9 +237,10 @@ export default function PriperQuestions() {
             className="mt-6 text-xs underline underline-offset-2"
             style={{ color: '#A8A29E' }}
           >
-            이전 문항으로
+            {s.btnPrev}
           </button>
         )}
+      </div>
       </div>
     </div>
   );

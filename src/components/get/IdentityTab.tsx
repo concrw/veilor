@@ -7,22 +7,7 @@ import type { VFileContext } from '@/lib/vfileAlgorithm';
 import { useAuth } from '@/context/AuthContext';
 import { veilorDb } from '@/integrations/supabase/client';
 import RadarTimeCompare from './RadarTimeCompare';
-
-// M43 확정 12종 + MSK 코드 매핑
-const MSK_LABELS: Record<string, { nameKo: string; category: string }> = {
-  PWR: { nameKo: '통제자', category: '포식형' },
-  NRC: { nameKo: '공허자', category: '포식형' },
-  SCP: { nameKo: '반항자', category: '포식형' },
-  MKV: { nameKo: '매혹자', category: '포식형' },
-  MNY: { nameKo: '유희자', category: '포식형' },
-  PSP: { nameKo: '탐험자', category: '포식형' },
-  EMP: { nameKo: '거울', category: '피식형' },
-  GVR: { nameKo: '돌봄자', category: '피식형' },
-  APV: { nameKo: '성취자', category: '피식형' },
-  DEP: { nameKo: '희생자', category: '피식형' },
-  AVD: { nameKo: '현자', category: '피식형' },
-  SAV: { nameKo: '순교자', category: '피식형' },
-};
+import { useGetTranslations } from '@/hooks/useTranslation';
 
 // V-File 가면명 → MSK 코드 역매핑 (DB에 한글 가면명이 저장된 경우)
 const NAME_TO_MSK: Record<string, string> = {};
@@ -31,25 +16,10 @@ MASK_PROFILES.forEach(m => {
   NAME_TO_MSK[m.id] = m.mskCode;
 });
 
-function resolveMask(primaryMask: string): { code: string; nameKo: string; category: string } | null {
-  // MSK 코드로 직접 매칭
-  if (MSK_LABELS[primaryMask]) {
-    return { code: primaryMask, ...MSK_LABELS[primaryMask] };
-  }
-  // 한글 가면명으로 역매핑
-  const mskCode = NAME_TO_MSK[primaryMask];
-  if (mskCode && MSK_LABELS[mskCode]) {
-    return { code: mskCode, ...MSK_LABELS[mskCode] };
-  }
-  return null;
-}
-
-const AXIS_LABELS: Record<string, string> = {
-  A: '애착', B: '소통', C: '욕구표현', D: '역할',
-};
-
-const ATTACHMENT_LABELS: Record<string, string> = {
-  secure: '안정형', anxious: '불안형', avoidant: '회피형', disorganized: '혼란형',
+// MSK 코드 → 카테고리 (predatory/prey는 코드로 고정)
+const MSK_CATEGORY: Record<string, 'predatory' | 'prey'> = {
+  PWR: 'predatory', NRC: 'predatory', SCP: 'predatory', MKV: 'predatory', MNY: 'predatory', PSP: 'predatory',
+  EMP: 'prey', GVR: 'prey', APV: 'prey', DEP: 'prey', AVD: 'prey', SAV: 'prey',
 };
 
 interface IdentityTabProps {
@@ -68,10 +38,11 @@ interface IdentityTabProps {
   signalTotal: number;
 }
 
-function ReanalysisHistory({ userId, currentScores, currentMask }: {
+function ReanalysisHistory({ userId, currentScores, currentMask, id }: {
   userId: string | undefined;
   currentScores: Record<string, number> | null;
   currentMask: string | null;
+  id: ReturnType<typeof useGetTranslations>['identity'];
 }) {
   const { data: sessions } = useQuery({
     queryKey: ['priper-history', userId],
@@ -91,22 +62,18 @@ function ReanalysisHistory({ userId, currentScores, currentMask }: {
 
   if (!sessions || sessions.length < 2 || !currentScores) return null;
 
-  const prev = sessions[1]; // 이전 세션 (현재는 [0])
+  const prev = sessions[1];
   const prevScores = prev.axis_scores as Record<string, number> | null;
   if (!prevScores) return null;
 
-  const diff = (key: string) => {
-    const cur = currentScores[key] ?? 0;
-    const old = prevScores[key] ?? 0;
-    return cur - old;
-  };
+  const diff = (key: string) => (currentScores[key] ?? 0) - (prevScores[key] ?? 0);
 
   return (
     <div className="bg-card border rounded-2xl p-5 space-y-3">
       <div className="flex items-center justify-between">
-        <p className="text-xs text-muted-foreground">재진단 비교</p>
+        <p className="text-xs text-muted-foreground">{id.reanalysisCompare}</p>
         <span className="text-[10px] text-muted-foreground">
-          {sessions.length}회 진단 기록
+          {id.diagnosisCount.replace('{count}', String(sessions.length))}
         </span>
       </div>
       {prev.primary_mask && currentMask && prev.primary_mask !== currentMask && (
@@ -121,7 +88,7 @@ function ReanalysisHistory({ userId, currentScores, currentMask }: {
           const d = diff(k);
           return (
             <div key={k} className="flex items-center gap-2 text-xs">
-              <span className="w-16 text-muted-foreground">{AXIS_LABELS[k]}</span>
+              <span className="w-16 text-muted-foreground">{id.axisLabels[k] ?? k}</span>
               <span className="w-6 text-right text-muted-foreground">{prevScores[k]}</span>
               <span className="mx-1">→</span>
               <span className="w-6 font-medium">{currentScores[k]}</span>
@@ -134,7 +101,7 @@ function ReanalysisHistory({ userId, currentScores, currentMask }: {
       </div>
       {prev.completed_at && (
         <p className="text-[10px] text-muted-foreground">
-          이전 진단: {new Date(prev.completed_at).toLocaleDateString('ko-KR')}
+          {id.prevDiagnosis.replace('{date}', new Date(prev.completed_at).toLocaleDateString())}
         </p>
       )}
     </div>
@@ -148,8 +115,17 @@ export default function IdentityTab({
 }: IdentityTabProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const get = useGetTranslations();
+  const id = get.identity;
 
-  // 맥락별 페르소나 프로필 조회
+  const resolveMask = (mask: string): { code: string; name: string; categoryKey: 'predatory' | 'prey' } | null => {
+    let code = MSK_CATEGORY[mask] !== undefined ? mask : NAME_TO_MSK[mask];
+    if (!code) return null;
+    const category = MSK_CATEGORY[code];
+    if (!category) return null;
+    return { code, name: id.maskLabels[code] ?? code, categoryKey: category };
+  };
+
   const { data: personas } = useQuery({
     queryKey: ['persona-profiles', user?.id],
     queryFn: async () => {
@@ -174,32 +150,33 @@ export default function IdentityTab({
     <>
       {/* V-File 가면 + 기원 프로필 */}
       <div className="bg-card border rounded-2xl p-5 space-y-4">
-        <p className="text-xs text-muted-foreground">나의 V-File</p>
+        <p className="text-xs text-muted-foreground">{id.vfileTitle}</p>
         {(() => {
           const resolved = primaryMask ? resolveMask(primaryMask) : null;
           if (!resolved) return <p className="text-2xl font-bold">—</p>;
           const profile = MASK_PROFILES.find(m => m.mskCode === resolved.code);
+          const isPredatory = resolved.categoryKey === 'predatory';
           return (
             <>
               <div className="space-y-2">
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <p className="text-2xl font-bold">{resolved.nameKo}</p>
+                    <p className="text-2xl font-bold">{resolved.name}</p>
                     <p className="text-[10px] text-muted-foreground leading-relaxed mt-0.5">
-                      고정된 정체성이 아니라, 지금 가장 자주 활성화되는 패턴입니다
+                      {id.notFixedPattern}
                     </p>
                   </div>
                   <button
                     onClick={() => navigate('/onboarding/vfile/questions', { state: { context: 'general', fromGet: true } })}
                     className="flex-shrink-0 text-[10px] text-primary border border-primary/30 px-2.5 py-1 rounded-lg hover:bg-primary/5 transition-colors mt-1"
                   >
-                    재분석
+                    {id.reanalyze}
                   </button>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-mono bg-muted px-2 py-0.5 rounded">{resolved.code}</span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${resolved.category === '포식형' ? 'bg-red-500/10 text-red-400' : 'bg-blue-500/10 text-blue-400'}`}>
-                    {resolved.category}
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${isPredatory ? 'bg-red-500/10 text-red-400' : 'bg-blue-500/10 text-blue-400'}`}>
+                    {isPredatory ? id.maskLabels['_predatory'] ?? resolved.categoryKey : id.maskLabels['_prey'] ?? resolved.categoryKey}
                   </span>
                 </div>
                 {profile && (
@@ -210,22 +187,22 @@ export default function IdentityTab({
               {/* 기원 심리 프로필 */}
               {profile && (
                 <div className="space-y-2.5 pt-2 border-t">
-                  <p className="text-xs font-medium text-muted-foreground">기원 프로필</p>
+                  <p className="text-xs font-medium text-muted-foreground">{id.originProfile}</p>
                   <div className="grid gap-2">
                     <div className="bg-muted/50 rounded-xl px-3.5 py-2.5 space-y-0.5">
-                      <p className="text-[10px] text-muted-foreground">핵심 상처</p>
+                      <p className="text-[10px] text-muted-foreground">{id.coreWound}</p>
                       <p className="text-xs font-medium">{profile.coreWound}</p>
                     </div>
                     <div className="bg-muted/50 rounded-xl px-3.5 py-2.5 space-y-0.5">
-                      <p className="text-[10px] text-muted-foreground">핵심 두려움</p>
+                      <p className="text-[10px] text-muted-foreground">{id.coreFear}</p>
                       <p className="text-xs font-medium">{profile.coreFear}</p>
                     </div>
                     <div className="bg-muted/50 rounded-xl px-3.5 py-2.5 space-y-0.5">
-                      <p className="text-[10px] text-muted-foreground">핵심 필요</p>
+                      <p className="text-[10px] text-muted-foreground">{id.coreNeed}</p>
                       <p className="text-xs font-medium">{profile.coreNeed}</p>
                     </div>
                     <div className="bg-muted/50 rounded-xl px-3.5 py-2.5 space-y-0.5">
-                      <p className="text-[10px] text-muted-foreground">생성 경로</p>
+                      <p className="text-[10px] text-muted-foreground">{id.genPath}</p>
                       <p className="text-xs font-medium">{profile.genPath}</p>
                     </div>
                   </div>
@@ -238,7 +215,7 @@ export default function IdentityTab({
                     })}
                     className="w-full text-xs text-center py-2.5 rounded-xl border border-dashed border-primary/30 text-primary hover:bg-primary/5 transition-colors"
                   >
-                    이 가면의 기원을 AI와 탐색하기
+                    {id.exploreWithAI}
                   </button>
                 </div>
               )}
@@ -250,11 +227,11 @@ export default function IdentityTab({
       {/* 축 점수 */}
       {axisScores && (
         <div className="bg-card border rounded-2xl p-5 space-y-3">
-          <p className="text-xs text-muted-foreground">관계 역량 4축</p>
+          <p className="text-xs text-muted-foreground">{id.fourAxes}</p>
           <div className="space-y-2">
             {(Object.entries(axisScores) as [string, number][]).map(([axis, score]) => (
               <div key={axis} className="flex items-center gap-3">
-                <span className="text-xs w-20 text-muted-foreground">{AXIS_LABELS[axis] ?? axis}</span>
+                <span className="text-xs w-20 text-muted-foreground">{id.axisLabels[axis] ?? axis}</span>
                 <div className="flex-1 h-1.5 bg-muted rounded-full">
                   <div className="h-1.5 bg-primary rounded-full transition-all" style={{ width: `${score}%` }} />
                 </div>
@@ -268,7 +245,7 @@ export default function IdentityTab({
       {/* V프로필 16유형 */}
       {axisScores && (
         <div className="bg-card border rounded-2xl p-5 space-y-2">
-          <p className="text-xs text-muted-foreground">V프로필 유형</p>
+          <p className="text-xs text-muted-foreground">{id.vprofileType}</p>
           {(() => {
             const vp = classifyVProfile(axisScores as Record<string, number>);
             return (
@@ -283,7 +260,7 @@ export default function IdentityTab({
                     <span key={k} className={`text-[10px] px-2 py-0.5 rounded-full ${
                       vp.axes[k] === 'high' ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
                     }`}>
-                      {vp.axes[k] === 'high' ? AXIS_LABELS[k] + '↑' : AXIS_LABELS[k] + '↓'}
+                      {vp.axes[k] === 'high' ? (id.axisLabels[k] ?? k) + '↑' : (id.axisLabels[k] ?? k) + '↓'}
                     </span>
                   ))}
                 </div>
@@ -299,30 +276,28 @@ export default function IdentityTab({
       {/* 애착 유형 */}
       {pp?.attachment_type && (
         <div className="bg-card border rounded-2xl p-5 space-y-1">
-          <p className="text-xs text-muted-foreground">애착 유형</p>
-          <p className="font-semibold">{ATTACHMENT_LABELS[pp.attachment_type] ?? pp.attachment_type}</p>
+          <p className="text-xs text-muted-foreground">{id.attachmentType}</p>
+          <p className="font-semibold">{id.attachmentLabels[pp.attachment_type as string] ?? pp.attachment_type}</p>
         </div>
       )}
 
       {/* Prime Perspective */}
       {pp?.perspective_text && (
         <div className="bg-card border rounded-2xl p-5 space-y-2">
-          <p className="text-xs text-muted-foreground">Prime Perspective</p>
-          <p className="font-semibold">{pp.perspective_text}</p>
+          <p className="text-xs text-muted-foreground">{id.primePerspective}</p>
+          <p className="font-semibold">{pp.perspective_text as string}</p>
         </div>
       )}
 
       {/* 세 개의 나 — 멀티페르소나 V-File */}
       <div className="bg-card border rounded-2xl p-5 space-y-4">
         <div className="flex items-center justify-between">
-          <p className="text-sm font-medium">세 개의 나</p>
+          <p className="text-sm font-medium">{id.threePersonas}</p>
           <span className="text-xs text-muted-foreground">
-            {personas?.length ?? 0}/3 완료
+            {id.personasComplete.replace('{count}', String(personas?.length ?? 0))}
           </span>
         </div>
-        <p className="text-xs text-muted-foreground leading-relaxed">
-          같은 질문이지만 맥락이 달라지면 다른 가면이 나타납니다
-        </p>
+        <p className="text-xs text-muted-foreground leading-relaxed">{id.personasDesc}</p>
         <div className="space-y-2.5">
           {contexts.map((ctx) => {
             const ctxLabel = VFILE_CONTEXT_LABELS[ctx];
@@ -342,7 +317,7 @@ export default function IdentityTab({
                         {resolved.code}
                       </span>
                       <span className="text-sm font-semibold" style={{ color: persona.color_hex }}>
-                        {resolved.nameKo}
+                        {resolved.name}
                       </span>
                     </div>
                   ) : (
@@ -350,7 +325,7 @@ export default function IdentityTab({
                       onClick={() => startDiagnosis(ctx)}
                       className="text-xs text-primary font-medium hover:underline"
                     >
-                      {ctx === 'general' ? '재분석' : '분석하기'}
+                      {ctx === 'general' ? id.reanalyze : id.startAnalysis}
                     </button>
                   )}
                 </div>
@@ -362,7 +337,7 @@ export default function IdentityTab({
                         <div className="h-1 bg-background rounded-full mb-1">
                           <div className="h-1 rounded-full" style={{ width: `${score}%`, backgroundColor: persona.color_hex }} />
                         </div>
-                        <span className="text-[10px] text-muted-foreground">{AXIS_LABELS[axis]}</span>
+                        <span className="text-[10px] text-muted-foreground">{id.axisLabels[axis] ?? axis}</span>
                       </div>
                     ))}
                   </div>
@@ -372,7 +347,7 @@ export default function IdentityTab({
                     onClick={() => startDiagnosis(ctx)}
                     className="text-[10px] text-muted-foreground hover:text-primary transition-colors"
                   >
-                    재분석
+                    {id.reanalyze}
                   </button>
                 )}
               </div>
@@ -385,36 +360,36 @@ export default function IdentityTab({
       {totalSessions > 0 && (
         <div className="bg-card border rounded-2xl p-5 space-y-4">
           <div className="flex items-center justify-between">
-            <p className="text-xs text-muted-foreground">누적 패턴 분석</p>
-            <span className="text-xs font-medium text-primary">총 {totalSessions}회 입력</span>
+            <p className="text-xs text-muted-foreground">{id.patternAnalysis}</p>
+            <span className="text-xs font-medium text-primary">{id.totalInput.replace('{count}', String(totalSessions))}</span>
           </div>
           <div className="grid grid-cols-3 gap-2">
             {ventCount > 0 && (
               <div className="bg-muted/50 rounded-xl p-3 text-center space-y-1">
                 <p className="text-xl font-bold">{ventCount}</p>
-                <p className="text-xs text-muted-foreground">Vent 대화</p>
+                <p className="text-xs text-muted-foreground">{id.ventConversation}</p>
               </div>
             )}
             {digCount > 0 && (
               <div className="bg-muted/50 rounded-xl p-3 text-center space-y-1">
                 <p className="text-xl font-bold">{digCount}</p>
-                <p className="text-xs text-muted-foreground">Dig 탐색</p>
+                <p className="text-xs text-muted-foreground">{id.digExploration}</p>
               </div>
             )}
             {setCount > 0 && (
               <div className="bg-muted/50 rounded-xl p-3 text-center space-y-1">
                 <p className="text-xl font-bold">{setCount}</p>
-                <p className="text-xs text-muted-foreground">Set 기록</p>
+                <p className="text-xs text-muted-foreground">{id.setRecord}</p>
               </div>
             )}
           </div>
           {topEmotions.length > 0 && (
             <div className="space-y-1.5">
-              <p className="text-xs text-muted-foreground">자주 느끼는 감정</p>
+              <p className="text-xs text-muted-foreground">{id.frequentEmotions}</p>
               <div className="flex flex-wrap gap-1.5">
                 {topEmotions.map(([emo, count]) => (
                   <span key={emo} className="text-xs bg-primary/10 text-primary px-2.5 py-1 rounded-full">
-                    {emo} <span className="opacity-60">{count}회</span>
+                    {emo} <span className="opacity-60">{id.times.replace('{count}', String(count))}</span>
                   </span>
                 ))}
               </div>
@@ -422,16 +397,16 @@ export default function IdentityTab({
           )}
           {topDomain && (
             <div className="space-y-1.5">
-              <p className="text-xs text-muted-foreground">반복 탐색 패턴</p>
+              <p className="text-xs text-muted-foreground">{id.repeatExploration}</p>
               <p className="text-sm font-medium">
                 {topDomain.domain}
-                <span className="text-xs text-muted-foreground font-normal ml-1">({topDomain.cnt}회 탐색)</span>
+                <span className="text-xs text-muted-foreground font-normal ml-1">({id.timesExplored.replace('{count}', String(topDomain.cnt))})</span>
               </p>
             </div>
           )}
           {recentKeywords.length > 0 && (
             <div className="space-y-1.5">
-              <p className="text-xs text-muted-foreground">최근 Set 키워드</p>
+              <p className="text-xs text-muted-foreground">{id.recentKeywords}</p>
               <div className="flex flex-wrap gap-1.5">
                 {recentKeywords.map((kw: string, i: number) => (
                   <span key={i} className="text-xs bg-muted px-2.5 py-1 rounded-full">{kw}</span>
@@ -441,17 +416,17 @@ export default function IdentityTab({
           )}
           {signalTotal > 0 && (
             <p className="text-xs text-muted-foreground border-t pt-3">
-              총 {signalTotal}개 신호 누적 — 사용할수록 분석이 정교해져요
+              {id.signalAccumulated.replace('{count}', String(signalTotal))}
             </p>
           )}
         </div>
       )}
 
       {/* #8 재진단 시간 비교 */}
-      <ReanalysisHistory userId={user?.id} currentScores={axisScores} currentMask={primaryMask} />
+      <ReanalysisHistory userId={user?.id} currentScores={axisScores} currentMask={primaryMask} id={id} />
 
       <Button variant="outline" className="w-full" onClick={() => startDiagnosis('general')}>
-        V-File 재분석
+        {id.priperReanalysis}
       </Button>
     </>
   );

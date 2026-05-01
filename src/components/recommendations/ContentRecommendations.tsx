@@ -13,6 +13,38 @@ import {
   Sparkles,
   RefreshCw,
 } from "lucide-react";
+import { useLanguageContext } from "@/context/LanguageContext";
+
+const S = {
+  ko: {
+    cardTitle: "맞춤 콘텐츠 추천",
+    loadFail: "추천 콘텐츠를 불러오지 못했습니다",
+    retry: "다시 시도",
+    emptyTitle: "아직 추천 콘텐츠가 없습니다",
+    emptyDesc: "Why 분석을 완료하면 맞춤 콘텐츠를 추천받을 수 있습니다",
+    relevance: (pct: number) => `관련도 ${pct}%`,
+    typeLabels: {
+      article: "아티클",
+      course: "강의",
+      book: "도서",
+      video: "영상",
+    },
+  },
+  en: {
+    cardTitle: "Recommended Content",
+    loadFail: "Failed to load recommendations",
+    retry: "Try again",
+    emptyTitle: "No recommendations yet",
+    emptyDesc: "Complete a Why analysis to receive personalized content recommendations",
+    relevance: (pct: number) => `${pct}% relevant`,
+    typeLabels: {
+      article: "Article",
+      course: "Course",
+      book: "Book",
+      video: "Video",
+    },
+  },
+};
 
 interface ContentRecommendation {
   id: string;
@@ -39,23 +71,10 @@ const getTypeIcon = (type: string) => {
   }
 };
 
-const getTypeLabel = (type: string) => {
-  switch (type) {
-    case "article":
-      return "아티클";
-    case "course":
-      return "강의";
-    case "book":
-      return "도서";
-    case "video":
-      return "영상";
-    default:
-      return type;
-  }
-};
-
 export const ContentRecommendations = () => {
   const { user } = useAuth();
+  const { language } = useLanguageContext();
+  const s = S[language] ?? S.ko;
 
   const {
     data,
@@ -74,13 +93,17 @@ export const ContentRecommendations = () => {
     staleTime: 1000 * 60 * 30, // 30 minutes
   });
 
+  const getTypeLabel = (type: string) => {
+    return s.typeLabels[type as keyof typeof s.typeLabels] ?? type;
+  };
+
   if (isLoading) {
     return (
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm flex items-center gap-2">
             <Sparkles className="w-4 h-4" />
-            맞춤 콘텐츠 추천
+            {s.cardTitle}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -108,13 +131,13 @@ export const ContentRecommendations = () => {
         <CardHeader className="pb-3">
           <CardTitle className="text-sm flex items-center gap-2">
             <Sparkles className="w-4 h-4" />
-            맞춤 콘텐츠 추천
+            {s.cardTitle}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-center py-6">
             <p className="text-xs text-muted-foreground mb-3">
-              추천 콘텐츠를 불러오지 못했습니다
+              {s.loadFail}
             </p>
             <Button
               variant="outline"
@@ -123,7 +146,7 @@ export const ContentRecommendations = () => {
               className="text-xs"
             >
               <RefreshCw className="w-3 h-3 mr-1" />
-              다시 시도
+              {s.retry}
             </Button>
           </div>
         </CardContent>
@@ -140,7 +163,7 @@ export const ContentRecommendations = () => {
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm flex items-center gap-2">
             <Sparkles className="w-4 h-4" />
-            맞춤 콘텐츠 추천
+            {s.cardTitle}
           </CardTitle>
           <Button
             variant="ghost"
@@ -167,10 +190,10 @@ export const ContentRecommendations = () => {
           <div className="text-center py-6">
             <Sparkles className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
             <p className="text-xs text-muted-foreground mb-1">
-              아직 추천 콘텐츠가 없습니다
+              {s.emptyTitle}
             </p>
             <p className="text-xs text-muted-foreground">
-              Why 분석을 완료하면 맞춤 콘텐츠를 추천받을 수 있습니다
+              {s.emptyDesc}
             </p>
           </div>
         ) : (
@@ -190,7 +213,7 @@ export const ContentRecommendations = () => {
                         {getTypeLabel(item.type)}
                       </Badge>
                       <span className="text-xs text-muted-foreground">
-                        관련도 {Math.round(item.relevance_score * 100)}%
+                        {s.relevance(Math.round(item.relevance_score * 100))}
                       </span>
                     </div>
                     <h4 className="text-sm font-medium mb-1 line-clamp-1">

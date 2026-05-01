@@ -1,18 +1,6 @@
 // BrandTab — brand strategy display + edit form + AI generate
 import { Button } from '@/components/ui/button';
-
-function PremiumLock({ label, onUnlock }: { label: string; onUnlock?: () => void }) {
-  return (
-    <div
-      className="bg-card border border-dashed rounded-2xl p-6 text-center space-y-2 opacity-70 cursor-pointer hover:opacity-90 transition-opacity"
-      onClick={onUnlock}
-    >
-      <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">프리미엄</span>
-      <p className="text-sm text-muted-foreground mt-2">{label}</p>
-      <p className="text-xs text-muted-foreground">탭하면 Pro 플랜을 확인할 수 있어요</p>
-    </div>
-  );
-}
+import { useGetTranslations, useCommonTranslations } from '@/hooks/useTranslation';
 
 interface BrandTabProps {
   isPro: boolean;
@@ -34,19 +22,32 @@ export default function BrandTab({
   onSetBrandEdit, onSetBrandForm, onBrandSave, onBrandAiGenerate,
 }: BrandTabProps) {
   void isPro; void tryAccess;
+  const get = useGetTranslations();
+  const common = useCommonTranslations();
+  const br = get.brand;
+
+  const VIEW_FIELDS: { key: keyof typeof brandForm; label: string }[] = [
+    { key: 'name', label: br.name },
+    { key: 'tagline', label: br.tagline },
+    { key: 'core_value', label: br.coreValue },
+    { key: 'target', label: br.target },
+    { key: 'tone', label: br.tone },
+  ];
+
+  const EDIT_FIELDS: { field: keyof typeof brandForm; label: string; placeholder: string }[] = [
+    { field: 'name', label: br.name, placeholder: br.namePlaceholder },
+    { field: 'tagline', label: br.tagline, placeholder: br.taglinePlaceholder },
+    { field: 'core_value', label: br.coreValue, placeholder: br.coreValuePlaceholder },
+    { field: 'target', label: br.target, placeholder: br.targetPlaceholder },
+    { field: 'tone', label: br.tone, placeholder: br.tonePlaceholder },
+  ];
 
   if (!brandEdit) {
     return (
       <div className="space-y-3">
         {brand ? (
           <>
-            {[
-              { key: 'name', label: '브랜드 이름' },
-              { key: 'tagline', label: '태그라인' },
-              { key: 'core_value', label: '핵심 가치' },
-              { key: 'target', label: '타겟 대상' },
-              { key: 'tone', label: '톤 & 보이스' },
-            ].map(({ key, label }) => (
+            {VIEW_FIELDS.map(({ key, label }) => (
               brand[key] && (
                 <div key={key} className="bg-card border rounded-2xl p-4 space-y-1">
                   <p className="text-xs text-muted-foreground">{label}</p>
@@ -64,22 +65,21 @@ export default function BrandTab({
                   tone: (brand.tone as string) ?? '',
                 }));
                 onSetBrandEdit(true);
-              }}>수정</Button>
+              }}>{br.writeManually}</Button>
               <Button size="sm" className="flex-1" onClick={onBrandAiGenerate}
                 disabled={brandAiLoading}>
-                {brandAiLoading ? 'AI 생성 중...' : 'AI 재생성'}
+                {brandAiLoading ? br.aiGenerating : br.aiRegenerate}
               </Button>
             </div>
           </>
         ) : (
           <div className="bg-card border rounded-2xl p-8 text-center space-y-3">
-            <p className="text-sm text-muted-foreground">아직 브랜드 정체성을 작성하지 않았어요.</p>
+            <p className="text-sm text-muted-foreground">{br.notYet}</p>
             <div className="flex flex-col gap-2">
-              <Button size="sm" onClick={onBrandAiGenerate}
-                disabled={brandAiLoading}>
-                {brandAiLoading ? 'AI 생성 중...' : 'AI로 브랜드 전략 생성'}
+              <Button size="sm" onClick={onBrandAiGenerate} disabled={brandAiLoading}>
+                {brandAiLoading ? br.aiGenerating : br.aiGenerate}
               </Button>
-              <Button size="sm" variant="outline" onClick={() => onSetBrandEdit(true)}>직접 작성하기</Button>
+              <Button size="sm" variant="outline" onClick={() => onSetBrandEdit(true)}>{br.writeManually}</Button>
             </div>
           </div>
         )}
@@ -90,14 +90,8 @@ export default function BrandTab({
   // Edit mode
   return (
     <div className="bg-card border rounded-2xl p-5 space-y-4">
-      <p className="text-sm font-medium">브랜드 정체성 설계</p>
-      {[
-        { field: 'name' as const, label: '브랜드 이름', placeholder: '나를 표현하는 이름' },
-        { field: 'tagline' as const, label: '태그라인', placeholder: '한 문장으로 나를 설명한다면' },
-        { field: 'core_value' as const, label: '핵심 가치', placeholder: '가장 중요하게 생각하는 가치' },
-        { field: 'target' as const, label: '타겟 대상', placeholder: '내 메시지를 전하고 싶은 사람' },
-        { field: 'tone' as const, label: '톤 & 보이스', placeholder: '예: 따뜻하고 직접적인, 분석적인' },
-      ].map(({ field, label, placeholder }) => (
+      <p className="text-sm font-medium">{br.design}</p>
+      {EDIT_FIELDS.map(({ field, label, placeholder }) => (
         <div key={field} className="space-y-1">
           <p className="text-xs text-muted-foreground">{label}</p>
           <input
@@ -110,9 +104,9 @@ export default function BrandTab({
         </div>
       ))}
       <div className="flex gap-2">
-        <Button variant="outline" size="sm" onClick={() => onSetBrandEdit(false)}>취소</Button>
+        <Button variant="outline" size="sm" onClick={() => onSetBrandEdit(false)}>{common.cancel}</Button>
         <Button size="sm" onClick={onBrandSave}
-          disabled={brandSavePending} className="flex-1">저장</Button>
+          disabled={brandSavePending} className="flex-1">{common.save}</Button>
       </div>
     </div>
   );

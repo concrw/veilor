@@ -13,6 +13,36 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Sparkles, Users, ArrowRight } from "lucide-react";
 import { PersonaPaywall } from "./PersonaPaywall";
+import { useLanguageContext } from "@/context/LanguageContext";
+
+const S = {
+  ko: {
+    analyzing: 'AI가 당신의 행복 패턴을 분석하고 있습니다',
+    analyzingTitle: '페르소나 분석 중...',
+    discoveredFmt: (n: number) => `${n}개의 페르소나가 발견되었습니다!`,
+    discoveredDesc: 'AI가 당신의 행복 직업군을 분석한 결과입니다',
+    mainBadge: '메인',
+    subBadge: '서브',
+    multiTitle: '멀티 페르소나 발견',
+    multiDesc: '무료 버전에서는 메인 페르소나 1개만 상세 분석할 수 있습니다. 모든 페르소나를 확인하려면 Pro로 업그레이드하세요.',
+    ctaMain: '메인 페르소나 확인하기',
+    ctaPro: '모든 페르소나 보기 (Pro)',
+    ctaLater: '나중에 하기',
+  },
+  en: {
+    analyzing: 'AI is analyzing your happiness patterns',
+    analyzingTitle: 'Analyzing personas...',
+    discoveredFmt: (n: number) => `${n} personas discovered!`,
+    discoveredDesc: 'This is the result of AI analyzing your happiness career groups',
+    mainBadge: 'Main',
+    subBadge: 'Sub',
+    multiTitle: 'Multiple Personas Found',
+    multiDesc: 'The free version only lets you see detailed analysis for 1 main persona. Upgrade to Pro to view all personas.',
+    ctaMain: 'View Main Persona',
+    ctaPro: 'See All Personas (Pro)',
+    ctaLater: 'Maybe later',
+  },
+};
 
 interface PersonaDetectionTriggerProps {
   sessionCompleted: boolean;
@@ -24,6 +54,8 @@ export function PersonaDetectionTrigger({
   userId,
 }: PersonaDetectionTriggerProps) {
   const navigate = useNavigate();
+  const { language } = useLanguageContext();
+  const s = S[language] ?? S.ko;
   const { data: existingPersonas } = usePersonas();
   const { mutate: detectPersonas, isPending, isSuccess, data } = useDetectPersonas();
   const [showResults, setShowResults] = useState(false);
@@ -48,9 +80,9 @@ export function PersonaDetectionTrigger({
           <div className="flex flex-col items-center justify-center py-8 space-y-4">
             <Loader2 className="w-12 h-12 animate-spin text-primary" />
             <div className="text-center space-y-2">
-              <h3 className="text-lg font-semibold">페르소나 분석 중...</h3>
+              <h3 className="text-lg font-semibold">{s.analyzingTitle}</h3>
               <p className="text-sm text-muted-foreground">
-                AI가 당신의 행복 패턴을 분석하고 있습니다
+                {s.analyzing}
               </p>
             </div>
           </div>
@@ -74,11 +106,11 @@ export function PersonaDetectionTrigger({
             <div className="flex items-center gap-2 mb-2">
               <Sparkles className="w-5 h-5 text-primary" />
               <DialogTitle className="text-xl">
-                {personaCount}개의 페르소나가 발견되었습니다!
+                {s.discoveredFmt(personaCount)}
               </DialogTitle>
             </div>
             <DialogDescription>
-              AI가 당신의 행복 직업군을 분석한 결과입니다
+              {s.discoveredDesc}
             </DialogDescription>
           </DialogHeader>
 
@@ -107,12 +139,12 @@ export function PersonaDetectionTrigger({
                           </h4>
                           {index === 0 && (
                             <Badge variant="default" className="text-xs">
-                              메인
+                              {s.mainBadge}
                             </Badge>
                           )}
                           {index > 0 && (
                             <Badge variant="outline" className="text-xs">
-                              서브
+                              {s.subBadge}
                             </Badge>
                           )}
                         </div>
@@ -132,11 +164,9 @@ export function PersonaDetectionTrigger({
                 <div className="flex items-start gap-2">
                   <Users className="w-4 h-4 mt-0.5 text-muted-foreground" />
                   <div className="text-sm">
-                    <p className="font-medium mb-1">멀티 페르소나 발견</p>
+                    <p className="font-medium mb-1">{s.multiTitle}</p>
                     <p className="text-muted-foreground">
-                      무료 버전에서는 <strong>메인 페르소나 1개</strong>만 상세
-                      분석할 수 있습니다. 모든 페르소나를 확인하려면 Pro로
-                      업그레이드하세요.
+                      {s.multiDesc}
                     </p>
                   </div>
                 </div>
@@ -153,7 +183,7 @@ export function PersonaDetectionTrigger({
                   navigate("/personas");
                 }}
               >
-                메인 페르소나 확인하기
+                {s.ctaMain}
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
               {hasMultiplePersonas && (
@@ -166,7 +196,7 @@ export function PersonaDetectionTrigger({
                     setPaywallOpen(true);
                   }}
                 >
-                  모든 페르소나 보기 (Pro)
+                  {s.ctaPro}
                 </Button>
               )}
               <Button
@@ -174,7 +204,7 @@ export function PersonaDetectionTrigger({
                 size="sm"
                 onClick={() => setShowResults(false)}
               >
-                나중에 하기
+                {s.ctaLater}
               </Button>
             </div>
           </div>

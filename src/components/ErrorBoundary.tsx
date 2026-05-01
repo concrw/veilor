@@ -1,6 +1,13 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import * as Sentry from '@sentry/react';
 
+const getErrorStrings = () => {
+  const lang = (typeof localStorage !== 'undefined' && localStorage.getItem('veilor-lang')) || 'ko';
+  return lang === 'en'
+    ? { title: 'Something went wrong', desc: 'An unexpected error occurred. Press the button below to try again.', retry: 'Try again', reload: 'Refresh' }
+    : { title: '문제가 발생했습니다', desc: '예상치 못한 오류가 발생했어요. 아래 버튼을 눌러 다시 시도해 주세요.', retry: '다시 시도', reload: '새로고침' };
+};
+
 interface Props {
   children: ReactNode;
   fallback?: ReactNode;
@@ -52,6 +59,8 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       if (this.props.fallback) return this.props.fallback;
 
+      const s = getErrorStrings();
+
       return (
         <div
           style={{
@@ -91,7 +100,7 @@ export class ErrorBoundary extends Component<Props, State> {
               marginBottom: '0.5rem',
             }}
           >
-            문제가 발생했습니다
+            {s.title}
           </h2>
 
           <p
@@ -103,7 +112,7 @@ export class ErrorBoundary extends Component<Props, State> {
               marginBottom: '2rem',
             }}
           >
-            예상치 못한 오류가 발생했어요. 아래 버튼을 눌러 다시 시도해 주세요.
+            {s.desc}
           </p>
 
           <div style={{ display: 'flex', gap: '0.75rem' }}>
@@ -119,7 +128,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 cursor: 'pointer',
               }}
             >
-              다시 시도
+              {s.retry}
             </button>
             <button
               onClick={this.handleReload}
@@ -134,7 +143,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 cursor: 'pointer',
               }}
             >
-              새로고침
+              {s.reload}
             </button>
           </div>
 

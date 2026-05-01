@@ -6,13 +6,9 @@ import {
   type EventType,
   type NewTimelineEvent,
 } from '@/hooks/useRelationshipTimeline';
+import { useMeTranslations } from '@/hooks/useTranslation';
 
 const EVENT_TYPES = Object.entries(EVENT_TYPE_META) as [EventType, typeof EVENT_TYPE_META[EventType]][];
-
-const TONE_LABELS: Record<number, string> = {
-  [-5]: '최악', [-4]: '매우 나쁨', [-3]: '나쁨', [-2]: '좋지 않음', [-1]: '약간 불편',
-  0: '중립', 1: '약간 좋음', 2: '좋음', 3: '꽤 좋음', 4: '매우 좋음', 5: '최고',
-};
 
 function ToneBar({ tone }: { tone: number }) {
   const pct = ((tone + 5) / 10) * 100;
@@ -24,9 +20,10 @@ function ToneBar({ tone }: { tone: number }) {
   );
 }
 
-function AddEventSheet({ onClose, onAdd }: {
+function AddEventSheet({ onClose, onAdd, t }: {
   onClose: () => void;
   onAdd: (e: NewTimelineEvent) => Promise<void>;
+  t: ReturnType<typeof useMeTranslations>['timeline'];
 }) {
   const [form, setForm] = useState<NewTimelineEvent>({
     event_date: new Date().toISOString().slice(0, 10),
@@ -47,6 +44,8 @@ function AddEventSheet({ onClose, onAdd }: {
     onClose();
   };
 
+  const toneLabel = t.toneLabels[String(form.emotional_tone)] ?? '';
+
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 60,
@@ -57,10 +56,9 @@ function AddEventSheet({ onClose, onAdd }: {
         onClick={e => e.stopPropagation()}
       >
         <div style={{ width: 36, height: 3, background: C.border, borderRadius: 99, margin: '0 auto 18px' }} />
-        <p style={{ fontSize: 15, fontWeight: 600, color: C.text, marginBottom: 16 }}>관계 순간 기록</p>
+        <p style={{ fontSize: 15, fontWeight: 600, color: C.text, marginBottom: 16 }}>{t.formTitle}</p>
 
-        {/* 날짜 */}
-        <label style={{ fontSize: 11, color: C.text4, display: 'block', marginBottom: 4 }}>날짜</label>
+        <label style={{ fontSize: 11, color: C.text4, display: 'block', marginBottom: 4 }}>{t.formDate}</label>
         <input
           type="date"
           value={form.event_date}
@@ -68,8 +66,7 @@ function AddEventSheet({ onClose, onAdd }: {
           style={{ width: '100%', background: C.bg, border: `1px solid ${C.border}`, borderRadius: 8, padding: '7px 10px', fontSize: 13, color: C.text, marginBottom: 12, boxSizing: 'border-box' }}
         />
 
-        {/* 유형 */}
-        <label style={{ fontSize: 11, color: C.text4, display: 'block', marginBottom: 6 }}>유형</label>
+        <label style={{ fontSize: 11, color: C.text4, display: 'block', marginBottom: 6 }}>{t.formType}</label>
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
           {EVENT_TYPES.map(([key, meta]) => (
             <button key={key} onClick={() => setForm(f => ({ ...f, event_type: key }))}
@@ -84,30 +81,27 @@ function AddEventSheet({ onClose, onAdd }: {
           ))}
         </div>
 
-        {/* 제목 */}
-        <label style={{ fontSize: 11, color: C.text4, display: 'block', marginBottom: 4 }}>한 줄 제목</label>
+        <label style={{ fontSize: 11, color: C.text4, display: 'block', marginBottom: 4 }}>{t.formEventTitle}</label>
         <input
           value={form.title}
           onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
-          placeholder="예: 처음으로 솔직하게 말했어요"
+          placeholder={t.formEventTitlePlaceholder}
           style={{ width: '100%', background: C.bg, border: `1px solid ${C.border}`, borderRadius: 8, padding: '7px 10px', fontSize: 13, color: C.text, marginBottom: 12, boxSizing: 'border-box' }}
         />
 
-        {/* 메모 */}
-        <label style={{ fontSize: 11, color: C.text4, display: 'block', marginBottom: 4 }}>메모 (선택)</label>
+        <label style={{ fontSize: 11, color: C.text4, display: 'block', marginBottom: 4 }}>{t.formNotes}</label>
         <textarea
           value={form.description ?? ''}
           onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
           rows={2}
-          placeholder="어떤 상황이었나요?"
+          placeholder={t.formNotesPlaceholder}
           style={{ width: '100%', background: C.bg, border: `1px solid ${C.border}`, borderRadius: 8, padding: '7px 10px', fontSize: 12, color: C.text, resize: 'none', marginBottom: 14, boxSizing: 'border-box' }}
         />
 
-        {/* 감정 온도 */}
         <label style={{ fontSize: 11, color: C.text4, display: 'block', marginBottom: 6 }}>
-          관계 온도 &nbsp;
+          {t.formTone} &nbsp;
           <span style={{ color: form.emotional_tone > 0 ? C.amberGold : form.emotional_tone < 0 ? '#F87171' : '#9CA3AF', fontWeight: 600 }}>
-            {form.emotional_tone > 0 ? '+' : ''}{form.emotional_tone} ({TONE_LABELS[form.emotional_tone]})
+            {form.emotional_tone > 0 ? '+' : ''}{form.emotional_tone} ({toneLabel})
           </span>
         </label>
         <input
@@ -127,7 +121,7 @@ function AddEventSheet({ onClose, onAdd }: {
             cursor: valid ? 'pointer' : 'default', transition: 'background .2s',
           }}
         >
-          {saving ? '저장 중...' : '기록하기'}
+          {saving ? t.formSaving : t.formSave}
         </button>
       </div>
     </div>
@@ -136,6 +130,8 @@ function AddEventSheet({ onClose, onAdd }: {
 
 export default function RelationshipTimeline() {
   const { events, isLoading, addEvent, deleteEvent, recentAvg, olderAvg } = useRelationshipTimeline();
+  const me = useMeTranslations();
+  const t = me.timeline;
   const [adding, setAdding] = useState(false);
 
   const delta = recentAvg !== null && olderAvg !== null ? recentAvg - olderAvg : null;
@@ -144,25 +140,23 @@ export default function RelationshipTimeline() {
 
   return (
     <div style={{ background: C.bg2, border: `1px solid ${C.border}`, borderRadius: 14, padding: '15px 17px' }}>
-      {/* 헤더 */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
         <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 16, color: C.text }}>
-          관계 변화 타임라인
+          {t.title}
         </span>
         <button
           onClick={() => setAdding(true)}
           style={{ fontSize: 10, padding: '3px 9px', borderRadius: 99, border: `1px solid ${C.border}`, color: C.text4, background: 'transparent', cursor: 'pointer' }}
         >
-          + 기록
+          {t.addButton}
         </button>
       </div>
 
-      {/* 3개월 온도 비교 */}
       {(recentAvg !== null || olderAvg !== null) && (
         <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
           {olderAvg !== null && (
             <div style={{ flex: 1, background: C.bg, borderRadius: 10, padding: '8px 10px' }}>
-              <p style={{ fontSize: 9, color: C.text4, marginBottom: 3 }}>3개월 전</p>
+              <p style={{ fontSize: 9, color: C.text4, marginBottom: 3 }}>{t.olderAvg}</p>
               <p style={{ fontSize: 16, fontWeight: 700, color: olderAvg > 0 ? C.amberGold : olderAvg < 0 ? '#F87171' : '#9CA3AF' }}>
                 {olderAvg > 0 ? '+' : ''}{olderAvg}
               </p>
@@ -170,7 +164,7 @@ export default function RelationshipTimeline() {
           )}
           {recentAvg !== null && (
             <div style={{ flex: 1, background: C.bg, borderRadius: 10, padding: '8px 10px' }}>
-              <p style={{ fontSize: 9, color: C.text4, marginBottom: 3 }}>지금</p>
+              <p style={{ fontSize: 9, color: C.text4, marginBottom: 3 }}>{t.recentAvg}</p>
               <p style={{ fontSize: 16, fontWeight: 700, color: recentAvg > 0 ? C.amberGold : recentAvg < 0 ? '#F87171' : '#9CA3AF' }}>
                 {recentAvg > 0 ? '+' : ''}{recentAvg}
               </p>
@@ -178,7 +172,7 @@ export default function RelationshipTimeline() {
           )}
           {delta !== null && (
             <div style={{ flex: 1, background: C.bg, borderRadius: 10, padding: '8px 10px' }}>
-              <p style={{ fontSize: 9, color: C.text4, marginBottom: 3 }}>변화</p>
+              <p style={{ fontSize: 9, color: C.text4, marginBottom: 3 }}>{t.changeLabel}</p>
               <p style={{ fontSize: 16, fontWeight: 700, color: delta > 0 ? C.amberGold : delta < 0 ? '#F87171' : '#9CA3AF' }}>
                 {delta > 0 ? '↑' : delta < 0 ? '↓' : '→'} {Math.abs(delta).toFixed(1)}
               </p>
@@ -187,19 +181,17 @@ export default function RelationshipTimeline() {
         </div>
       )}
 
-      {/* 이벤트 없을 때 */}
       {events.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '24px 0' }}>
           <p style={{ fontSize: 28, marginBottom: 8 }}>🕰️</p>
           <p style={{ fontSize: 12, color: C.text4, lineHeight: 1.6 }}>
-            관계의 순간들을 기록해보세요.<br />
-            3개월 전과 지금을 비교할 수 있어요.
+            {t.emptyDesc.split('\n').map((line, i) => <span key={i}>{line}{i === 0 ? <br /> : null}</span>)}
           </p>
           <button
             onClick={() => setAdding(true)}
             style={{ marginTop: 12, fontSize: 12, padding: '7px 16px', borderRadius: 99, border: `1px solid ${C.amberGold}44`, color: C.amberGold, background: `${C.amberGold}0A`, cursor: 'pointer' }}
           >
-            첫 순간 기록하기
+            {t.firstRecord}
           </button>
         </div>
       ) : (
@@ -241,6 +233,7 @@ export default function RelationshipTimeline() {
         <AddEventSheet
           onClose={() => setAdding(false)}
           onAdd={async (ev) => { await addEvent.mutateAsync(ev); }}
+          t={t}
         />
       )}
     </div>

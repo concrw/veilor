@@ -7,6 +7,110 @@ import { useAuth } from '@/context/AuthContext';
 import { veilorDb } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { ROUTINE_MILESTONES } from '@/data/routineConstants';
+import { useLanguageContext } from '@/context/LanguageContext';
+
+// ──────────────────────────────────────────────────────────────────────────────
+// i18n
+// ──────────────────────────────────────────────────────────────────────────────
+
+const S = {
+  ko: {
+    moodItems: [
+      { label: '😫', text: '힘들어' },
+      { label: '😔', text: '별로야' },
+      { label: '😐', text: '그냥' },
+      { label: '😊', text: '괜찮아' },
+      { label: '😄', text: '좋아' },
+    ],
+    energyItems: [
+      { label: '🪫', text: '완전 방전' },
+      { label: '🔋', text: '조금 남음' },
+      { label: '⚡', text: '보통' },
+      { label: '🔥', text: '에너지 있음' },
+    ],
+    activityItems: [
+      '일했어', '공부했어', '운동했어', '사람 만났어',
+      '혼자 있었어', '쉬었어', '뭔가 만들었어', '바깥에 나갔어',
+    ],
+    mood: {
+      stepLabel: '오늘의 감정',
+      title: '지금 기분이 어때요?',
+      hint: '선택하면 다음으로 넘어가요',
+    },
+    energy: {
+      stepLabel: '에너지',
+      title: '에너지는요?',
+      hint: '선택하면 다음으로 넘어가요',
+      back: '← 뒤로',
+    },
+    activity: {
+      stepLabel: '오늘 한 것 (선택)',
+      title: '오늘 뭐 했어요?',
+      back: '← 뒤로',
+      save: '오늘 체크인 완료',
+      saving: '저장 중...',
+      skip: '그냥 건너뛰고 완료',
+    },
+    done: {
+      streakUnit: '일',
+      milestoneTitle: (streak: number) => `${streak}일 달성!`,
+      milestoneDesc: '마일스톤을 넘었어요. 이게 쌓이는 거예요.',
+      regularTitle: (streak: number) => `${streak}일째`,
+      regularDesc: '오늘도 기록했어요. 내일도 이어가요.',
+      currentStreak: '현재 스트릭',
+      home: '홈으로',
+    },
+    saveError: '저장 중 오류가 발생했습니다',
+  },
+  en: {
+    moodItems: [
+      { label: '😫', text: 'Tough' },
+      { label: '😔', text: 'Not great' },
+      { label: '😐', text: 'Okay' },
+      { label: '😊', text: 'Good' },
+      { label: '😄', text: 'Great' },
+    ],
+    energyItems: [
+      { label: '🪫', text: 'Drained' },
+      { label: '🔋', text: 'Low' },
+      { label: '⚡', text: 'Normal' },
+      { label: '🔥', text: 'Energized' },
+    ],
+    activityItems: [
+      'Worked', 'Studied', 'Exercised', 'Met people',
+      'Was alone', 'Rested', 'Made something', 'Went outside',
+    ],
+    mood: {
+      stepLabel: "Today's mood",
+      title: 'How are you feeling?',
+      hint: 'Select to continue',
+    },
+    energy: {
+      stepLabel: 'Energy',
+      title: 'How is your energy?',
+      hint: 'Select to continue',
+      back: '← Back',
+    },
+    activity: {
+      stepLabel: 'What you did today (optional)',
+      title: 'What did you do today?',
+      back: '← Back',
+      save: "Today's check-in done",
+      saving: 'Saving...',
+      skip: 'Skip and complete',
+    },
+    done: {
+      streakUnit: 'days',
+      milestoneTitle: (streak: number) => `${streak}-day milestone!`,
+      milestoneDesc: "You've hit a milestone. It all adds up.",
+      regularTitle: (streak: number) => `Day ${streak}`,
+      regularDesc: 'Recorded again today. Keep it going tomorrow.',
+      currentStreak: 'Current streak',
+      home: 'Go home',
+    },
+    saveError: 'An error occurred while saving',
+  },
+} as const;
 
 // ──────────────────────────────────────────────────────────────────────────────
 // 타입
@@ -16,30 +120,6 @@ interface Props {
   onClose: () => void;
   onComplete: (streak: number) => void;
 }
-
-// ──────────────────────────────────────────────────────────────────────────────
-// 데이터
-// ──────────────────────────────────────────────────────────────────────────────
-
-const MOODS = [
-  { label: '😫', text: '힘들어' },
-  { label: '😔', text: '별로야' },
-  { label: '😐', text: '그냥' },
-  { label: '😊', text: '괜찮아' },
-  { label: '😄', text: '좋아' },
-];
-
-const ENERGY = [
-  { label: '🪫', text: '완전 방전' },
-  { label: '🔋', text: '조금 남음' },
-  { label: '⚡', text: '보통' },
-  { label: '🔥', text: '에너지 있음' },
-];
-
-const ACTIVITIES = [
-  '일했어', '공부했어', '운동했어', '사람 만났어',
-  '혼자 있었어', '쉬었어', '뭔가 만들었어', '바깥에 나갔어',
-];
 
 // ──────────────────────────────────────────────────────────────────────────────
 // 유틸
@@ -73,6 +153,8 @@ type Step = 'mood' | 'energy' | 'activity' | 'done';
 
 export default function RoutineCheckinModal({ onClose, onComplete }: Props) {
   const { user } = useAuth();
+  const { language } = useLanguageContext();
+  const s = S[language] ?? S.ko;
   const [step, setStep] = useState<Step>('mood');
   const [mood, setMood] = useState<number | null>(null);
   const [energy, setEnergy] = useState<number | null>(null);
@@ -101,9 +183,9 @@ export default function RoutineCheckinModal({ onClose, onComplete }: Props) {
       // 1) 오늘의 체크인 기록 저장 (tab_conversations에 JSON으로)
       const checkinData = {
         mood_index: mood,
-        mood_label: MOODS[mood].text,
+        mood_label: s.moodItems[mood].text,
         energy_index: energy,
-        energy_label: ENERGY[energy].text,
+        energy_label: s.energyItems[energy].text,
         activities,
         checked_at: new Date().toISOString(),
       };
@@ -139,7 +221,7 @@ export default function RoutineCheckinModal({ onClose, onComplete }: Props) {
       onComplete(updatedStreak);
     } catch (err) {
       console.error(err);
-      toast({ title: '저장 중 오류가 발생했습니다', variant: 'destructive' });
+      toast({ title: s.saveError, variant: 'destructive' });
     } finally {
       setSaving(false);
     }
@@ -163,6 +245,10 @@ export default function RoutineCheckinModal({ onClose, onComplete }: Props) {
         {step === 'mood' && (
           <MoodStep
             mood={mood}
+            moodItems={s.moodItems}
+            stepLabel={s.mood.stepLabel}
+            title={s.mood.title}
+            hint={s.mood.hint}
             onSelect={(i) => { setMood(i); setStep('energy'); }}
           />
         )}
@@ -170,6 +256,11 @@ export default function RoutineCheckinModal({ onClose, onComplete }: Props) {
         {step === 'energy' && (
           <EnergyStep
             energy={energy}
+            energyItems={s.energyItems}
+            stepLabel={s.energy.stepLabel}
+            title={s.energy.title}
+            hint={s.energy.hint}
+            back={s.energy.back}
             onSelect={(i) => { setEnergy(i); setStep('activity'); }}
             onBack={() => setStep('mood')}
           />
@@ -178,6 +269,13 @@ export default function RoutineCheckinModal({ onClose, onComplete }: Props) {
         {step === 'activity' && (
           <ActivityStep
             activities={activities}
+            activityItems={s.activityItems}
+            stepLabel={s.activity.stepLabel}
+            title={s.activity.title}
+            back={s.activity.back}
+            savLabel={s.activity.save}
+            savingLabel={s.activity.saving}
+            skipLabel={s.activity.skip}
             onToggle={toggleActivity}
             onSave={handleSave}
             onBack={() => setStep('energy')}
@@ -186,7 +284,7 @@ export default function RoutineCheckinModal({ onClose, onComplete }: Props) {
         )}
 
         {step === 'done' && (
-          <DoneStep streak={newStreak} onClose={onClose} />
+          <DoneStep streak={newStreak} strings={s.done} onClose={onClose} />
         )}
       </div>
     </div>
@@ -195,13 +293,27 @@ export default function RoutineCheckinModal({ onClose, onComplete }: Props) {
 
 // ── 서브 스텝 컴포넌트 ────────────────────────────────────────────────────────
 
-function MoodStep({ mood, onSelect }: { mood: number | null; onSelect: (i: number) => void }) {
+function MoodStep({
+  mood,
+  moodItems,
+  stepLabel,
+  title,
+  hint,
+  onSelect,
+}: {
+  mood: number | null;
+  moodItems: readonly { label: string; text: string }[];
+  stepLabel: string;
+  title: string;
+  hint: string;
+  onSelect: (i: number) => void;
+}) {
   return (
     <div>
-      <p className="text-[10px] tracking-widest text-stone-500 uppercase mb-1">오늘의 감정</p>
-      <h2 className="text-lg font-semibold text-stone-100 mb-6">지금 기분이 어때요?</h2>
+      <p className="text-[10px] tracking-widest text-stone-500 uppercase mb-1">{stepLabel}</p>
+      <h2 className="text-lg font-semibold text-stone-100 mb-6">{title}</h2>
       <div className="flex justify-between mb-2">
-        {MOODS.map((m, i) => (
+        {moodItems.map((m, i) => (
           <button
             key={i}
             onClick={() => onSelect(i)}
@@ -217,27 +329,37 @@ function MoodStep({ mood, onSelect }: { mood: number | null; onSelect: (i: numbe
           </button>
         ))}
       </div>
-      <p className="text-center text-xs text-stone-500 mt-4">선택하면 다음으로 넘어가요</p>
+      <p className="text-center text-xs text-stone-500 mt-4">{hint}</p>
     </div>
   );
 }
 
 function EnergyStep({
   energy,
+  energyItems,
+  stepLabel,
+  title,
+  hint,
+  back,
   onSelect,
   onBack,
 }: {
   energy: number | null;
+  energyItems: readonly { label: string; text: string }[];
+  stepLabel: string;
+  title: string;
+  hint: string;
+  back: string;
   onSelect: (i: number) => void;
   onBack: () => void;
 }) {
   return (
     <div>
-      <button onClick={onBack} className="text-xs text-stone-500 mb-4">← 뒤로</button>
-      <p className="text-[10px] tracking-widest text-stone-500 uppercase mb-1">에너지</p>
-      <h2 className="text-lg font-semibold text-stone-100 mb-6">에너지는요?</h2>
+      <button onClick={onBack} className="text-xs text-stone-500 mb-4">{back}</button>
+      <p className="text-[10px] tracking-widest text-stone-500 uppercase mb-1">{stepLabel}</p>
+      <h2 className="text-lg font-semibold text-stone-100 mb-6">{title}</h2>
       <div className="flex justify-between">
-        {ENERGY.map((e, i) => (
+        {energyItems.map((e, i) => (
           <button
             key={i}
             onClick={() => onSelect(i)}
@@ -253,19 +375,33 @@ function EnergyStep({
           </button>
         ))}
       </div>
-      <p className="text-center text-xs text-stone-500 mt-4">선택하면 다음으로 넘어가요</p>
+      <p className="text-center text-xs text-stone-500 mt-4">{hint}</p>
     </div>
   );
 }
 
 function ActivityStep({
   activities,
+  activityItems,
+  stepLabel,
+  title,
+  back,
+  savLabel,
+  savingLabel,
+  skipLabel,
   onToggle,
   onSave,
   onBack,
   saving,
 }: {
   activities: string[];
+  activityItems: readonly string[];
+  stepLabel: string;
+  title: string;
+  back: string;
+  savLabel: string;
+  savingLabel: string;
+  skipLabel: string;
   onToggle: (a: string) => void;
   onSave: () => void;
   onBack: () => void;
@@ -273,11 +409,11 @@ function ActivityStep({
 }) {
   return (
     <div>
-      <button onClick={onBack} className="text-xs text-stone-500 mb-4">← 뒤로</button>
-      <p className="text-[10px] tracking-widest text-stone-500 uppercase mb-1">오늘 한 것 (선택)</p>
-      <h2 className="text-lg font-semibold text-stone-100 mb-5">오늘 뭐 했어요?</h2>
+      <button onClick={onBack} className="text-xs text-stone-500 mb-4">{back}</button>
+      <p className="text-[10px] tracking-widest text-stone-500 uppercase mb-1">{stepLabel}</p>
+      <h2 className="text-lg font-semibold text-stone-100 mb-5">{title}</h2>
       <div className="flex flex-wrap gap-2 mb-6">
-        {ACTIVITIES.map((a) => (
+        {activityItems.map((a) => (
           <button
             key={a}
             onClick={() => onToggle(a)}
@@ -297,20 +433,28 @@ function ActivityStep({
         disabled={saving}
         className="w-full bg-amber-600 hover:bg-amber-500 active:bg-amber-700 disabled:opacity-50 text-stone-950 font-semibold text-sm py-3.5 rounded-2xl transition-colors"
       >
-        {saving ? '저장 중...' : '오늘 체크인 완료'}
+        {saving ? savingLabel : savLabel}
       </button>
       <button
         onClick={onSave}
         disabled={saving}
         className="w-full mt-2 text-xs text-stone-500 py-2"
       >
-        그냥 건너뛰고 완료
+        {skipLabel}
       </button>
     </div>
   );
 }
 
-function DoneStep({ streak, onClose }: { streak: number; onClose: () => void }) {
+function DoneStep({
+  streak,
+  strings,
+  onClose,
+}: {
+  streak: number;
+  strings: typeof S.ko.done;
+  onClose: () => void;
+}) {
   const isMilestone = (ROUTINE_MILESTONES as readonly number[]).includes(streak);
 
   return (
@@ -318,25 +462,25 @@ function DoneStep({ streak, onClose }: { streak: number; onClose: () => void }) 
       {isMilestone ? (
         <>
           <div className="text-5xl mb-3">🏆</div>
-          <h2 className="text-xl font-bold text-amber-300 mb-1">{streak}일 달성!</h2>
-          <p className="text-sm text-stone-400 mb-6">마일스톤을 넘었어요. 이게 쌓이는 거예요.</p>
+          <h2 className="text-xl font-bold text-amber-300 mb-1">{strings.milestoneTitle(streak)}</h2>
+          <p className="text-sm text-stone-400 mb-6">{strings.milestoneDesc}</p>
         </>
       ) : (
         <>
           <div className="text-5xl mb-3">🔥</div>
-          <h2 className="text-xl font-bold text-stone-100 mb-1">{streak}일째</h2>
-          <p className="text-sm text-stone-400 mb-6">오늘도 기록했어요. 내일도 이어가요.</p>
+          <h2 className="text-xl font-bold text-stone-100 mb-1">{strings.regularTitle(streak)}</h2>
+          <p className="text-sm text-stone-400 mb-6">{strings.regularDesc}</p>
         </>
       )}
       <div className="bg-stone-800/60 rounded-2xl p-4 mb-6">
-        <p className="text-xs text-stone-500 mb-1">현재 스트릭</p>
-        <p className="text-3xl font-bold text-amber-400">{streak}<span className="text-sm font-normal text-stone-400 ml-1">일</span></p>
+        <p className="text-xs text-stone-500 mb-1">{strings.currentStreak}</p>
+        <p className="text-3xl font-bold text-amber-400">{streak}<span className="text-sm font-normal text-stone-400 ml-1">{strings.streakUnit}</span></p>
       </div>
       <button
         onClick={onClose}
         className="w-full bg-stone-800 hover:bg-stone-700 text-stone-200 font-medium text-sm py-3 rounded-2xl transition-colors"
       >
-        홈으로
+        {strings.home}
       </button>
     </div>
   );

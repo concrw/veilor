@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { C } from '@/lib/colors';
 import { RADAR_DATA, PERSONAS, FRIENDS } from '@/data/mePageData';
+import { useMeTranslations } from '@/hooks/useTranslation';
 import PersonaMap from '@/components/persona/PersonaMap';
 import MonthlyReportCard from '@/components/me/MonthlyReportCard';
 import CommunicationPatternCard from '@/components/me/CommunicationPatternCard';
@@ -29,6 +30,7 @@ interface GrowthTabProps {
 
 export default function GrowthTab({ meData, pct, closedCount, seedTitle, stageStatus, userId }: GrowthTabProps) {
   const navigate = useNavigate();
+  const me = useMeTranslations();
   const [openPersona, setOpenPersona] = useState<number | null>(null);
   const [chartMode, setChartMode] = useState<'prev' | 'now'>('now');
   const [dmToast, setDmToast] = useState('');
@@ -40,7 +42,7 @@ export default function GrowthTab({ meData, pct, closedCount, seedTitle, stageSt
   const displayPersonas = meData.personas.length > 0 ? meData.personas : PERSONAS;
 
   const sendDM = (name: string) => {
-    setDmToast(`${name}에게 대화 신청을 보냈어요`);
+    setDmToast(me.dmToast.replace('{name}', name));
     setTimeout(() => setDmToast(''), 2200);
   };
 
@@ -59,7 +61,7 @@ export default function GrowthTab({ meData, pct, closedCount, seedTitle, stageSt
             <span style={{ width: 9, height: 9, borderRadius: '50%', background: C.frost, display: 'block' }} />
           </div>
           <p style={{ fontFamily: "'Cormorant Garamond', serif", fontStyle: 'italic', fontWeight: 300, fontSize: 12, color: C.text3, flex: 1, lineHeight: 1.5 }}>
-            "현재 정밀도 {pct}%. {closedCount}개 영역이 닫혀 있어요. 열면 더 정확해져요."
+            "{me.frost.precisionMessage.replace('{pct}', String(pct)).replace('{count}', String(closedCount))}"
           </p>
           <span style={{ fontSize: 9, color: C.text5, flexShrink: 0, marginTop: 2 }}>Frost</span>
         </div>
@@ -71,13 +73,13 @@ export default function GrowthTab({ meData, pct, closedCount, seedTitle, stageSt
       {/* 멀티페르소나 */}
       <div className="vr-fade-in" style={{ background: C.bg2, border: `1px solid ${C.border}`, borderRadius: 14, padding: '15px 17px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 11 }}>
-          <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 16, color: C.text }}>멀티페르소나</span>
+          <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 16, color: C.text }}>{me.multiPersona}</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: 9, fontWeight: 300, color: C.text4 }}>
-              {meData.personasLoading ? '...' : `${displayPersonas.length}개 발견됨`}
+              {meData.personasLoading ? '...' : me.found.replace('{count}', String(displayPersonas.length))}
             </span>
             <button onClick={() => navigate('/personas')} style={{ fontSize: 9, padding: '3px 9px', borderRadius: 99, border: `1px solid ${C.amberGold}44`, color: C.amberGold, background: `${C.amberGold}08`, cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", whiteSpace: 'nowrap' }}>
-              전체 보기
+              {me.viewAll}
             </button>
           </div>
         </div>
@@ -98,7 +100,7 @@ export default function GrowthTab({ meData, pct, closedCount, seedTitle, stageSt
                       {p.tags.map(tag => <span key={tag} style={PERSONA_TAG_STYLE}>{tag}</span>)}
                     </div>
                     <div style={{ background: `${C.amberGold}08`, border: `1px solid ${C.amberGold}22`, borderRadius: 7, padding: '7px 9px' }}>
-                      <p style={{ fontSize: 9, color: C.amberGold, marginBottom: 2, fontWeight: 400, letterSpacing: '.05em' }}>다른 페르소나와의 충돌</p>
+                      <p style={{ fontSize: 9, color: C.amberGold, marginBottom: 2, fontWeight: 400, letterSpacing: '.05em' }}>{me.personaConflict}</p>
                       <p style={{ fontSize: 11, fontWeight: 300, color: C.text2, lineHeight: 1.5 }}>{p.conflict}</p>
                     </div>
                   </div>
@@ -112,12 +114,12 @@ export default function GrowthTab({ meData, pct, closedCount, seedTitle, stageSt
       {/* 관계 프로필 변화 (Radar) */}
       <div className="vr-fade-in" style={{ background: C.bg2, border: `1px solid ${C.border}`, borderRadius: 14, padding: '15px 17px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 11 }}>
-          <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 16, color: C.text }}>관계 프로필 변화</span>
+          <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 16, color: C.text }}>{me.profileChange}</span>
           <div style={{ display: 'flex', gap: 5 }}>
             {(['prev', 'now'] as const).map(m => (
               <button key={m} onClick={() => setChartMode(m)} disabled={m === 'prev' && !radarPrev}
                 style={{ fontSize: 9, padding: '2px 8px', borderRadius: 99, border: `1px solid ${chartMode === m ? `${C.amberGold}44` : C.border}`, color: chartMode === m ? C.amberGold : C.text4, background: chartMode === m ? `${C.amberGold}08` : 'transparent', cursor: (m === 'prev' && !radarPrev) ? 'default' : 'pointer', opacity: (m === 'prev' && !radarPrev) ? 0.4 : 1, transition: 'all .15s' }}>
-                {m === 'prev' ? '1개월 전' : '지금'}
+                {m === 'prev' ? me.monthAgo : me.now}
               </button>
             ))}
           </div>
@@ -136,7 +138,7 @@ export default function GrowthTab({ meData, pct, closedCount, seedTitle, stageSt
                 <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 400, fontSize: 14, color: C.text }}>{nowVal}</span>
                 {chartMode === 'now' && radarPrev
                   ? <span style={{ fontSize: 9, fontWeight: 400, color: delta >= 0 ? C.amberGold : C.text4 }}>{delta >= 0 ? '+' : ''}{delta}</span>
-                  : <span style={{ fontSize: 10, fontWeight: 300, color: C.text5, marginLeft: 2 }}>기준</span>}
+                  : <span style={{ fontSize: 10, fontWeight: 300, color: C.text5, marginLeft: 2 }}>{me.baseline}</span>}
               </div>
             );
           })}
@@ -150,8 +152,8 @@ export default function GrowthTab({ meData, pct, closedCount, seedTitle, stageSt
       {/* 친구 추천 */}
       <div className="vr-fade-in" style={{ background: C.bg2, border: `1px solid ${C.border}`, borderRadius: 14, padding: '14px 17px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 11 }}>
-          <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 16, color: C.text }}>대화가 잘 통할 것 같아요</span>
-          <span style={{ fontSize: 9, fontWeight: 300, color: C.text4 }}>패턴과 zone 교집합 기준</span>
+          <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 16, color: C.text }}>{me.friendRecommend}</span>
+          <span style={{ fontSize: 9, fontWeight: 300, color: C.text4 }}>{me.friendCriteria}</span>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {FRIENDS.map((f, i) => (
@@ -177,14 +179,14 @@ export default function GrowthTab({ meData, pct, closedCount, seedTitle, stageSt
           <div style={{ width: 26, height: 26, borderRadius: 7, background: `${C.amberGold}15`, border: `1px solid ${C.amberGold}33`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 10l4-4 3 3 5-6" stroke={C.amberGold} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>
           </div>
-          <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 15, color: C.text }}>나의 변화 공유하기</span>
+          <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 15, color: C.text }}>{me.shareChange}</span>
         </div>
-        <p style={{ fontSize: 11, fontWeight: 300, color: C.text4, lineHeight: 1.5, marginBottom: 9 }}>처음과 지금이 얼마나 달라졌는지 한 장으로.</p>
+        <p style={{ fontSize: 11, fontWeight: 300, color: C.text4, lineHeight: 1.5, marginBottom: 9 }}>{me.shareDesc}</p>
         <button onClick={() => { setShareToast(true); setTimeout(() => setShareToast(false), 2500); }}
           style={{ width: '100%', padding: '10px 0', borderRadius: 10, border: 'none', background: C.amberGold, fontFamily: "'DM Sans', sans-serif", fontSize: 12, fontWeight: 400, color: C.bg, cursor: 'pointer' }}>
-          공유 카드 만들기
+          {me.shareButton}
         </button>
-        {shareToast && <p style={{ textAlign: 'center', fontSize: 11, fontWeight: 300, color: C.amberGold, marginTop: 7 }}>준비 중이에요 — 곧 만들 수 있어요</p>}
+        {shareToast && <p style={{ textAlign: 'center', fontSize: 11, fontWeight: 300, color: C.amberGold, marginTop: 7 }}>{me.sharePreparing}</p>}
       </div>
     </div>
   );

@@ -3,44 +3,96 @@ import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { veilorDb } from '@/integrations/supabase/client';
+import { useLanguageContext } from '@/context/LanguageContext';
 
-const COACHING_WEEKS = [
-  { week: 1, title: '나를 알기', topic: '나의 관계 패턴 인식', exercise: 'V-File 결과를 되돌아보고, 가장 놀라웠던 점 1가지 적기' },
-  { week: 2, title: '감정 읽기', topic: '감정 언어 확장', exercise: '오늘 느낀 감정에 정확한 이름 붙이기 (불안→걱정? 두려움? 초조?)' },
-  { week: 3, title: '경계 설정', topic: '건강한 경계 연습', exercise: '이번 주 한 번 "아니요"라고 말하기' },
-  { week: 4, title: '욕구 표현', topic: '필요한 것 말하기', exercise: '"나는 ___이 필요해"로 시작하는 문장 매일 1개 쓰기' },
-  { week: 5, title: '경청하기', topic: '반응하지 않고 듣기', exercise: '상대 말을 끝까지 듣고, 요약해서 확인하기' },
-  { week: 6, title: '갈등 다루기', topic: '비폭력적 소통', exercise: '"나는 ___할 때 ___을 느껴" 형식으로 갈등 표현' },
-  { week: 7, title: '용서하기', topic: '과거 놓아주기', exercise: '용서 편지 쓰기 (보내지 않아도 됨)' },
-  { week: 8, title: '신뢰 쌓기', topic: '작은 약속 지키기', exercise: '이번 주 3가지 작은 약속을 만들고 지키기' },
-  { week: 9, title: '친밀감', topic: '취약함 보여주기', exercise: '가까운 사람에게 약한 모습 하나 보여주기' },
-  { week: 10, title: '감사하기', topic: '관계 속 감사 발견', exercise: '매일 관계에서 감사한 점 1가지 기록' },
-  { week: 11, title: '변화 인정', topic: '성장 되돌아보기', exercise: '1주차와 비교해서 달라진 점 3가지 적기' },
-  { week: 12, title: '선언하기', topic: '관계 선언문 완성', exercise: '나의 관계 원칙을 문장으로 완성하기' },
-];
-
-// #41 대화법/질문법 학습
-const COMMUNICATION_SKILLS = [
-  { id: 'i-message', title: 'I-메시지', desc: '"너는 왜 항상..."→ "나는 ...할 때 ...을 느껴"', example: '"네가 늦으면 화나" → "약속 시간이 지나면 걱정이 돼"' },
-  { id: 'reflective', title: '반영적 경청', desc: '상대의 말을 자기 언어로 되돌려주기', example: '"그러니까 지금 서운한 거지?" → "네가 무시당한 느낌이 들었구나"' },
-  { id: 'open-question', title: '열린 질문', desc: 'Yes/No가 아닌, 생각을 여는 질문하기', example: '"괜찮아?" → "지금 어떤 기분이야?"' },
-  { id: 'boundary', title: '경계 언어', desc: '거절하면서도 관계를 유지하는 표현', example: '"싫어" → "그건 나에게 불편해. 대신 이건 어때?"' },
-];
-
-// #40 관계 결론 착지
-const CLOSURE_STEPS = [
-  { step: 1, title: '감정 인정', desc: '이 관계에서 느꼈던 모든 감정을 인정하세요' },
-  { step: 2, title: '배움 추출', desc: '이 관계가 나에게 가르쳐준 것은 무엇인가요?' },
-  { step: 3, title: '용서/놓아주기', desc: '상대와 나 자신을 용서하는 과정' },
-  { step: 4, title: '의미 부여', desc: '이 경험이 나의 성장에 어떤 의미가 있나요?' },
-  { step: 5, title: '앞으로', desc: '다음 관계에서 다르게 하고 싶은 것은?' },
-];
+const S = {
+  ko: {
+    tabs: [
+      { key: 'coaching' as const, label: '12주 코칭' },
+      { key: 'skills' as const, label: '대화법' },
+      { key: 'closure' as const, label: '관계 정리' },
+    ],
+    thisWeekPractice: '이번 주 실천',
+    prevWeek: '이전 주',
+    nextWeek: '다음 주',
+    closureSubtitle: '관계를 정리하고 의미를 찾아가는 5단계',
+    skillExample: '예시',
+    coaching: [
+      { week: 1, title: '나를 알기', topic: '나의 관계 패턴 인식', exercise: 'V-File 결과를 되돌아보고, 가장 놀라웠던 점 1가지 적기' },
+      { week: 2, title: '감정 읽기', topic: '감정 언어 확장', exercise: '오늘 느낀 감정에 정확한 이름 붙이기 (불안→걱정? 두려움? 초조?)' },
+      { week: 3, title: '경계 설정', topic: '건강한 경계 연습', exercise: '이번 주 한 번 "아니요"라고 말하기' },
+      { week: 4, title: '욕구 표현', topic: '필요한 것 말하기', exercise: '"나는 ___이 필요해"로 시작하는 문장 매일 1개 쓰기' },
+      { week: 5, title: '경청하기', topic: '반응하지 않고 듣기', exercise: '상대 말을 끝까지 듣고, 요약해서 확인하기' },
+      { week: 6, title: '갈등 다루기', topic: '비폭력적 소통', exercise: '"나는 ___할 때 ___을 느껴" 형식으로 갈등 표현' },
+      { week: 7, title: '용서하기', topic: '과거 놓아주기', exercise: '용서 편지 쓰기 (보내지 않아도 됨)' },
+      { week: 8, title: '신뢰 쌓기', topic: '작은 약속 지키기', exercise: '이번 주 3가지 작은 약속을 만들고 지키기' },
+      { week: 9, title: '친밀감', topic: '취약함 보여주기', exercise: '가까운 사람에게 약한 모습 하나 보여주기' },
+      { week: 10, title: '감사하기', topic: '관계 속 감사 발견', exercise: '매일 관계에서 감사한 점 1가지 기록' },
+      { week: 11, title: '변화 인정', topic: '성장 되돌아보기', exercise: '1주차와 비교해서 달라진 점 3가지 적기' },
+      { week: 12, title: '선언하기', topic: '관계 선언문 완성', exercise: '나의 관계 원칙을 문장으로 완성하기' },
+    ],
+    skills: [
+      { id: 'i-message', title: 'I-메시지', desc: '"너는 왜 항상..."→ "나는 ...할 때 ...을 느껴"', example: '"네가 늦으면 화나" → "약속 시간이 지나면 걱정이 돼"' },
+      { id: 'reflective', title: '반영적 경청', desc: '상대의 말을 자기 언어로 되돌려주기', example: '"그러니까 지금 서운한 거지?" → "네가 무시당한 느낌이 들었구나"' },
+      { id: 'open-question', title: '열린 질문', desc: 'Yes/No가 아닌, 생각을 여는 질문하기', example: '"괜찮아?" → "지금 어떤 기분이야?"' },
+      { id: 'boundary', title: '경계 언어', desc: '거절하면서도 관계를 유지하는 표현', example: '"싫어" → "그건 나에게 불편해. 대신 이건 어때?"' },
+    ],
+    closure: [
+      { step: 1, title: '감정 인정', desc: '이 관계에서 느꼈던 모든 감정을 인정하세요' },
+      { step: 2, title: '배움 추출', desc: '이 관계가 나에게 가르쳐준 것은 무엇인가요?' },
+      { step: 3, title: '용서/놓아주기', desc: '상대와 나 자신을 용서하는 과정' },
+      { step: 4, title: '의미 부여', desc: '이 경험이 나의 성장에 어떤 의미가 있나요?' },
+      { step: 5, title: '앞으로', desc: '다음 관계에서 다르게 하고 싶은 것은?' },
+    ],
+  },
+  en: {
+    tabs: [
+      { key: 'coaching' as const, label: '12-Week Coaching' },
+      { key: 'skills' as const, label: 'Communication' },
+      { key: 'closure' as const, label: 'Closure' },
+    ],
+    thisWeekPractice: 'This week\'s practice',
+    prevWeek: 'Previous',
+    nextWeek: 'Next',
+    closureSubtitle: '5 steps to find closure and meaning in a relationship',
+    skillExample: 'Example',
+    coaching: [
+      { week: 1, title: 'Know Yourself', topic: 'Recognizing my relationship patterns', exercise: 'Reflect on your V-File results and write down 1 thing that surprised you most' },
+      { week: 2, title: 'Read Emotions', topic: 'Expanding emotional vocabulary', exercise: 'Give your feelings today a precise name (anxious → worried? afraid? jittery?)' },
+      { week: 3, title: 'Set Boundaries', topic: 'Practicing healthy limits', exercise: 'Say "no" once this week' },
+      { week: 4, title: 'Express Needs', topic: 'Saying what you need', exercise: 'Write 1 sentence each day starting with "I need ___"' },
+      { week: 5, title: 'Listen Deeply', topic: 'Hearing without reacting', exercise: 'Listen until the other person finishes, then summarize what you heard' },
+      { week: 6, title: 'Handle Conflict', topic: 'Nonviolent communication', exercise: 'Express conflict using "When ___, I feel ___" format' },
+      { week: 7, title: 'Forgive', topic: 'Releasing the past', exercise: 'Write a forgiveness letter (you don\'t have to send it)' },
+      { week: 8, title: 'Build Trust', topic: 'Keeping small promises', exercise: 'Make 3 small promises this week and keep them' },
+      { week: 9, title: 'Intimacy', topic: 'Showing vulnerability', exercise: 'Show one vulnerable side of yourself to someone close' },
+      { week: 10, title: 'Be Grateful', topic: 'Finding gratitude in relationships', exercise: 'Record 1 thing you\'re grateful for in a relationship each day' },
+      { week: 11, title: 'Accept Growth', topic: 'Looking back on progress', exercise: 'Write 3 things that have changed compared to week 1' },
+      { week: 12, title: 'Declare', topic: 'Completing a relationship declaration', exercise: 'Complete a sentence expressing your relationship principles' },
+    ],
+    skills: [
+      { id: 'i-message', title: 'I-Messages', desc: '"Why do you always..." → "When you ___, I feel ___"', example: '"You\'re always late" → "When the time passes, I feel worried"' },
+      { id: 'reflective', title: 'Reflective Listening', desc: 'Mirror back what the other person says in your own words', example: '"So you\'re feeling left out right now?" → "It sounds like you felt ignored"' },
+      { id: 'open-question', title: 'Open Questions', desc: 'Ask questions that open up thinking, not yes/no', example: '"Are you okay?" → "How are you feeling right now?"' },
+      { id: 'boundary', title: 'Boundary Language', desc: 'Expressions that decline while maintaining the relationship', example: '"No" → "That\'s uncomfortable for me. How about this instead?"' },
+    ],
+    closure: [
+      { step: 1, title: 'Acknowledge Feelings', desc: 'Recognize all the emotions you felt in this relationship' },
+      { step: 2, title: 'Extract Lessons', desc: 'What did this relationship teach you?' },
+      { step: 3, title: 'Forgive & Release', desc: 'The process of forgiving the other person and yourself' },
+      { step: 4, title: 'Find Meaning', desc: 'What meaning does this experience have for your growth?' },
+      { step: 5, title: 'Moving Forward', desc: 'What do you want to do differently in your next relationship?' },
+    ],
+  },
+};
 
 type Section = 'coaching' | 'skills' | 'closure';
 
 export default function RelationshipCoaching() {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const { language } = useLanguageContext();
+  const s = S[language] ?? S.ko;
   const [section, setSection] = useState<Section>('coaching');
 
   const { data: profile } = useQuery({
@@ -72,11 +124,7 @@ export default function RelationshipCoaching() {
     <div className="space-y-4">
       {/* 섹션 탭 */}
       <div className="flex gap-1 bg-muted rounded-lg p-0.5">
-        {([
-          { key: 'coaching' as const, label: '12주 코칭' },
-          { key: 'skills' as const, label: '대화법' },
-          { key: 'closure' as const, label: '관계 정리' },
-        ]).map(t => (
+        {s.tabs.map(t => (
           <button key={t.key} onClick={() => setSection(t.key)}
             className={`flex-1 text-xs py-2 rounded-md transition-colors ${
               section === t.key ? 'bg-background text-foreground shadow-sm font-medium' : 'text-muted-foreground'
@@ -91,14 +139,14 @@ export default function RelationshipCoaching() {
         <div className="space-y-3">
           <div className="bg-card border rounded-2xl p-5 space-y-2">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-medium">WEEK {COACHING_WEEKS[currentWeek].week}</p>
+              <p className="text-sm font-medium">WEEK {s.coaching[currentWeek].week}</p>
               <span className="text-[10px] text-muted-foreground">{currentWeek + 1}/12</span>
             </div>
-            <h3 className="font-semibold">{COACHING_WEEKS[currentWeek].title}</h3>
-            <p className="text-xs text-muted-foreground">{COACHING_WEEKS[currentWeek].topic}</p>
+            <h3 className="font-semibold">{s.coaching[currentWeek].title}</h3>
+            <p className="text-xs text-muted-foreground">{s.coaching[currentWeek].topic}</p>
             <div className="bg-primary/5 border border-primary/20 rounded-xl p-3">
-              <p className="text-[10px] text-primary font-medium mb-1">이번 주 실천</p>
-              <p className="text-xs">{COACHING_WEEKS[currentWeek].exercise}</p>
+              <p className="text-[10px] text-primary font-medium mb-1">{s.thisWeekPractice}</p>
+              <p className="text-xs">{s.coaching[currentWeek].exercise}</p>
             </div>
           </div>
           <div className="h-1.5 bg-muted rounded-full">
@@ -106,9 +154,9 @@ export default function RelationshipCoaching() {
           </div>
           <div className="flex gap-2">
             <button onClick={() => weekMutation.mutate(Math.max(0, currentWeek - 1))} disabled={currentWeek === 0 || weekMutation.isPending}
-              className="flex-1 text-xs py-2 border rounded-lg disabled:opacity-30">이전 주</button>
+              className="flex-1 text-xs py-2 border rounded-lg disabled:opacity-30">{s.prevWeek}</button>
             <button onClick={() => weekMutation.mutate(Math.min(11, currentWeek + 1))} disabled={currentWeek === 11 || weekMutation.isPending}
-              className="flex-1 text-xs py-2 bg-primary text-white rounded-lg disabled:opacity-30">다음 주</button>
+              className="flex-1 text-xs py-2 bg-primary text-white rounded-lg disabled:opacity-30">{s.nextWeek}</button>
           </div>
         </div>
       )}
@@ -116,12 +164,12 @@ export default function RelationshipCoaching() {
       {/* #41 대화법/질문법 */}
       {section === 'skills' && (
         <div className="space-y-2">
-          {COMMUNICATION_SKILLS.map(skill => (
+          {s.skills.map(skill => (
             <div key={skill.id} className="bg-card border rounded-xl p-4 space-y-2">
               <p className="text-sm font-medium">{skill.title}</p>
               <p className="text-xs text-muted-foreground">{skill.desc}</p>
               <div className="bg-muted/50 rounded-lg p-2.5">
-                <p className="text-[10px] text-muted-foreground mb-0.5">예시</p>
+                <p className="text-[10px] text-muted-foreground mb-0.5">{s.skillExample}</p>
                 <p className="text-xs">{skill.example}</p>
               </div>
             </div>
@@ -132,8 +180,8 @@ export default function RelationshipCoaching() {
       {/* #40 관계 결론 착지 */}
       {section === 'closure' && (
         <div className="space-y-2">
-          <p className="text-xs text-muted-foreground">관계를 정리하고 의미를 찾아가는 5단계</p>
-          {CLOSURE_STEPS.map(step => (
+          <p className="text-xs text-muted-foreground">{s.closureSubtitle}</p>
+          {s.closure.map(step => (
             <div key={step.step} className="bg-card border rounded-xl p-4 flex gap-3">
               <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary flex-shrink-0">
                 {step.step}

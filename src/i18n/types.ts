@@ -108,6 +108,7 @@ export interface LocaleResource {
   vent: {
     header: string;
     subtitle: string;
+    amberName: string;
     sections: {
       mood: string;
       layer: string;
@@ -147,6 +148,16 @@ export interface LocaleResource {
       night: { title: string; placeholder: string };
       lateNight: { title: string; placeholder: string };
     };
+    amberSheet: {
+      initialText: string;
+      toneHere: string;
+      toneListening: string;
+      toneDig: string;
+      fallbackText: string;
+      thinkingPlaceholder: string;
+      close: string;
+      send: string;
+    };
     chat: {
       amberIntro: string;
       amberListening: string;
@@ -167,7 +178,19 @@ export interface LocaleResource {
       aiErrorTitle: string;
       aiErrorDesc: string;
       yourPace: string;
+      toneWith: string;
+      toneContinue: string;
       continueResponse: string;
+      feedbackHelpful: string;
+      feedbackNotHelpful: string;
+      sexSelfNudge: string;
+      sexSelfNudgePrivate: string;
+      sexSelfNudgeYes: string;
+      sexSelfNudgeNo: string;
+      partnerNudge: string;
+      partnerNudgePrivate: string;
+      partnerNudgeExplore: string;
+      partnerNudgeSkip: string;
     };
     layers: {
       title: string;
@@ -219,12 +242,79 @@ export interface LocaleResource {
     historyTitle: string;
     historyCount: string;
     monthlyPatterns: string;
+    ventPatternBanner: string;
+    ventPatternStart: string;
+    historyLabel: string;
     errorTitle: string;
     trendLabels: {
       rising: string;
       declining: string;
       stable: string;
     };
+    relevance: string;
+    tendencyDisclaimer: string;
+    optional: string;
+    all: string;
+    socraticHint: string;
+    codetalk: {
+      title: string;
+      subtitle: string;
+      soloMode: string;
+      soloModeDesc: string;
+      togetherMode: string;
+      togetherModeDesc: string;
+      byRelation: string;
+      byRelationDesc: string;
+      byPsych: string;
+      byPsychDesc: string;
+      selectRelation: string;
+      selectPsych: string;
+      backToCategory: string;
+      backToList: string;
+      backToEntry: string;
+      keywordSearch: string;
+      noResults: string;
+      freePlaceholder: string;
+      publicToggle: string;
+      privateToggle: string;
+      prev: string;
+      next: string;
+      save: string;
+      saving: string;
+      savedToast: string;
+      otherEntries: string;
+      exploreMore: string;
+      noPublicEntries: string;
+      anonymous: string;
+      storyFeedDesc: string;
+      storyFeedEmpty: string;
+      steps: Record<string, string>;
+      stepPrompts: Record<string, string>;
+      relCategories: Record<string, string>;
+      psychCategories: Record<string, string>;
+      socraticPrompts: Record<string, string[]>;
+    };
+  };
+  community: {
+    header: string;
+    subtitle: string;
+    tabs: { groups: string; discuss: string; connect: string; content: string };
+    categoryLabels: Record<string, string>;
+    backToList: string;
+    backToGroup: string;
+    anonymous: string;
+    realName: string;
+    commentCount: string;
+    commentPlaceholder: string;
+    postPlaceholder: string;
+    titlePlaceholder: string;
+    writePost: string;
+    register: string;
+    cancel: string;
+    emptyPosts: string;
+    postRegistered: string;
+    commentRegistered: string;
+    memberCount: string;
   };
   set: {
     header: string;
@@ -252,8 +342,26 @@ export interface LocaleResource {
       };
       consentChecked: string;
       consentUnchecked: string;
+      sexual: string;
+      sexualPrivate: string;
+      sexualDesc: string;
+      sexualExplore: string;
+      save: string;
+      axMercerTitle: string;
+      axMercerSubtitle: string;
+      axMercerAllComplete: string;
+      sectionComplete: string;
+      boundarySettingTitle: string;
+      boundarySettingSubtitle: string;
+      placeholders: Record<string, string>;
+      axMercerSections: Record<string, { title: string; description: string; items: Record<string, string> }>;
     };
     axmercer: Record<string, string>;
+    tabs2: { us: string; tools: string; practice: string };
+    sexSelfBanner: { title: string; desc: string };
+    coupleTalk: { subtitle: string; connected: string };
+    sidebarSubtitle: string;
+    insightError: string;
   };
   get: {
     header: string;
@@ -263,6 +371,7 @@ export interface LocaleResource {
       why: string;
       ikigai: string;
       brand: string;
+      couple: string;
     };
     identity: {
       myMask: string;
@@ -286,6 +395,33 @@ export interface LocaleResource {
       recentKeywords: string;
       signalAccumulated: string;
       priperReanalysis: string;
+      vfileTitle: string;
+      notFixedPattern: string;
+      reanalyze: string;
+      startAnalysis: string;
+      originProfile: string;
+      coreWound: string;
+      coreFear: string;
+      coreNeed: string;
+      genPath: string;
+      exploreWithAI: string;
+      vprofileType: string;
+      reanalysisCompare: string;
+      diagnosisCount: string;
+      prevDiagnosis: string;
+      threePersonas: string;
+      personasComplete: string;
+      personasDesc: string;
+      sexualBoundaryPrivate: string;
+      sexualBoundaryExplore: string;
+      sexualBoundaryDesc: string;
+      save: string;
+      axMercerTitle: string;
+      axMercerSubtitle: string;
+      axMercerComplete: string;
+      sectionComplete: string;
+      boundarySettingTitle: string;
+      boundarySettingSubtitle: string;
       maskLabels: Record<string, string>;
     };
     ikigai: {
@@ -331,6 +467,11 @@ export interface LocaleResource {
       ikigaiDesc: string;
       brandDesc: string;
     };
+    radarCompare: {
+      axisChange: string;
+      maskChanged: string;
+      personaChange: string;
+    };
     errors: {
       loadFailed: string;
     };
@@ -353,6 +494,8 @@ export interface LocaleResource {
       insights: string;
       signals: string;
       patternAreas: string;
+      statsLine: string;
+      patternAreasFmt: string;
     };
     frost: {
       precisionMessage: string;
@@ -374,6 +517,9 @@ export interface LocaleResource {
       patterns: string;
       mainEmotions: string;
       unresolved: string;
+      weekLabelFmt: string;
+      weekReportBadge: string;
+      emotionCountFmt: string;
     };
     initialDiagnosis: string;
     diagAxisHighest: string;
@@ -390,18 +536,123 @@ export interface LocaleResource {
       discoveredPattern: string;
       personaConflict: string;
       addPerson: string;
+      relTypes: string[];
+      formTitle: string;
+      formNamePlaceholder: string;
+      formNotesPlaceholder: string;
+      save: string;
+      saving: string;
+      cancel: string;
+      delete: string;
     };
     zone: {
       title: string;
       subtitle: string;
       precision: string;
       frostMessage: string;
+      sensitive: string;
     };
+    amberDefaultName: string;
+    frostDefaultName: string;
     rename: {
       amber: string;
       frost: string;
     };
     dmToast: string;
+    aiSheet: {
+      amberRole: string;
+      frostRole: string;
+      amberGreeting: string;
+      frostGreeting: string;
+      amberResponse: string;
+      frostResponse: string;
+      placeholder: string;
+      close: string;
+      send: string;
+      inputLabel: string;
+    };
+    viewAll: string;
+    timeline: {
+      title: string;
+      addButton: string;
+      olderAvg: string;
+      recentAvg: string;
+      changeLabel: string;
+      emptyDesc: string;
+      firstRecord: string;
+      formTitle: string;
+      formDate: string;
+      formType: string;
+      formEventTitle: string;
+      formEventTitlePlaceholder: string;
+      formNotes: string;
+      formNotesPlaceholder: string;
+      formTone: string;
+      formSave: string;
+      formSaving: string;
+      toneLabels: Record<string, string>;
+    };
+    personaFragments: {
+      title: string;
+      engineLabel: string;
+      loading: string;
+      emptyTitle: string;
+      emptyDesc: string;
+      newBadge: string;
+      detected: string;
+      contradictionStrength: string;
+      reactionPrompt: string;
+      reactions: { resonates: string; surprising: string; disagree: string };
+      reactionResult: { resonates: string; surprising: string; disagree: string };
+      acknowledged: string;
+      typeLabels: Record<string, string>;
+      newCountFmt: string;
+      countFmt: string;
+      systemDetected: string;
+      footer: string;
+    };
+    monthlyReport: {
+      badge: string;
+      activitySummary: string;
+      loading: string;
+      error: string;
+      threeMonthCompare: string;
+      psychTrendTitle: string;
+      psychTrendHighlight: string;
+      psychTrendNeed: string;
+      topPatterns: string;
+      noData: string;
+      growthMeasure: string;
+      axisLabels: Record<string, string>;
+      axisShortLabels: Record<string, string>;
+    };
+    communicationPattern: {
+      title: string;
+      countLabel: string;
+      topKeywords: string;
+      depthLabel: string;
+      depthStages: { low: string; mid: string; high: string };
+    };
+    patternDeviation: {
+      title: string;
+      stabilityChangeFmt: string;
+      newEmotionsLabel: string;
+      positive: string;
+      negative: string;
+    };
+    shareCard: {
+      shareGroupLabel: string;
+      copyButton: string;
+      copyDone: string;
+      shareButton: string;
+      copyAriaLabel: string;
+      shareAriaLabel: string;
+      axisLabels: Record<string, string>;
+    };
+    feedEvolution: {
+      dismissAriaLabel: string;
+      milestones: Record<string, { title: string; desc: string }>;
+    };
   };
   crisis: {
     banner: {
@@ -437,6 +688,7 @@ export interface LocaleResource {
   };
   clear: {
     dashboard: string;
+    dashboardGreetingFmt: (name: string) => string;
     healthScore: string;
     scoreUnit: string;
     weeklyRecord: string;
@@ -474,8 +726,18 @@ export interface LocaleResource {
     sexAxisLeading: string;
     sexAxisExpressiveness: string;
     sexAxisIntensity: string;
+    sexSelfPanelDesc: string;
+    sexSelfOnlyMe: string;
+    sexSelfProfiles: Record<string, string>;
     navPatterns: string;
     navGrowth: string;
+    emotionDist: string;
+    calendarTitle: string;
+    summaryRecords: string;
+    summaryAvg: string;
+    summaryBest: string;
+    summaryDaysFmt: string;
+    dowLabels: string[];
     activities: {
       relationship: string;
       work: string;
@@ -483,6 +745,40 @@ export interface LocaleResource {
       alone: string;
       rest: string;
       study: string;
+    };
+  };
+  relation: {
+    connect: {
+      section: string;
+      subtitle: string;
+      checkinTitle: string;
+      personPlaceholder: string;
+      warmthLabel: string;
+      warmthLow: string;
+      warmthHigh: string;
+      energyLabel: string;
+      energyLow: string;
+      energyHigh: string;
+      notePlaceholder: string;
+      save: string;
+      saving: string;
+      historyTitle: string;
+      warmestRelation: string;
+      mostConcerning: string;
+      amberNoCheckin: string;
+      amberLowWarmth: (name: string) => string;
+      amberLowEnergy: string;
+    };
+    mirror: {
+      section: string;
+      subtitle: string;
+      boundaryTitle: string;
+      boundaryCount: (n: number) => string;
+      boundaryDetail: string;
+      patternTitle: string;
+      patternLabels: Record<string, string>;
+      patternDescs: Record<string, string>;
+      amberPattern: string;
     };
   };
 }

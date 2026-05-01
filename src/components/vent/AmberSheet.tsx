@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { invokeHeldChat } from '@/lib/heldChatClient';
 import { useAuth } from '@/context/AuthContext';
 import { C, alpha } from '@/lib/colors';
+import { useVentTranslations } from '@/hooks/useTranslation';
 
 const SHEET_AI_MSG_STYLE = { background: C.bg2, border: `1px solid ${C.border}`, borderRadius: '11px 11px 11px 3px', padding: '10px 13px' } as const;
 const SHEET_USER_MSG_STYLE = { background: alpha(C.amber, 0.05), border: `1px solid ${alpha(C.amber, 0.13)}`, borderRadius: '11px 11px 3px 11px', padding: '9px 13px' } as const;
@@ -14,8 +15,9 @@ interface Props {
 
 export default function AmberSheet({ open, onClose, aiName }: Props) {
   const { user, primaryMask, axisScores } = useAuth();
-  const [msgs, setMsgs] = useState<{ role: 'ai' | 'user'; text: string; tone?: string }[]>([
-    { role: 'ai', text: '지금 어떤 감정인지 꺼내놔도 괜찮아요. 여기 있어요.', tone: '여기 있어요' },
+  const vent = useVentTranslations();
+  const [msgs, setMsgs] = useState<{ role: 'ai' | 'user'; text: string; tone?: string }[]>(() => [
+    { role: 'ai', text: vent.amberSheet.initialText, tone: vent.amberSheet.toneHere },
   ]);
   const [val, setVal] = useState('');
   const [thinking, setThinking] = useState(false);
@@ -37,10 +39,10 @@ export default function AmberSheet({ open, onClose, aiName }: Props) {
         { text: txt, mask: primaryMask ?? undefined, axisScores: axisScores ?? null, history: msgs.slice(-6), tab: 'amber_sheet', userId: user?.id },
         abortRef.current.signal,
       );
-      setMsgs(m => [...m, { role: 'ai', text: result.response, tone: '엠버가 듣고 있어요' }]);
+      setMsgs(m => [...m, { role: 'ai', text: result.response, tone: vent.amberSheet.toneListening }]);
     } catch (err: unknown) {
       if (err instanceof Error && err.name === 'AbortError') return;
-      setMsgs(m => [...m, { role: 'ai', text: '그 감정, 언제부터 있었던 것 같아요?', tone: '같이 파고들어요' }]);
+      setMsgs(m => [...m, { role: 'ai', text: vent.amberSheet.fallbackText, tone: vent.amberSheet.toneDig }]);
     } finally {
       setThinking(false);
     }
@@ -62,7 +64,7 @@ export default function AmberSheet({ open, onClose, aiName }: Props) {
             <div className="w-[17px] h-[17px] rounded-full" style={{ background: C.amber }} />
           </div>
           <span className="flex-1 text-[15px]" style={{ fontFamily: "'Cormorant Garamond', serif", color: C.text }}>{aiName}</span>
-          <button aria-label="닫기" onClick={onClose} className="w-[26px] h-[26px] rounded-full flex items-center justify-center text-[13px]" style={{ border: `1px solid ${C.border}`, color: C.text4 }}>✕</button>
+          <button aria-label={vent.amberSheet.close} onClick={onClose} className="w-[26px] h-[26px] rounded-full flex items-center justify-center text-[13px]" style={{ border: `1px solid ${C.border}`, color: C.text4 }}>✕</button>
         </div>
         <div ref={chatRef} className="flex-1 overflow-y-auto flex flex-col gap-2 min-h-0" style={{ padding: '12px 18px', scrollbarWidth: 'none' }}>
           {msgs.map((m, i) => m.role === 'ai' ? (
@@ -77,13 +79,13 @@ export default function AmberSheet({ open, onClose, aiName }: Props) {
           ))}
         </div>
         <div className="flex-shrink-0 flex items-center gap-[7px]" style={{ padding: '8px 14px 14px', borderTop: `1px solid ${C.border2}` }}>
-          <input aria-label="메시지 입력" className="flex-1 text-[12px] font-light rounded-full outline-none"
+          <input aria-label={vent.chat.messageInput} className="flex-1 text-[12px] font-light rounded-full outline-none"
             style={{ background: C.bg2, border: `1px solid ${C.border}`, padding: '7px 13px', color: C.text2, fontFamily: "'DM Sans', sans-serif" }}
-            placeholder={thinking ? '엠버가 생각하고 있어요...' : `${aiName}에게 말해요...`}
+            placeholder={thinking ? vent.amberSheet.thinkingPlaceholder : vent.chat.speakToAmber.replace('{name}', aiName)}
             value={val} onChange={e => setVal(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && !thinking && send()}
             disabled={thinking} />
-          <button aria-label="전송" onClick={() => send()} disabled={thinking} className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: thinking ? alpha(C.amber, 0.4) : C.amber, border: 'none' }}>
+          <button aria-label={vent.amberSheet.send} onClick={() => send()} disabled={thinking} className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: thinking ? alpha(C.amber, 0.4) : C.amber, border: 'none' }}>
             <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M6 11V1M1 6l5-5 5 5" stroke="#1C1917" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
           </button>
         </div>

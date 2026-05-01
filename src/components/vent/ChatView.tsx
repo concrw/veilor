@@ -1,8 +1,11 @@
 // ChatView — message list + AI thinking indicator + finish button + summary card
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { C, alpha } from '@/lib/colors';
 import { veilorDb } from '@/integrations/supabase/client';
 import { useVentTranslations } from '@/hooks/useTranslation';
+
+// NUDGE_EMOTIONS is built dynamically from translations in the component
 
 const CHAT_AI_MSG_STYLE = { background: C.bg2, border: `1px solid ${C.border}`, borderRadius: '12px 12px 12px 3px', padding: '12px 14px' } as const;
 const CHAT_USER_MSG_STYLE = { background: alpha(C.amber, 0.05), border: `1px solid ${alpha(C.amber, 0.13)}`, borderRadius: '12px 12px 3px 12px', padding: '10px 14px' } as const;
@@ -22,22 +25,44 @@ interface ChatViewProps {
   emoData: { count: number; suggestion: string };
   greeting: { title: string; placeholder: string };
   userId?: string;
+  hasSexSelfResult?: boolean;
   onMsgValChange: (val: string) => void;
   onSendMsg: () => void;
   onFinishSession: () => void;
   onContinueChat: () => void;
+  onNavigateToSexSelf: () => void;
 }
 
 export default function ChatView({
   curEmo, msgs, msgCount, msgVal, aiThinking, showSummary, sessionSaved,
   crisisLocked = false,
   emoData, greeting, userId,
-  onMsgValChange, onSendMsg, onFinishSession, onContinueChat,
+  hasSexSelfResult = false,
+  onMsgValChange, onSendMsg, onFinishSession, onContinueChat, onNavigateToSexSelf,
 }: ChatViewProps) {
   const vent = useVentTranslations();
+  const navigate = useNavigate();
   const chatRef = useRef<HTMLDivElement>(null);
-  // C6: 응답별 피드백 상태 (msgIndex → 'up'|'down')
   const [feedbacks, setFeedbacks] = useState<Record<number, 'up' | 'down'>>({});
+  const [showSexSelfNudge, setShowSexSelfNudge] = useState(false);
+  const nudgeShownRef = useRef(false);
+
+  const nudgeEmotions = useMemo(() => [
+    vent.emotions.hurt, vent.emotions.lonely, vent.emotions.confused,
+  ], [vent.emotions]);
+
+  useEffect(() => {
+    if (
+      msgCount >= 4 &&
+      nudgeEmotions.includes(curEmo) &&
+      !nudgeShownRef.current &&
+      !hasSexSelfResult &&
+      !showSummary
+    ) {
+      nudgeShownRef.current = true;
+      setShowSexSelfNudge(true);
+    }
+  }, [msgCount, curEmo, nudgeEmotions, hasSexSelfResult, showSummary]);
 
   async function handleFeedback(msgIdx: number, value: 'up' | 'down', msgText: string) {
     setFeedbacks(prev => ({ ...prev, [msgIdx]: value }));
@@ -80,7 +105,7 @@ export default function ChatView({
             {i > 1 && !aiThinking && (
               <div className="flex gap-2 mt-2">
                 <button
-                  aria-label="도움이 됐어요"
+                  aria-label={vent.chat.feedbackHelpful}
                   onClick={() => handleFeedback(i, 'up', m.text)}
                   style={{
                     background: feedbacks[i] === 'up' ? alpha(C.amber, 0.2) : 'transparent',
@@ -93,7 +118,7 @@ export default function ChatView({
                   {feedbacks[i] === 'up' ? '👍' : '↑'}
                 </button>
                 <button
-                  aria-label="도움이 안 됐어요"
+                  aria-label={vent.chat.feedbackNotHelpful}
                   onClick={() => handleFeedback(i, 'down', m.text)}
                   style={{
                     background: feedbacks[i] === 'down' ? 'rgba(220,38,38,0.1)' : 'transparent',
@@ -121,6 +146,32 @@ export default function ChatView({
               <div className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background: C.amber, animationDelay: '300ms' }} />
             </div>
             <span className="text-[10px] font-light" style={{ color: C.text4 }}>{vent.chat.amberListening}</span>
+          </div>
+        )}
+
+        {/* 엠버 SexSelf 넛지 */}
+        {showSexSelfNudge && !showSummary && (
+          <div className="vr-fade-in flex-shrink-0 space-y-3" style={CHAT_AI_MSG_STYLE}>
+            <p className="text-[16px] font-light leading-[1.6] break-keep" style={{ fontFamily: "'Cormorant Garamond', serif", color: C.text }}>
+              {vent.chat.sexSelfNudge}
+            </p>
+            <p className="text-[10px] font-light" style={{ color: alpha(C.amber, 0.4) }}>{vent.chat.sexSelfNudgePrivate}</p>
+            <div className="flex gap-2 pt-1">
+              <button
+                onClick={() => { setShowSexSelfNudge(false); onNavigateToSexSelf(); }}
+                className="flex-1 py-[9px] rounded-[9px] text-[11px] font-light transition-all"
+                style={{ background: alpha('#ec4899', 0.08), border: `1px solid ${alpha('#ec4899', 0.3)}`, color: '#ec4899' }}
+              >
+                {vent.chat.sexSelfNudgeYes}
+              </button>
+              <button
+                onClick={() => setShowSexSelfNudge(false)}
+                className="flex-1 py-[9px] rounded-[9px] text-[11px] font-light transition-all"
+                style={{ border: `1px solid ${C.border}`, background: 'transparent', color: C.text4 }}
+              >
+                {vent.chat.sexSelfNudgeNo}
+              </button>
+            </div>
           </div>
         )}
 
@@ -176,11 +227,11 @@ export default function ChatView({
           </div>
         ) : (
           <div className="flex-shrink-0 flex items-center gap-2" style={{ padding: '8px 16px 14px', borderTop: `1px solid ${C.border2}` }}>
-            <button aria-label="음성 입력" className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ border: `1px solid ${C.border}`, background: 'transparent' }}>
+            <button aria-label={vent.chat.voiceInput} className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ border: `1px solid ${C.border}`, background: 'transparent' }}>
               <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="5" y="1" width="6" height="9" rx="3" stroke="#78716C" strokeWidth="1.2"/><path d="M2 7.5C2 10.538 4.686 13 8 13s6-2.462 6-5.5" stroke="#78716C" strokeWidth="1.2" strokeLinecap="round" fill="none"/><line x1="8" y1="13" x2="8" y2="15" stroke="#78716C" strokeWidth="1.2" strokeLinecap="round"/></svg>
             </button>
             <input
-              aria-label="메시지 입력"
+              aria-label={vent.chat.messageInput}
               className="flex-1 rounded-full text-[12px] font-light outline-none"
               style={{ background: C.bg2, border: `1px solid ${C.border}`, padding: '8px 14px', color: C.text2, fontFamily: "'DM Sans', sans-serif" }}
               placeholder={greeting.placeholder}
@@ -188,7 +239,7 @@ export default function ChatView({
               onChange={e => onMsgValChange(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && onSendMsg()}
             />
-            <button aria-label="메시지 전송" onClick={onSendMsg} className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-transform active:scale-[.92]" style={{ background: C.amber, border: 'none' }}>
+            <button aria-label={vent.chat.sendMessage} onClick={onSendMsg} className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-transform active:scale-[.92]" style={{ background: C.amber, border: 'none' }}>
               <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M6 11V1M1 6l5-5 5 5" stroke="#1C1917" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
             </button>
           </div>

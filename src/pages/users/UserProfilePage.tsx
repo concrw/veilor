@@ -4,6 +4,36 @@ import { useAuth } from '@/context/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { veilorDb } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { useLanguageContext } from '@/context/LanguageContext';
+
+const S = {
+  ko: {
+    anonUser: '익명 사용자',
+    continueChat: '대화 이어가기',
+    sendMessage: '메시지 보내기',
+    back: '← 뒤로',
+    startChatTitle: '대화를 시작할까요?',
+    startChatDesc: '상대방이 수락하면 메시지를 주고받을 수 있습니다. 안전하게 보호됩니다.',
+    cancel: '취소',
+    requesting: '요청 중...',
+    start: '시작',
+    errorTitle: '오류',
+    errorDesc: '대화방을 만들 수 없습니다.',
+  },
+  en: {
+    anonUser: 'Anonymous user',
+    continueChat: 'Continue chat',
+    sendMessage: 'Send message',
+    back: '← Back',
+    startChatTitle: 'Start a conversation?',
+    startChatDesc: 'Once the other person accepts, you can exchange messages. Your privacy is protected.',
+    cancel: 'Cancel',
+    requesting: 'Requesting...',
+    start: 'Start',
+    errorTitle: 'Error',
+    errorDesc: 'Could not create a chat room.',
+  },
+};
 
 interface DmRoom {
   id: string;
@@ -20,6 +50,8 @@ export default function UserProfilePage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const { language } = useLanguageContext();
+  const s = S[language] ?? S.ko;
 
   // 상대방 프로필 조회
   const { data: profile, isLoading } = useQuery({
@@ -75,7 +107,7 @@ export default function UserProfilePage() {
       navigate('/home/dm', { state: { roomId: room.id, partnerUserId: userId } });
     },
     onError: () => {
-      toast({ title: '오류', description: '대화방을 만들 수 없습니다.', variant: 'destructive' });
+      toast({ title: s.errorTitle, description: s.errorDesc, variant: 'destructive' });
     },
   });
 
@@ -90,7 +122,7 @@ export default function UserProfilePage() {
   };
 
   const isOwnProfile = user?.id === userId;
-  const displayName = profile?.nickname ?? profile?.primary_mask ?? '익명 사용자';
+  const displayName = profile?.nickname ?? profile?.primary_mask ?? s.anonUser;
 
   if (isLoading) {
     return (
@@ -101,62 +133,77 @@ export default function UserProfilePage() {
   }
 
   return (
-    <div className="min-h-screen px-4 py-6" style={{ background: '#1C1917', fontFamily: "'DM Sans', sans-serif" }}>
-      <div className="max-w-sm mx-auto space-y-5">
+    <div className="min-h-screen" style={{ background: '#1C1917', fontFamily: "'DM Sans', sans-serif" }}>
+      <div className="flex flex-col lg:flex-row min-h-screen">
 
-        {/* 뒤로가기 */}
-        <button
-          onClick={() => navigate(-1)}
-          className="text-xs"
-          style={{ color: '#A8A29E' }}
-        >
-          ← 뒤로
-        </button>
-
-        {/* 프로필 카드 */}
-        <div className="rounded-2xl p-6 space-y-5" style={{ background: '#292524', border: '1px solid #44403C' }}>
-          <div className="flex flex-col items-center gap-3">
-            {/* 아바타 */}
-            <div
-              className="w-16 h-16 rounded-full flex items-center justify-center text-xl font-semibold"
-              style={{ background: '#D4A57420', border: '1px solid #D4A57440', color: '#D4A574' }}
-            >
-              {displayName.slice(0, 1).toUpperCase()}
-            </div>
-
-            <div className="text-center space-y-1">
-              <h2 className="text-base font-medium" style={{ color: '#F5F5F4' }}>{displayName}</h2>
-              {profile?.primary_mask && (
-                <span
-                  className="inline-block text-xs px-2 py-0.5 rounded-full"
-                  style={{ background: '#D4A57415', border: '1px solid #D4A57430', color: '#D4A574' }}
-                >
-                  {profile.primary_mask}
-                </span>
-              )}
-            </div>
+        {/* PC 좌측 패널 */}
+        <div className="hidden lg:flex flex-col flex-shrink-0 justify-center items-center border-r px-12 py-10 space-y-6" style={{ width: 320, borderColor: '#2A2624' }}>
+          <div
+            className="w-24 h-24 rounded-full flex items-center justify-center text-3xl font-semibold"
+            style={{ background: '#D4A57420', border: '1px solid #D4A57440', color: '#D4A574' }}
+          >
+            {displayName.slice(0, 1).toUpperCase()}
           </div>
+          <div className="text-center space-y-2">
+            <h2 className="text-lg font-medium" style={{ color: '#F5F5F4' }}>{displayName}</h2>
+            {profile?.primary_mask && (
+              <span className="inline-block text-xs px-2.5 py-1 rounded-full" style={{ background: '#D4A57415', border: '1px solid #D4A57430', color: '#D4A574' }}>
+                {profile.primary_mask}
+              </span>
+            )}
+          </div>
+          {!isOwnProfile && (
+            <button
+              onClick={handleSendMessage}
+              className="w-full py-3 rounded-xl text-sm font-medium"
+              style={{ background: '#D4A574', color: '#1C1917' }}
+            >
+              {existingRoom ? s.continueChat : s.sendMessage}
+            </button>
+          )}
         </div>
 
-        {/* 메시지 버튼 */}
-        {!isOwnProfile && (
-          <button
-            onClick={handleSendMessage}
-            className="w-full py-3 rounded-xl text-sm font-medium transition-opacity"
-            style={{ background: '#D4A574', color: '#1C1917' }}
-          >
-            {existingRoom ? '대화 이어가기' : '메시지 보내기'}
-          </button>
-        )}
+        {/* 우측 / 모바일 메인 */}
+        <div className="flex-1 px-4 py-6" style={{ maxWidth: 600 }}>
+          <div className="space-y-5">
+            {/* 뒤로가기 */}
+            <button onClick={() => navigate(-1)} className="text-xs" style={{ color: '#A8A29E' }}>{s.back}</button>
 
-        {/* 확인 모달 */}
+            {/* 모바일 프로필 카드 */}
+            <div className="lg:hidden rounded-2xl p-6 space-y-5" style={{ background: '#292524', border: '1px solid #44403C' }}>
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-16 h-16 rounded-full flex items-center justify-center text-xl font-semibold" style={{ background: '#D4A57420', border: '1px solid #D4A57440', color: '#D4A574' }}>
+                  {displayName.slice(0, 1).toUpperCase()}
+                </div>
+                <div className="text-center space-y-1">
+                  <h2 className="text-base font-medium" style={{ color: '#F5F5F4' }}>{displayName}</h2>
+                  {profile?.primary_mask && (
+                    <span className="inline-block text-xs px-2 py-0.5 rounded-full" style={{ background: '#D4A57415', border: '1px solid #D4A57430', color: '#D4A574' }}>
+                      {profile.primary_mask}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* 모바일 메시지 버튼 */}
+            {!isOwnProfile && (
+              <button className="lg:hidden w-full py-3 rounded-xl text-sm font-medium" onClick={handleSendMessage} style={{ background: '#D4A574', color: '#1C1917' }}>
+                {existingRoom ? s.continueChat : s.sendMessage}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* 확인 모달 */}
         {showConfirmModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.6)' }}>
             <div className="mx-4 max-w-xs w-full rounded-2xl p-6 space-y-4" style={{ background: '#292524', border: '1px solid #44403C' }}>
               <div className="space-y-1">
-                <h3 className="text-sm font-medium" style={{ color: '#F5F5F4' }}>대화를 시작할까요?</h3>
+                <h3 className="text-sm font-medium" style={{ color: '#F5F5F4' }}>{s.startChatTitle}</h3>
                 <p className="text-xs leading-relaxed" style={{ color: '#A8A29E' }}>
-                  상대방이 수락하면 메시지를 주고받을 수 있습니다. 안전하게 보호됩니다.
+                  {s.startChatDesc}
                 </p>
               </div>
               <div className="flex gap-2">
@@ -166,7 +213,7 @@ export default function UserProfilePage() {
                   className="flex-1 py-2 rounded-xl text-xs"
                   style={{ border: '1px solid #44403C', color: '#A8A29E', background: 'transparent' }}
                 >
-                  취소
+                  {s.cancel}
                 </button>
                 <button
                   onClick={() => createRoomMutation.mutate()}
@@ -174,13 +221,12 @@ export default function UserProfilePage() {
                   className="flex-1 py-2 rounded-xl text-xs font-medium"
                   style={{ background: '#D4A574', color: '#1C1917' }}
                 >
-                  {createRoomMutation.isPending ? '요청 중...' : '시작'}
+                  {createRoomMutation.isPending ? s.requesting : s.start}
                 </button>
               </div>
             </div>
           </div>
         )}
-      </div>
     </div>
   );
 }

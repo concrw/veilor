@@ -12,7 +12,7 @@ const Logo: React.FC<LogoProps> = ({ size = 48, className = "" }) => {
       src="/lovable-uploads/d43fbf8a-86fd-4a31-a94c-67dd25db1dc9.png"
       width={size}
       style={{ height: 'auto' }}
-      alt="RESEARCH WHY 로고"
+      alt="RESEARCH WHY logo"
       className={className}
       loading="eager"
       decoding="async"

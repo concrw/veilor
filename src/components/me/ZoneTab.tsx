@@ -2,6 +2,7 @@ import { C } from '@/lib/colors';
 import { ZONES } from '@/data/mePageData';
 import ZoneToggle from '@/components/me/ZoneToggle';
 import { useState } from 'react';
+import { useMeTranslations } from '@/hooks/useTranslation';
 
 const ZONE_ITEM_NAME_STYLE = { fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 13.5, color: C.text, marginBottom: 1 } as const;
 const ZONE_ITEM_DESC_STYLE = { fontSize: 10, fontWeight: 300, color: C.text4 } as const;
@@ -15,17 +16,19 @@ interface ZoneTabProps {
 }
 
 export default function ZoneTab({ pct, closedCount, zoneState, toggleZone }: ZoneTabProps) {
+  const me = useMeTranslations();
+  const z = me.zone;
   const [openGroups, setOpenGroups] = useState<Record<number, boolean>>({ 0: true, 1: true, 2: true });
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       <div style={{ flexShrink: 0, padding: '11px 20px 10px', borderBottom: `1px solid ${C.border2}` }}>
-        <p style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 16, color: C.text, marginBottom: 2 }}>탐색 범위 설정</p>
-        <p style={{ fontSize: 10, fontWeight: 300, color: C.text4 }}>열어둔 영역 안에서만 AI가 작동해요.</p>
+        <p style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 16, color: C.text, marginBottom: 2 }}>{z.title}</p>
+        <p style={{ fontSize: 10, fontWeight: 300, color: C.text4 }}>{z.subtitle}</p>
       </div>
 
       <div style={{ flexShrink: 0, padding: '9px 20px', borderBottom: `1px solid ${C.border2}`, display: 'flex', alignItems: 'center', gap: 10 }}>
-        <span style={{ fontSize: 10, fontWeight: 300, color: C.text4, flexShrink: 0 }}>정밀도</span>
+        <span style={{ fontSize: 10, fontWeight: 300, color: C.text4, flexShrink: 0 }}>{z.precision}</span>
         <div style={{ flex: 1, height: 3, background: C.border2, borderRadius: 99, overflow: 'hidden' }}>
           <div style={{ height: '100%', borderRadius: 99, background: `linear-gradient(90deg,${C.amberGold},${C.amber})`, width: `${pct}%`, transition: 'width .4s ease' }} />
         </div>
@@ -39,7 +42,7 @@ export default function ZoneTab({ pct, closedCount, zoneState, toggleZone }: Zon
               <span style={{ width: 9, height: 9, borderRadius: '50%', background: C.frost, display: 'block' }} />
             </div>
             <p style={{ fontFamily: "'Cormorant Garamond', serif", fontStyle: 'italic', fontWeight: 300, fontSize: 12, color: C.text3, flex: 1, lineHeight: 1.5 }}>
-              "현재 정밀도 {pct}%. {closedCount}개 영역이 닫혀 있어요."
+              "{z.frostMessage.replace('{pct}', String(pct)).replace('{count}', String(closedCount))}"
             </p>
             <span style={{ fontSize: 9, color: C.text5, flexShrink: 0, marginTop: 2 }}>Frost</span>
           </div>
@@ -66,7 +69,7 @@ export default function ZoneTab({ pct, closedCount, zoneState, toggleZone }: Zon
                         <p style={ZONE_ITEM_NAME_STYLE}>{item.name}</p>
                         <p style={ZONE_ITEM_DESC_STYLE}>{item.desc}</p>
                       </div>
-                      {item.sensitive && <span style={ZONE_SENSITIVE_BADGE_STYLE}>민감</span>}
+                      {item.sensitive && <span style={ZONE_SENSITIVE_BADGE_STYLE}>{z.sensitive}</span>}
                       <ZoneToggle on={zoneState[item.id]} onToggle={() => toggleZone(item.id)} />
                     </div>
                   ))}

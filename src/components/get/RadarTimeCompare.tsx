@@ -3,11 +3,13 @@ import { useAuth } from '@/context/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { veilorDb } from '@/integrations/supabase/client';
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer, Legend } from 'recharts';
-
-const AXIS_LABELS: Record<string, string> = { A: '애착', B: '소통', C: '욕구표현', D: '역할' };
+import { useGetTranslations, useMeTranslations } from '@/hooks/useTranslation';
 
 export default function RadarTimeCompare() {
   const { user, axisScores } = useAuth();
+  const get = useGetTranslations();
+  const me = useMeTranslations();
+  const t = get.radarCompare;
 
   const { data: history } = useQuery({
     queryKey: ['vfile-history-radar', user?.id],
@@ -31,10 +33,15 @@ export default function RadarTimeCompare() {
   const previous = history[1]?.axis_scores as Record<string, number> | null;
   if (!previous) return null;
 
+  const axisShortLabels = get.monthlyReport.axisShortLabels;
+
+  const nowLabel = me.now;
+  const prevLabel = me.monthAgo;
+
   const radarData = (['A', 'B', 'C', 'D'] as const).map(k => ({
-    axis: AXIS_LABELS[k],
-    현재: current[k] ?? 50,
-    이전: previous[k] ?? 50,
+    axis: axisShortLabels[k] ?? k,
+    [nowLabel]: current[k] ?? 50,
+    [prevLabel]: previous[k] ?? 50,
   }));
 
   // #60 페르소나 변화 추적
@@ -43,10 +50,10 @@ export default function RadarTimeCompare() {
   return (
     <div className="bg-card border rounded-2xl p-5 space-y-3">
       <div className="flex items-center justify-between">
-        <p className="text-xs text-muted-foreground">축 점수 변화</p>
+        <p className="text-xs text-muted-foreground">{t.axisChange}</p>
         {maskChanged && (
           <span className="text-[10px] px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-500">
-            가면 변화 감지
+            {t.maskChanged}
           </span>
         )}
       </div>
@@ -55,15 +62,15 @@ export default function RadarTimeCompare() {
         <RadarChart data={radarData}>
           <PolarGrid strokeDasharray="3 3" />
           <PolarAngleAxis dataKey="axis" tick={{ fontSize: 11 }} />
-          <Radar name="이전" dataKey="이전" fill="#94A3B8" fillOpacity={0.15} stroke="#94A3B8" strokeWidth={1} strokeDasharray="4 4" />
-          <Radar name="현재" dataKey="현재" fill="#8B5CF6" fillOpacity={0.25} stroke="#8B5CF6" strokeWidth={2} />
+          <Radar name={prevLabel} dataKey={prevLabel} fill="#94A3B8" fillOpacity={0.15} stroke="#94A3B8" strokeWidth={1} strokeDasharray="4 4" />
+          <Radar name={nowLabel} dataKey={nowLabel} fill="#8B5CF6" fillOpacity={0.25} stroke="#8B5CF6" strokeWidth={2} />
           <Legend wrapperStyle={{ fontSize: 10 }} />
         </RadarChart>
       </ResponsiveContainer>
 
       {maskChanged && (
         <div className="bg-violet-500/5 border border-violet-500/20 rounded-xl p-3 space-y-1">
-          <p className="text-xs font-medium text-violet-500">페르소나 변화</p>
+          <p className="text-xs font-medium text-violet-500">{t.personaChange}</p>
           <p className="text-sm">
             <span className="text-muted-foreground">{history[1]?.primary_mask}</span>
             <span className="mx-2">→</span>

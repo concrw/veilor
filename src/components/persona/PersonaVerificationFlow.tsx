@@ -1,6 +1,44 @@
 import { useState } from "react";
 import { useVerifyPersona, useUpdatePersona } from "@/hooks/usePersonas";
 import { PersonaWithDetails } from "@/integrations/supabase/persona-types";
+import { useLanguageContext } from "@/context/LanguageContext";
+
+const S = {
+  ko: {
+    titleEdit: '페르소나 수정',
+    titleVerify: '페르소나 검증',
+    descEdit: 'AI가 제안한 내용을 수정할 수 있습니다',
+    descVerify: 'AI가 분석한 페르소나가 정확한가요?',
+    strengthSuffix: (n: number) => `${n}% 강도`,
+    themeLabel: '테마 설명',
+    keywordsLabel: '관련 키워드',
+    btnAccept: '정확해요',
+    btnEdit: '수정할래요',
+    nameLabel: '페르소나 이름',
+    namePlaceholder: '예: 돕는 나, 창작하는 나',
+    descLabel: '테마 설명',
+    descPlaceholder: '이 페르소나를 설명하는 문장을 작성하세요',
+    cancel: '취소',
+    saveVerify: '저장하고 검증 완료',
+  },
+  en: {
+    titleEdit: 'Edit Persona',
+    titleVerify: 'Verify Persona',
+    descEdit: 'You can edit the AI-suggested details',
+    descVerify: 'Is the AI-analyzed persona accurate?',
+    strengthSuffix: (n: number) => `${n}% strength`,
+    themeLabel: 'Theme Description',
+    keywordsLabel: 'Related Keywords',
+    btnAccept: 'Looks right',
+    btnEdit: 'Edit it',
+    nameLabel: 'Persona Name',
+    namePlaceholder: 'e.g. Helper Me, Creative Me',
+    descLabel: 'Theme Description',
+    descPlaceholder: 'Write a sentence that describes this persona',
+    cancel: 'Cancel',
+    saveVerify: 'Save & Complete Verification',
+  },
+};
 import {
   Dialog,
   DialogContent,
@@ -29,6 +67,8 @@ export function PersonaVerificationFlow({
   onOpenChange,
   onVerified,
 }: PersonaVerificationFlowProps) {
+  const { language } = useLanguageContext();
+  const s = S[language] ?? S.ko;
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(persona.persona_name);
   const [editedDescription, setEditedDescription] = useState(persona.theme_description);
@@ -76,12 +116,10 @@ export function PersonaVerificationFlow({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="text-xl">
-            {isEditing ? "페르소나 수정" : "페르소나 검증"}
+            {isEditing ? s.titleEdit : s.titleVerify}
           </DialogTitle>
           <DialogDescription>
-            {isEditing
-              ? "AI가 제안한 내용을 수정할 수 있습니다"
-              : "AI가 분석한 페르소나가 정확한가요?"}
+            {isEditing ? s.descEdit : s.descVerify}
           </DialogDescription>
         </DialogHeader>
 
@@ -105,19 +143,19 @@ export function PersonaVerificationFlow({
                       <Badge variant="outline">{persona.persona_archetype}</Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      {Math.round(persona.strength_score || 0)}% 강도
+                      {s.strengthSuffix(Math.round(persona.strength_score || 0))}
                     </p>
                   </div>
                 </div>
 
                 <div className="border rounded-lg p-4 bg-muted/50">
-                  <p className="text-sm font-medium mb-2">테마 설명</p>
+                  <p className="text-sm font-medium mb-2">{s.themeLabel}</p>
                   <p className="text-sm">{persona.theme_description}</p>
                 </div>
 
                 {persona.keywords && persona.keywords.length > 0 && (
                   <div>
-                    <p className="text-sm font-medium mb-2">관련 키워드</p>
+                    <p className="text-sm font-medium mb-2">{s.keywordsLabel}</p>
                     <div className="flex flex-wrap gap-2">
                       {persona.keywords.slice(0, 8).map((kw) => (
                         <Badge key={kw.keyword} variant="secondary">
@@ -136,7 +174,7 @@ export function PersonaVerificationFlow({
                   disabled={isPending}
                 >
                   <CheckCircle2 className="w-4 h-4 mr-2" />
-                  정확해요
+                  {s.btnAccept}
                 </Button>
                 <Button
                   variant="outline"
@@ -145,7 +183,7 @@ export function PersonaVerificationFlow({
                   disabled={isPending}
                 >
                   <Edit3 className="w-4 h-4 mr-2" />
-                  수정할래요
+                  {s.btnEdit}
                 </Button>
               </div>
             </>
@@ -154,23 +192,23 @@ export function PersonaVerificationFlow({
             <>
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="persona-name">페르소나 이름</Label>
+                  <Label htmlFor="persona-name">{s.nameLabel}</Label>
                   <Input
                     id="persona-name"
                     value={editedName}
                     onChange={(e) => setEditedName(e.target.value)}
-                    placeholder="예: 돕는 나, 창작하는 나"
+                    placeholder={s.namePlaceholder}
                     className="mt-2"
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="persona-description">테마 설명</Label>
+                  <Label htmlFor="persona-description">{s.descLabel}</Label>
                   <Textarea
                     id="persona-description"
                     value={editedDescription}
                     onChange={(e) => setEditedDescription(e.target.value)}
-                    placeholder="이 페르소나를 설명하는 문장을 작성하세요"
+                    placeholder={s.descPlaceholder}
                     rows={4}
                     className="mt-2"
                   />
@@ -187,10 +225,10 @@ export function PersonaVerificationFlow({
                   }}
                   disabled={isPending}
                 >
-                  취소
+                  {s.cancel}
                 </Button>
                 <Button onClick={handleSaveEdit} disabled={isPending}>
-                  저장하고 검증 완료
+                  {s.saveVerify}
                 </Button>
               </DialogFooter>
             </>

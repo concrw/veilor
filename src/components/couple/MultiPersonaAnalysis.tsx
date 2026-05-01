@@ -2,9 +2,35 @@ import { useAuth } from '@/context/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { veilorDb } from '@/integrations/supabase/client';
 import { MASK_PROFILES } from '@/lib/vfileAlgorithm';
+import { useLanguageContext } from '@/context/LanguageContext';
+
+const S = {
+  ko: {
+    title: '멀티페르소나 분석',
+    emptyDesc: '2가지 이상 맥락(사회적/일반적/비밀스러운)의 V-File을 완료하면 교차 분석이 가능해요',
+    emptyHint: 'Get 탭 → 세 개의 나 → 추가 진단',
+    contextGeneral: '일반적인 나',
+    contextSocial: '사회적인 나',
+    contextSecret: '비밀스러운 나',
+    allSameMask: '모든 맥락에서 같은 가면을 쓰고 있어요. 일관된 관계 패턴을 가지고 있습니다.',
+    diffMask: '맥락에 따라 다른 가면이 나타나요. 상황별로 다른 전략을 사용하고 있습니다.',
+  },
+  en: {
+    title: 'Multi-Persona Analysis',
+    emptyDesc: 'Complete V-Files in 2+ contexts (social/general/secret) to unlock cross-analysis',
+    emptyHint: 'Get tab → Three Selves → Additional Diagnosis',
+    contextGeneral: 'General Me',
+    contextSocial: 'Social Me',
+    contextSecret: 'Secret Me',
+    allSameMask: 'You wear the same mask in every context — consistent relational pattern.',
+    diffMask: 'Different masks emerge per context — you use different strategies by situation.',
+  },
+};
 
 export default function MultiPersonaAnalysis() {
   const { user } = useAuth();
+  const { language } = useLanguageContext();
+  const s = S[language] ?? S.ko;
 
   const { data: personas } = useQuery({
     queryKey: ['multi-persona-analysis', user?.id],
@@ -19,9 +45,9 @@ export default function MultiPersonaAnalysis() {
   if (!personas || personas.length < 2) {
     return (
       <div className="bg-card border rounded-2xl p-5 space-y-2">
-        <p className="text-sm font-medium">멀티페르소나 분석</p>
-        <p className="text-xs text-muted-foreground">2가지 이상 맥락(사회적/일반적/비밀스러운)의 V-File을 완료하면 교차 분석이 가능해요</p>
-        <p className="text-xs text-primary">Get 탭 → 세 개의 나 → 추가 진단</p>
+        <p className="text-sm font-medium">{s.title}</p>
+        <p className="text-xs text-muted-foreground">{s.emptyDesc}</p>
+        <p className="text-xs text-primary">{s.emptyHint}</p>
       </div>
     );
   }
@@ -38,7 +64,7 @@ export default function MultiPersonaAnalysis() {
   return (
     <div className="bg-card border rounded-2xl p-5 space-y-3">
       <div className="flex items-center justify-between">
-        <p className="text-sm font-medium">멀티페르소나 분석</p>
+        <p className="text-sm font-medium">{s.title}</p>
         <span className="text-[10px] px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-500">Become</span>
       </div>
       <div className="space-y-2">
@@ -53,7 +79,7 @@ export default function MultiPersonaAnalysis() {
                 {m.mask?.nameKo ?? '?'}
               </p>
               <p className="text-[10px] text-muted-foreground">
-                {m.context === 'general' ? '일반적인 나' : m.context === 'social' ? '사회적인 나' : '비밀스러운 나'}
+                {m.context === 'general' ? s.contextGeneral : m.context === 'social' ? s.contextSocial : s.contextSecret}
               </p>
             </div>
             <span className="text-[10px] font-mono text-muted-foreground">{m.mask?.mskCode}</span>
@@ -64,9 +90,7 @@ export default function MultiPersonaAnalysis() {
         allSameMask ? 'bg-emerald-500/5 border border-emerald-500/20 text-emerald-700' :
         'bg-violet-500/5 border border-violet-500/20 text-violet-600'
       }`}>
-        {allSameMask
-          ? '모든 맥락에서 같은 가면을 쓰고 있어요. 일관된 관계 패턴을 가지고 있습니다.'
-          : '맥락에 따라 다른 가면이 나타나요. 상황별로 다른 전략을 사용하고 있습니다.'}
+        {allSameMask ? s.allSameMask : s.diffMask}
       </div>
     </div>
   );

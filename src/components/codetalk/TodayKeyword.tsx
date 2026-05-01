@@ -14,6 +14,18 @@ import { MESSAGES } from "@/constants/messages";
 import { UI_TEXT } from "@/constants/ui";
 import { PLACEHOLDERS } from "@/constants/placeholders";
 import { UNLOCK_HOUR, LOCK_HOUR } from "@/lib/constants";
+import { useLanguageContext } from "@/context/LanguageContext";
+
+const S = {
+  ko: {
+    defTooLong: '정의는 500자 이내로 입력해주세요.',
+    memTooLong: '기억은 500자 이내로 입력해주세요.',
+  },
+  en: {
+    defTooLong: 'Definition must be 500 characters or fewer.',
+    memTooLong: 'Memory must be 500 characters or fewer.',
+  },
+} as const;
 
 interface TodayKeywordProps {
   keyword: string;
@@ -31,6 +43,8 @@ export function TodayKeyword({
   hasParticipated
 }: TodayKeywordProps) {
   const { toast } = useToast();
+  const { language } = useLanguageContext();
+  const s = S[language] ?? S.ko;
   const [definition, setDefinition] = useState("");
   const [memory, setMemory] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -110,12 +124,12 @@ export function TodayKeyword({
     if (!trimmedDefinition || !trimmedMemory) return;
 
     if (trimmedDefinition.length > 500) {
-      toast.error('정의는 500자 이내로 입력해주세요.');
+      toast.error(s.defTooLong);
       return;
     }
 
     if (trimmedMemory.length > 500) {
-      toast.error('기억은 500자 이내로 입력해주세요.');
+      toast.error(s.memTooLong);
       return;
     }
 

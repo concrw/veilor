@@ -1,19 +1,8 @@
 // IkigaiTab — ikigai 4-element display + edit form + AI generate
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { useGetTranslations, useCommonTranslations } from '@/hooks/useTranslation';
 
-function PremiumLock({ label, onUnlock }: { label: string; onUnlock?: () => void }) {
-  return (
-    <div
-      className="bg-card border border-dashed rounded-2xl p-6 text-center space-y-2 opacity-70 cursor-pointer hover:opacity-90 transition-opacity"
-      onClick={onUnlock}
-    >
-      <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">프리미엄</span>
-      <p className="text-sm text-muted-foreground mt-2">{label}</p>
-      <p className="text-xs text-muted-foreground">탭하면 Pro 플랜을 확인할 수 있어요</p>
-    </div>
-  );
-}
 
 interface IkigaiTabProps {
   isPro: boolean;
@@ -36,18 +25,23 @@ export default function IkigaiTab({
   onSetIkigaiEdit, onSetIkigaiForm, onIkigaiSave, onIkigaiAiInsight,
 }: IkigaiTabProps) {
   void isPro; void tryAccess;
+  const get = useGetTranslations();
+  const common = useCommonTranslations();
+  const ik = get.ikigai;
+
+  const FIELDS: { key: keyof typeof ikigaiForm; label: string; inputLabel: string }[] = [
+    { key: 'love', label: ik.love, inputLabel: ik.loveInput },
+    { key: 'good_at', label: ik.goodAt, inputLabel: ik.goodAt },
+    { key: 'world_needs', label: ik.worldNeeds, inputLabel: ik.worldNeeds },
+    { key: 'paid_for', label: ik.paidFor, inputLabel: ik.paidFor },
+  ];
 
   if (!ikigaiEdit) {
     return (
       <div className="space-y-3">
         {ikigai ? (
           <>
-            {[
-              { key: 'love', label: '내가 사랑하는 것' },
-              { key: 'good_at', label: '내가 잘하는 것' },
-              { key: 'world_needs', label: '세상이 필요로 하는 것' },
-              { key: 'paid_for', label: '돈이 될 수 있는 것' },
-            ].map(({ key, label }) => (
+            {FIELDS.map(({ key, label }) => (
               <div key={key} className="bg-card border rounded-2xl p-4 space-y-2">
                 <p className="text-xs text-muted-foreground">{label}</p>
                 <div className="flex flex-wrap gap-1.5">
@@ -62,7 +56,7 @@ export default function IkigaiTab({
             ))}
             {ikigaiAiInsight && (
               <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4 space-y-1">
-                <p className="text-xs text-primary font-medium">AI 인사이트</p>
+                <p className="text-xs text-primary font-medium">{ik.aiInsight}</p>
                 <p className="text-sm leading-relaxed">{ikigaiAiInsight}</p>
               </div>
             )}
@@ -75,17 +69,17 @@ export default function IkigaiTab({
                   paid_for: ((ikigai.paid_for as string[]) ?? []).join('\n'),
                 }));
                 onSetIkigaiEdit(true);
-              }}>수정</Button>
+              }}>{ik.writeButton}</Button>
               <Button size="sm" className="flex-1" onClick={onIkigaiAiInsight}
                 disabled={ikigaiAiLoading}>
-                {ikigaiAiLoading ? 'AI 분석 중...' : 'AI 인사이트'}
+                {ikigaiAiLoading ? ik.aiAnalyzing : ik.aiInsight}
               </Button>
             </div>
           </>
         ) : (
           <div className="bg-card border rounded-2xl p-8 text-center space-y-3">
-            <p className="text-sm text-muted-foreground">아직 Ikigai를 작성하지 않았어요.</p>
-            <Button size="sm" onClick={() => onSetIkigaiEdit(true)}>Ikigai 작성하기</Button>
+            <p className="text-sm text-muted-foreground">{ik.notYet}</p>
+            <Button size="sm" onClick={() => onSetIkigaiEdit(true)}>{ik.design}</Button>
           </div>
         )}
       </div>
@@ -95,28 +89,23 @@ export default function IkigaiTab({
   // Edit mode
   return (
     <div className="bg-card border rounded-2xl p-5 space-y-4">
-      <p className="text-sm font-medium">Ikigai 설계</p>
-      <p className="text-xs text-muted-foreground">항목을 줄 바꿔서 여러 개 입력할 수 있어요</p>
-      {[
-        { field: 'love' as const, label: '내가 사랑하는 것 (한 줄씩 입력)' },
-        { field: 'good_at' as const, label: '내가 잘하는 것' },
-        { field: 'world_needs' as const, label: '세상이 필요로 하는 것' },
-        { field: 'paid_for' as const, label: '돈이 될 수 있는 것' },
-      ].map(({ field, label }) => (
-        <div key={field} className="space-y-1">
+      <p className="text-sm font-medium">{ik.design}</p>
+      <p className="text-xs text-muted-foreground">{ik.multiLineHint}</p>
+      {FIELDS.map(({ key, label, inputLabel }) => (
+        <div key={key} className="space-y-1">
           <p className="text-xs text-muted-foreground">{label}</p>
           <Textarea
-            value={ikigaiForm[field]}
-            onChange={e => onSetIkigaiForm(prev => ({ ...prev, [field]: e.target.value }))}
+            value={ikigaiForm[key]}
+            onChange={e => onSetIkigaiForm(prev => ({ ...prev, [key]: e.target.value }))}
             className="h-20 resize-none text-sm"
-            placeholder={label}
+            placeholder={inputLabel}
           />
         </div>
       ))}
       <div className="flex gap-2">
-        <Button variant="outline" size="sm" onClick={() => onSetIkigaiEdit(false)}>취소</Button>
+        <Button variant="outline" size="sm" onClick={() => onSetIkigaiEdit(false)}>{common.cancel}</Button>
         <Button size="sm" onClick={onIkigaiSave}
-          disabled={ikigaiSavePending} className="flex-1">저장</Button>
+          disabled={ikigaiSavePending} className="flex-1">{common.save}</Button>
       </div>
     </div>
   );

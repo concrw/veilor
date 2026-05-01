@@ -1,20 +1,11 @@
 // PersonaFragmentsSection — ME탭 "발견된 나" 섹션
-// 시스템이 모순에서 감지한 페르소나 조각을 카드로 표시
-// 유저는 "맞아요 / 놀라워요 / 아닌 것 같아요"로 반응만 하면 됨
-
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
 import { getPersonaFragments, acknowledgeFragment } from '@/lib/personaContradictionEngine';
 import type { PersonaFragmentRow } from '@/lib/personaContradictionEngine';
 import { C, alpha } from '@/lib/colors';
-
-const TYPE_LABEL: Record<string, string> = {
-  value_behavior: '가치 vs 행동',
-  self_image:     '자기상 vs 실제',
-  desire_block:   '욕망 차단',
-  role_split:     '역할 분리',
-};
+import { useMeTranslations } from '@/hooks/useTranslation';
 
 const TYPE_COLOR: Record<string, string> = {
   value_behavior: '#f59e0b',
@@ -23,19 +14,20 @@ const TYPE_COLOR: Record<string, string> = {
   role_split:     '#3b82f6',
 };
 
-const REACTIONS = [
-  { key: 'resonates',   label: '맞아요',      icon: '✓' },
-  { key: 'surprising',  label: '놀라워요',     icon: '!' },
-  { key: 'disagree',    label: '아닌 것 같아요', icon: '×' },
-] as const;
-
-function FragmentCard({ fragment, onReact }: {
+function FragmentCard({ fragment, onReact, t }: {
   fragment: PersonaFragmentRow;
   onReact: (id: string, reaction: 'resonates' | 'surprising' | 'disagree') => void;
+  t: ReturnType<typeof useMeTranslations>['personaFragments'];
 }) {
   const [expanded, setExpanded] = useState(false);
   const color = TYPE_COLOR[fragment.contradiction_type] ?? C.amberGold;
   const scoreBar = Math.round(fragment.contradiction_score * 100);
+
+  const REACTIONS = [
+    { key: 'resonates' as const, label: t.reactions.resonates, icon: '✓' },
+    { key: 'surprising' as const, label: t.reactions.surprising, icon: '!' },
+    { key: 'disagree' as const, label: t.reactions.disagree, icon: '×' },
+  ];
 
   return (
     <div
@@ -48,12 +40,10 @@ function FragmentCard({ fragment, onReact }: {
         transition: 'all .2s',
       }}
     >
-      {/* 헤더 */}
       <div
         onClick={() => setExpanded(!expanded)}
         style={{ padding: '12px 15px', cursor: 'pointer', display: 'flex', alignItems: 'flex-start', gap: 10 }}
       >
-        {/* 모순 강도 인디케이터 */}
         <div style={{
           width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
           border: `2px solid ${alpha(color, 0.4)}`,
@@ -73,14 +63,14 @@ function FragmentCard({ fragment, onReact }: {
                 background: alpha(color, 0.12), color,
                 fontWeight: 500, letterSpacing: '.04em',
               }}>
-                새로 발견됨
+                {t.newBadge}
               </span>
             )}
             <span style={{
               fontSize: 8, padding: '1px 5px', borderRadius: 99,
               border: `1px solid ${C.border}`, color: C.text4,
             }}>
-              {TYPE_LABEL[fragment.contradiction_type]}
+              {t.typeLabels[fragment.contradiction_type]}
             </span>
           </div>
           <p style={{
@@ -103,11 +93,8 @@ function FragmentCard({ fragment, onReact }: {
         </span>
       </div>
 
-      {/* 확장 — 상세 설명 */}
       {expanded && (
         <div style={{ borderTop: `1px solid ${C.border2}`, padding: '12px 15px 14px' }}>
-
-          {/* 설명 */}
           <p style={{
             fontSize: 11, fontWeight: 300, color: C.text2,
             lineHeight: 1.65, marginBottom: 12,
@@ -115,13 +102,12 @@ function FragmentCard({ fragment, onReact }: {
             {fragment.description}
           </p>
 
-          {/* 모순의 두 출처 */}
           <div style={{
             background: C.bg, borderRadius: 9, padding: '10px 12px',
             marginBottom: 12, display: 'flex', flexDirection: 'column', gap: 8,
           }}>
             <p style={{ fontSize: 9, color: C.text5, letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: 2 }}>
-              감지된 모순
+              {t.detected}
             </p>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <div style={{ flex: 1, background: alpha(color, 0.06), borderRadius: 7, padding: '7px 9px' }}>
@@ -144,10 +130,9 @@ function FragmentCard({ fragment, onReact }: {
             </div>
           </div>
 
-          {/* 모순 강도 바 */}
           <div style={{ marginBottom: 14 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-              <span style={{ fontSize: 9, color: C.text5 }}>모순 강도</span>
+              <span style={{ fontSize: 9, color: C.text5 }}>{t.contradictionStrength}</span>
               <span style={{ fontSize: 9, color, fontWeight: 500 }}>{scoreBar}%</span>
             </div>
             <div style={{ height: 3, background: C.border2, borderRadius: 99, overflow: 'hidden' }}>
@@ -159,10 +144,9 @@ function FragmentCard({ fragment, onReact }: {
             </div>
           </div>
 
-          {/* 반응 버튼 */}
           {!fragment.is_acknowledged ? (
             <div>
-              <p style={{ fontSize: 9, color: C.text5, marginBottom: 7 }}>이 발견이 당신에게 어떻게 느껴지나요?</p>
+              <p style={{ fontSize: 9, color: C.text5, marginBottom: 7 }}>{t.reactionPrompt}</p>
               <div style={{ display: 'flex', gap: 6 }}>
                 {REACTIONS.map(({ key, label, icon }) => (
                   <button
@@ -191,11 +175,11 @@ function FragmentCard({ fragment, onReact }: {
               background: alpha(color, 0.06), border: `1px solid ${alpha(color, 0.15)}`,
             }}>
               <span style={{ fontSize: 10, color }}>
-                {fragment.user_reaction === 'resonates' ? '✓ 공명했어요'
-                  : fragment.user_reaction === 'surprising' ? '! 놀라웠어요'
-                  : '× 동의하지 않아요'}
+                {fragment.user_reaction === 'resonates' ? t.reactionResult.resonates
+                  : fragment.user_reaction === 'surprising' ? t.reactionResult.surprising
+                  : t.reactionResult.disagree}
               </span>
-              <span style={{ fontSize: 9, color: C.text5, marginLeft: 'auto' }}>확인됨</span>
+              <span style={{ fontSize: 9, color: C.text5, marginLeft: 'auto' }}>{t.acknowledged}</span>
             </div>
           )}
         </div>
@@ -207,6 +191,8 @@ function FragmentCard({ fragment, onReact }: {
 export default function PersonaFragmentsSection() {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const me = useMeTranslations();
+  const t = me.personaFragments;
 
   const { data: fragments, isLoading } = useQuery<PersonaFragmentRow[]>({
     queryKey: ['me-persona-fragments', user?.id],
@@ -230,10 +216,10 @@ export default function PersonaFragmentsSection() {
         borderRadius: 14, padding: '15px 17px',
       }}>
         <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 16, color: C.text }}>
-          발견된 나
+          {t.title}
         </span>
         <p style={{ fontSize: 11, color: C.text4, marginTop: 8, textAlign: 'center', padding: '16px 0' }}>
-          불러오는 중...
+          {t.loading}
         </p>
       </div>
     );
@@ -247,9 +233,9 @@ export default function PersonaFragmentsSection() {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
           <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 16, color: C.text }}>
-            발견된 나
+            {t.title}
           </span>
-          <span style={{ fontSize: 9, color: C.text5 }}>모순 감지 엔진</span>
+          <span style={{ fontSize: 9, color: C.text5 }}>{t.engineLabel}</span>
         </div>
         <div style={{ textAlign: 'center', padding: '20px 0 12px' }}>
           <div style={{
@@ -261,11 +247,10 @@ export default function PersonaFragmentsSection() {
             <span style={{ fontSize: 18, color: C.text5 }}>?</span>
           </div>
           <p style={{ fontSize: 12, fontWeight: 300, color: C.text3, lineHeight: 1.5, marginBottom: 4 }}>
-            아직 발견된 페르소나가 없어요
+            {t.emptyTitle}
           </p>
           <p style={{ fontSize: 10, fontWeight: 300, color: C.text5, lineHeight: 1.5 }}>
-            탐색을 계속하면 시스템이 당신 안의<br />
-            모순을 감지하고 새로운 자아를 발견해 드려요.
+            {t.emptyDesc.split('\n').map((line, i) => <span key={i}>{line}{i === 0 ? <br /> : null}</span>)}
           </p>
         </div>
       </div>
@@ -282,7 +267,7 @@ export default function PersonaFragmentsSection() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 13 }}>
         <div>
           <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 16, color: C.text }}>
-            발견된 나
+            {t.title}
           </span>
           {newCount > 0 && (
             <span style={{
@@ -290,14 +275,14 @@ export default function PersonaFragmentsSection() {
               background: alpha('#ec4899', 0.12), color: '#ec4899',
               fontWeight: 500,
             }}>
-              {newCount}개 새로 발견됨
+              {t.newCountFmt.replace('{count}', String(newCount))}
             </span>
           )}
           <p style={{ fontSize: 10, fontWeight: 300, color: C.text4, marginTop: 2 }}>
-            시스템이 당신의 응답 패턴에서 감지했어요
+            {t.systemDetected}
           </p>
         </div>
-        <span style={{ fontSize: 9, color: C.text5 }}>{fragments.length}개</span>
+        <span style={{ fontSize: 9, color: C.text5 }}>{t.countFmt.replace('{count}', String(fragments.length))}</span>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -306,6 +291,7 @@ export default function PersonaFragmentsSection() {
             key={fragment.id}
             fragment={fragment}
             onReact={handleReact}
+            t={t}
           />
         ))}
       </div>
@@ -314,7 +300,7 @@ export default function PersonaFragmentsSection() {
         fontSize: 9, fontWeight: 300, color: C.text5,
         textAlign: 'center', marginTop: 12, lineHeight: 1.5,
       }}>
-        더 많이 탐색할수록 더 많은 내가 발견돼요.
+        {t.footer}
       </p>
     </div>
   );

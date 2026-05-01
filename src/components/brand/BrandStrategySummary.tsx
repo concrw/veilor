@@ -17,11 +17,88 @@ import {
   Target,
   TrendingUp,
   Download,
-  FileDown,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
+import { useLanguageContext } from "@/context/LanguageContext";
+
+const S = {
+  ko: {
+    exportBtn: "PDF 내보내기",
+    exportFailTitle: "내보내기 실패",
+    exportFailNotFound: "요약 내용을 찾을 수 없습니다.",
+    exportFailError: "PDF 생성 중 오류가 발생했습니다.",
+    exportSuccessTitle: "내보내기 완료",
+    exportSuccessDesc: (fileName: string) => `${fileName} 파일이 다운로드되었습니다.`,
+    pdfTitle: "브랜드 전략 요약",
+    pdfCreatedAt: (date: string) => `생성일: ${date}`,
+    fileNamePrefix: "브랜드전략",
+    coreMessage: "핵심 메시지",
+    brandDirection: "브랜드 방향",
+    field: "전문 분야",
+    targetAudience: "타겟 고객",
+    ageRange: "연령대",
+    interests: "관심사",
+    contentStrategy: "콘텐츠 전략",
+    mainTopics: "주요 주제",
+    channels: "채널",
+    publishCycle: "발행 주기",
+    revenueModel: "수익 모델",
+    primaryModel: "주요 모델",
+    pricePolicy: "가격 정책",
+    painAndSolution: "고객 페인포인트 & 솔루션",
+    customerPains: "고객의 고충",
+    solutionByContent: "콘텐츠로 해결",
+    brandNames: "브랜드명 후보",
+    actionRoadmap: "실행 로드맵",
+    step1Title: "브랜드 정체성 확립",
+    step1Desc: "브랜드명 확정, 프로필 설정, 소개 문구 작성",
+    step2Title: "콘텐츠 채널 개설",
+    step2Desc: (channels: string) => `${channels} 계정 생성 및 최적화`,
+    step3Title: "첫 콘텐츠 발행",
+    step3Desc: (topic: string) => `"${topic}" 주제로 첫 콘텐츠 제작`,
+    step4Title: "수익화 준비",
+    step4Desc: (channel: string, model: string) => `${channel}에서 ${model} 상품 기획`,
+  },
+  en: {
+    exportBtn: "Export PDF",
+    exportFailTitle: "Export Failed",
+    exportFailNotFound: "Could not find summary content.",
+    exportFailError: "An error occurred while generating the PDF.",
+    exportSuccessTitle: "Export Complete",
+    exportSuccessDesc: (fileName: string) => `${fileName} has been downloaded.`,
+    pdfTitle: "Brand Strategy Summary",
+    pdfCreatedAt: (date: string) => `Created: ${date}`,
+    fileNamePrefix: "BrandStrategy",
+    coreMessage: "Core Message",
+    brandDirection: "Brand Direction",
+    field: "Field",
+    targetAudience: "Target Audience",
+    ageRange: "Age Range",
+    interests: "Interests",
+    contentStrategy: "Content Strategy",
+    mainTopics: "Main Topics",
+    channels: "Channels",
+    publishCycle: "Publishing Cycle",
+    revenueModel: "Revenue Model",
+    primaryModel: "Primary Model",
+    pricePolicy: "Pricing",
+    painAndSolution: "Customer Pain Points & Solutions",
+    customerPains: "Customer Pains",
+    solutionByContent: "Solved Through Content",
+    brandNames: "Brand Name Candidates",
+    actionRoadmap: "Action Roadmap",
+    step1Title: "Establish Brand Identity",
+    step1Desc: "Finalize brand name, set up profile, write introduction",
+    step2Title: "Launch Content Channels",
+    step2Desc: (channels: string) => `Create and optimize ${channels} accounts`,
+    step3Title: "Publish First Content",
+    step3Desc: (topic: string) => `Create first content on "${topic}"`,
+    step4Title: "Prepare Monetization",
+    step4Desc: (channel: string, model: string) => `Plan ${model} product on ${channel}`,
+  },
+};
 
 interface BrandStrategy {
   brand_direction: {
@@ -61,12 +138,14 @@ export function BrandStrategySummary({
   userName = "User",
 }: BrandStrategySummaryProps) {
   const summaryRef = useRef<HTMLDivElement>(null);
+  const { language } = useLanguageContext();
+  const s = S[language] ?? S.ko;
 
   const exportToPDF = async () => {
     if (!summaryRef.current) {
       toast({
-        title: "내보내기 실패",
-        description: "요약 내용을 찾을 수 없습니다.",
+        title: s.exportFailTitle,
+        description: s.exportFailNotFound,
         variant: "destructive",
       });
       return;
@@ -98,7 +177,7 @@ export function BrandStrategySummary({
       const imgY = 15;
 
       pdf.setFontSize(16);
-      pdf.text("브랜드 전략 요약", pdfWidth / 2, 10, { align: "center" });
+      pdf.text(s.pdfTitle, pdfWidth / 2, 10, { align: "center" });
 
       pdf.addImage(
         imgData,
@@ -112,21 +191,22 @@ export function BrandStrategySummary({
       const footerY = pdfHeight - 10;
       pdf.setFontSize(8);
       pdf.setTextColor(128, 128, 128);
-      pdf.text(`생성일: ${new Date().toLocaleDateString("ko-KR")}`, 10, footerY);
+      const locale = language === "ko" ? "ko-KR" : "en-US";
+      pdf.text(s.pdfCreatedAt(new Date().toLocaleDateString(locale)), 10, footerY);
       pdf.text(`${userName}`, pdfWidth - 10, footerY, { align: "right" });
 
-      const fileName = `브랜드전략_${selectedBrandName || userName}_${new Date().getTime()}.pdf`;
+      const fileName = `${s.fileNamePrefix}_${selectedBrandName || userName}_${new Date().getTime()}.pdf`;
       pdf.save(fileName);
 
       toast({
-        title: "내보내기 완료",
-        description: `${fileName} 파일이 다운로드되었습니다.`,
+        title: s.exportSuccessTitle,
+        description: s.exportSuccessDesc(fileName),
       });
     } catch (error) {
       console.error("PDF export error:", error);
       toast({
-        title: "내보내기 실패",
-        description: "PDF 생성 중 오류가 발생했습니다.",
+        title: s.exportFailTitle,
+        description: s.exportFailError,
         variant: "destructive",
       });
     }
@@ -138,7 +218,7 @@ export function BrandStrategySummary({
       <div className="flex justify-end">
         <Button variant="outline" size="sm" onClick={exportToPDF} className="gap-2">
           <Download className="w-4 h-4" />
-          PDF 내보내기
+          {s.exportBtn}
         </Button>
       </div>
 
@@ -155,7 +235,7 @@ export function BrandStrategySummary({
                 {strategy.brand_direction.positioning}
               </p>
               <div className="bg-background/50 rounded-lg p-3 max-w-lg mx-auto">
-                <p className="text-xs text-muted-foreground mb-1">핵심 메시지</p>
+                <p className="text-xs text-muted-foreground mb-1">{s.coreMessage}</p>
                 <p className="text-sm font-medium">{strategy.brand_direction.core_message}</p>
               </div>
             </div>
@@ -169,12 +249,12 @@ export function BrandStrategySummary({
             <CardHeader className="pb-2">
               <CardTitle className="text-xs flex items-center gap-2">
                 <Compass className="w-4 h-4 text-blue-500" />
-                브랜드 방향
+                {s.brandDirection}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               <div>
-                <p className="text-xs text-muted-foreground">전문 분야</p>
+                <p className="text-xs text-muted-foreground">{s.field}</p>
                 <p className="text-sm font-medium">{strategy.brand_direction.field}</p>
               </div>
             </CardContent>
@@ -185,16 +265,16 @@ export function BrandStrategySummary({
             <CardHeader className="pb-2">
               <CardTitle className="text-xs flex items-center gap-2">
                 <Users className="w-4 h-4 text-green-500" />
-                타겟 고객
+                {s.targetAudience}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               <div>
-                <p className="text-xs text-muted-foreground">연령대</p>
+                <p className="text-xs text-muted-foreground">{s.ageRange}</p>
                 <p className="text-sm font-medium">{strategy.target_audience.age_range}</p>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground mb-1">관심사</p>
+                <p className="text-xs text-muted-foreground mb-1">{s.interests}</p>
                 <div className="flex flex-wrap gap-1">
                   {strategy.target_audience.interests.slice(0, 4).map((interest, idx) => (
                     <Badge key={idx} variant="secondary" className="text-xs">
@@ -211,12 +291,12 @@ export function BrandStrategySummary({
             <CardHeader className="pb-2">
               <CardTitle className="text-xs flex items-center gap-2">
                 <FileText className="w-4 h-4 text-purple-500" />
-                콘텐츠 전략
+                {s.contentStrategy}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               <div>
-                <p className="text-xs text-muted-foreground mb-1">주요 주제</p>
+                <p className="text-xs text-muted-foreground mb-1">{s.mainTopics}</p>
                 <div className="flex flex-wrap gap-1">
                   {strategy.content_strategy.topics.slice(0, 3).map((topic, idx) => (
                     <Badge key={idx} variant="outline" className="text-xs">
@@ -231,7 +311,7 @@ export function BrandStrategySummary({
                 </div>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground mb-1">채널</p>
+                <p className="text-xs text-muted-foreground mb-1">{s.channels}</p>
                 <div className="flex flex-wrap gap-1">
                   {strategy.content_strategy.channels.map((channel, idx) => (
                     <Badge key={idx} variant="secondary" className="text-xs bg-purple-500/10">
@@ -241,7 +321,7 @@ export function BrandStrategySummary({
                 </div>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">발행 주기</p>
+                <p className="text-xs text-muted-foreground">{s.publishCycle}</p>
                 <p className="text-sm">{strategy.content_strategy.cadence}</p>
               </div>
             </CardContent>
@@ -252,16 +332,16 @@ export function BrandStrategySummary({
             <CardHeader className="pb-2">
               <CardTitle className="text-xs flex items-center gap-2">
                 <DollarSign className="w-4 h-4 text-amber-500" />
-                수익 모델
+                {s.revenueModel}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               <div>
-                <p className="text-xs text-muted-foreground">주요 모델</p>
+                <p className="text-xs text-muted-foreground">{s.primaryModel}</p>
                 <p className="text-sm font-medium">{strategy.revenue_model.primary_model}</p>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground mb-1">가격 정책</p>
+                <p className="text-xs text-muted-foreground mb-1">{s.pricePolicy}</p>
                 <div className="flex flex-wrap gap-1">
                   {strategy.revenue_model.price_points.slice(0, 3).map((price, idx) => (
                     <Badge key={idx} variant="secondary" className="text-xs bg-amber-500/10">
@@ -279,13 +359,13 @@ export function BrandStrategySummary({
           <CardHeader className="pb-2">
             <CardTitle className="text-xs flex items-center gap-2">
               <Target className="w-4 h-4 text-red-500" />
-              고객 페인포인트 & 솔루션
+              {s.painAndSolution}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <p className="text-xs font-medium mb-2 text-red-600">고객의 고충</p>
+                <p className="text-xs font-medium mb-2 text-red-600">{s.customerPains}</p>
                 <ul className="space-y-1">
                   {strategy.target_audience.pain_points.map((pain, idx) => (
                     <li key={idx} className="text-xs flex items-start gap-2">
@@ -296,7 +376,7 @@ export function BrandStrategySummary({
                 </ul>
               </div>
               <div>
-                <p className="text-xs font-medium mb-2 text-green-600">콘텐츠로 해결</p>
+                <p className="text-xs font-medium mb-2 text-green-600">{s.solutionByContent}</p>
                 <ul className="space-y-1">
                   {strategy.content_strategy.formats.map((format, idx) => (
                     <li key={idx} className="text-xs flex items-start gap-2">
@@ -315,7 +395,7 @@ export function BrandStrategySummary({
           <CardHeader className="pb-2">
             <CardTitle className="text-xs flex items-center gap-2">
               <MessageSquare className="w-4 h-4 text-pink-500" />
-              브랜드명 후보
+              {s.brandNames}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -340,7 +420,7 @@ export function BrandStrategySummary({
           <CardHeader className="pb-2">
             <CardTitle className="text-xs flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-primary" />
-              실행 로드맵
+              {s.actionRoadmap}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -350,9 +430,9 @@ export function BrandStrategySummary({
                   1
                 </div>
                 <div>
-                  <p className="text-xs font-medium">브랜드 정체성 확립</p>
+                  <p className="text-xs font-medium">{s.step1Title}</p>
                   <p className="text-xs text-muted-foreground">
-                    브랜드명 확정, 프로필 설정, 소개 문구 작성
+                    {s.step1Desc}
                   </p>
                 </div>
               </div>
@@ -361,9 +441,9 @@ export function BrandStrategySummary({
                   2
                 </div>
                 <div>
-                  <p className="text-xs font-medium">콘텐츠 채널 개설</p>
+                  <p className="text-xs font-medium">{s.step2Title}</p>
                   <p className="text-xs text-muted-foreground">
-                    {strategy.content_strategy.channels.slice(0, 2).join(", ")} 계정 생성 및 최적화
+                    {s.step2Desc(strategy.content_strategy.channels.slice(0, 2).join(", "))}
                   </p>
                 </div>
               </div>
@@ -372,9 +452,9 @@ export function BrandStrategySummary({
                   3
                 </div>
                 <div>
-                  <p className="text-xs font-medium">첫 콘텐츠 발행</p>
+                  <p className="text-xs font-medium">{s.step3Title}</p>
                   <p className="text-xs text-muted-foreground">
-                    "{strategy.content_strategy.topics[0]}" 주제로 첫 콘텐츠 제작
+                    {s.step3Desc(strategy.content_strategy.topics[0])}
                   </p>
                 </div>
               </div>
@@ -383,10 +463,12 @@ export function BrandStrategySummary({
                   4
                 </div>
                 <div>
-                  <p className="text-xs font-medium">수익화 준비</p>
+                  <p className="text-xs font-medium">{s.step4Title}</p>
                   <p className="text-xs text-muted-foreground">
-                    {strategy.revenue_model.monetization_channels[0]}에서{" "}
-                    {strategy.revenue_model.primary_model} 상품 기획
+                    {s.step4Desc(
+                      strategy.revenue_model.monetization_channels[0],
+                      strategy.revenue_model.primary_model
+                    )}
                   </p>
                 </div>
               </div>

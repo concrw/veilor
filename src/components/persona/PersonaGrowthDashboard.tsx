@@ -7,6 +7,7 @@ import {
 } from "@/hooks/usePersonas";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
+import { useLanguageContext } from "@/context/LanguageContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +26,53 @@ import {
   BarChart3
 } from "lucide-react";
 import { ARCHETYPE_CONFIGS } from "@/integrations/supabase/persona-types";
+
+const S = {
+  ko: {
+    emptyState: '성장 대시보드는 페르소나가 생성된 후 사용할 수 있습니다.',
+    title: '페르소나 성장 추적',
+    subtitle: '각 페르소나의 발전 과정을 추적하고 목표를 달성하세요',
+    strengthLabel: '강도',
+    prevLabel: (n: number) => `이전: ${n}%`,
+    currentLabel: (n: number) => `현재: ${n}%`,
+    milestonesTab: '마일스톤',
+    growthTab: '성장 추이',
+    goalDesc: '성장 목표 및 달성 현황',
+    noMilestones: '아직 마일스톤이 없습니다. 첫 마일스톤을 만들어보세요!',
+    completed: '완료',
+    completedDate: (d: string) => `완료일: ${d}`,
+    targetDate: (d: string) => `목표일: ${d}`,
+    growthTitle: '성장 추이',
+    growthDesc: (name: string) => `${name}의 강도 변화 및 발전 방향`,
+    currentStrength: '현재 강도',
+    prevMeasure: '이전 측정',
+    changeAmount: '변화량',
+    notEnoughData: '아직 성장 데이터가 충분하지 않습니다.',
+    growthTip: '💡 페르소나 강도는 관련 활동(Ikigai 설계, 콘텐츠 발행, 커뮤니티 참여 등)을 통해 성장합니다. 꾸준히 활동하여 이 페르소나를 발전시켜 보세요!',
+  },
+  en: {
+    emptyState: 'The growth dashboard is available after a persona has been created.',
+    title: 'Persona Growth Tracking',
+    subtitle: "Track each persona's development and achieve your goals",
+    strengthLabel: 'Strength',
+    prevLabel: (n: number) => `Before: ${n}%`,
+    currentLabel: (n: number) => `Current: ${n}%`,
+    milestonesTab: 'Milestones',
+    growthTab: 'Growth Trend',
+    goalDesc: 'Growth goals and achievement status',
+    noMilestones: 'No milestones yet. Create your first milestone!',
+    completed: 'Done',
+    completedDate: (d: string) => `Completed: ${d}`,
+    targetDate: (d: string) => `Target: ${d}`,
+    growthTitle: 'Growth Trend',
+    growthDesc: (name: string) => `${name}'s strength changes and direction`,
+    currentStrength: 'Current Strength',
+    prevMeasure: 'Previous Measure',
+    changeAmount: 'Change',
+    notEnoughData: 'Not enough growth data yet.',
+    growthTip: '💡 Persona strength grows through related activities (Ikigai design, content publishing, community engagement, etc.). Keep active to develop this persona!',
+  },
+};
 
 interface GrowthSummaryRow {
   persona_id: string;
@@ -45,6 +93,8 @@ interface MilestoneRow {
 
 export function PersonaGrowthDashboard() {
   const { user } = useAuth();
+  const { language } = useLanguageContext();
+  const s = S[language] ?? S.ko;
   const queryClient = useQueryClient();
   const { data: personas, isLoading: personasLoading } = usePersonas();
   const { data: growthSummary, isLoading: growthLoading } = useGrowthSummary();
@@ -129,7 +179,7 @@ export function PersonaGrowthDashboard() {
       <Alert>
         <InfoIcon className="h-4 w-4" />
         <AlertDescription>
-          성장 대시보드는 페르소나가 생성된 후 사용할 수 있습니다.
+          {s.emptyState}
         </AlertDescription>
       </Alert>
     );
@@ -163,10 +213,10 @@ export function PersonaGrowthDashboard() {
       <div className="text-center space-y-2">
         <h2 className="text-2xl font-bold flex items-center justify-center gap-2">
           <BarChart3 className="w-6 h-6 text-primary" />
-          페르소나 성장 추적
+          {s.title}
         </h2>
         <p className="text-muted-foreground">
-          각 페르소나의 발전 과정을 추적하고 목표를 달성하세요
+          {s.subtitle}
         </p>
       </div>
 
@@ -210,7 +260,7 @@ export function PersonaGrowthDashboard() {
               <CardContent className="space-y-3">
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs text-muted-foreground">강도</span>
+                    <span className="text-xs text-muted-foreground">{s.strengthLabel}</span>
                     <Badge variant="outline" className={getTrendColor(change)}>
                       {change > 0 ? "+" : ""}
                       {Math.round(change)}%
@@ -219,10 +269,10 @@ export function PersonaGrowthDashboard() {
                   <Progress value={currentStrength} className="h-2" />
                   <div className="flex justify-between mt-1">
                     <span className="text-xs text-muted-foreground">
-                      이전: {Math.round(previousStrength)}%
+                      {s.prevLabel(Math.round(previousStrength))}
                     </span>
                     <span className="text-xs font-semibold">
-                      현재: {Math.round(currentStrength)}%
+                      {s.currentLabel(Math.round(currentStrength))}
                     </span>
                   </div>
                 </div>
@@ -238,11 +288,11 @@ export function PersonaGrowthDashboard() {
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="milestones">
               <Target className="w-4 h-4 mr-2" />
-              마일스톤
+              {s.milestonesTab}
             </TabsTrigger>
             <TabsTrigger value="progress">
               <BarChart3 className="w-4 h-4 mr-2" />
-              성장 추이
+              {s.growthTab}
             </TabsTrigger>
           </TabsList>
 
@@ -261,7 +311,7 @@ export function PersonaGrowthDashboard() {
                   </div>
                   <div>
                     <CardTitle>{selectedPersona.persona_name}</CardTitle>
-                    <CardDescription>성장 목표 및 달성 현황</CardDescription>
+                    <CardDescription>{s.goalDesc}</CardDescription>
                   </div>
                 </div>
               </CardHeader>
@@ -274,7 +324,7 @@ export function PersonaGrowthDashboard() {
                   <Alert>
                     <InfoIcon className="h-4 w-4" />
                     <AlertDescription>
-                      아직 마일스톤이 없습니다. 첫 마일스톤을 만들어보세요!
+                      {s.noMilestones}
                     </AlertDescription>
                   </Alert>
                 ) : (
@@ -299,7 +349,7 @@ export function PersonaGrowthDashboard() {
                             <h4 className="font-semibold text-sm">{milestone.title}</h4>
                             {milestone.is_completed && (
                               <Badge variant="outline" className="bg-green-100 text-green-700">
-                                완료
+                                {s.completed}
                               </Badge>
                             )}
                           </div>
@@ -312,12 +362,12 @@ export function PersonaGrowthDashboard() {
                             <Calendar className="w-3 h-3" />
                             {milestone.is_completed && milestone.completed_at && (
                               <span>
-                                완료일: {new Date(milestone.completed_at).toLocaleDateString("ko-KR")}
+                                {s.completedDate(new Date(milestone.completed_at).toLocaleDateString(language === 'en' ? 'en-US' : 'ko-KR'))}
                               </span>
                             )}
                             {!milestone.is_completed && milestone.target_date && (
                               <span>
-                                목표일: {new Date(milestone.target_date).toLocaleDateString("ko-KR")}
+                                {s.targetDate(new Date(milestone.target_date).toLocaleDateString(language === 'en' ? 'en-US' : 'ko-KR'))}
                               </span>
                             )}
                           </div>
@@ -333,9 +383,9 @@ export function PersonaGrowthDashboard() {
           <TabsContent value="progress" className="space-y-4 mt-4">
             <Card>
               <CardHeader>
-                <CardTitle>성장 추이</CardTitle>
+                <CardTitle>{s.growthTitle}</CardTitle>
                 <CardDescription>
-                  {selectedPersona.persona_name}의 강도 변화 및 발전 방향
+                  {s.growthDesc(selectedPersona.persona_name)}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -343,7 +393,7 @@ export function PersonaGrowthDashboard() {
                   <>
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">현재 강도</span>
+                        <span className="text-sm font-medium">{s.currentStrength}</span>
                         <span className="text-2xl font-bold">
                           {Math.round(selectedGrowth.current_strength)}%
                         </span>
@@ -353,13 +403,13 @@ export function PersonaGrowthDashboard() {
 
                     <div className="grid grid-cols-2 gap-4 pt-4 border-t">
                       <div>
-                        <p className="text-xs text-muted-foreground mb-1">이전 측정</p>
+                        <p className="text-xs text-muted-foreground mb-1">{s.prevMeasure}</p>
                         <p className="text-xl font-semibold">
                           {Math.round(selectedGrowth.previous_strength)}%
                         </p>
                       </div>
                       <div>
-                        <p className="text-xs text-muted-foreground mb-1">변화량</p>
+                        <p className="text-xs text-muted-foreground mb-1">{s.changeAmount}</p>
                         <p
                           className={`text-xl font-semibold ${
                             selectedGrowth.change > 0
@@ -379,7 +429,7 @@ export function PersonaGrowthDashboard() {
                   <Alert>
                     <InfoIcon className="h-4 w-4" />
                     <AlertDescription>
-                      아직 성장 데이터가 충분하지 않습니다.
+                      {s.notEnoughData}
                     </AlertDescription>
                   </Alert>
                 )}
@@ -387,8 +437,7 @@ export function PersonaGrowthDashboard() {
                 <Alert className="mt-4">
                   <InfoIcon className="h-4 w-4" />
                   <AlertDescription className="text-xs">
-                    💡 페르소나 강도는 관련 활동(Ikigai 설계, 콘텐츠 발행, 커뮤니티 참여 등)을 통해
-                    성장합니다. 꾸준히 활동하여 이 페르소나를 발전시켜 보세요!
+                    {s.growthTip}
                   </AlertDescription>
                 </Alert>
               </CardContent>

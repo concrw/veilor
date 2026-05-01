@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { getChallengeByScore, isChallengeCompletedToday, markChallengeCompleted } from '@/data/challengeConstants';
 
+// category 값은 DB/데이터 상수에서 오는 코드값이므로 색상 매핑만 유지
 const CATEGORY_COLORS: Record<string, string> = {
   관계: '#4AAEFF',
   자기이해: '#A78BFA',

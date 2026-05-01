@@ -9,7 +9,7 @@ const StatusBar = () => {
   return (
     <header className="sticky top-0 z-30 bg-card/80 backdrop-blur supports-[backdrop-filter]:bg-card/60 border-b border-border">
       <div className="flex items-center justify-between px-4 py-2 text-foreground/80 text-[11px]">
-        <span aria-label="현재 시간">{time}</span>
+        <span aria-label="current time">{time}</span>
         <div className="flex items-center gap-2">
           <Signal className="h-4 w-4" aria-hidden="true" />
           <Wifi className="h-4 w-4" aria-hidden="true" />

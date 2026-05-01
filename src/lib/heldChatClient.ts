@@ -31,7 +31,9 @@ export interface HeldChatParams {
   aiSettings?: { name?: string; tone?: string; personality?: string };
   tab?: string;
   userId?: string;
-  similarCount?: number; // 비슷한 고민을 가진 가상유저 수 — AI 패턴 컨텍스트
+  similarCount?: number;
+  sexselfProfile?: string | null; // 성적 자아 프로파일 타입
+  sexselfSha?: number | null;     // 수치심 점수 (SHA) — 대화 민감도 조정
 }
 
 export interface HeldChatResult {

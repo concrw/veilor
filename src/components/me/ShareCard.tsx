@@ -3,11 +3,15 @@ import { useRef, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { MASK_PROFILES, classifyVProfile } from '@/lib/vfileAlgorithm';
 import type { AxisScores } from '@/context/AuthContext';
+import { C } from '@/lib/colors';
+import { useMeTranslations } from '@/hooks/useTranslation';
 
 export default function ShareCard() {
   const { primaryMask, axisScores } = useAuth();
   const [copied, setCopied] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+  const me = useMeTranslations();
+  const t = me.shareCard;
 
   if (!primaryMask || !axisScores) return null;
 
@@ -34,39 +38,36 @@ export default function ShareCard() {
   };
 
   return (
-    <div className="bg-card border rounded-2xl overflow-hidden">
-      {/* 공유 카드 프리뷰 */}
-      <div ref={cardRef} className="p-5 space-y-3" style={{ background: `linear-gradient(135deg, ${profile?.color ?? '#6366f1'}15, transparent)` }}>
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl"
-            style={{ backgroundColor: (profile?.color ?? '#6366f1') + '20' }}>
+    <div className="vr-fade-in" style={{ background: C.bg2, border: `1px solid ${C.border}`, borderRadius: 14, overflow: 'hidden' }}>
+      <div ref={cardRef} style={{ padding: '16px 17px', display: 'flex', flexDirection: 'column', gap: 10, background: `linear-gradient(135deg, ${(profile?.color ?? '#6366f1') + '15'}, transparent)` }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ width: 42, height: 42, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, background: (profile?.color ?? '#6366f1') + '20' }}>
             🎭
           </div>
           <div>
-            <p className="text-lg font-bold" style={{ color: profile?.color }}>{profile?.nameKo ?? primaryMask}</p>
-            <p className="text-xs text-muted-foreground font-mono">{vProfile.code} · {profile?.mskCode ?? ''}</p>
+            <p style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 400, fontSize: 18, color: profile?.color }}>{profile?.nameKo ?? primaryMask}</p>
+            <p style={{ fontSize: 10, color: C.text4, fontFamily: 'monospace' }}>{vProfile.code} · {profile?.mskCode ?? ''}</p>
           </div>
         </div>
-        <p className="text-xs text-muted-foreground">{profile?.archetype}</p>
-        <div className="flex gap-3">
+        <p style={{ fontSize: 11, fontWeight: 300, color: C.text4 }}>{profile?.archetype}</p>
+        <div style={{ display: 'flex', gap: 10 }}>
           {(['A', 'B', 'C', 'D'] as const).map(k => (
-            <div key={k} className="text-center flex-1">
-              <div className="text-sm font-semibold">{(axisScores as Record<string, number>)[k]}</div>
-              <div className="text-[10px] text-muted-foreground">
-                {k === 'A' ? '애착' : k === 'B' ? '소통' : k === 'C' ? '욕구' : '역할'}
-              </div>
+            <div key={k} style={{ textAlign: 'center', flex: 1 }}>
+              <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 16, fontWeight: 500, color: C.text }}>{(axisScores as Record<string, number>)[k]}</div>
+              <div style={{ fontSize: 9, color: C.text4 }}>{t.axisLabels[k]}</div>
             </div>
           ))}
         </div>
-        <p className="text-[9px] text-muted-foreground text-right">VEILOR · veilor.ai</p>
+        <p style={{ fontSize: 9, color: C.text5, textAlign: 'right' }}>VEILOR · veilor.ai</p>
       </div>
-      {/* 공유 버튼 */}
-      <div className="flex border-t" role="group" aria-label="공유 옵션">
-        <button onClick={handleCopy} aria-label="V-File 결과 텍스트 복사" className="flex-1 py-3 text-xs text-muted-foreground hover:text-foreground transition-colors border-r">
-          {copied ? '복사됨!' : '텍스트 복사'}
+      <div style={{ display: 'flex', borderTop: `1px solid ${C.border}` }} role="group" aria-label={t.shareGroupLabel}>
+        <button onClick={handleCopy} aria-label={t.copyAriaLabel}
+          style={{ flex: 1, padding: '12px 0', fontSize: 11, color: C.text4, background: 'transparent', border: 'none', borderRight: `1px solid ${C.border}`, cursor: 'pointer' }}>
+          {copied ? t.copyDone : t.copyButton}
         </button>
-        <button onClick={handleShare} aria-label="V-File 결과 공유하기" className="flex-1 py-3 text-xs text-primary font-medium hover:bg-primary/5 transition-colors">
-          공유하기
+        <button onClick={handleShare} aria-label={t.shareAriaLabel}
+          style={{ flex: 1, padding: '12px 0', fontSize: 11, color: C.amberGold, fontWeight: 500, background: 'transparent', border: 'none', cursor: 'pointer' }}>
+          {t.shareButton}
         </button>
       </div>
     </div>

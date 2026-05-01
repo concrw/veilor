@@ -3,6 +3,50 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { veilorDb } from '@/integrations/supabase/client';
+import { useLanguageContext } from '@/context/LanguageContext';
+
+const S = {
+  ko: {
+    title: 'Dig',
+    subtitle: '내 감정 패턴을 데이터로 들여다보기',
+    tabs: {
+      trend: '감정 트렌드',
+      activity: '활동 분석',
+    },
+    loading: '불러오는 중...',
+    noCheckin: '아직 기록이 없어요. 체크인부터 시작해보세요.',
+    goToVent: 'Vent 탭으로 이동 →',
+    recentMood: '최근 30일 감정 흐름',
+    highLabel: '최고',
+    lowLabel: '최저',
+    scoreUnit: '점',
+    activityAvg: '활동별 평균 기분',
+    noActivityData: '아직 기록이 없어요.',
+    needMoreData: '활동별 분석을 위해 더 많은 기록이 필요해요.',
+    needMoreDataSub: '각 활동을 2번 이상 기록해보세요.',
+    activities: ['관계', '일', '운동', '혼자', '휴식', '공부'],
+  },
+  en: {
+    title: 'Dig',
+    subtitle: 'Visualize my emotional patterns as data',
+    tabs: {
+      trend: 'Mood Trend',
+      activity: 'Activity Analysis',
+    },
+    loading: 'Loading...',
+    noCheckin: 'No records yet. Start with a check-in.',
+    goToVent: 'Go to Vent tab →',
+    recentMood: 'Mood over the last 30 days',
+    highLabel: 'High',
+    lowLabel: 'Low',
+    scoreUnit: '',
+    activityAvg: 'Average mood by activity',
+    noActivityData: 'No records yet.',
+    needMoreData: 'More records are needed for activity analysis.',
+    needMoreDataSub: 'Record each activity at least twice.',
+    activities: ['Relationship', 'Work', 'Exercise', 'Alone', 'Rest', 'Study'],
+  },
+} as const;
 
 interface ClearCheckinRow {
   content: string;
@@ -16,9 +60,9 @@ interface ParsedCheckin {
   created_at: string;
 }
 
-const ACTIVITY_OPTIONS = ['관계', '일', '운동', '혼자', '휴식', '공부'] as const;
+const ACTIVITY_OPTIONS_KO = ['관계', '일', '운동', '혼자', '휴식', '공부'] as const;
 
-function MoodTrendTab({ checkins }: { checkins: ParsedCheckin[] }) {
+function MoodTrendTab({ checkins, s }: { checkins: ParsedCheckin[]; s: typeof S.ko }) {
   const navigate = useNavigate();
 
   if (checkins.length === 0) {
@@ -27,13 +71,13 @@ function MoodTrendTab({ checkins }: { checkins: ParsedCheckin[] }) {
         className="rounded-2xl border p-5 text-center space-y-3"
         style={{ background: '#111318', borderColor: '#4AAEFF22' }}
       >
-        <p className="text-sm text-slate-400">아직 기록이 없어요. 체크인부터 시작해보세요.</p>
+        <p className="text-sm text-slate-400">{s.noCheckin}</p>
         <button
           onClick={() => navigate('/home/vent')}
           className="text-xs font-medium"
           style={{ color: '#4AAEFF' }}
         >
-          Vent 탭으로 이동 →
+          {s.goToVent}
         </button>
       </div>
     );
@@ -75,7 +119,7 @@ function MoodTrendTab({ checkins }: { checkins: ParsedCheckin[] }) {
       className="rounded-2xl border p-5 space-y-3"
       style={{ background: '#111318', borderColor: '#4AAEFF22' }}
     >
-      <p className="text-[11px] tracking-[0.2em] uppercase text-slate-500">최근 30일 감정 흐름</p>
+      <p className="text-[11px] tracking-[0.2em] uppercase text-slate-500">{s.recentMood}</p>
       <svg width={svgW} height={svgH} style={{ display: 'block', overflow: 'visible' }}>
         {[2, 5, 8].map(v => {
           const y = padT + innerH - ((v - 1) / 9) * innerH;
@@ -88,15 +132,15 @@ function MoodTrendTab({ checkins }: { checkins: ParsedCheckin[] }) {
       </svg>
       <div className="flex justify-between pt-1" style={{ borderTop: '1px solid #1e2a38' }}>
         <div className="space-y-0.5">
-          <p className="text-[10px] text-slate-600">최고</p>
+          <p className="text-[10px] text-slate-600">{s.highLabel}</p>
           <p className="text-sm font-semibold" style={{ color: '#34C48B' }}>
-            {maxScore}점 <span className="text-xs font-normal text-slate-500">{formatDate(maxDate)}</span>
+            {maxScore}{s.scoreUnit} <span className="text-xs font-normal text-slate-500">{formatDate(maxDate)}</span>
           </p>
         </div>
         <div className="space-y-0.5 text-right">
-          <p className="text-[10px] text-slate-600">최저</p>
+          <p className="text-[10px] text-slate-600">{s.lowLabel}</p>
           <p className="text-sm font-semibold" style={{ color: '#F59E0B' }}>
-            {minScore}점 <span className="text-xs font-normal text-slate-500">{formatDate(minDate)}</span>
+            {minScore}{s.scoreUnit} <span className="text-xs font-normal text-slate-500">{formatDate(minDate)}</span>
           </p>
         </div>
       </div>
@@ -104,11 +148,11 @@ function MoodTrendTab({ checkins }: { checkins: ParsedCheckin[] }) {
   );
 }
 
-function ActivityAnalysisTab({ checkins }: { checkins: ParsedCheckin[] }) {
+function ActivityAnalysisTab({ checkins, s }: { checkins: ParsedCheckin[]; s: typeof S.ko }) {
   if (checkins.length === 0) {
     return (
       <div className="rounded-2xl border p-5 text-center" style={{ background: '#111318', borderColor: '#4AAEFF22' }}>
-        <p className="text-sm text-slate-400">아직 기록이 없어요.</p>
+        <p className="text-sm text-slate-400">{s.noActivityData}</p>
       </div>
     );
   }
@@ -121,11 +165,11 @@ function ActivityAnalysisTab({ checkins }: { checkins: ParsedCheckin[] }) {
     }
   }
 
-  const rows = ACTIVITY_OPTIONS
+  const rows = ACTIVITY_OPTIONS_KO
     .map(act => {
       const scores = activityMoods[act] ?? [];
       if (scores.length < 2) return null;
-      const avg = scores.reduce((s, v) => s + v, 0) / scores.length;
+      const avg = scores.reduce((sv, v) => sv + v, 0) / scores.length;
       return { act, avg };
     })
     .filter((r): r is { act: string; avg: number } => r !== null)
@@ -134,8 +178,8 @@ function ActivityAnalysisTab({ checkins }: { checkins: ParsedCheckin[] }) {
   if (rows.length === 0) {
     return (
       <div className="rounded-2xl border p-5 text-center" style={{ background: '#111318', borderColor: '#4AAEFF22' }}>
-        <p className="text-sm text-slate-400">활동별 분석을 위해 더 많은 기록이 필요해요.</p>
-        <p className="text-xs text-slate-600 mt-1">각 활동을 2번 이상 기록해보세요.</p>
+        <p className="text-sm text-slate-400">{s.needMoreData}</p>
+        <p className="text-xs text-slate-600 mt-1">{s.needMoreDataSub}</p>
       </div>
     );
   }
@@ -145,7 +189,7 @@ function ActivityAnalysisTab({ checkins }: { checkins: ParsedCheckin[] }) {
 
   return (
     <div className="rounded-2xl border p-5 space-y-4" style={{ background: '#111318', borderColor: '#4AAEFF22' }}>
-      <p className="text-[11px] tracking-[0.2em] uppercase text-slate-500">활동별 평균 기분</p>
+      <p className="text-[11px] tracking-[0.2em] uppercase text-slate-500">{s.activityAvg}</p>
       <div className="space-y-3">
         {rows.map(({ act, avg }) => {
           const color = avg === maxAvg ? '#34C48B' : avg === minAvg ? '#F59E0B' : '#4AAEFF';
@@ -167,6 +211,8 @@ function ActivityAnalysisTab({ checkins }: { checkins: ParsedCheckin[] }) {
 
 export default function ClearDigView() {
   const { user } = useAuth();
+  const { language } = useLanguageContext();
+  const s = S[language] ?? S.ko;
   const [activeTab, setActiveTab] = useState<'trend' | 'activity'>('trend');
 
   const { data: checkins = [], isLoading } = useQuery<ParsedCheckin[]>({
@@ -213,13 +259,13 @@ export default function ClearDigView() {
   return (
     <div className="px-4 py-6 space-y-4" style={{ background: '#0D1117', minHeight: '100%' }}>
       <div>
-        <h2 className="text-lg font-semibold text-slate-100">Dig</h2>
-        <p className="text-sm text-slate-500 mt-1">내 감정 패턴을 데이터로 들여다보기</p>
+        <h2 className="text-lg font-semibold text-slate-100">{s.title}</h2>
+        <p className="text-sm text-slate-500 mt-1">{s.subtitle}</p>
       </div>
 
       <div className="flex rounded-2xl p-1 gap-1" style={{ background: '#111318', border: '1px solid #4AAEFF22' }}>
         {(['trend', 'activity'] as const).map(tab => {
-          const label = tab === 'trend' ? '감정 트렌드' : '활동 분석';
+          const label = s.tabs[tab];
           const active = activeTab === tab;
           return (
             <button
@@ -236,12 +282,12 @@ export default function ClearDigView() {
 
       {isLoading ? (
         <div className="rounded-2xl border p-5 text-center" style={{ background: '#111318', borderColor: '#4AAEFF22' }}>
-          <p className="text-sm text-slate-500">불러오는 중...</p>
+          <p className="text-sm text-slate-500">{s.loading}</p>
         </div>
       ) : activeTab === 'trend' ? (
-        <MoodTrendTab checkins={checkins} />
+        <MoodTrendTab checkins={checkins} s={s} />
       ) : (
-        <ActivityAnalysisTab checkins={checkins} />
+        <ActivityAnalysisTab checkins={checkins} s={s} />
       )}
     </div>
   );

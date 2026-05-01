@@ -2,9 +2,13 @@
 import { useAuth } from '@/context/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { veilorDb } from '@/integrations/supabase/client';
+import { C } from '@/lib/colors';
+import { useMeTranslations } from '@/hooks/useTranslation';
 
 export default function CommunicationPatternCard() {
   const { user } = useAuth();
+  const me = useMeTranslations();
+  const t = me.communicationPattern;
 
   const { data } = useQuery({
     queryKey: ['communication-pattern', user?.id],
@@ -18,7 +22,6 @@ export default function CommunicationPatternCard() {
 
       if (!entries || entries.length === 0) return null;
 
-      // 키워드 빈도 분석
       const kwCount: Record<string, number> = {};
       entries.forEach(e => {
         if (e.keyword) kwCount[e.keyword] = (kwCount[e.keyword] ?? 0) + 1;
@@ -27,7 +30,6 @@ export default function CommunicationPatternCard() {
         .sort(([, a], [, b]) => b - a)
         .slice(0, 5);
 
-      // 각인/뿌리 완성도
       const withImprint = entries.filter(e => e.imprinting_moment).length;
       const withRoot = entries.filter(e => e.root_cause).length;
       const depth = Math.round(((withImprint + withRoot) / (entries.length * 2)) * 100);
@@ -40,37 +42,35 @@ export default function CommunicationPatternCard() {
 
   if (!data) return null;
 
+  const depthStage = data.depth < 30 ? t.depthStages.low : data.depth < 70 ? t.depthStages.mid : t.depthStages.high;
+
   return (
-    <div className="bg-card border rounded-2xl p-5 space-y-3">
-      <div className="flex items-center justify-between">
-        <p className="text-xs text-muted-foreground">소통 패턴 분석</p>
-        <span className="text-xs text-muted-foreground">{data.totalEntries}개 기록</span>
+    <div className="vr-fade-in" style={{ background: C.bg2, border: `1px solid ${C.border}`, borderRadius: 14, padding: '14px 17px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+        <p style={{ fontSize: 12, fontWeight: 300, color: C.text }}>{t.title}</p>
+        <span style={{ fontSize: 10, fontWeight: 300, color: C.text4 }}>{t.countLabel.replace('{count}', String(data.totalEntries))}</span>
       </div>
       {data.topKeywords.length > 0 && (
-        <div>
-          <p className="text-[10px] text-muted-foreground mb-1.5">자주 탐색한 키워드</p>
-          <div className="flex flex-wrap gap-1.5">
+        <div style={{ marginBottom: 10 }}>
+          <p style={{ fontSize: 9, fontWeight: 400, letterSpacing: '.07em', textTransform: 'uppercase', color: C.text4, marginBottom: 6 }}>{t.topKeywords}</p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
             {data.topKeywords.map(([kw, count]) => (
-              <span key={kw} className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
-                {kw} <span className="opacity-60">{count}</span>
+              <span key={kw} style={{ fontSize: 11, padding: '3px 9px', borderRadius: 99, border: `1px solid ${C.amberGold}33`, color: C.amberGold, background: `${C.amberGold}08` }}>
+                {kw} <span style={{ opacity: 0.6, fontSize: 9 }}>{count}</span>
               </span>
             ))}
           </div>
         </div>
       )}
       <div>
-        <p className="text-[10px] text-muted-foreground mb-1">탐색 깊이</p>
-        <div className="flex items-center gap-2">
-          <div className="flex-1 h-1.5 bg-muted rounded-full">
-            <div className="h-1.5 bg-primary rounded-full" style={{ width: `${data.depth}%` }} />
+        <p style={{ fontSize: 9, fontWeight: 400, letterSpacing: '.07em', textTransform: 'uppercase', color: C.text4, marginBottom: 5 }}>{t.depthLabel}</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
+          <div style={{ flex: 1, height: 4, background: C.border2, borderRadius: 99, overflow: 'hidden' }}>
+            <div style={{ height: '100%', borderRadius: 99, background: `linear-gradient(90deg,${C.amberGold},${C.amber})`, width: `${data.depth}%`, transition: 'width .4s ease' }} />
           </div>
-          <span className="text-xs font-medium">{data.depth}%</span>
+          <span style={{ fontSize: 12, fontWeight: 400, color: C.amberGold, minWidth: 34, textAlign: 'right', fontFamily: "'Cormorant Garamond', serif" }}>{data.depth}%</span>
         </div>
-        <p className="text-[10px] text-muted-foreground mt-1">
-          {data.depth < 30 ? '정의 단계 — 각인과 뿌리를 기록하면 더 깊어져요' :
-           data.depth < 70 ? '각인 단계 — 뿌리까지 도달하면 패턴이 선명해져요' :
-           '뿌리 단계 — 소통 패턴의 원인이 드러나고 있어요'}
-        </p>
+        <p style={{ fontSize: 10, fontWeight: 300, color: C.text4, lineHeight: 1.5 }}>{depthStage}</p>
       </div>
     </div>
   );

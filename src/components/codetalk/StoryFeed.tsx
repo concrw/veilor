@@ -1,6 +1,48 @@
 import { useState, useMemo } from 'react';
 import { C, alpha } from '@/lib/colors';
 import { KEYWORD_MAP, getParticipantCount, getVirtualFeedUpToDay, getVirtualResonances } from '@/lib/virtualCodetalk';
+import { useLanguageContext } from '@/context/LanguageContext';
+
+const S = {
+  ko: {
+    todayTab: '오늘의 이야기',
+    pastTab: '지난 이야기',
+    storyAbout: (kw: string) => `"${kw}" 에 대한 이야기`,
+    participantCount: (n: number) => `${n}명 참여`,
+    anon: '익명',
+    defLabel: '정의',
+    imprintLabel: '각인',
+    rootLabel: '뿌리',
+    noTodayStory: '아직 오늘의 이야기가 없어요',
+    noTodayStoryDesc: '먼저 기록하고, 다른 사람들의 정의를 확인해보세요',
+    pastDayRange: (end: number) => `DAY 1~${end}의 이야기 (최근 7일)`,
+    noPastStory: 'DAY 2부터 이전 이야기를 볼 수 있어요',
+    feedLocked: '오전 6시에 오늘의 이야기가 공개됩니다',
+    feedLockedDesc: '다른 사람들의 정의가 여기에 나타나요',
+    yesterdayKeyword: (kw: string) => `어제의 키워드: ${kw}`,
+    participantsLeft: (n: number, nextDay: number, isLast: boolean) =>
+      `총 ${n}명이 자신만의 정의를 남겼어요.${isLast ? ' 100일의 여정이 마무리에 가까워지고 있어요.' : ` 내일은 DAY ${nextDay}의 키워드가 기다리고 있습니다.`}`,
+  },
+  en: {
+    todayTab: "Today's Stories",
+    pastTab: 'Past Stories',
+    storyAbout: (kw: string) => `Stories about "${kw}"`,
+    participantCount: (n: number) => `${n} participants`,
+    anon: 'Anonymous',
+    defLabel: 'Definition',
+    imprintLabel: 'Imprint',
+    rootLabel: 'Root',
+    noTodayStory: "No stories yet today",
+    noTodayStoryDesc: 'Be the first to write, then check others\' definitions',
+    pastDayRange: (end: number) => `DAY 1–${end} stories (last 7 days)`,
+    noPastStory: 'Past stories are available from DAY 2',
+    feedLocked: "Today's stories open at 6 AM",
+    feedLockedDesc: "Other people's definitions will appear here",
+    yesterdayKeyword: (kw: string) => `Yesterday's keyword: ${kw}`,
+    participantsLeft: (n: number, nextDay: number, isLast: boolean) =>
+      `${n} people left their own definitions.${isLast ? ' The 100-day journey is nearing its end.' : ` Tomorrow, DAY ${nextDay}'s keyword awaits.`}`,
+  },
+} as const;
 
 interface FeedEntry {
   anon_alias?: string;
@@ -22,6 +64,8 @@ interface StoryFeedProps {
 
 export function StoryFeed({ keyword, currentDay, feedOpen, publicFeed, todayEntry, userId }: StoryFeedProps) {
   const [feedTab, setFeedTab] = useState<'today' | 'past'>('today');
+  const { language } = useLanguageContext();
+  const s = S[language] ?? S.ko;
 
   const pastDayFeed = useMemo(() => {
     if (!feedOpen || currentDay <= 1) return [];
@@ -41,7 +85,7 @@ export function StoryFeed({ keyword, currentDay, feedOpen, publicFeed, todayEntr
               }`}
               style={feedTab === 'today' ? { backgroundColor: C.amber } : undefined}
             >
-              오늘의 이야기
+              {s.todayTab}
             </button>
             <button
               onClick={() => setFeedTab('past')}
@@ -50,7 +94,7 @@ export function StoryFeed({ keyword, currentDay, feedOpen, publicFeed, todayEntr
               }`}
               style={feedTab === 'past' ? { backgroundColor: C.frost } : undefined}
             >
-              지난 이야기
+              {s.pastTab}
             </button>
           </div>
 
@@ -59,9 +103,9 @@ export function StoryFeed({ keyword, currentDay, feedOpen, publicFeed, todayEntr
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-medium text-muted-foreground">
-                    "<span style={{ color: C.amber }}>{keyword?.keyword}</span>" 에 대한 이야기
+                    {s.storyAbout(keyword?.keyword ?? '')}
                   </p>
-                  <span className="text-xs text-muted-foreground">{publicFeed.length}명 참여</span>
+                  <span className="text-xs text-muted-foreground">{s.participantCount(publicFeed.length)}</span>
                 </div>
                 {publicFeed.map((e: FeedEntry, i: number) => {
                   const resonances = !e.is_virtual
@@ -73,7 +117,7 @@ export function StoryFeed({ keyword, currentDay, feedOpen, publicFeed, todayEntr
                         style={{ borderLeftWidth: 3, borderLeftColor: e.is_virtual ? C.frost : C.amber }}>
                         <div className="flex items-center justify-between">
                           <span className="text-xs font-medium" style={{ color: e.is_virtual ? C.frost : C.amber }}>
-                            {e.anon_alias ?? '익명'}
+                            {e.anon_alias ?? s.anon}
                           </span>
                           <span className="text-xs text-muted-foreground">
                             {new Date(e.created_at).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}
@@ -82,19 +126,19 @@ export function StoryFeed({ keyword, currentDay, feedOpen, publicFeed, todayEntr
                         <div className="space-y-1.5">
                           {e.definition && (
                             <div>
-                              <span className="text-[10px] text-muted-foreground">정의</span>
+                              <span className="text-[10px] text-muted-foreground">{s.defLabel}</span>
                               <p className="text-sm leading-relaxed line-clamp-2">{e.definition}</p>
                             </div>
                           )}
                           {e.imprinting_moment && (
                             <div>
-                              <span className="text-[10px] text-muted-foreground">각인</span>
+                              <span className="text-[10px] text-muted-foreground">{s.imprintLabel}</span>
                               <p className="text-sm leading-relaxed line-clamp-2 text-muted-foreground">{e.imprinting_moment}</p>
                             </div>
                           )}
                           {e.root_cause && (
                             <div>
-                              <span className="text-[10px] text-muted-foreground">뿌리</span>
+                              <span className="text-[10px] text-muted-foreground">{s.rootLabel}</span>
                               <p className="text-sm leading-relaxed line-clamp-2 text-muted-foreground">{e.root_cause}</p>
                             </div>
                           )}
@@ -119,15 +163,15 @@ export function StoryFeed({ keyword, currentDay, feedOpen, publicFeed, todayEntr
               </div>
             ) : (
               <div className="bg-card border rounded-xl p-4 text-center space-y-1">
-                <p className="text-xs font-medium">아직 오늘의 이야기가 없어요</p>
-                <p className="text-xs text-muted-foreground">먼저 기록하고, 다른 사람들의 정의를 확인해보세요</p>
+                <p className="text-xs font-medium">{s.noTodayStory}</p>
+                <p className="text-xs text-muted-foreground">{s.noTodayStoryDesc}</p>
               </div>
             )
           ) : (
             pastDayFeed.length > 0 ? (
               <div className="space-y-3">
                 <p className="text-xs text-muted-foreground">
-                  DAY 1~{currentDay - 1}의 이야기 (최근 7일)
+                  {s.pastDayRange(currentDay - 1)}
                 </p>
                 {pastDayFeed.map((e, i) => (
                   <div key={i} className="bg-card border rounded-xl p-4 space-y-2"
@@ -150,15 +194,15 @@ export function StoryFeed({ keyword, currentDay, feedOpen, publicFeed, todayEntr
               </div>
             ) : (
               <div className="bg-card border rounded-xl p-4 text-center">
-                <p className="text-xs text-muted-foreground">DAY 2부터 이전 이야기를 볼 수 있어요</p>
+                <p className="text-xs text-muted-foreground">{s.noPastStory}</p>
               </div>
             )
           )}
         </div>
       ) : (
         <div className="bg-card border rounded-xl p-4 text-center space-y-1">
-          <p className="text-xs font-medium">오전 6시에 오늘의 이야기가 공개됩니다</p>
-          <p className="text-xs text-muted-foreground">다른 사람들의 정의가 여기에 나타나요</p>
+          <p className="text-xs font-medium">{s.feedLocked}</p>
+          <p className="text-xs text-muted-foreground">{s.feedLockedDesc}</p>
         </div>
       )}
 
@@ -167,13 +211,14 @@ export function StoryFeed({ keyword, currentDay, feedOpen, publicFeed, todayEntr
         <div className="border rounded-xl p-4 space-y-2"
           style={{ backgroundColor: alpha(C.frost, 0.05), borderColor: alpha(C.frost, 0.2) }}>
           <p className="text-xs font-medium" style={{ color: C.frost }}>
-            어제의 키워드: {KEYWORD_MAP[currentDay - 1] ?? '—'}
+            {s.yesterdayKeyword(KEYWORD_MAP[currentDay - 1] ?? '—')}
           </p>
           <p className="text-sm text-muted-foreground">
-            총 {getParticipantCount(currentDay - 1) + Math.floor(Math.random() * 3)}명이 자신만의 정의를 남겼어요.
-            {currentDay < 100
-              ? ` 내일은 DAY ${currentDay + 1}의 키워드가 기다리고 있습니다.`
-              : ' 100일의 여정이 마무리에 가까워지고 있어요.'}
+            {s.participantsLeft(
+              getParticipantCount(currentDay - 1) + Math.floor(Math.random() * 3),
+              currentDay + 1,
+              currentDay >= 100
+            )}
           </p>
         </div>
       )}

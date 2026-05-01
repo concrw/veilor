@@ -17,7 +17,7 @@ export default defineConfig({
   },
 
   projects: [
-    { name: 'Mobile Chrome', use: { ...devices['Pixel 5'] } },
+    { name: 'Mobile Chrome', use: { ...devices['Pixel 5'], locale: 'ko-KR' } },
   ],
 
   // 로컬 dev 서버 자동 시작 (CI에서는 외부에서 띄움)

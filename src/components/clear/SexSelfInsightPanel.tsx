@@ -24,42 +24,45 @@ interface SexSelfInsightPanelProps {
   onNavigate: (path: string) => void;
 }
 
-const SEXSELF_PROFILE_LABELS: Record<string, string> = {
-  OPEN_EXPRESSIVE: '열린 표현형', RESPONSIVE: '반응형', SUPPRESSED: '억제형',
-  DORMANT: '휴면형', SHAME_BLOCKED: '수치 차단형', SAFETY_SEEKING: '안전 추구형',
-  EXPLORING: '탐색형', BUILDING_AWARENESS: '인식 형성 중', ANXIETY_FROZEN: '욕구 동결',
-};
-
 export function SexSelfInsightPanel({ data, onNavigate }: SexSelfInsightPanelProps) {
   const { translations: tr } = useTranslation();
   const c = tr.clear;
 
+  const profileLabels: Record<string, string> = c.sexSelfProfiles;
+
   if (!data || !data.sexself_profile) {
     return (
       <div
-        className="rounded-2xl border p-5 flex items-center justify-between"
+        className="rounded-2xl border p-5 space-y-3"
         style={{ background: '#111318', borderColor: '#ec489922' }}
       >
-        <div>
-          <p className="text-sm font-medium mb-0.5" style={{ color: '#e2e8f0' }}>
-            {c.sexSelfTitle}
-          </p>
-          <p className="text-xs" style={{ color: '#64748b' }}>{c.sexSelfDesc}</p>
+        <div className="flex items-start justify-between gap-3">
+          <div className="space-y-1">
+            <p className="text-sm font-medium" style={{ color: '#e2e8f0' }}>
+              {c.sexSelfTitle}
+            </p>
+            <p className="text-xs leading-relaxed" style={{ color: '#94a3b8' }}>
+              {c.sexSelfPanelDesc}
+            </p>
+            <p className="text-[10px]" style={{ color: '#ec489966' }}>
+              {c.sexSelfOnlyMe}
+            </p>
+          </div>
+          <button
+            onClick={() => onNavigate('/home/sexself/questions')}
+            className="shrink-0 text-xs font-medium px-3 py-1.5 rounded-lg"
+            style={{ background: '#ec489922', color: '#ec4899' }}
+          >
+            {c.sexSelfStart}
+          </button>
         </div>
-        <button
-          onClick={() => onNavigate('/home/sexself/questions')}
-          className="text-xs font-medium px-3 py-1.5 rounded-lg"
-          style={{ background: '#ec489922', color: '#ec4899' }}
-        >
-          {c.sexSelfStart}
-        </button>
       </div>
     );
   }
 
   const profile = data.sexself_profile;
   const profileColor = SEXSELF_PROFILE_COLORS[profile] ?? '#64748b';
-  const profileLabel = SEXSELF_PROFILE_LABELS[profile] ?? profile;
+  const profileLabel = profileLabels[profile] ?? profile;
 
   if (profile === 'ANXIETY_FROZEN') {
     return (

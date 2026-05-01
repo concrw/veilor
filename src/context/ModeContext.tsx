@@ -1,10 +1,17 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import type { Domain } from './DomainContext';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // 타입 정의
 // ──────────────────────────────────────────────────────────────────────────────
 
-export type UXMode = 'original' | 'clear' | 'routine';
+export type UXMode = 'original' | 'clear' | 'routine' | 'focus' | 'sprint' | 'connect' | 'mirror';
+
+export const DOMAIN_MODES: Record<Domain, UXMode[]> = {
+  self:     ['original', 'clear', 'routine'],
+  work:     ['original', 'clear', 'routine', 'focus', 'sprint'],
+  relation: ['original', 'clear', 'routine', 'connect', 'mirror'],
+};
 
 interface ModeContextValue {
   mode: UXMode;
@@ -23,11 +30,13 @@ const FIRST_VISIT_KEY = 'veilor_mode_selected';
 
 const DEFAULT_MODE: UXMode = 'original';
 
+const VALID_MODES: UXMode[] = ['original', 'clear', 'routine', 'focus', 'sprint', 'connect', 'mirror'];
+
 function getStoredMode(): UXMode {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored === 'original' || stored === 'clear' || stored === 'routine') {
-      return stored;
+    if (stored && VALID_MODES.includes(stored as UXMode)) {
+      return stored as UXMode;
     }
   } catch {
     // localStorage 접근 불가 환경 (SSR 등)
