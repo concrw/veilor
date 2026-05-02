@@ -986,6 +986,12 @@ export interface WorkTask {
   completed_at: string | null;
   rolled_over_from: string | null;
   created_at: string;
+  time_remaining: number | null;
+  is_running: boolean;
+  is_paused: boolean;
+  paused_at: string | null;
+  total_paused_seconds: number;
+  order_index: number;
 }
 
 export interface WorkSprint {

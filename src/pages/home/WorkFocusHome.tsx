@@ -1,89 +1,30 @@
-import { useState, useEffect, useRef } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguageContext } from '@/context/LanguageContext';
 import { veilorDb } from '@/integrations/supabase/client';
-import type { WorkTask } from '@/integrations/supabase/veilor-types';
-import { getRolloverTasks } from '@/lib/tbqc';
+import { useWorkTasks } from '@/hooks/useWorkTasks';
+import { useWorkTaskTimers } from '@/hooks/useWorkTaskTimers';
+import { useMidnightRollover } from '@/hooks/useMidnightRollover';
+import { useWorkTranslations } from '@/hooks/useTranslation';
 
 // ──────────────────────────────────────────────────────────────────────────────
-// i18n
+// 헬퍼
 // ──────────────────────────────────────────────────────────────────────────────
-
-const S = {
-  ko: {
-    header: '오늘의 집중',
-    mentalLabel: '현재 에너지',
-    noCheckin: '오늘 체크인 없음',
-    addPlaceholder: '새 태스크 제목',
-    estLabel: '예상(분)',
-    add: '추가',
-    start: '시작',
-    pause: '일시정지',
-    done: '완료',
-    rolloverLabel: (n: number) => `어제 미완료 ${n}개가 오늘로 넘어왔어요`,
-    amberComment: (energy: number) =>
-      energy >= 70
-        ? '에너지가 좋습니다. 집중력이 필요한 태스크를 먼저 하세요.'
-        : energy >= 40
-        ? '적당한 에너지입니다. 중간 난이도 태스크부터 시작해보세요.'
-        : '에너지가 낮습니다. 작은 태스크부터 시작해 모멘텀을 만들어보세요.',
-    empty: '아직 태스크가 없습니다',
-    minuteUnit: '분',
-  },
-  en: {
-    header: "Today's Focus",
-    mentalLabel: 'Current Energy',
-    noCheckin: 'No check-in today',
-    addPlaceholder: 'New task title',
-    estLabel: 'Est. (min)',
-    add: 'Add',
-    start: 'Start',
-    pause: 'Pause',
-    done: 'Done',
-    rolloverLabel: (n: number) => `${n} unfinished task${n > 1 ? 's' : ''} rolled over from yesterday`,
-    amberComment: (energy: number) =>
-      energy >= 70
-        ? 'Great energy. Tackle your high-focus tasks first.'
-        : energy >= 40
-        ? 'Moderate energy. Start with medium-difficulty tasks.'
-        : 'Energy is low. Begin with small tasks to build momentum.',
-    empty: 'No tasks yet',
-    minuteUnit: 'min',
-  },
-} as const;
-
-// ──────────────────────────────────────────────────────────────────────────────
-// 타이머 훅
-// ──────────────────────────────────────────────────────────────────────────────
-
-function useTaskTimer(taskId: string | null, onTick?: (secs: number) => void) {
-  const [elapsed, setElapsed] = useState(0);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  useEffect(() => {
-    if (taskId) {
-      intervalRef.current = setInterval(() => {
-        setElapsed(prev => {
-          const next = prev + 1;
-          onTick?.(next);
-          return next;
-        });
-      }, 1000);
-    } else {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      setElapsed(0);
-    }
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [taskId]);
-
-  return elapsed;
-}
 
 function formatTime(secs: number) {
-  const m = Math.floor(secs / 60).toString().padStart(2, '0');
-  const s = (secs % 60).toString().padStart(2, '0');
+  const totalSecs = Math.max(0, secs);
+  const m = Math.floor(totalSecs / 60).toString().padStart(2, '0');
+  const s = (totalSecs % 60).toString().padStart(2, '0');
   return `${m}:${s}`;
+}
+
+function getTodayDateString() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -93,16 +34,30 @@ function formatTime(secs: number) {
 export default function WorkFocusHome() {
   const { user } = useAuth();
   const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
-  const queryClient = useQueryClient();
+  const w = useWorkTranslations();
+  const s = w.focus;
 
   const [newTitle, setNewTitle] = useState('');
   const [newEst, setNewEst] = useState('');
-  const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
 
-  const elapsed = useTaskTimer(activeTaskId);
+  const {
+    tasks,
+    completedTasks,
+    loading,
+    addTask,
+    startTask,
+    pauseTask,
+    resumeTask,
+    completeTask,
+    deleteTask,
+    loadTasks,
+  } = useWorkTasks();
 
-  // 오늘 체크인 에너지 (mood_score를 energy로 사용)
+  const { getDisplayTime } = useWorkTaskTimers(tasks);
+
+  useMidnightRollover({ userId: user?.id, onDateChange: () => loadTasks() });
+
+  // 오늘 체크인 에너지
   const { data: todayEnergy } = useQuery<number | null>({
     queryKey: ['focus_today_energy', user?.id],
     queryFn: async () => {
@@ -121,104 +76,32 @@ export default function WorkFocusHome() {
       try {
         const parsed = JSON.parse(data[0].content ?? '{}');
         return typeof parsed.mood_score === 'number' ? parsed.mood_score : null;
-      } catch { return null; }
+      } catch {
+        return null;
+      }
     },
     enabled: !!user,
   });
 
-  // 오늘 + 롤오버 태스크
-  const { data: tasks = [] } = useQuery<WorkTask[]>({
-    queryKey: ['work_tasks_today', user?.id],
-    queryFn: async () => {
-      if (!user) return [];
-      const weekAgo = new Date();
-      weekAgo.setDate(weekAgo.getDate() - 7);
-      const { data } = await veilorDb
-        .from('work_tasks' as never)
-        .select('*')
-        .eq('user_id', user.id)
-        .neq('status', 'done')
-        .gte('created_at', weekAgo.toISOString())
-        .order('created_at', { ascending: true });
-      return (data ?? []) as WorkTask[];
-    },
-    enabled: !!user,
-  });
+  // 롤오버 태스크 — date < today 이면서 미완료
+  const today = getTodayDateString();
+  const rollovers = tasks.filter(
+    (t) => t.date !== null && t.date < today && t.status !== 'done',
+  );
 
-  const rollovers = getRolloverTasks(tasks);
-
-  // 태스크 추가
-  const addMutation = useMutation({
-    mutationFn: async () => {
-      if (!user || !newTitle.trim()) return;
-      const mentalSnapshot = todayEnergy != null
-        ? { energy: todayEnergy, mood: todayEnergy, focus: null }
-        : {};
-      await veilorDb.from('work_tasks' as never).insert({
-        user_id: user.id,
-        title: newTitle.trim(),
-        estimated_minutes: newEst ? parseInt(newEst) : null,
-        mental_snapshot: mentalSnapshot,
-        lang: language,
-      });
-    },
-    onSuccess: () => {
-      setNewTitle('');
-      setNewEst('');
-      queryClient.invalidateQueries({ queryKey: ['work_tasks_today', user?.id] });
-    },
-  });
-
-  // 타이머 시작
-  const startMutation = useMutation({
-    mutationFn: async (taskId: string) => {
-      await veilorDb.from('work_tasks' as never).update({
-        status: 'in_progress',
-        started_at: new Date().toISOString(),
-      }).eq('id', taskId);
-    },
-    onSuccess: (_, taskId) => {
-      setActiveTaskId(taskId);
-      queryClient.invalidateQueries({ queryKey: ['work_tasks_today', user?.id] });
-    },
-  });
-
-  // 일시정지
-  const pauseMutation = useMutation({
-    mutationFn: async (task: WorkTask) => {
-      await veilorDb.from('work_tasks' as never).update({
-        status: 'todo',
-        pause_count: task.pause_count + 1,
-      }).eq('id', task.id);
-    },
-    onSuccess: () => {
-      setActiveTaskId(null);
-      queryClient.invalidateQueries({ queryKey: ['work_tasks_today', user?.id] });
-    },
-  });
-
-  // 완료
-  const doneMutation = useMutation({
-    mutationFn: async (task: WorkTask) => {
-      const actualMinutes = task.started_at
-        ? Math.round((Date.now() - new Date(task.started_at).getTime()) / 60000)
-        : null;
-      await veilorDb.from('work_tasks' as never).update({
-        status: 'done',
-        actual_minutes: actualMinutes,
-        completed_at: new Date().toISOString(),
-      }).eq('id', task.id);
-    },
-    onSuccess: () => {
-      setActiveTaskId(null);
-      queryClient.invalidateQueries({ queryKey: ['work_tasks_today', user?.id] });
-    },
-  });
+  const handleAdd = () => {
+    if (!newTitle.trim()) return;
+    const estMins = newEst ? parseInt(newEst) : 30;
+    addTask(newTitle.trim(), estMins);
+    setNewTitle('');
+    setNewEst('');
+  };
 
   const energyPct = todayEnergy ?? 0;
-  const today = new Date();
-  const dateLabel = today.toLocaleDateString(language === 'ko' ? 'ko-KR' : 'en-US', {
-    month: 'long', day: 'numeric', weekday: 'short',
+  const dateLabel = new Date().toLocaleDateString(language === 'ko' ? 'ko-KR' : 'en-US', {
+    month: 'long',
+    day: 'numeric',
+    weekday: 'short',
   });
 
   return (
@@ -240,22 +123,32 @@ export default function WorkFocusHome() {
         <div className="w-full h-1.5 rounded-full bg-stone-800">
           <div
             className="h-1.5 rounded-full transition-all duration-500"
-            style={{ width: `${energyPct}%`, background: energyPct >= 70 ? '#38bdf8' : energyPct >= 40 ? '#f59e0b' : '#f43f5e' }}
+            style={{
+              width: `${energyPct}%`,
+              background: energyPct >= 70 ? '#38bdf8' : energyPct >= 40 ? '#f59e0b' : '#f43f5e',
+            }}
           />
         </div>
       </div>
 
       {/* Amber 코멘트 */}
-      <div className="rounded-2xl p-4 mb-4 flex gap-3 items-start" style={{ background: '#1E1C1A', border: '1px solid #2A2624' }}>
-        <span className="w-6 h-6 rounded-full flex-shrink-0 mt-0.5" style={{ background: '#D4A574' }} />
-        <p className="text-sm text-stone-300 leading-relaxed">
-          {s.amberComment(energyPct)}
-        </p>
+      <div
+        className="rounded-2xl p-4 mb-4 flex gap-3 items-start"
+        style={{ background: '#1E1C1A', border: '1px solid #2A2624' }}
+      >
+        <span
+          className="w-6 h-6 rounded-full flex-shrink-0 mt-0.5"
+          style={{ background: '#E0B48A' }}
+        />
+        <p className="text-sm text-stone-300 leading-relaxed">{s.amberComment(energyPct)}</p>
       </div>
 
       {/* 롤오버 알림 */}
       {rollovers.length > 0 && (
-        <div className="rounded-xl px-4 py-2.5 mb-4 text-xs text-amber-300" style={{ background: '#2A2010', border: '1px solid #44330088' }}>
+        <div
+          className="rounded-xl px-4 py-2.5 mb-4 text-xs text-amber-300"
+          style={{ background: '#2A2010', border: '1px solid #44330088' }}
+        >
           {s.rolloverLabel(rollovers.length)}
         </div>
       )}
@@ -264,15 +157,15 @@ export default function WorkFocusHome() {
       <div className="flex gap-2 mb-4">
         <input
           value={newTitle}
-          onChange={e => setNewTitle(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && addMutation.mutate()}
+          onChange={(e) => setNewTitle(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
           placeholder={s.addPlaceholder}
           className="flex-1 rounded-xl px-3 py-2.5 text-sm text-stone-200 placeholder-stone-600 outline-none"
           style={{ background: '#252220', border: '1px solid #2A2624' }}
         />
         <input
           value={newEst}
-          onChange={e => setNewEst(e.target.value)}
+          onChange={(e) => setNewEst(e.target.value)}
           placeholder={s.estLabel}
           type="number"
           min="1"
@@ -280,68 +173,134 @@ export default function WorkFocusHome() {
           style={{ background: '#252220', border: '1px solid #2A2624' }}
         />
         <button
-          onClick={() => addMutation.mutate()}
+          onClick={handleAdd}
           disabled={!newTitle.trim()}
-          className="rounded-xl px-3 py-2.5 text-sm font-medium text-stone-950 bg-sky-400 hover:bg-sky-300 disabled:opacity-40 transition-colors"
+          className="rounded-xl px-3 py-2.5 text-sm font-medium text-stone-950 disabled:opacity-40 transition-colors"
+          style={{ background: '#E0B48A' }}
         >
           {s.add}
         </button>
       </div>
 
-      {/* 태스크 목록 */}
-      {tasks.length === 0 ? (
+      {/* 로딩 */}
+      {loading && (
+        <p className="text-center text-stone-600 text-xs py-4">로딩 중...</p>
+      )}
+
+      {/* 활성 태스크 목록 */}
+      {!loading && tasks.length === 0 ? (
         <p className="text-center text-stone-600 text-sm py-8">{s.empty}</p>
       ) : (
-        <div className="flex flex-col gap-3">
-          {tasks.map(task => {
-            const isActive = activeTaskId === task.id;
+        <div className="flex flex-col gap-3 mb-4">
+          {tasks.map((task) => {
+            const isRunning = task.is_running;
+            const isPaused = task.is_paused;
+            const displaySecs = getDisplayTime(task);
+
             return (
               <div
                 key={task.id}
                 className="rounded-2xl p-4"
                 style={{
-                  background: isActive ? '#1A2230' : '#252220',
-                  border: `1px solid ${isActive ? '#38bdf844' : '#2A2624'}`,
+                  background: isRunning ? '#1A2230' : '#252220',
+                  border: `1px solid ${isRunning ? '#38bdf844' : '#2A2624'}`,
                 }}
               >
                 <div className="flex items-start justify-between gap-2 mb-2">
-                  <p className="text-sm text-stone-200 font-medium leading-snug flex-1">{task.title}</p>
+                  <p className="text-sm text-stone-200 font-medium leading-snug flex-1">
+                    {task.title}
+                  </p>
                   {task.estimated_minutes && (
                     <span className="text-xs text-stone-500 flex-shrink-0">
                       {task.estimated_minutes}{s.minuteUnit}
                     </span>
                   )}
                 </div>
-                {isActive && (
-                  <p className="text-lg font-mono text-sky-300 mb-2">{formatTime(elapsed)}</p>
+
+                {/* 타이머 표시 */}
+                {(isRunning || isPaused) && (
+                  <p
+                    className="text-lg font-mono mb-2"
+                    style={{ color: isRunning ? '#38bdf8' : '#f59e0b' }}
+                  >
+                    {formatTime(displaySecs)}
+                  </p>
                 )}
+
                 <div className="flex gap-2">
-                  {!isActive && task.status !== 'done' && (
+                  {/* 시작 버튼 — 정지 상태이며 일시정지 아닐 때 */}
+                  {!isRunning && !isPaused && (
                     <button
-                      onClick={() => startMutation.mutate(task.id)}
+                      onClick={() => startTask(task.id)}
                       className="text-xs px-3 py-1.5 rounded-lg bg-sky-400/10 text-sky-300 hover:bg-sky-400/20 transition-colors"
                     >
                       {s.start}
                     </button>
                   )}
-                  {isActive && (
+
+                  {/* 재개 버튼 — 일시정지 상태 */}
+                  {isPaused && !isRunning && (
                     <button
-                      onClick={() => pauseMutation.mutate(task)}
+                      onClick={() => resumeTask(task.id)}
+                      className="text-xs px-3 py-1.5 rounded-lg bg-sky-400/10 text-sky-300 hover:bg-sky-400/20 transition-colors"
+                    >
+                      {s.resume}
+                    </button>
+                  )}
+
+                  {/* 일시정지 버튼 — 실행 중 */}
+                  {isRunning && (
+                    <button
+                      onClick={() => pauseTask(task.id, displaySecs)}
                       className="text-xs px-3 py-1.5 rounded-lg bg-amber-400/10 text-amber-300 hover:bg-amber-400/20 transition-colors"
                     >
                       {s.pause}
                     </button>
                   )}
+
+                  {/* 완료 버튼 */}
                   <button
-                    onClick={() => doneMutation.mutate(task)}
+                    onClick={() => {
+                      const estMins = task.estimated_minutes ?? undefined;
+                      completeTask(task.id, estMins);
+                    }}
                     className="text-xs px-3 py-1.5 rounded-lg bg-emerald-400/10 text-emerald-300 hover:bg-emerald-400/20 transition-colors"
                   >
                     {s.done}
+                  </button>
+
+                  {/* 삭제 버튼 */}
+                  <button
+                    onClick={() => deleteTask(task.id)}
+                    className="text-xs px-3 py-1.5 rounded-lg bg-red-400/10 text-red-400 hover:bg-red-400/20 transition-colors"
+                  >
+                    {s.delete}
                   </button>
                 </div>
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* 완료된 태스크 */}
+      {completedTasks.length > 0 && (
+        <div className="mt-2">
+          <p className="text-xs text-stone-500 mb-2">완료 {completedTasks.length}개</p>
+          <div className="flex flex-col gap-2">
+            {completedTasks.map((task) => (
+              <div
+                key={task.id}
+                className="rounded-xl px-4 py-2.5 flex items-center justify-between"
+                style={{ background: '#1A1C18', border: '1px solid #2A3024' }}
+              >
+                <p className="text-sm text-stone-500 line-through">{task.title}</p>
+                {task.actual_minutes && (
+                  <span className="text-xs text-stone-600">{task.actual_minutes}{s.minuteUnit}</span>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>

@@ -38,6 +38,8 @@ export default function VentPage() {
   const [amberOpen, setAmberOpen] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const [layerActive, setLayerActive] = useState('');
+  const [showAmberNudge, setShowAmberNudge] = useState(false);
+  const sessionNudgeShownRef = useRef(false);
 
   const aiSettingsRef = useRef<Record<string, string> | null>(null);
   useEffect(() => {
@@ -158,6 +160,20 @@ export default function VentPage() {
     }, 300);
   }
 
+  const AMBER_NUDGE_KEYWORDS = ['상처받았', '외로워', '혼란스러워', '외롭', '힘들'];
+
+  function checkAmberNudge(messages: { role: 'ai' | 'user'; text: string }[]) {
+    if (sessionNudgeShownRef.current) return;
+    const userMessages = messages.filter(m => m.role === 'user');
+    if (userMessages.length < 4) return;
+    const hasKeyword = userMessages.some(m =>
+      AMBER_NUDGE_KEYWORDS.some(kw => m.text.includes(kw)),
+    );
+    if (!hasKeyword) return;
+    sessionNudgeShownRef.current = true;
+    setShowAmberNudge(true);
+  }
+
   function finishSession() {
     if (!user || !curEmo || sessionSavedRef.current) return;
     const data = EMO_DATA[curEmo];
@@ -231,6 +247,7 @@ export default function VentPage() {
     const updatedMsgs = [...msgsBeforeAI, { role: 'ai' as const, text: aiText, tone: aiTone }];
     setMsgs(() => updatedMsgs);
     saveLocal({ emotion: curEmo, msgs: updatedMsgs, msgCount: newCount });
+    checkAmberNudge(updatedMsgs);
 
     if (newCount >= 4 && newCount % 4 === 0 && !sessionSavedRef.current) {
       timerRefs.current.push(window.setTimeout(() => {
@@ -371,6 +388,32 @@ export default function VentPage() {
                     onContinueChat={() => { setShowSummary(false); setMsgs(m => [...m, { role: 'ai', text: vent.chat.continueResponse, tone: vent.chat.toneContinue }]); }}
                     onNavigateToSexSelf={() => navigate('/home/sexself/questions')}
                   />
+                  {showAmberNudge && !showSummary && (
+                    <div
+                      className="flex-shrink-0 mx-4 mb-3 rounded-[12px] p-4"
+                      style={{ background: '#242120', border: '1px solid #3C3835' }}
+                    >
+                      <p className="text-[14px] font-light leading-[1.6] break-keep mb-3" style={{ fontFamily: "'Cormorant Garamond', serif", color: '#E7E5E4' }}>
+                        {vent.chat.amberNudgeDeep}
+                      </p>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => { setShowAmberNudge(false); navigate('/home/sexself/questions'); }}
+                          className="flex-1 py-[9px] rounded-[20px] text-[11px] font-medium transition-all"
+                          style={{ background: '#E0B48A', color: '#1C1917' }}
+                        >
+                          {vent.chat.amberNudgeDeepButton}
+                        </button>
+                        <button
+                          onClick={() => setShowAmberNudge(false)}
+                          className="flex-1 py-[9px] rounded-[20px] text-[11px] font-light transition-all"
+                          style={{ border: '1px solid #3C3835', background: 'transparent', color: '#9C9590' }}
+                        >
+                          {vent.chat.sexSelfNudgeNo}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </>
               )}
             </div>

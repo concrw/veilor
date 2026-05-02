@@ -16,6 +16,7 @@ import PeopleSection from '@/components/me/PeopleSection';
 import ClearMeView from '@/components/me/ClearMeView';
 import GrowthTab from '@/components/me/GrowthTab';
 import ZoneTab from '@/components/me/ZoneTab';
+import NeedSummaryCard from '@/components/me/NeedSummaryCard';
 
 type Tab = 'growth' | 'people' | 'zone';
 
@@ -74,7 +75,10 @@ export default function MePage() {
           </div>
 
           {tab === 'growth' && user && (
-            <GrowthTab meData={meData} pct={pct} closedCount={closedCount} seedTitle={seedTitle} stageStatus={stageStatus} userId={user.id} />
+            <>
+              <GrowthTab meData={meData} pct={pct} closedCount={closedCount} seedTitle={seedTitle} stageStatus={stageStatus} userId={user.id} />
+              <NeedSummaryCard />
+            </>
           )}
           {tab === 'people' && (
             <PeopleSection people={meData.people} peopleLoading={meData.peopleLoading} />

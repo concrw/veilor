@@ -173,6 +173,24 @@ Deno.serve(async (req) => {
       actions: payload.actions || [],
     };
 
+    // KST 현재 시각 계산 (±10분 필터용)
+    const nowUtc = new Date();
+    const nowKst = new Date(nowUtc.getTime() + 9 * 60 * 60 * 1000);
+    const kstHH = nowKst.getUTCHours();
+    const kstMM = nowKst.getUTCMinutes();
+    const nowTotalMinutes = kstHH * 60 + kstMM;
+
+    function isWithinWindow(reminderTime: string | null): boolean {
+      const rt = reminderTime ?? "21:00";
+      const [h, m] = rt.split(":").map(Number);
+      if (isNaN(h) || isNaN(m)) return true;
+      const rtTotal = h * 60 + m;
+      const diff = Math.abs(nowTotalMinutes - rtTotal);
+      // 자정 경계 처리
+      const wrappedDiff = Math.min(diff, 24 * 60 - diff);
+      return wrappedDiff <= 10;
+    }
+
     // Fetch subscriptions based on request type
     let query = supabaseAdmin
       .from("push_subscriptions")
@@ -209,11 +227,38 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`Sending push to ${subscriptions.length} subscriptions`);
+    // user_profiles에서 reminder_time 조회하여 시간 필터 적용
+    // broadcast 모드가 아닐 때만 필터 적용
+    let filteredSubscriptions = subscriptions;
+    if (!broadcast) {
+      const userIds = subscriptions.map((s) => s.user_id);
+      const { data: profiles } = await supabaseAdmin
+        .from("user_profiles")
+        .select("user_id, reminder_time")
+        .in("user_id", userIds);
+
+      const reminderMap: Record<string, string | null> = {};
+      (profiles ?? []).forEach((p: { user_id: string; reminder_time: string | null }) => {
+        reminderMap[p.user_id] = p.reminder_time;
+      });
+
+      filteredSubscriptions = subscriptions.filter((sub) =>
+        isWithinWindow(reminderMap[sub.user_id] ?? null)
+      );
+
+      if (filteredSubscriptions.length === 0) {
+        return new Response(
+          JSON.stringify({ success: true, sent: 0, message: "No subscriptions match current reminder time" }),
+          { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
+        );
+      }
+    }
+
+    console.log(`Sending push to ${filteredSubscriptions.length} subscriptions (filtered from ${subscriptions.length})`);
 
     // Send notifications
     const results = await Promise.all(
-      subscriptions.map(async (sub) => {
+      filteredSubscriptions.map(async (sub) => {
         const result = await sendPushToSubscription(
           { endpoint: sub.endpoint, p256dh: sub.p256dh, auth: sub.auth },
           fullPayload,
@@ -242,7 +287,7 @@ Deno.serve(async (req) => {
         success: true,
         sent: successful,
         failed: failed,
-        total: subscriptions.length,
+        total: filteredSubscriptions.length,
         details: results,
       }),
       { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }

@@ -262,6 +262,8 @@ export const en: LocaleResource = {
       partnerNudgePrivate: 'Only visible to you',
       partnerNudgeExplore: 'Explore deeper →',
       partnerNudgeSkip: "I'm okay",
+      amberNudgeDeep: "Want to look deeper? Let's see what's inside.",
+      amberNudgeDeepButton: 'Look inside',
     },
     layers: {
       title: 'My layers',
@@ -1073,6 +1075,69 @@ export const en: LocaleResource = {
         BALANCED: "You're maintaining a balanced pattern in relationships. Staying aware of this is what keeps it going.",
       },
       amberPattern: 'Recognizing this pattern is itself the beginning of change',
+    },
+  },
+
+  work: {
+    focus: {
+      header: "Today's Focus",
+      mentalLabel: 'Current Energy',
+      noCheckin: 'No check-in today',
+      addPlaceholder: 'New task title',
+      estLabel: 'Est. (min)',
+      add: 'Add',
+      start: 'Start',
+      pause: 'Pause',
+      resume: 'Resume',
+      done: 'Done',
+      delete: 'Delete',
+      rolloverLabel: (n: number) => `${n} unfinished task${n > 1 ? 's' : ''} rolled over from yesterday`,
+      amberComment: (energy: number) =>
+        energy >= 70
+          ? 'Great energy. Tackle your high-focus tasks first.'
+          : energy >= 40
+          ? 'Moderate energy. Start with medium-difficulty tasks.'
+          : 'Energy is low. Begin with small tasks to build momentum.',
+      empty: 'No tasks yet',
+      minuteUnit: 'min',
+    },
+    sprint: {
+      header: "This Week's Performance",
+      masteryTitle: 'Metacognition Level',
+      mastery: {
+        beginner:     'Beginner',
+        intermediate: 'Intermediate',
+        skilled:      'Skilled',
+        expert:       'Time-Prediction Expert',
+        master:       'TBQC Master',
+      },
+      kpiTitle: 'TBQC Key Metrics',
+      completionRate: 'Completion Rate',
+      accuracy: 'Time Prediction Accuracy',
+      completionPower: 'Completion Power',
+      mentalTitle: 'Mental × Performance',
+      highEnergy: 'High-energy days',
+      lowEnergy: 'Low-energy days',
+      mentalInsight: (hi: number, lo: number) =>
+        `High-energy completion ${Math.round(hi * 100)}%, low-energy ${Math.round(lo * 100)}%`,
+      streakTitle: 'Streak',
+      streakUnit: 'day(s)',
+      goalsTitle: 'Sprint Goals',
+      addGoalPlaceholder: 'Add a goal',
+      addGoal: 'Add',
+      amberTitle: 'Amber Weekly Coaching',
+      amberCoaching: (rate: number, acc: number) => {
+        if (rate >= 0.8 && acc >= 0.7) return 'Excellent. Both execution and time prediction are outstanding this week. Set more ambitious goals next week.';
+        if (rate >= 0.6) return `${Math.round(rate * 100)}% completion is a good start. Improving time prediction accuracy will take you to the next level.`;
+        return 'Practice completing small tasks this week. As you accumulate completions, your prediction accuracy will naturally improve.';
+      },
+      pctUnit: '%',
+      noData: 'No task data this week',
+      weekLabel: (start: Date) => {
+        const end = new Date(start);
+        end.setDate(start.getDate() + 6);
+        return `${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} — ${end.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+      },
     },
   },
 };

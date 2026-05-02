@@ -262,6 +262,8 @@ export const ko: LocaleResource = {
       partnerNudgePrivate: '나만 볼 수 있어요',
       partnerNudgeExplore: '더 들여다보기 →',
       partnerNudgeSkip: '괜찮아요',
+      amberNudgeDeep: '더 깊이 들여다볼까요? 내 안에 뭐가 있는지 살펴봐요.',
+      amberNudgeDeepButton: '살펴보기',
     },
     layers: {
       title: '나의 레이어',
@@ -1031,6 +1033,69 @@ export const ko: LocaleResource = {
       study: '공부',
     },
   },
+  work: {
+    focus: {
+      header: '오늘의 집중',
+      mentalLabel: '현재 에너지',
+      noCheckin: '오늘 체크인 없음',
+      addPlaceholder: '새 태스크 제목',
+      estLabel: '예상(분)',
+      add: '추가',
+      start: '시작',
+      pause: '일시정지',
+      resume: '재개',
+      done: '완료',
+      delete: '삭제',
+      rolloverLabel: (n: number) => `어제 미완료 ${n}개가 오늘로 넘어왔어요`,
+      amberComment: (energy: number) =>
+        energy >= 70
+          ? '에너지가 좋습니다. 집중력이 필요한 태스크를 먼저 하세요.'
+          : energy >= 40
+          ? '적당한 에너지입니다. 중간 난이도 태스크부터 시작해보세요.'
+          : '에너지가 낮습니다. 작은 태스크부터 시작해 모멘텀을 만들어보세요.',
+      empty: '아직 태스크가 없습니다',
+      minuteUnit: '분',
+    },
+    sprint: {
+      header: '이번 주 퍼포먼스',
+      masteryTitle: '메타인지 레벨',
+      mastery: {
+        beginner:     '초보자',
+        intermediate: '중급자',
+        skilled:      '숙련자',
+        expert:       '시간예측 전문가',
+        master:       'TBQC 마스터',
+      },
+      kpiTitle: 'TBQC 핵심 지표',
+      completionRate: '완료율',
+      accuracy: '시간예측 정확도',
+      completionPower: '완수력',
+      mentalTitle: '멘탈 × 퍼포먼스',
+      highEnergy: '에너지 높은 날',
+      lowEnergy: '에너지 낮은 날',
+      mentalInsight: (hi: number, lo: number) =>
+        `에너지 높은 날 완료율 ${Math.round(hi * 100)}%, 낮은 날 ${Math.round(lo * 100)}%`,
+      streakTitle: '연속 완료',
+      streakUnit: '일',
+      goalsTitle: '이번 주 목표',
+      addGoalPlaceholder: '목표 입력',
+      addGoal: '추가',
+      amberTitle: 'Amber 주간 코칭',
+      amberCoaching: (rate: number, acc: number) => {
+        if (rate >= 0.8 && acc >= 0.7) return '훌륭합니다. 이번 주 실행력과 시간 예측 모두 탁월합니다. 다음 주는 더 도전적인 목표를 설정해보세요.';
+        if (rate >= 0.6) return `완료율 ${Math.round(rate * 100)}%는 좋은 출발입니다. 시간 예측 정확도를 높이면 다음 레벨로 도약할 수 있어요.`;
+        return '이번 주는 작은 태스크를 완료하는 연습을 해보세요. 완료 경험이 쌓일수록 예측 정확도도 함께 올라갑니다.';
+      },
+      pctUnit: '%',
+      noData: '이번 주 태스크 데이터가 없습니다',
+      weekLabel: (start: Date) => {
+        const end = new Date(start);
+        end.setDate(start.getDate() + 6);
+        return `${start.getMonth() + 1}/${start.getDate()} — ${end.getMonth() + 1}/${end.getDate()}`;
+      },
+    },
+  },
+
   relation: {
     connect: {
       section: 'CONNECT',

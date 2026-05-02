@@ -176,6 +176,20 @@ export default function GuardianApp() {
     loadAll();
   }, [user, orgId]);
 
+  useEffect(() => {
+    if (!user || !orgId || !trainee) return;
+    veilorDb
+      .from('b2b_guardian_access_log' as never)
+      .insert({
+        guardian_user_id: user.id,
+        trainee_user_id: trainee.user_id ?? trainee.id,
+        org_id: orgId,
+        access_type: 'view',
+      } as never)
+      .then(() => {})
+      .catch(() => {});
+  }, [user, orgId, trainee]);
+
   const loadAll = async () => {
     setLoading(true);
     try {

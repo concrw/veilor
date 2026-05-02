@@ -191,6 +191,8 @@ export interface LocaleResource {
       partnerNudgePrivate: string;
       partnerNudgeExplore: string;
       partnerNudgeSkip: string;
+      amberNudgeDeep: string;
+      amberNudgeDeepButton: string;
     };
     layers: {
       title: string;
@@ -745,6 +747,54 @@ export interface LocaleResource {
       alone: string;
       rest: string;
       study: string;
+    };
+  };
+  work: {
+    focus: {
+      header: string;
+      mentalLabel: string;
+      noCheckin: string;
+      addPlaceholder: string;
+      estLabel: string;
+      add: string;
+      start: string;
+      pause: string;
+      resume: string;
+      done: string;
+      delete: string;
+      rolloverLabel: (n: number) => string;
+      amberComment: (energy: number) => string;
+      empty: string;
+      minuteUnit: string;
+    };
+    sprint: {
+      header: string;
+      masteryTitle: string;
+      mastery: {
+        beginner: string;
+        intermediate: string;
+        skilled: string;
+        expert: string;
+        master: string;
+      };
+      kpiTitle: string;
+      completionRate: string;
+      accuracy: string;
+      completionPower: string;
+      mentalTitle: string;
+      highEnergy: string;
+      lowEnergy: string;
+      mentalInsight: (hi: number, lo: number) => string;
+      streakTitle: string;
+      streakUnit: string;
+      goalsTitle: string;
+      addGoalPlaceholder: string;
+      addGoal: string;
+      amberTitle: string;
+      amberCoaching: (rate: number, acc: number) => string;
+      pctUnit: string;
+      noData: string;
+      weekLabel: (start: Date) => string;
     };
   };
   relation: {

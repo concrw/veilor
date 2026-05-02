@@ -119,3 +119,8 @@ export const useRelationTranslations = () => {
   const { translations } = useTranslation();
   return translations.relation;
 };
+
+export const useWorkTranslations = () => {
+  const { translations } = useTranslation();
+  return translations.work;
+};
