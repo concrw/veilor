@@ -6,6 +6,8 @@ import { supabase, veilorDb } from '@/integrations/supabase/client';
 import { invokeHeldChat } from '@/lib/heldChatClient';
 import { saveVentMessage, saveVentSummary, saveVentSessionSummary, saveVentPartialSession } from '@/hooks/useSignalPipeline';
 import { useDynamicMaskSignal } from '@/hooks/useDynamicMaskSignal';
+import { useDomain } from '@/context/DomainContext';
+import { useSocialPivotDetection } from '@/hooks/useSocialPivotDetection';
 import { AmberBtn } from '../../layouts/HomeLayout';
 import { useAmberAttention } from '../../hooks/useAmberAttention';
 import { C, alpha } from '@/lib/colors';
@@ -41,7 +43,9 @@ export default function VentPage() {
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const [layerActive, setLayerActive] = useState('');
   const [showAmberNudge, setShowAmberNudge] = useState(false);
+  const [showSocialPivotNudge, setShowSocialPivotNudge] = useState(false);
   const sessionNudgeShownRef = useRef(false);
+  const pivotNudgeShownRef = useRef(false);
 
   const aiSettingsRef = useRef<Record<string, string> | null>(null);
   useEffect(() => {
@@ -50,6 +54,13 @@ export default function VentPage() {
       .then(({ data }) => { if (data?.ai_settings) aiSettingsRef.current = data.ai_settings; });
   }, [user]);
 
+  useEffect(() => {
+    if (domain !== 'social' || !shouldNudge || pivotNudgeShownRef.current) return;
+    pivotNudgeShownRef.current = true;
+    setShowSocialPivotNudge(true);
+    recordPivot(pivotType ?? 'transition', '');
+  }, [domain, shouldNudge, pivotType]);
+
   const sessionSavedRef = useRef(false);
   const timerRefs = useRef<number[]>([]);
   const transitionTimerRef = useRef<number | null>(null);
@@ -57,6 +68,9 @@ export default function VentPage() {
   const { saveLocal, loadLocal: _loadLocal, clearLocal } = useLocalChatHistory(user?.id);
   const { language } = useLanguageContext();
   const isEn = language === 'en';
+  const isKo = language === 'ko';
+  const { domain } = useDomain();
+  const { shouldNudge, pivotType, recordPivot } = useSocialPivotDetection(user?.id);
   const { recordSignal } = useDynamicMaskSignal(user?.id, primaryMask ?? null);
   const vent = useVentTranslations();
   const { EMOTIONS, EMO_DATA, QUICK_CARDS, LAYER_GROUPS, COMM_GROUPS, getTimeGreeting } = useVentData();
@@ -372,14 +386,39 @@ export default function VentPage() {
           {section === 'vent' && (
             <div className="flex flex-col flex-1 overflow-hidden min-h-0" style={{ position: 'relative' }}>
               {phase === 'select' ? (
-                <EmotionSelector
-                  greeting={greeting} curEmo={curEmo}
-                  lastSession={lastSession ? { emotion: lastSession.emotion, turn_count: lastSession.turn_count } : null}
-                  recentEmotions={recentEmotions ?? null}
-                  emotions={EMOTIONS} quickCards={QUICK_CARDS}
-                  onPickEmotion={pickEmotion}
-                  onResumeSession={() => lastSession && resumeSession(lastSession)}
-                />
+                <>
+                  {domain === 'social' && showSocialPivotNudge && (
+                    <div style={{ margin: '12px 16px 0', padding: '12px 14px', background: '#2DD4BF10', border: '1px solid #2DD4BF33', borderRadius: 12 }}>
+                      <p style={{ fontSize: 13, color: '#2DD4BF', marginBottom: 8, lineHeight: 1.5 }}>
+                        {pivotType === 'fatigue'
+                          ? (isKo ? '최근 관심사에서 조금 멀어진 것 같아요. 지쳐있는 건 아닌지 이야기해볼까요?' : "It seems you've stepped back from some interests. Want to talk about it?")
+                          : (isKo ? '관심사의 흐름이 바뀌고 있어요. 새로운 챕터로 넘어가는 중인 걸까요?' : "Your interests seem to be shifting. Could this be a new chapter?")}
+                      </p>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button
+                          onClick={() => { setShowSocialPivotNudge(false); setAmberOpen(true); }}
+                          style={{ fontSize: 12, color: '#2DD4BF', border: '1px solid #2DD4BF55', borderRadius: 8, padding: '5px 12px', background: 'transparent', cursor: 'pointer' }}
+                        >
+                          {isKo ? 'Amber와 이야기하기' : 'Talk to Amber'}
+                        </button>
+                        <button
+                          onClick={() => setShowSocialPivotNudge(false)}
+                          style={{ fontSize: 12, color: C.text4, background: 'transparent', border: 'none', cursor: 'pointer' }}
+                        >
+                          {isKo ? '괜찮아요' : "I'm fine"}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  <EmotionSelector
+                    greeting={greeting} curEmo={curEmo}
+                    lastSession={lastSession ? { emotion: lastSession.emotion, turn_count: lastSession.turn_count } : null}
+                    recentEmotions={recentEmotions ?? null}
+                    emotions={EMOTIONS} quickCards={QUICK_CARDS}
+                    onPickEmotion={pickEmotion}
+                    onResumeSession={() => lastSession && resumeSession(lastSession)}
+                  />
+                </>
               ) : (
                 <>
                   {similarCount != null && similarCount > 0 && (

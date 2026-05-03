@@ -108,6 +108,28 @@ export default function SocialInterestExplorer() {
 
   const [expandedCode, setExpandedCode] = useState<IssueCode | null>(null);
   const [pendingNote, setPendingNote] = useState<Record<string, string>>({});
+  const [level3Open, setLevel3Open] = useState<Record<string, boolean>>({});
+  const [level3Text, setLevel3Text] = useState<Record<string, string>>({});
+
+  const L3 = {
+    ko: {
+      question: '왜 이것이 문제라고 생각하나요? 떠오르는 대로 써보세요.',
+      placeholder: '분량 제한 없어요...',
+      save: '저장',
+      skip: '나중에 쓸게요',
+      openExisting: '페인포인트 보기',
+      openNew: '더 깊이 써볼까요?',
+    },
+    en: {
+      question: 'Why do you think this is a problem? Write whatever comes to mind.',
+      placeholder: 'No length limit...',
+      save: 'Save',
+      skip: 'Maybe later',
+      openExisting: 'View pain point',
+      openNew: 'Go deeper?',
+    },
+  };
+  const l3 = isKo ? L3.ko : L3.en;
 
   // 내 관심사 조회
   const { data: interests = [] } = useQuery<SocialInterest[]>({
@@ -142,11 +164,21 @@ export default function SocialInterestExplorer() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['social-interests', user?.id] }),
   });
 
-  // 서브이슈 노트 저장
+  // 서브이슈 노트 저장 (Level 2)
   const saveNote = (code: string, subIdx: number) => {
     const key = `${code}_${subIdx}`;
     const note = pendingNote[key] ?? '';
     upsertInterest.mutate({ code: `${code}__${subIdx}`, level: 2, note });
+    toast({ title: isKo ? '저장했어요' : 'Saved' });
+  };
+
+  // Level 3 페인포인트 저장
+  const saveLevel3 = (areaCode: string, subIdx: number) => {
+    const key = `${areaCode}_${subIdx}`;
+    const subCode = `${areaCode}__${subIdx}`;
+    const note = level3Text[key] ?? '';
+    upsertInterest.mutate({ code: subCode, level: 3, note });
+    setLevel3Open(prev => ({ ...prev, [key]: false }));
     toast({ title: isKo ? '저장했어요' : 'Saved' });
   };
 
@@ -357,20 +389,101 @@ export default function SocialInterestExplorer() {
                                 outline: 'none',
                               }}
                             />
-                            <button
-                              onClick={() => saveNote(area.code, idx)}
-                              style={{
-                                marginTop: 6,
-                                fontSize: 11,
-                                color: '#2DD4BF',
-                                background: 'transparent',
-                                border: 'none',
-                                cursor: 'pointer',
-                                padding: '2px 0',
-                              }}
-                            >
-                              {isKo ? '저장' : 'Save'}
-                            </button>
+                            <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 6 }}>
+                              <button
+                                onClick={() => saveNote(area.code, idx)}
+                                style={{
+                                  fontSize: 11,
+                                  color: '#2DD4BF',
+                                  background: 'transparent',
+                                  border: 'none',
+                                  cursor: 'pointer',
+                                  padding: '2px 0',
+                                }}
+                              >
+                                {isKo ? '저장' : 'Save'}
+                              </button>
+                              <button
+                                onClick={() => {
+                                  const l3Existing = getInterest(`${area.code}__${idx}`, 3);
+                                  if (l3Existing && !level3Text[noteKey]) {
+                                    setLevel3Text(prev => ({ ...prev, [noteKey]: l3Existing.note ?? '' }));
+                                  }
+                                  setLevel3Open(prev => ({ ...prev, [noteKey]: !prev[noteKey] }));
+                                }}
+                                style={{
+                                  fontSize: 11,
+                                  color: getInterest(`${area.code}__${idx}`, 3) ? '#C4A355' : '#2DD4BF',
+                                  background: 'transparent',
+                                  border: `1px solid ${getInterest(`${area.code}__${idx}`, 3) ? '#C4A35544' : '#2DD4BF44'}`,
+                                  borderRadius: 8,
+                                  padding: '3px 9px',
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                {getInterest(`${area.code}__${idx}`, 3) ? l3.openExisting : l3.openNew}
+                              </button>
+                            </div>
+
+                            {/* Level 3 패널 */}
+                            {level3Open[noteKey] && (
+                              <div style={{ marginTop: 10, padding: '12px 14px', background: '#1A2420', border: '1px solid #2DD4BF22', borderRadius: 10 }}>
+                                <p style={{ fontSize: 12, color: '#2DD4BF', marginBottom: 8, lineHeight: 1.5 }}>
+                                  {l3.question}
+                                </p>
+                                <textarea
+                                  placeholder={l3.placeholder}
+                                  value={level3Text[noteKey] ?? ''}
+                                  onChange={e => setLevel3Text(prev => ({ ...prev, [noteKey]: e.target.value }))}
+                                  rows={5}
+                                  style={{
+                                    width: '100%',
+                                    background: C.bg2,
+                                    border: `1px solid ${C.border}`,
+                                    borderRadius: 8,
+                                    padding: '8px 10px',
+                                    fontSize: 12,
+                                    color: C.text2,
+                                    resize: 'vertical',
+                                    fontFamily: "'DM Sans', sans-serif",
+                                    outline: 'none',
+                                    boxSizing: 'border-box',
+                                  }}
+                                  onFocus={e => { e.currentTarget.style.borderColor = '#2DD4BF'; }}
+                                  onBlur={e => { e.currentTarget.style.borderColor = C.border; }}
+                                />
+                                <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                                  <button
+                                    onClick={() => saveLevel3(area.code, idx)}
+                                    style={{
+                                      fontSize: 11,
+                                      color: '#1C1917',
+                                      background: '#2DD4BF',
+                                      border: 'none',
+                                      borderRadius: 8,
+                                      padding: '5px 14px',
+                                      cursor: 'pointer',
+                                      fontWeight: 500,
+                                    }}
+                                  >
+                                    {l3.save}
+                                  </button>
+                                  <button
+                                    onClick={() => setLevel3Open(prev => ({ ...prev, [noteKey]: false }))}
+                                    style={{
+                                      fontSize: 11,
+                                      color: C.text4,
+                                      background: 'transparent',
+                                      border: 'none',
+                                      cursor: 'pointer',
+                                      padding: '5px 4px',
+                                    }}
+                                  >
+                                    {l3.skip}
+                                  </button>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
