@@ -62,10 +62,11 @@ serve(async (req: Request) => {
   const limit = Math.min(Number(body.limit ?? BATCH_SIZE), 500);
   const domainFilter: string | null = body.domain_code ?? null;
 
-  // 청킹 대상 논문 조회 — 이미 청크가 있는 paper_id는 skip
+  // 청킹 대상 논문 조회 — chunked=false 필터
   let query = sb
     .from("psych_papers")
     .select("id, title, abstract, domain_codes")
+    .eq("chunked", false)
     .not("abstract", "is", null)
     .range(offset, offset + limit - 1);
 
@@ -86,21 +87,11 @@ serve(async (req: Request) => {
     });
   }
 
-  // 이미 청크가 있는 paper_id 목록
-  const paperIds = papers.map((p) => p.id);
-  const { data: existingChunks } = await sb
-    .from("psych_paper_chunks")
-    .select("paper_id")
-    .in("paper_id", paperIds);
-
-  const chunkedPaperIds = new Set((existingChunks ?? []).map((c: { paper_id: string }) => c.paper_id));
-
   let processed = 0;
   let skipped = 0;
   let totalChunks = 0;
 
   for (const paper of papers) {
-    if (chunkedPaperIds.has(paper.id)) { skipped++; continue; }
     if (!paper.abstract || paper.abstract.length < 50) { skipped++; continue; }
 
     const chunks = splitIntoChunks(paper.abstract, CHUNK_MAX_CHARS);
@@ -121,6 +112,8 @@ serve(async (req: Request) => {
       skipped++;
       continue;
     }
+
+    await sb.from("psych_papers").update({ chunked: true }).eq("id", paper.id);
 
     processed++;
     totalChunks += chunks.length;
