@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useVentTranslations } from './useTranslation';
+import { SOCIAL_EMOTIONS, SOCIAL_QUICK_CARDS } from '@/components/vent/ventData';
 
 export function useVentData() {
   const vent = useVentTranslations();
@@ -77,5 +78,5 @@ export function useVentData() {
     return vent.greetings.lateNight;
   }
 
-  return { EMOTIONS, EMO_DATA, QUICK_CARDS, LAYER_GROUPS, COMM_GROUPS, getTimeGreeting };
+  return { EMOTIONS, EMO_DATA, QUICK_CARDS, SOCIAL_EMOTIONS, SOCIAL_QUICK_CARDS, LAYER_GROUPS, COMM_GROUPS, getTimeGreeting };
 }

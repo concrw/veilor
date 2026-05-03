@@ -73,8 +73,14 @@ export default function VentPage() {
   }, [domain, shouldNudge, pivotType]);
   const { recordSignal } = useDynamicMaskSignal(user?.id, primaryMask ?? null);
   const vent = useVentTranslations();
-  const { EMOTIONS, EMO_DATA, QUICK_CARDS, LAYER_GROUPS, COMM_GROUPS, getTimeGreeting } = useVentData();
+  const { EMOTIONS, EMO_DATA, QUICK_CARDS, SOCIAL_EMOTIONS, SOCIAL_QUICK_CARDS, LAYER_GROUPS, COMM_GROUPS, getTimeGreeting } = useVentData();
   const greeting = getTimeGreeting();
+  const socialGreeting = isKo
+    ? '지금 사회에 대해 어떤 감정이 드나요?'
+    : 'How are you feeling about the world right now?';
+  const displayGreeting = domain === 'social'
+    ? { title: socialGreeting, placeholder: greeting.placeholder }
+    : greeting;
   const aiName = vent.amberName;
   const amberFlash = useAmberAttention();
 
@@ -410,11 +416,21 @@ export default function VentPage() {
                       </div>
                     </div>
                   )}
+                  {domain === 'social' && (
+                    <p style={{ fontSize: 11, color: C.text3, margin: '4px 22px 0', lineHeight: 1.5 }}>
+                      {isKo ? '사회적 감정은 개인의 감정만큼 중요해요' : 'Social emotions matter as much as personal ones'}
+                    </p>
+                  )}
                   <EmotionSelector
-                    greeting={greeting} curEmo={curEmo}
+                    greeting={displayGreeting} curEmo={curEmo}
                     lastSession={lastSession ? { emotion: lastSession.emotion, turn_count: lastSession.turn_count } : null}
                     recentEmotions={recentEmotions ?? null}
-                    emotions={EMOTIONS} quickCards={QUICK_CARDS}
+                    emotions={domain === 'social'
+                      ? SOCIAL_EMOTIONS.map(e => ({ label: isKo ? e.label.ko : e.label.en, svg: e.svg }))
+                      : EMOTIONS}
+                    quickCards={domain === 'social'
+                      ? SOCIAL_QUICK_CARDS.map(c => ({ key: c.emo, text: isKo ? c.text.ko : c.text.en, emo: c.emo }))
+                      : QUICK_CARDS}
                     onPickEmotion={pickEmotion}
                     onResumeSession={() => lastSession && resumeSession(lastSession)}
                   />

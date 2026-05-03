@@ -181,6 +181,38 @@ export const COMM_GROUPS = [
     desc:  { ko: '감정을 숨기고 버티는 패턴', en: 'A pattern of hiding feelings and holding on' } },
 ];
 
+// Social 도메인 전용 감정 — 사회적 맥락 8종
+export const SOCIAL_EMOTIONS = [
+  { label: { ko: '무력감',     en: 'Powerless'  }, svg: 'numb'      },
+  { label: { ko: '분노',       en: 'Outraged'   }, svg: 'angry'     },
+  { label: { ko: '슬픔',       en: 'Grieving'   }, svg: 'sad'       },
+  { label: { ko: '불안',       en: 'Anxious'    }, svg: 'anxious'   },
+  { label: { ko: '희망',       en: 'Hopeful'    }, svg: 'calm'      },
+  { label: { ko: '지침',       en: 'Burned out' }, svg: 'tired'     },
+  { label: { ko: '연대감',     en: 'Connected'  }, svg: 'lonely'    },
+  { label: { ko: '혼란',       en: 'Confused'   }, svg: 'confused'  },
+];
+
+// Social 도메인 전용 빠른 시작 카드 4종
+export const SOCIAL_QUICK_CARDS: { text: { ko: string; en: string }; emo: string }[] = [
+  {
+    text: { ko: '뉴스를 보다가 무언가에 화가 났어요', en: "I got angry reading the news" },
+    emo: '분노',
+  },
+  {
+    text: { ko: '내가 할 수 있는 게 없는 것 같아요', en: "It feels like there's nothing I can do" },
+    emo: '무력감',
+  },
+  {
+    text: { ko: '이 문제가 해결될 수 있을까요?', en: "Can this problem even be solved?" },
+    emo: '불안',
+  },
+  {
+    text: { ko: '비슷한 마음인 사람들이 있다는 게 위안이 돼요', en: "It's comforting to know others feel the same way" },
+    emo: '연대감',
+  },
+];
+
 export function getTimeGreeting() {
   const h = new Date().getHours();
   if (h >= 5  && h < 9)  return { title: { ko: '좋은 아침이에요.',   en: 'Good morning.' },              placeholder: { ko: '지금 어떤 마음이에요?',     en: 'How are you feeling right now?' } };
