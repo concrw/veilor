@@ -6,6 +6,8 @@ import { useAuth } from '@/context/AuthContext';
 import { useUserMeData } from '@/hooks/useUserMeData';
 import { usePremiumTrigger } from '@/hooks/usePremiumTrigger';
 import { useMePageState } from '@/hooks/useMePageState';
+import { useQuery } from '@tanstack/react-query';
+import { veilorDb } from '@/integrations/supabase/client';
 import UpgradeModal from '@/components/premium/UpgradeModal';
 import { C } from '@/lib/colors';
 import { useMode } from '@/context/ModeContext';
@@ -31,6 +33,16 @@ export default function MePage() {
   const { modalOpen, activeTrigger, closeModal } = usePremiumTrigger();
   const amberFlash = useAmberAttention();
   const { zoneState, toggleZone, pct, closedCount, seedTitle, stageStatus } = useMePageState(meData?.stats);
+
+  const { data: patternSummary } = useQuery({
+    queryKey: ['pattern-summary-me', user?.id],
+    queryFn: async () => {
+      const { data } = await veilorDb.rpc('get_user_pattern_summary', { p_user_id: user!.id });
+      return data as { vent_count: number } | null;
+    },
+    enabled: !!user,
+  });
+  const ventCount = patternSummary?.vent_count ?? 0;
 
   const [tab, setTab] = useState<Tab>('growth');
   const [aiSheet, setAiSheet] = useState<'amber' | 'frost' | null>(null);
@@ -91,7 +103,7 @@ export default function MePage() {
 
                 {tab === 'growth' && user && (
                   <>
-                    <GrowthTab meData={meData} pct={pct} closedCount={closedCount} seedTitle={seedTitle} stageStatus={stageStatus} userId={user.id} />
+                    <GrowthTab meData={meData} pct={pct} closedCount={closedCount} seedTitle={seedTitle} stageStatus={stageStatus} userId={user.id} ventCount={ventCount} />
                     <NeedSummaryCard />
                   </>
                 )}

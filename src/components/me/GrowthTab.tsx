@@ -16,6 +16,7 @@ import RelationshipTimeline from '@/components/me/RelationshipTimeline';
 import PersonaFragmentsSection from '@/components/me/PersonaFragmentsSection';
 import RadarChart from '@/components/me/RadarChart';
 import type { useUserMeData } from '@/hooks/useUserMeData';
+import AlignmentRadar from '@/components/me/AlignmentRadar';
 
 const PERSONA_TAG_STYLE = { fontSize: 9, padding: '2px 7px', borderRadius: 99, border: `1px solid ${C.border}`, color: C.text4 } as const;
 
@@ -26,9 +27,10 @@ interface GrowthTabProps {
   seedTitle: string;
   stageStatus: (i: number) => 'done' | 'active' | 'none';
   userId: string;
+  ventCount: number;
 }
 
-export default function GrowthTab({ meData, pct, closedCount, seedTitle, stageStatus, userId }: GrowthTabProps) {
+export default function GrowthTab({ meData, pct, closedCount, seedTitle, stageStatus, userId, ventCount }: GrowthTabProps) {
   const navigate = useNavigate();
   const me = useMeTranslations();
   const [openPersona, setOpenPersona] = useState<number | null>(null);
@@ -148,6 +150,7 @@ export default function GrowthTab({ meData, pct, closedCount, seedTitle, stageSt
       <RelationshipTimeline />
       <WeeklyReportSection weeklyReport={meData.weeklyReport} weeklyReportLoading={meData.weeklyReportLoading} />
       <DiagnosisSection diagnosis={meData.diagnosis} />
+      <AlignmentRadar userId={userId} ventCount={ventCount} />
 
       {/* 친구 추천 */}
       <div className="vr-fade-in" style={{ background: C.bg2, border: `1px solid ${C.border}`, borderRadius: 14, padding: '14px 17px' }}>
