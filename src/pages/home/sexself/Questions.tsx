@@ -412,7 +412,7 @@ export default function SexSelfQuestions() {
             className="mb-4 px-3 py-2.5 rounded-lg text-xs leading-relaxed"
             style={{ background: alpha('#f59e0b', 0.08), border: `1px solid ${alpha('#f59e0b', 0.2)}`, color: '#b45309' }}
           >
-            {q.depth_warning}
+            {language === 'en' ? (q.depth_warningEn ?? q.depth_warning) : q.depth_warning}
           </div>
         )}
 
@@ -431,13 +431,13 @@ export default function SexSelfQuestions() {
           className="text-lg font-light leading-snug mb-2"
           style={{ fontFamily: "'Cormorant Garamond', serif", color: C.text }}
         >
-          {q.question}
+          {language === 'en' ? (q.questionEn ?? q.question) : q.question}
         </h2>
 
         {/* 보조 설명 */}
         {q.subtext ? (
           <p className="text-xs mb-6 leading-relaxed" style={{ color: C.text4 }}>
-            {q.subtext}
+            {language === 'en' ? (q.subtextEn ?? q.subtext) : q.subtext}
           </p>
         ) : (
           <div className="mb-6" />
@@ -460,7 +460,7 @@ export default function SexSelfQuestions() {
                     fontWeight: selected ? 500 : 300,
                   }}
                 >
-                  {choice.label}
+                  {language === 'en' ? (choice.labelEn ?? choice.label) : choice.label}
                 </button>
               );
             })}
@@ -478,9 +478,9 @@ export default function SexSelfQuestions() {
                 className="w-full"
               />
               <div className="flex justify-between text-xs" style={{ color: C.text4 }}>
-                <span>{q.sliderMin}</span>
+                <span>{language === 'en' ? (q.sliderMinEn ?? q.sliderMin) : q.sliderMin}</span>
                 <span className="font-medium" style={{ color: axisColor }}>{sliderVal}</span>
-                <span>{q.sliderMax}</span>
+                <span>{language === 'en' ? (q.sliderMaxEn ?? q.sliderMax) : q.sliderMax}</span>
               </div>
             </div>
             <Button
@@ -510,7 +510,7 @@ export default function SexSelfQuestions() {
                     fontWeight: selected ? 500 : 300,
                   }}
                 >
-                  {choice.label}
+                  {language === 'en' ? (choice.labelEn ?? choice.label) : choice.label}
                 </button>
               );
             })}

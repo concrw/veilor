@@ -187,7 +187,7 @@ export default function GuardianApp() {
         access_type: 'view',
       } as never)
       .then(() => {})
-      .catch(() => {});
+      .catch(() => { console.warn('[GuardianApp] Access log write failed'); });
   }, [user, orgId, trainee]);
 
   const loadAll = async () => {

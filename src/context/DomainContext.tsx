@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
-export type Domain = 'self' | 'work' | 'relation';
+export type Domain = 'self' | 'work' | 'relation' | 'social';
 
 interface DomainContextValue {
   domain: Domain;
@@ -13,7 +13,7 @@ const DEFAULT_DOMAIN: Domain = 'self';
 function getStoredDomain(): Domain {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored === 'self' || stored === 'work' || stored === 'relation') {
+    if (stored === 'self' || stored === 'work' || stored === 'relation' || stored === 'social') {
       return stored;
     }
   } catch {

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
+import { useLanguageContext } from "@/context/LanguageContext";
 import { toast } from "@/hooks/use-toast";
 
 export const useBrandingStrategy = () => {
@@ -29,6 +30,8 @@ export const useBrandingStrategy = () => {
 export const useSaveBrandingStrategy = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { language } = useLanguageContext();
+  const isEn = language === 'en';
 
   return useMutation({
     mutationFn: async ({
@@ -58,11 +61,11 @@ export const useSaveBrandingStrategy = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["branding-strategy", user?.id] });
-      toast({ title: "브랜딩 전략이 저장되었습니다" });
+      toast({ title: isEn ? 'Branding strategy saved' : '브랜딩 전략이 저장되었습니다' });
     },
     onError: (error) => {
       console.error("Branding strategy save error:", error);
-      toast({ title: "브랜딩 전략 저장 중 오류가 발생했습니다", variant: "destructive" });
+      toast({ title: isEn ? 'Error saving branding strategy' : '브랜딩 전략 저장 중 오류가 발생했습니다', variant: "destructive" });
     },
   });
 };

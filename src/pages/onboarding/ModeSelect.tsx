@@ -27,11 +27,13 @@ const S = {
       sprint: '스프린트 시작하기',
       connect: '연결 시작하기',
       mirror: '패턴 보러 가기',
+      social: '관심 영역 탐색하기',
     },
     domains: {
       self:     { name: '나',    sub: '나의 퍼포먼스',    desc: '감정·에너지·루틴 중심 자기 관리' },
       work:     { name: '업무',  sub: '업무 퍼포먼스',    desc: '집중·태스크·시간 예측으로 실행력 관리' },
       relation: { name: '관계',  sub: '관계 퍼포먼스',    desc: '관계 온도·패턴 인식으로 연결 관리' },
+      social:   { name: '사회',  sub: '사회관리 퍼포먼스', desc: '관심 영역·기여·임팩트 중심 사회적 실천 관리' },
     },
     modes: {
       original: { name: '오리지널',  tagline: '말하지 않아도 알 것 같은 공간',     keywords: ['감성적', '비구조적', '대화 중심'] },
@@ -41,6 +43,7 @@ const S = {
       sprint:   { name: '스프린트',  tagline: '주간 실행력을 숫자로',              keywords: ['TBQC', '주간 성과', '메타인지'] },
       connect:  { name: '커넥트',    tagline: '관계 온도를 느껴보세요',            keywords: ['관계', '온도', '연결'] },
       mirror:   { name: '미러',      tagline: '관계 패턴을 발견하세요',            keywords: ['패턴', '인식', '인사이트'] },
+      social:   { name: '소셜',      tagline: '세상 어디에 기여하고 싶은지 발견',  keywords: ['관심 영역', '임팩트', '기여'] },
     },
   },
   en: {
@@ -61,11 +64,13 @@ const S = {
       sprint: 'Start sprint',
       connect: 'Start connecting',
       mirror: 'See patterns',
+      social: 'Explore interests',
     },
     domains: {
       self:     { name: 'Self',         sub: 'My Performance',           desc: 'Emotion, energy, and routine-centered self-management' },
       work:     { name: 'Work',         sub: 'Work Performance',         desc: 'Manage execution with focus, tasks, and time prediction' },
       relation: { name: 'Relationship', sub: 'Relationship Performance', desc: 'Manage connection with relationship temperature and pattern recognition' },
+      social:   { name: 'Social',       sub: 'Social Performance',       desc: 'Track interest areas, contributions, and social impact over time' },
     },
     modes: {
       original: { name: 'Original',  tagline: 'A space that just gets it',            keywords: ['Emotional', 'Unstructured', 'Conversation-first'] },
@@ -75,6 +80,7 @@ const S = {
       sprint:   { name: 'Sprint',    tagline: 'Weekly execution in numbers',          keywords: ['TBQC', 'Weekly', 'Metacognition'] },
       connect:  { name: 'Connect',   tagline: 'Feel the temperature of your bonds',  keywords: ['Relation', 'Temperature', 'Connection'] },
       mirror:   { name: 'Mirror',    tagline: 'Discover your relationship patterns',  keywords: ['Pattern', 'Recognition', 'Insight'] },
+      social:   { name: 'Social',    tagline: 'Discover where you want to contribute', keywords: ['Interests', 'Impact', 'Contribution'] },
     },
   },
 } as const;
@@ -87,6 +93,7 @@ const DOMAIN_META: { id: Domain; accent: string; border: string; bgSelected: str
   { id: 'self',     accent: 'text-amber-400',   border: 'border-amber-400/60',   bgSelected: 'bg-amber-400/10' },
   { id: 'work',     accent: 'text-sky-400',     border: 'border-sky-400/60',     bgSelected: 'bg-sky-400/10' },
   { id: 'relation', accent: 'text-rose-400',    border: 'border-rose-400/60',    bgSelected: 'bg-rose-400/10' },
+  { id: 'social',   accent: 'text-teal-400',    border: 'border-teal-400/60',    bgSelected: 'bg-teal-400/10' },
 ];
 
 const MODE_META: { id: UXMode; accent: string; border: string; bgSelected: string }[] = [
@@ -97,6 +104,7 @@ const MODE_META: { id: UXMode; accent: string; border: string; bgSelected: strin
   { id: 'sprint',   accent: 'text-sky-400',     border: 'border-sky-400/60',     bgSelected: 'bg-sky-400/10' },
   { id: 'connect',  accent: 'text-rose-300',    border: 'border-rose-300/60',    bgSelected: 'bg-rose-300/10' },
   { id: 'mirror',   accent: 'text-rose-400',    border: 'border-rose-400/60',    bgSelected: 'bg-rose-400/10' },
+  { id: 'social',   accent: 'text-teal-400',   border: 'border-teal-400/60',    bgSelected: 'bg-teal-400/10' },
 ];
 
 // ──────────────────────────────────────────────────────────────────────────────

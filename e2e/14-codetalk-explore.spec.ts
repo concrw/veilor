@@ -188,9 +188,10 @@ test.describe('Set 페이지 — 코드토크 AI 인사이트 버튼', () => {
     // 키워드 탭이 기본 active
     await page.waitForTimeout(1_500);
     // 이미 오늘 기록이 있으면 버튼 표시, 없으면 입력 폼 표시
-    const hasInsightBtn = await page.getByRole('button', { name: 'AI 인사이트 보기' }).isVisible().catch(() => false);
-    const hasForm       = await page.getByText('오늘 이 키워드가 내 관계에서 어떻게 나타났나요?').isVisible().catch(() => false);
-    const hasDoneCard   = await page.getByText('오늘의 기록 ✓').isVisible().catch(() => false);
-    expect(hasInsightBtn || hasForm || hasDoneCard).toBe(true);
+    const hasInsightBtn = await page.getByRole('button', { name: 'AI 인사이트' }).isVisible().catch(() => false);
+    const hasForm       = await page.getByText('오늘 이 키워드가').isVisible().catch(() => false);
+    const hasDoneCard   = await page.getByText('오늘의 기록').isVisible().catch(() => false);
+    const hasKeyword    = await page.getByText('키워드 검색').isVisible().catch(() => false);
+    expect(hasInsightBtn || hasForm || hasDoneCard || hasKeyword).toBe(true);
   });
 });

@@ -4,10 +4,13 @@
 // 6단계: 직접 경험 여부 → 7단계: 1차 AI 분석 → 8단계: 2차 분석 →
 // 9단계: 가치관 매핑 → 10단계: Prime Perspective 도출
 
+import { useState } from 'react';
+import { useFeature } from '@growthbook/growthbook-react';
 import { useWhySession } from '@/hooks/useWhySession';
 import { useWhyJobs } from '@/hooks/useWhyJobs';
 import { useWhyFlowAnalysis } from '@/hooks/useWhyFlowAnalysis';
 import { useLanguageContext } from '@/context/LanguageContext';
+import { FEATURES } from '@/lib/growthbook';
 import { StepReady } from './steps/StepReady';
 import { StepBrainstorm } from './steps/StepBrainstorm';
 import { StepDefinition } from './steps/StepDefinition';
@@ -56,6 +59,8 @@ const S = {
 export default function WhyFlow() {
   const { language } = useLanguageContext();
   const loc = S[language] ?? S.ko;
+  const whyHint = useFeature(FEATURES.WHY_ONBOARDING_HINT).value ?? 'none';
+  const [hintDismissed, setHintDismissed] = useState(false);
   const s = useWhySession();
   const j = useWhyJobs({
     user: s.user,
@@ -111,6 +116,36 @@ export default function WhyFlow() {
           </div>
           <div className="h-1 bg-muted rounded-full">
             <div className="h-1 bg-primary rounded-full transition-all" style={{ width: `${s.progressPct}%` }} />
+          </div>
+        </div>
+      )}
+
+      {/* WHY 온보딩 힌트 (feature flag: why_onboarding_hint) */}
+      {s.step === 0 && whyHint === 'tooltip' && !hintDismissed && (
+        <div className="relative bg-primary/10 border border-primary/20 rounded-lg px-4 py-3 text-sm text-muted-foreground">
+          {language === 'en'
+            ? 'Tip: WHY analysis helps you uncover the root values behind your career choices.'
+            : '팁: WHY 분석은 직업 선택 이면의 핵심 가치관을 발견하는 여정입니다.'}
+          <button onClick={() => setHintDismissed(true)} className="absolute top-2 right-3 text-xs opacity-40 hover:opacity-80">✕</button>
+        </div>
+      )}
+      {s.step === 0 && whyHint === 'modal' && !hintDismissed && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="bg-card border border-border rounded-2xl p-6 max-w-sm w-full mx-4 space-y-4">
+            <h3 className="text-base font-semibold">
+              {language === 'en' ? 'Before you begin WHY' : 'WHY 시작 전 안내'}
+            </h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {language === 'en'
+                ? 'This 10-step journey uncovers the values that shape your career decisions. Take your time — there are no right or wrong answers.'
+                : '10단계 플로우를 통해 직업 선택 이면의 가치관을 탐색합니다. 정답은 없으니 천천히 진행하세요.'}
+            </p>
+            <button
+              onClick={() => setHintDismissed(true)}
+              className="w-full py-2 rounded-lg text-sm font-medium bg-primary text-primary-foreground"
+            >
+              {language === 'en' ? 'Got it' : '확인'}
+            </button>
           </div>
         </div>
       )}

@@ -1051,3 +1051,39 @@ export interface OrgWorkAggregate {
   rollover_count: number;
   active_member_count: number;
 }
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Social Domain S035
+// ──────────────────────────────────────────────────────────────────────────────
+
+export type SocialIssueCode = 'env' | 'edu' | 'labor' | 'health' | 'equity' | 'tech' | 'poverty' | 'community';
+export type SocialInterestStatus = 'active' | 'dormant' | 'revisit';
+export type SocialPivotType = 'growth' | 'fatigue' | 'transition';
+
+export interface VeilorSocialInterest {
+  id: string;
+  user_id: string;
+  issue_code: string;
+  level: 1 | 2 | 3;
+  status: SocialInterestStatus;
+  note: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface VeilorSocialContribution {
+  id: string;
+  user_id: string;
+  issue_code: string;
+  action_text: string;
+  date: string;
+  created_at: string;
+}
+
+export interface VeilorSocialPivot {
+  id: string;
+  user_id: string;
+  pivot_type: SocialPivotType;
+  note: string | null;
+  detected_at: string;
+}

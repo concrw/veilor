@@ -5,12 +5,13 @@ import type { Domain } from './DomainContext';
 // 타입 정의
 // ──────────────────────────────────────────────────────────────────────────────
 
-export type UXMode = 'original' | 'clear' | 'routine' | 'focus' | 'sprint' | 'connect' | 'mirror';
+export type UXMode = 'original' | 'clear' | 'routine' | 'focus' | 'sprint' | 'connect' | 'mirror' | 'social';
 
 export const DOMAIN_MODES: Record<Domain, UXMode[]> = {
   self:     ['original', 'clear', 'routine'],
   work:     ['original', 'clear', 'routine', 'focus', 'sprint'],
   relation: ['original', 'clear', 'routine', 'connect', 'mirror'],
+  social:   ['original', 'clear'],
 };
 
 interface ModeContextValue {
@@ -30,7 +31,7 @@ const FIRST_VISIT_KEY = 'veilor_mode_selected';
 
 const DEFAULT_MODE: UXMode = 'original';
 
-const VALID_MODES: UXMode[] = ['original', 'clear', 'routine', 'focus', 'sprint', 'connect', 'mirror'];
+const VALID_MODES: UXMode[] = ['original', 'clear', 'routine', 'focus', 'sprint', 'connect', 'mirror', 'social'];
 
 function getStoredMode(): UXMode {
   try {

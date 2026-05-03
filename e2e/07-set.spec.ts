@@ -29,11 +29,11 @@ test.describe('SetPage', () => {
 
   test('Codetalk — 오늘의 키워드 표시 확인', async ({ page }) => {
     // 키워드 탭 기본 선택됨
-    await expect(page.getByText('오늘의 키워드')).toBeVisible({ timeout: 5_000 });
+    await expect(page.getByText('키워드 검색')).toBeVisible({ timeout: 5_000 });
   });
 
   test('Codetalk — 텍스트 입력 → 저장', async ({ page }) => {
-    await expect(page.getByText('오늘의 키워드')).toBeVisible({ timeout: 5_000 });
+    await expect(page.getByText('키워드 검색')).toBeVisible({ timeout: 5_000 });
 
     // 이미 오늘 저장했으면 편집 모드 / 아니면 입력창 바로 표시
     const textarea = page.getByPlaceholder('자유롭게 기록해 보세요 (최대 500자)');

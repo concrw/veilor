@@ -211,6 +211,7 @@ export default function AILeadOverlay({
           history:    [...history, userMsg].slice(-6),
           tab:        currentTab ?? 'vent',
           userId:     user?.id,
+          language,
         },
         (delta) => {
           accumulated += delta;

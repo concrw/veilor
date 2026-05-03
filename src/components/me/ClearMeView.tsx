@@ -100,7 +100,7 @@ export default function ClearMeView({ userId }: { userId: string }) {
         }
         setEmotionScores(Object.entries(totals).map(([emotion, total]) => ({ emotion, score: total / counts[emotion] })));
       })
-      .catch(() => {});
+      .catch(() => { console.warn('[ClearMeView] Emotion score query failed'); });
     return () => { cancelled = true; };
   }, [userId]);
 

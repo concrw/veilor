@@ -134,7 +134,7 @@ export default function WorkSprintHome() {
       </div>
 
       {loading && (
-        <p className="text-center text-stone-600 text-xs py-4">로딩 중...</p>
+        <p className="text-center text-stone-600 text-xs py-4">{s.loading}</p>
       )}
 
       {!loading && tasks.length === 0 ? (

@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useLanguageContext } from "@/context/LanguageContext";
 import { toast } from "@/hooks/use-toast";
 
 export const usePersonaIkigai = (personaId: string | null) => {
@@ -23,6 +24,8 @@ export const usePersonaIkigai = (personaId: string | null) => {
 
 export const useUpsertPersonaIkigai = () => {
   const queryClient = useQueryClient();
+  const { language } = useLanguageContext();
+  const isEn = language === 'en';
 
   return useMutation({
     mutationFn: async ({
@@ -53,11 +56,11 @@ export const useUpsertPersonaIkigai = () => {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["persona-ikigai", variables.personaId] });
       queryClient.invalidateQueries({ queryKey: ["persona", variables.personaId] });
-      toast({ title: "Ikigai가 저장되었습니다" });
+      toast({ title: isEn ? 'Ikigai saved' : 'Ikigai가 저장되었습니다' });
     },
     onError: (error) => {
       console.error("Ikigai upsert error:", error);
-      toast({ title: "Ikigai 저장 중 오류가 발생했습니다", variant: "destructive" });
+      toast({ title: isEn ? 'Error saving Ikigai' : 'Ikigai 저장 중 오류가 발생했습니다', variant: "destructive" });
     },
   });
 };

@@ -1,9 +1,12 @@
 // Get — 뿌리가 궁금하다
 // 기능: V-File 기반 자기 구조 탐색 + Ikigai / 브랜드 정체성 / 멀티페르소나 (프리미엄)
+// Social 도메인 선택 시 관심 영역 탐색(SocialInterestExplorer)으로 전환
 
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useDomain } from '@/context/DomainContext';
 import { useGetTranslations } from '@/hooks/useTranslation';
+import SocialInterestExplorer from '@/components/get/SocialInterestExplorer';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase, veilorDb } from '@/integrations/supabase/client';
 import { ErrorState } from '@/components/ErrorState';
@@ -20,8 +23,17 @@ type Tab = 'identity' | 'why' | 'ikigai' | 'brand' | 'couple';
 
 export default function GetPage() {
   const { user, primaryMask, axisScores } = useAuth();
+  const { domain } = useDomain();
   const qc = useQueryClient();
   const get = useGetTranslations();
+
+  if (domain === 'social') {
+    return (
+      <div className="px-4 py-6 max-w-2xl mx-auto">
+        <SocialInterestExplorer />
+      </div>
+    );
+  }
   const { isPro, modalOpen, activeTrigger, tryAccess, closeModal } = usePremiumTrigger();
   const [tab, setTab] = useState<Tab>('identity');
 
@@ -85,6 +97,7 @@ export default function GetPage() {
   });
 
   const handleIkigaiAiInsight = async () => {
+    if (!isPro && !tryAccess('ikigai_design')) return;
     if (!ikigai) { toast({ title: get.ikigai.notYet, variant: 'destructive' }); return; }
     setIkigaiAiLoading(true); setIkigaiAiInsight('');
     try {
@@ -115,6 +128,7 @@ export default function GetPage() {
   });
 
   const handleBrandAiGenerate = async () => {
+    if (!isPro && !tryAccess('brand_identity')) return;
     setBrandAiLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('generate-brand-strategy', {

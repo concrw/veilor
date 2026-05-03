@@ -46,7 +46,8 @@ interface DomainQuestion {
 
 export type { Division, MatchResult, DigHistoryItem, PatternProfile };
 
-export function useDigPageData() {
+export function useDigPageData(options?: { isPro?: boolean }) {
+  const isPro = options?.isPro ?? false;
   const { user, axisScores } = useAuth();
   const location = useLocation();
   const prefillText = (location.state as { prefillText?: string } | null)?.prefillText ?? '';
@@ -248,6 +249,7 @@ export function useDigPageData() {
             qc.invalidateQueries({ queryKey: ['pattern-profiles', user.id] });
           } catch (e) { console.error('pattern_profiles upsert error:', e); }
         }
+        if (!isPro) return;
         setInterpreting(true);
         setInterpretation('');
         try {

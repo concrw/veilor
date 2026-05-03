@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { renderWithProviders as render, screen, fireEvent } from '../../test-utils';
 
 // jsdom doesn't implement scrollIntoView
 Element.prototype.scrollIntoView = vi.fn();
@@ -14,9 +14,21 @@ vi.mock('@/context/AuthContext', () => ({
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
+    auth: {
+      getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
+    },
     functions: {
       invoke: vi.fn().mockResolvedValue({ data: { reply: 'AI response' }, error: null }),
     },
+  },
+  veilorDb: {
+    from: () => ({
+      select: () => ({
+        eq: () => ({
+          single: vi.fn().mockResolvedValue({ data: null, error: null }),
+        }),
+      }),
+    }),
   },
 }));
 
@@ -77,16 +89,15 @@ describe('AILeadOverlay', () => {
   it('is hidden when open is false', () => {
     render(<AILeadOverlay open={false} onClose={onClose} />);
 
-    const dialog = screen.getByRole('dialog', { hidden: true });
-    expect(dialog).toHaveAttribute('aria-hidden', 'true');
-    expect(dialog).toHaveStyle({ pointerEvents: 'none', opacity: '0' });
+    // open=false일 때 dialog 자체가 DOM에서 제거됨 (AnimatePresence 사용)
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 
   it('is visible when open is true', () => {
     render(<AILeadOverlay open={true} onClose={onClose} />);
 
     const dialog = screen.getByRole('dialog');
-    expect(dialog).toHaveStyle({ pointerEvents: 'all', opacity: '1' });
+    expect(dialog).toBeInTheDocument();
   });
 
   it('displays the AI name (default: 엠버)', () => {

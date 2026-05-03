@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
-import { getChallengeByScore, isChallengeCompletedToday, markChallengeCompleted } from '@/data/challengeConstants';
+import { useLanguageContext } from '@/context/LanguageContext';
+import { getChallengeByScore, isChallengeCompletedToday, markChallengeCompleted, CATEGORY_LABELS } from '@/data/challengeConstants';
 
 // category 값은 DB/데이터 상수에서 오는 코드값이므로 색상 매핑만 유지
 const CATEGORY_COLORS: Record<string, string> = {
@@ -12,6 +13,8 @@ const CATEGORY_COLORS: Record<string, string> = {
 
 export function ChallengeCard({ score }: { score: number }) {
   const { translations: tr } = useTranslation();
+  const { language } = useLanguageContext();
+  const lang = language === 'en' ? 'en' : 'ko';
   const c = tr.clear;
   const [done, setDone] = useState(isChallengeCompletedToday);
   const challenge = getChallengeByScore(score);
@@ -35,12 +38,12 @@ export function ChallengeCard({ score }: { score: number }) {
           className="text-[10px] px-2 py-0.5 rounded-full"
           style={{ color, background: `${color}15` }}
         >
-          {challenge.category}
+          {CATEGORY_LABELS[challenge.category][lang]}
         </span>
       </div>
 
       <p className="text-sm font-medium text-slate-200 leading-relaxed mb-4">
-        "{challenge.text}"
+        "{challenge.text[lang]}"
       </p>
 
       {done ? (

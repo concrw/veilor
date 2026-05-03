@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { renderWithProviders as render, screen, fireEvent } from '../test-utils';
 import { MemoryRouter } from 'react-router-dom';
 import ConcernRouter from '@/components/set/ConcernRouter';
 

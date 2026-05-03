@@ -1,9 +1,11 @@
 // ChatView — message list + AI thinking indicator + finish button + summary card
 import { useRef, useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useFeature } from '@growthbook/growthbook-react';
 import { C, alpha } from '@/lib/colors';
 import { veilorDb } from '@/integrations/supabase/client';
 import { useVentTranslations } from '@/hooks/useTranslation';
+import { FEATURES } from '@/lib/growthbook';
 
 // NUDGE_EMOTIONS is built dynamically from translations in the component
 
@@ -44,6 +46,7 @@ export default function ChatView({
   const navigate = useNavigate();
   const chatRef = useRef<HTMLDivElement>(null);
   const [feedbacks, setFeedbacks] = useState<Record<number, 'up' | 'down'>>({});
+  const ventNudge = useFeature(FEATURES.VENT_NUDGE_MODE).value ?? 'passive';
   const [showSexSelfNudge, setShowSexSelfNudge] = useState(false);
   const nudgeShownRef = useRef(false);
 
@@ -73,7 +76,7 @@ export default function ChatView({
       feedback: value,
       context: curEmo,
       created_at: new Date().toISOString(),
-    }).then(() => {}).catch(() => {});
+    }).then(() => {}).catch(() => { console.warn('[ChatView] Feedback save failed'); });
   }
 
   useEffect(() => {
@@ -184,6 +187,19 @@ export default function ChatView({
               style={{ border: `1px solid ${alpha(C.amber, 0.3)}`, color: C.amber, background: alpha(C.amber, 0.05) }}
             >
               {vent.chat.finishButton}
+            </button>
+          </div>
+        )}
+
+        {/* proactive 모드: 4턴 완료 시 Dig 이동 버튼 강조 */}
+        {ventNudge === 'proactive' && msgCount >= 4 && !showSummary && !aiThinking && (
+          <div className="vr-fade-in flex-shrink-0 flex justify-center mt-1">
+            <button
+              onClick={() => navigate('/dig')}
+              className="text-[12px] font-medium px-5 py-2 rounded-full transition-all animate-pulse"
+              style={{ border: `1px solid ${alpha(C.amber, 0.7)}`, color: C.amber, background: alpha(C.amber, 0.12) }}
+            >
+              Dig으로 이동 →
             </button>
           </div>
         )}

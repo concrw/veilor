@@ -6,20 +6,39 @@
 import { supabase } from '@/integrations/supabase/client';
 import { detectCrisisLevel } from './crisisDetect';
 
-const CRISIS_RESPONSE_CRITICAL = `지금 정말 힘드시겠어요. 혼자 이 무게를 지고 계셨던 거죠.
+function getCrisisResponseCritical(lang: 'ko' | 'en'): string {
+  if (lang === 'en') return `It sounds like you're carrying something incredibly heavy right now. You don't have to face this alone.
+
+There are people you can reach out to right now:
+📞 **988 Suicide & Crisis Lifeline** (call or text 988, 24/7, free)
+📞 **Crisis Text Line** (text HOME to 741741)
+
+Are you safe right now? I hope there's someone who can be with you tonight.`;
+
+  return `지금 정말 힘드시겠어요. 혼자 이 무게를 지고 계셨던 거죠.
 
 지금 바로 연락할 수 있는 곳이 있어요:
 📞 **자살예방상담전화 1393** (24시간, 무료)
 📞 **정신건강위기상담전화 1577-0199** (24시간)
 
 지금 안전한가요? 오늘 밤 옆에 있어줄 수 있는 사람이 있으면 좋겠어요.`;
+}
 
-const CRISIS_RESPONSE_HIGH = `지금 많이 지쳐 있는 것 같아서 마음이 쓰여요.
+function getCrisisResponseHigh(lang: 'ko' | 'en'): string {
+  if (lang === 'en') return `It seems like you've been under a lot of strain, and that matters to me.
+
+I wonder if you've been holding it together for too long on your own. There's always someone available to talk to:
+📞 **988 Suicide & Crisis Lifeline** (call or text 988, 24/7)
+
+Can you tell me a little more about where you are right now?`;
+
+  return `지금 많이 지쳐 있는 것 같아서 마음이 쓰여요.
 
 혼자서 너무 오래 버텨오신 건 아닌지 걱정돼요. 언제든 이야기 나눌 수 있는 곳이 있어요:
 📞 **자살예방상담전화 1393** (24시간)
 
 지금 어떤 상황인지 조금 더 이야기해줄 수 있어요?`;
+}
 
 export interface HeldChatParams {
   emotion?: string;
@@ -34,6 +53,7 @@ export interface HeldChatParams {
   similarCount?: number;
   sexselfProfile?: string | null; // 성적 자아 프로파일 타입
   sexselfSha?: number | null;     // 수치심 점수 (SHA) — 대화 민감도 조정
+  language?: 'ko' | 'en';
 }
 
 export interface HeldChatResult {
@@ -46,14 +66,15 @@ export async function invokeHeldChat(
   signal?: AbortSignal,
 ): Promise<HeldChatResult> {
   const { text } = params;
+  const lang = params.language ?? 'ko';
 
   // ── 1차 클라이언트 위기 감지 (즉각 차단, 서버 왕복 없음) ──
   const crisisLevel = detectCrisisLevel(text);
   if (crisisLevel === 'critical') {
-    return { response: CRISIS_RESPONSE_CRITICAL, crisis: 'critical' };
+    return { response: getCrisisResponseCritical(lang), crisis: 'critical' };
   }
   if (crisisLevel === 'high') {
-    return { response: CRISIS_RESPONSE_HIGH, crisis: 'high' };
+    return { response: getCrisisResponseHigh(lang), crisis: 'high' };
   }
 
   // ── Edge Function 경유 (API 키는 서버에만 존재) ──
@@ -100,15 +121,18 @@ export async function invokeHeldChatStream(
   signal?: AbortSignal,
 ): Promise<HeldChatResult> {
   const { text } = params;
+  const lang = params.language ?? 'ko';
 
   const crisisLevel = detectCrisisLevel(text);
   if (crisisLevel === 'critical') {
-    onChunk(CRISIS_RESPONSE_CRITICAL);
-    return { response: CRISIS_RESPONSE_CRITICAL, crisis: 'critical' };
+    const msg = getCrisisResponseCritical(lang);
+    onChunk(msg);
+    return { response: msg, crisis: 'critical' };
   }
   if (crisisLevel === 'high') {
-    onChunk(CRISIS_RESPONSE_HIGH);
-    return { response: CRISIS_RESPONSE_HIGH, crisis: 'high' };
+    const msg = getCrisisResponseHigh(lang);
+    onChunk(msg);
+    return { response: msg, crisis: 'high' };
   }
 
   const { data: { session } } = await supabase.auth.getSession();

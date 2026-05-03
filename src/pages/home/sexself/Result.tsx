@@ -103,7 +103,7 @@ export default function SexSelfResult() {
 
       const r = runSexSelfDiagnosis(responses, attachmentStyle, coreWound);
       setResult(r);
-      const kr = computeKinkLanguage(r.scores, r.profileType);
+      const kr = computeKinkLanguage(r.scores, r.profileType, language === 'en' ? 'en' : 'ko');
       setKinkResult(kr);
 
       // DB 저장 — user_signals에 sexself 완료 신호 저장

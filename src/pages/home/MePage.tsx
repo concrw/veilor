@@ -9,6 +9,7 @@ import { useMePageState } from '@/hooks/useMePageState';
 import UpgradeModal from '@/components/premium/UpgradeModal';
 import { C } from '@/lib/colors';
 import { useMode } from '@/context/ModeContext';
+import { useDomain } from '@/context/DomainContext';
 import AISheet from '@/components/me/AISheet';
 import SettingsSheet from '@/components/me/SettingsSheet';
 import RenameSheet from '@/components/me/RenameSheet';
@@ -16,13 +17,15 @@ import PeopleSection from '@/components/me/PeopleSection';
 import ClearMeView from '@/components/me/ClearMeView';
 import GrowthTab from '@/components/me/GrowthTab';
 import ZoneTab from '@/components/me/ZoneTab';
+import ImpactTab from '@/components/me/ImpactTab';
 import NeedSummaryCard from '@/components/me/NeedSummaryCard';
 
-type Tab = 'growth' | 'people' | 'zone';
+type Tab = 'growth' | 'people' | 'zone' | 'impact';
 
 export default function MePage() {
   const { user } = useAuth();
   const { mode } = useMode();
+  const { domain } = useDomain();
   const me = useMeTranslations();
   const meData = useUserMeData();
   const { modalOpen, activeTrigger, closeModal } = usePremiumTrigger();
@@ -61,31 +64,49 @@ export default function MePage() {
 
       {mode !== 'clear' && (
         <>
-          <div style={{ display: 'flex', borderBottom: `1px solid ${C.border2}`, padding: '0 20px', flexShrink: 0 }}>
-            {([
-              { id: 'growth' as Tab, label: me.tabs.growth },
-              { id: 'people' as Tab, label: me.tabs.people },
-              { id: 'zone'   as Tab, label: me.tabs.zone },
-            ]).map(t => (
-              <button key={t.id} onClick={() => setTab(t.id)}
-                style={{ fontSize: 11, fontWeight: tab === t.id ? 400 : 300, color: tab === t.id ? C.amberGold : C.text4, padding: '10px 0', marginRight: 20, background: 'transparent', border: 'none', borderBottom: `2px solid ${tab === t.id ? C.amberGold : 'transparent'}`, cursor: 'pointer', transition: 'all .2s' }}>
-                {t.label}
-              </button>
-            ))}
-          </div>
+          {(() => {
+            const tabAccentColor =
+              domain === 'work'     ? '#38BDF8' :
+              domain === 'relation' ? '#FB7185' :
+              domain === 'social'   ? '#2DD4BF' :
+              C.amberGold;
 
-          {tab === 'growth' && user && (
-            <>
-              <GrowthTab meData={meData} pct={pct} closedCount={closedCount} seedTitle={seedTitle} stageStatus={stageStatus} userId={user.id} />
-              <NeedSummaryCard />
-            </>
-          )}
-          {tab === 'people' && (
-            <PeopleSection people={meData.people} peopleLoading={meData.peopleLoading} />
-          )}
-          {tab === 'zone' && (
-            <ZoneTab pct={pct} closedCount={closedCount} zoneState={zoneState} toggleZone={toggleZone} />
-          )}
+            const tabList: { id: Tab; label: string }[] = [
+              { id: 'growth', label: me.tabs.growth },
+              { id: 'people', label: me.tabs.people },
+              { id: 'zone',   label: me.tabs.zone },
+              ...(domain === 'social' ? [{ id: 'impact' as Tab, label: me.tabs.impact }] : []),
+            ];
+
+            return (
+              <>
+                <div style={{ display: 'flex', borderBottom: `1px solid ${C.border2}`, padding: '0 20px', flexShrink: 0 }}>
+                  {tabList.map(t => (
+                    <button key={t.id} onClick={() => setTab(t.id)}
+                      style={{ fontSize: 11, fontWeight: tab === t.id ? 400 : 300, color: tab === t.id ? tabAccentColor : C.text4, padding: '10px 0', marginRight: 20, background: 'transparent', border: 'none', borderBottom: `2px solid ${tab === t.id ? tabAccentColor : 'transparent'}`, cursor: 'pointer', transition: 'all .2s' }}>
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
+
+                {tab === 'growth' && user && (
+                  <>
+                    <GrowthTab meData={meData} pct={pct} closedCount={closedCount} seedTitle={seedTitle} stageStatus={stageStatus} userId={user.id} />
+                    <NeedSummaryCard />
+                  </>
+                )}
+                {tab === 'people' && (
+                  <PeopleSection people={meData.people} peopleLoading={meData.peopleLoading} />
+                )}
+                {tab === 'zone' && (
+                  <ZoneTab pct={pct} closedCount={closedCount} zoneState={zoneState} toggleZone={toggleZone} />
+                )}
+                {tab === 'impact' && (
+                  <ImpactTab />
+                )}
+              </>
+            );
+          })()}
         </>
       )}
 

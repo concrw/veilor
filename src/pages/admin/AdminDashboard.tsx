@@ -60,6 +60,7 @@ const S = {
       fragNameDist: { title: '페르소나 조각 분포 (5종)', sub: 'detect_persona_fragments 결과' },
       axisAvg: { title: '4축 점수 평균', sub: '전체 유저 axis 평균값' },
       axisDist: { title: '4축 점수 분포', sub: '0~100 점수대별 유저 분포' },
+      funnel: { title: '유저 파이프라인 퍼널', sub: '단계별 진행 유저 수 및 전환율', convRate: '전환율' },
     },
     axisLabels: ["애착", "소통", "욕구표현", "역할"],
     fragCountLabels: ["0개", "1개", "2개", "3개", "4개+"],
@@ -113,6 +114,7 @@ const S = {
       fragNameDist: { title: 'Persona Fragment Distribution (5 types)', sub: 'detect_persona_fragments results' },
       axisAvg: { title: '4-Axis Score Average', sub: 'Average axis values for all users' },
       axisDist: { title: '4-Axis Score Distribution', sub: 'User distribution by score range (0–100)' },
+      funnel: { title: 'User Pipeline Funnel', sub: 'Users per stage and conversion rate', convRate: 'Conv. Rate' },
     },
     axisLabels: ["Attachment", "Communication", "Expression", "Role"],
     fragCountLabels: ["0", "1", "2", "3", "4+"],
@@ -122,6 +124,13 @@ const S = {
 } as const;
 
 const COLORS = ["#6366f1","#8b5cf6","#a78bfa","#c4b5fd","#ddd6fe","#ede9fe","#f5f3ff","#4f46e5","#7c3aed","#9333ea","#c026d3","#e879f9"];
+
+type FunnelRow = {
+  stage: string;
+  label_ko: string;
+  label_en: string;
+  count: number;
+};
 
 type Row = {
   id: string; seq: number; primary_concern: string; relationship_status: string;
@@ -164,6 +173,7 @@ export default function AdminDashboard() {
   const [rows, setRows] = useState<Row[]>([]);
   const [fragments, setFragments] = useState<{ name_ko: string }[]>([]);
   const [memberships, setMemberships] = useState<GroupMembership[]>([]);
+  const [funnel, setFunnel] = useState<FunnelRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'b2c' | 'b2b' | 'virtual'>('b2c');
   const { language } = useLanguageContext();
@@ -171,14 +181,40 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     async function load() {
-      const [{ data: vData }, { data: fData }, { data: mData }] = await Promise.all([
+      const [
+        { data: vData },
+        { data: fData },
+        { data: mData },
+        { count: s0 },
+        { count: s2 },
+        { count: s3 },
+        { count: s4 },
+        { count: s5 },
+        { count: s6 },
+      ] = await Promise.all([
         supabase.from("admin_dashboard_stats" as never).select("*").limit(2000),
         supabase.from("persona_fragments" as never).select("name_ko"),
         supabase.from("user_group_memberships" as never).select("user_id,group_code,source").limit(5000),
+        supabase.from("user_profiles" as never).select("*", { count: "exact", head: true }),
+        // ≈ 세션 수 (유저 기준 아님)
+        supabase.from("dive_sessions" as never).select("user_id", { count: "exact", head: true }).eq("mode" as never, "F"),
+        // ≈ 세션 수 (유저 기준 아님)
+        supabase.from("dive_sessions" as never).select("user_id", { count: "exact", head: true }).eq("mode" as never, "D"),
+        supabase.from("why_sessions" as never).select("user_id", { count: "exact", head: true }),
+        supabase.from("why_sessions" as never).select("user_id", { count: "exact", head: true }).not("completed_at" as never, "is", null),
+        supabase.from("persona_instances" as never).select("user_id", { count: "exact", head: true }),
       ]);
       setRows((vData as Row[]) || []);
       setFragments((fData as { name_ko: string }[]) || []);
       setMemberships((mData as GroupMembership[]) || []);
+      setFunnel([
+        { stage: 'S0', label_ko: '가입', label_en: 'Sign Up', count: s0 ?? 0 },
+        { stage: 'S2', label_ko: '첫 Vent', label_en: 'First Vent', count: s2 ?? 0 },
+        { stage: 'S3', label_ko: '첫 Dig', label_en: 'First Dig', count: s3 ?? 0 },
+        { stage: 'S4', label_ko: 'WHY 시작', label_en: 'WHY Start', count: s4 ?? 0 },
+        { stage: 'S5', label_ko: 'WHY 완료', label_en: 'WHY Done', count: s5 ?? 0 },
+        { stage: 'S6', label_ko: '페르소나 검출', label_en: 'Persona Found', count: s6 ?? 0 },
+      ]);
       setLoading(false);
     }
     load();
@@ -258,6 +294,46 @@ export default function AdminDashboard() {
       {activeTab === 'virtual' && <VirtualInjectTab />}
       {activeTab === 'b2c' && (
         <div className="space-y-8">
+          <Section title={s.sections.funnel.title} sub={s.sections.funnel.sub}>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-white/40 text-left border-b border-white/10">
+                    <th className="pb-2 pr-4">단계</th>
+                    <th className="pb-2 pr-4 text-right">유저 수</th>
+                    <th className="pb-2 text-right">{s.sections.funnel.convRate}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {funnel.map((f, i) => {
+                    const prev = funnel[i - 1]?.count ?? f.count;
+                    const rate = prev > 0 ? Math.round((f.count / prev) * 100) : 100;
+                    return (
+                      <tr key={f.stage} className="border-b border-white/5">
+                        <td className="py-2 pr-4 text-white/80">
+                          <span className="text-white/40 text-xs mr-2">{f.stage}</span>
+                          {language === 'en' ? f.label_en : f.label_ko}
+                        </td>
+                        <td className="py-2 pr-4 text-right font-mono text-white">
+                          {f.count.toLocaleString()}
+                        </td>
+                        <td className="py-2 text-right">
+                          {i === 0 ? (
+                            <span className="text-white/30 text-xs">—</span>
+                          ) : (
+                            <span className={`text-xs font-medium ${rate >= 60 ? 'text-green-400' : rate >= 30 ? 'text-yellow-400' : 'text-red-400'}`}>
+                              {rate}%
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </Section>
+
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <StatCard label={s.statCards.totalVirtual} value={`${total}${s.userCountSuffix}`} />
             <StatCard label={s.statCards.withSession} value={`${withSession}${s.userCountSuffix}`} sub={`${Math.round(withSession*100/total)}%`} />

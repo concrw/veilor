@@ -1,11 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+import { renderHook, waitFor } from '../test-utils';
 import type { OnboardingStep, AxisScores } from '@/context/AuthContext';
+
+vi.mock('@/context/LanguageContext', () => ({
+  useLanguageContext: () => ({ language: 'ko', setLanguage: vi.fn(), isLoading: false }),
+  LanguageProvider: ({ children }: { children: React.ReactNode }) => children,
+}));
 
 // Hoisted mocks
 const mocks = vi.hoisted(() => ({
   onAuthStateChange: vi.fn(),
   getSession: vi.fn(),
+  getUser: vi.fn(),
   signInWithPassword: vi.fn(),
   signUp: vi.fn(),
   signInWithOAuth: vi.fn(),
@@ -18,6 +24,7 @@ vi.mock('@/integrations/supabase/client', () => ({
     auth: {
       onAuthStateChange: mocks.onAuthStateChange,
       getSession: mocks.getSession,
+      getUser: mocks.getUser,
       signInWithPassword: mocks.signInWithPassword,
       signUp: mocks.signUp,
       signInWithOAuth: mocks.signInWithOAuth,
@@ -63,6 +70,7 @@ describe('AuthContext', () => {
       return { data: { subscription: { unsubscribe: vi.fn() } } };
     });
     mocks.getSession.mockResolvedValue({ data: { session: null }, error: null });
+    mocks.getUser.mockResolvedValue({ data: { user: null }, error: null });
     mocks.profileSelect.mockResolvedValue({ data: null, error: { code: 'PGRST116' } });
   });
 

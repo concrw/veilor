@@ -3,6 +3,7 @@ import { invokeHeldChat } from '@/lib/heldChatClient';
 import { useAuth } from '@/context/AuthContext';
 import { C, alpha } from '@/lib/colors';
 import { useVentTranslations } from '@/hooks/useTranslation';
+import { useLanguageContext } from '@/context/LanguageContext';
 
 const SHEET_AI_MSG_STYLE = { background: C.bg2, border: `1px solid ${C.border}`, borderRadius: '11px 11px 11px 3px', padding: '10px 13px' } as const;
 const SHEET_USER_MSG_STYLE = { background: alpha(C.amber, 0.05), border: `1px solid ${alpha(C.amber, 0.13)}`, borderRadius: '11px 11px 3px 11px', padding: '9px 13px' } as const;
@@ -16,6 +17,7 @@ interface Props {
 export default function AmberSheet({ open, onClose, aiName }: Props) {
   const { user, primaryMask, axisScores } = useAuth();
   const vent = useVentTranslations();
+  const { language } = useLanguageContext();
   const [msgs, setMsgs] = useState<{ role: 'ai' | 'user'; text: string; tone?: string }[]>(() => [
     { role: 'ai', text: vent.amberSheet.initialText, tone: vent.amberSheet.toneHere },
   ]);
@@ -36,7 +38,7 @@ export default function AmberSheet({ open, onClose, aiName }: Props) {
 
     try {
       const result = await invokeHeldChat(
-        { text: txt, mask: primaryMask ?? undefined, axisScores: axisScores ?? null, history: msgs.slice(-6), tab: 'amber_sheet', userId: user?.id },
+        { text: txt, mask: primaryMask ?? undefined, axisScores: axisScores ?? null, history: msgs.slice(-6), tab: 'amber_sheet', userId: user?.id, language },
         abortRef.current.signal,
       );
       setMsgs(m => [...m, { role: 'ai', text: result.response, tone: vent.amberSheet.toneListening }]);

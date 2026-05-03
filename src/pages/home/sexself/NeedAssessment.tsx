@@ -146,6 +146,8 @@ function NeedCard({
   labelDesired: string;
   labelSatisfied: string;
 }) {
+  const { language: cardLang } = useLanguageContext();
+  const lang = cardLang === 'en' ? 'en' : 'ko';
   const layerColor = LAYER_COLORS[layer];
   const gap = Math.max(0, desired - satisfied);
 
@@ -160,10 +162,10 @@ function NeedCard({
             className="text-[10px] px-1.5 py-0.5 rounded font-medium"
             style={{ background: alpha(layerColor, 0.15), color: layerColor }}
           >
-            {LAYER_LABELS[layer]}
+            {LAYER_LABELS[layer][lang]}
           </span>
           <span className="text-sm font-medium" style={{ color: C.text }}>
-            {NEED_LABELS[code]}
+            {NEED_LABELS[code][lang]}
           </span>
         </div>
         {gap >= 10 && (
@@ -186,6 +188,8 @@ function NeedCard({
 
 // ── Gap 바 차트 ───────────────────────────────────────────────────
 function GapBarChart({ profile }: { profile: NeedProfile }) {
+  const { language: chartLang } = useLanguageContext();
+  const lang = chartLang === 'en' ? 'en' : 'ko';
   const sorted = [...profile.gaps].sort((a, b) => b.gap - a.gap);
   return (
     <div className="space-y-2">
@@ -198,7 +202,7 @@ function GapBarChart({ profile }: { profile: NeedProfile }) {
               className="text-[11px] w-14 text-right shrink-0"
               style={{ color: isTop3 ? color : C.text4 }}
             >
-              {NEED_LABELS[g.code]}
+              {NEED_LABELS[g.code][lang]}
             </span>
             <div className="flex-1 h-2 rounded-full" style={{ background: '#1e2a38' }}>
               <div
@@ -222,6 +226,8 @@ export default function NeedAssessment() {
   const navigate = useNavigate();
   const { language } = useLanguageContext();
   const s = S[language] ?? S.ko;
+  const lang = language === 'en' ? 'en' : 'ko';
+  const isEn = language === 'en';
 
   const [responses, setResponses] = useState<NeedResponses>(createEmptyNeedResponses);
   const [profile, setProfile] = useState<NeedProfile | null>(null);
@@ -291,7 +297,7 @@ export default function NeedAssessment() {
                 className="text-[11px] font-medium tracking-wider uppercase px-1"
                 style={{ color: LAYER_COLORS[layer] }}
               >
-                {s.layerPrefix}{LAYER_LABELS[layer]}
+                {s.layerPrefix}{LAYER_LABELS[layer][lang]}
               </div>
               {codes.map(code => (
                 <NeedCard
@@ -366,10 +372,10 @@ export default function NeedAssessment() {
                   className="text-sm font-medium flex-1"
                   style={{ color }}
                 >
-                  {NEED_LABELS[code]}
+                  {NEED_LABELS[code][lang]}
                 </span>
                 <span className="text-xs" style={{ color }}>
-                  {GAP_LEVEL_LABELS[gap.level]} ({gap.gap}점)
+                  {GAP_LEVEL_LABELS[gap.level][lang]} ({gap.gap}{isEn ? 'pts' : '점'})
                 </span>
               </div>
             );
@@ -387,7 +393,7 @@ export default function NeedAssessment() {
                 style={{ background: alpha(color, 0.08), border: `1px solid ${alpha(color, 0.2)}` }}
               >
                 <div className="text-[10px] font-medium mb-0.5" style={{ color }}>
-                  {LAYER_LABELS[ls.layer]}
+                  {LAYER_LABELS[ls.layer][lang]}
                 </div>
                 <div className="text-xs" style={{ color }}>
                   {ls.avgGap}

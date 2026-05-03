@@ -170,7 +170,9 @@ export default function PriperQuestions() {
         </div>
 
         {/* 질문 */}
-        <h2 className="text-lg font-semibold leading-snug mb-8 flex-1" style={{ color: '#F5F5F4' }}>{q.question}</h2>
+        <h2 className="text-lg font-semibold leading-snug mb-8 flex-1" style={{ color: '#F5F5F4' }}>
+          {language === 'en' ? (q.questionEn ?? q.question) : q.question}
+        </h2>
 
         {/* scenario 선택 */}
         {q.type === 'scenario' && q.choices && (
@@ -182,7 +184,7 @@ export default function PriperQuestions() {
                 className="w-full text-left px-4 py-3.5 rounded-xl text-sm transition-all"
                 style={choiceButtonStyle(responses[q.id] === choice.score)}
               >
-                {choice.label}
+                {language === 'en' ? (choice.labelEn ?? choice.label) : choice.label}
               </button>
             ))}
           </div>
@@ -199,9 +201,13 @@ export default function PriperQuestions() {
                 className="w-full"
               />
               <div className="flex justify-between text-xs">
-                <span style={{ color: '#A8A29E' }}>{q.sliderMin}</span>
+                <span style={{ color: '#A8A29E' }}>
+                  {language === 'en' ? (q.sliderMinEn ?? q.sliderMin) : q.sliderMin}
+                </span>
                 <span className="font-medium" style={{ color: '#D4A574' }}>{sliderVal}</span>
-                <span style={{ color: '#A8A29E' }}>{q.sliderMax}</span>
+                <span style={{ color: '#A8A29E' }}>
+                  {language === 'en' ? (q.sliderMaxEn ?? q.sliderMax) : q.sliderMax}
+                </span>
               </div>
             </div>
             <button
@@ -224,7 +230,7 @@ export default function PriperQuestions() {
                 className="w-full text-left px-4 py-4 rounded-xl text-sm leading-relaxed transition-all"
                 style={choiceButtonStyle(responses[q.id] === choice.score)}
               >
-                {choice.label}
+                {language === 'en' ? (choice.labelEn ?? choice.label) : choice.label}
               </button>
             ))}
           </div>

@@ -93,6 +93,7 @@ export default function GuestLanding() {
   const navigate = useNavigate();
   const { language } = useLanguageContext();
   const s = S[language] ?? S.ko;
+  const lang = language === 'en' ? 'en' : 'ko';
 
   const [phase, setPhase] = useState<Phase>('landing');
   const [messages, setMessages] = useState<Message[]>([]);
@@ -125,12 +126,12 @@ export default function GuestLanding() {
     const response = getAmberResponse(ans);
     await new Promise(r => setTimeout(r, 1400));
     setTyping(false);
-    setMessages(prev => [...prev, { role: 'amber', text: response.reply }]);
+    setMessages(prev => [...prev, { role: 'amber', text: response.reply[lang] }]);
     await new Promise(r => setTimeout(r, 800));
     setTyping(true);
     await new Promise(r => setTimeout(r, 1200));
     setTyping(false);
-    setMessages(prev => [...prev, { role: 'amber', text: response.followUp }]);
+    setMessages(prev => [...prev, { role: 'amber', text: response.followUp[lang] }]);
     setPhase('chat2');
   };
 
@@ -144,7 +145,7 @@ export default function GuestLanding() {
     await new Promise(r => setTimeout(r, 1600));
     setTyping(false);
     const tease = getInsightTease(firstAnswer + ' ' + ans);
-    setMessages(prev => [...prev, { role: 'amber', text: `${tease}${s.vfileSuffix}` }]);
+    setMessages(prev => [...prev, { role: 'amber', text: `${tease[lang]}${s.vfileSuffix}` }]);
     await new Promise(r => setTimeout(r, 600));
     setPhase('insight');
   };
@@ -177,8 +178,8 @@ export default function GuestLanding() {
         <div className="space-y-3">
           {PUBLIC_POSTS.map(post => (
             <div key={post.id} className="rounded-xl p-4" style={{ background: '#292524', border: '1px solid #44403C' }}>
-              <p className="text-xs mb-2" style={{ color: '#A8A29E' }}>{post.mask} · {post.group}</p>
-              <p className="text-sm leading-relaxed" style={{ color: '#D4D4D0' }}>{post.content}</p>
+              <p className="text-xs mb-2" style={{ color: '#A8A29E' }}>{post.mask} · {post.group[lang]}</p>
+              <p className="text-sm leading-relaxed" style={{ color: '#D4D4D0' }}>{post.content[lang]}</p>
               <p className="text-xs mt-2" style={{ color: '#57534E' }}>{s.postUpvotesLabel} {post.upvotes}</p>
             </div>
           ))}
@@ -234,8 +235,8 @@ export default function GuestLanding() {
               <div className="space-y-3">
                 {PUBLIC_POSTS.map(post => (
                   <div key={post.id} className="rounded-xl p-4" style={{ background: '#292524', border: '1px solid #44403C' }}>
-                    <p className="text-xs mb-2" style={{ color: '#A8A29E' }}>{post.mask} · {post.group}</p>
-                    <p className="text-sm leading-relaxed" style={{ color: '#D4D4D0' }}>{post.content}</p>
+                    <p className="text-xs mb-2" style={{ color: '#A8A29E' }}>{post.mask} · {post.group[lang]}</p>
+                    <p className="text-sm leading-relaxed" style={{ color: '#D4D4D0' }}>{post.content[lang]}</p>
                     <p className="text-xs mt-2" style={{ color: '#57534E' }}>{s.postUpvotesLabel} {post.upvotes}</p>
                   </div>
                 ))}
@@ -282,7 +283,7 @@ export default function GuestLanding() {
               <div className="pt-6 space-y-3">
                 <div className="rounded-xl p-4 text-center" style={{ background: '#D4A57410', border: '1px solid #D4A57430' }}>
                   <p className="text-xs mb-1" style={{ color: '#A8A29E' }}>{s.insightLabel}</p>
-                  <p className="text-sm font-medium" style={{ color: '#D4A574' }}>{getInsightTease(firstAnswer + ' ' + secondAnswer)}</p>
+                  <p className="text-sm font-medium" style={{ color: '#D4A574' }}>{getInsightTease(firstAnswer + ' ' + secondAnswer)[language === 'en' ? 'en' : 'ko']}</p>
                   <p className="text-xs mt-2" style={{ color: '#78716C' }}>{s.insightSub}</p>
                 </div>
                 <button onClick={() => navigate('/auth/signup')} className="w-full py-3.5 rounded-xl text-sm font-medium" style={{ background: '#D4A574', color: '#1C1917' }}>
@@ -306,8 +307,8 @@ export default function GuestLanding() {
               <p className="text-xs" style={{ color: '#57534E' }}>{s.postsTitle}</p>
               {PUBLIC_POSTS.slice(0, 2).map(post => (
                 <div key={post.id} className="rounded-xl p-4" style={{ background: '#292524', border: '1px solid #44403C' }}>
-                  <p className="text-xs mb-2" style={{ color: '#A8A29E' }}>{post.mask} · {post.group}</p>
-                  <p className="text-sm leading-relaxed" style={{ color: '#D4D4D0' }}>{post.content}</p>
+                  <p className="text-xs mb-2" style={{ color: '#A8A29E' }}>{post.mask} · {post.group[lang]}</p>
+                  <p className="text-sm leading-relaxed" style={{ color: '#D4D4D0' }}>{post.content[lang]}</p>
                 </div>
               ))}
             </div>

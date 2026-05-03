@@ -66,6 +66,7 @@ const S = {
     domainSelf: '나', domainSelfSub: '나의 퍼포먼스',
     domainWork: '업무', domainWorkSub: '업무 퍼포먼스',
     domainRelation: '관계', domainRelationSub: '관계 퍼포먼스',
+    domainSocial: '사회', domainSocialSub: '사회관리 퍼포먼스',
     domainActive: '✓ 선택됨',
     sectionMode: 'UX 모드',
     modeOriginal: '오리지널', modeOriginalSub: '감성적 · 대화 중심',
@@ -75,6 +76,7 @@ const S = {
     modeSprint: '스프린트', modeSprintSub: 'TBQC · 주간 성과 · 메타인지',
     modeConnect: '커넥트', modeConnectSub: '관계 온도 · 연결',
     modeMirror: '미러', modeMirrorSub: '패턴 인식 · 인사이트',
+    modeSocial: '소셜', modeSocialSub: '관심 영역 · 임팩트 · 기여',
     modeActive: '✓ 사용 중',
     sectionApp: '앱 설정',
     sectionSubscription: '구독',
@@ -116,6 +118,7 @@ const S = {
     domainSelf: 'Self', domainSelfSub: 'My Performance',
     domainWork: 'Work', domainWorkSub: 'Work Performance',
     domainRelation: 'Relation', domainRelationSub: 'Relationship Performance',
+    domainSocial: 'Social', domainSocialSub: 'Social Performance',
     domainActive: '✓ Selected',
     sectionMode: 'UX Mode',
     modeOriginal: 'Original', modeOriginalSub: 'Emotional · Conversation-first',
@@ -125,6 +128,7 @@ const S = {
     modeSprint: 'Sprint', modeSprintSub: 'TBQC · Weekly performance · Metacognition',
     modeConnect: 'Connect', modeConnectSub: 'Relationship temperature · Connection',
     modeMirror: 'Mirror', modeMirrorSub: 'Pattern recognition · Insights',
+    modeSocial: 'Social', modeSocialSub: 'Interest areas · Impact · Contribution',
     modeActive: '✓ Active',
     sectionApp: 'App Settings',
     sectionSubscription: 'Subscription',
@@ -226,6 +230,7 @@ function SettingsSheet({
     sprint:   { label: s.modeSprint,   sub: s.modeSprintSub,   color: '#60a5fa'   },
     connect:  { label: s.modeConnect,  sub: s.modeConnectSub,  color: '#fb7185'   },
     mirror:   { label: s.modeMirror,   sub: s.modeMirrorSub,   color: '#f43f5e'   },
+    social:   { label: s.modeSocial,   sub: s.modeSocialSub,   color: '#2dd4bf'   },
   };
   const UX_MODES = DOMAIN_MODES[domain].map(id => ({ id, ...ALL_UX_MODES[id] }));
 
@@ -233,6 +238,7 @@ function SettingsSheet({
     { id: 'self',     label: s.domainSelf,     sub: s.domainSelfSub,     color: C.amberGold },
     { id: 'work',     label: s.domainWork,     sub: s.domainWorkSub,     color: '#38bdf8'   },
     { id: 'relation', label: s.domainRelation, sub: s.domainRelationSub, color: '#fb7185'   },
+    { id: 'social',   label: s.domainSocial,   sub: s.domainSocialSub,   color: '#2dd4bf'   },
   ];
 
   const sectionStyle: React.CSSProperties = { fontSize: 9, fontWeight: 400, letterSpacing: '.09em', textTransform: 'uppercase', color: C.text5, padding: '8px 0 4px' };

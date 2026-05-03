@@ -69,7 +69,7 @@ const S = {
     categoryLabels: { happy: 'HAPPINESS', pain: 'SUFFERING', neutral: 'NEUTRAL' } as Record<Category, string>,
     perspectives: {
       tie: { title: 'Balanced Prime Perspective', desc: 'You have a balanced view of happiness, pain, and neutrality. You tend to explore diverse possibilities and make objective judgments.' },
-      happy: { title: 'Happiness-Driven Prime Perspective', desc: 'You prioritize work that brings joy and motivation. You thrive in environments that generate energy and engagement.' },
+      happy: { title: 'Happiness-Centered Prime Perspective', desc: 'You prioritize work that brings joy and motivation. You thrive in environments that generate energy and engagement.' },
       pain: { title: 'Problem-Solving Prime Perspective', desc: 'You identify and improve discomfort and inefficiency. You find meaning and motivation in reducing pain points.' },
       neutral: { title: 'Balanced-Analytical Prime Perspective', desc: 'You make fact-based judgments and value stability and sustainability. You see the essence without being swayed by emotion.' },
     },

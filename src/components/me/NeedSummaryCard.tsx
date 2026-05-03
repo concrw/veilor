@@ -59,6 +59,7 @@ export default function NeedSummaryCard() {
   const navigate = useNavigate();
   const { language } = useLanguageContext();
   const s = S[language] ?? S.ko;
+  const lang = language === 'en' ? 'en' : 'ko';
 
   const { data, isLoading } = useQuery({
     queryKey: ['need-summary', user?.id],
@@ -154,7 +155,7 @@ export default function NeedSummaryCard() {
                   />
                 </div>
                 <span className="text-[11px] font-light w-14 flex-shrink-0" style={{ color: C.text2 }}>
-                  {NEED_LABELS[g.code]}
+                  {NEED_LABELS[g.code][lang]}
                 </span>
                 <span className="text-[10px] flex-shrink-0" style={{ color }}>
                   {s.gapUnit} {g.gap}
@@ -175,7 +176,7 @@ export default function NeedSummaryCard() {
                 className="text-[9px] w-10 text-right flex-shrink-0 font-medium"
                 style={{ color: LAYER_COLORS[ls.layer] }}
               >
-                {LAYER_LABELS[ls.layer]}
+                {LAYER_LABELS[ls.layer][lang]}
               </span>
               <div className="flex-1 h-1 rounded-full bg-stone-800 overflow-hidden">
                 <div

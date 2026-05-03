@@ -93,10 +93,10 @@ export default function CoreQuestions() {
   const QUESTIONS = s.questions;
 
   const [current, setCurrent] = useState(() => {
-    try { return JSON.parse(safeGetItem(CQ_STORAGE_KEY) ?? '{}').current ?? 0; } catch { return 0; }
+    try { return JSON.parse(safeGetItem(CQ_STORAGE_KEY) ?? '{}').current ?? 0; } catch { console.warn('[CoreQuestions] Failed to parse stored answers'); return 0; }
   });
   const [answers, setAnswers] = useState<Record<string, string>>(() => {
-    try { return JSON.parse(safeGetItem(CQ_STORAGE_KEY) ?? '{}').answers ?? {}; } catch { return {}; }
+    try { return JSON.parse(safeGetItem(CQ_STORAGE_KEY) ?? '{}').answers ?? {}; } catch { console.warn('[CoreQuestions] Failed to parse stored answers'); return {}; }
   });
 
   useEffect(() => {

@@ -3,6 +3,7 @@ import { ZONES } from '@/data/mePageData';
 import ZoneToggle from '@/components/me/ZoneToggle';
 import { useState } from 'react';
 import { useMeTranslations } from '@/hooks/useTranslation';
+import { useLanguageContext } from '@/context/LanguageContext';
 
 const ZONE_ITEM_NAME_STYLE = { fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 13.5, color: C.text, marginBottom: 1 } as const;
 const ZONE_ITEM_DESC_STYLE = { fontSize: 10, fontWeight: 300, color: C.text4 } as const;
@@ -18,6 +19,8 @@ interface ZoneTabProps {
 export default function ZoneTab({ pct, closedCount, zoneState, toggleZone }: ZoneTabProps) {
   const me = useMeTranslations();
   const z = me.zone;
+  const { language } = useLanguageContext();
+  const lang = language === 'en' ? 'en' : 'ko';
   const [openGroups, setOpenGroups] = useState<Record<number, boolean>>({ 0: true, 1: true, 2: true });
 
   return (
@@ -56,8 +59,8 @@ export default function ZoneTab({ pct, closedCount, zoneState, toggleZone }: Zon
                 style={{ padding: '12px 15px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
                 <span style={{ width: 8, height: 8, borderRadius: '50%', background: g.color, flexShrink: 0, display: 'block' }} />
                 <div style={{ flex: 1 }}>
-                  <p style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 15, color: C.text, marginBottom: 2 }}>{g.title}</p>
-                  <p style={{ fontSize: 10, fontWeight: 300, color: C.text4 }}>{g.sub}</p>
+                  <p style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 15, color: C.text, marginBottom: 2 }}>{g.title[lang]}</p>
+                  <p style={{ fontSize: 10, fontWeight: 300, color: C.text4 }}>{g.sub[lang]}</p>
                 </div>
                 <span style={{ fontSize: 11, color: C.text5, transform: groupOpen ? 'rotate(90deg)' : 'none', transition: 'transform .2s', display: 'inline-block', flexShrink: 0 }}>›</span>
               </div>
@@ -66,8 +69,8 @@ export default function ZoneTab({ pct, closedCount, zoneState, toggleZone }: Zon
                   {g.items.map((item, ii) => (
                     <div key={item.id} style={{ padding: '10px 15px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: ii < g.items.length - 1 ? `1px solid ${C.border2}` : 'none' }}>
                       <div style={{ flex: 1 }}>
-                        <p style={ZONE_ITEM_NAME_STYLE}>{item.name}</p>
-                        <p style={ZONE_ITEM_DESC_STYLE}>{item.desc}</p>
+                        <p style={ZONE_ITEM_NAME_STYLE}>{item.name[lang]}</p>
+                        <p style={ZONE_ITEM_DESC_STYLE}>{item.desc[lang]}</p>
                       </div>
                       {item.sensitive && <span style={ZONE_SENSITIVE_BADGE_STYLE}>{z.sensitive}</span>}
                       <ZoneToggle on={zoneState[item.id]} onToggle={() => toggleZone(item.id)} />

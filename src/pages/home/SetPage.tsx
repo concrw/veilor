@@ -11,6 +11,8 @@ import { veilorDb, supabase } from '@/integrations/supabase/client';
 import type { VeilorUserBoundary, VeilorConsentChecklist } from '@/integrations/supabase/veilor-types';
 import { toast } from '@/hooks/use-toast';
 import { saveSetSignal } from '@/hooks/useSignalPipeline';
+import { usePremiumTrigger } from '@/hooks/usePremiumTrigger';
+import UpgradeModal from '@/components/premium/UpgradeModal';
 import CodetalkTab from '@/components/set/CodetalkTab';
 import CoupleTalkTab from '@/components/set/CoupleTalkTab';
 import BoundaryTab, { ALL_AX_MERCER_KEYS, BOUNDARY_CATEGORY_KEYS, type BoundaryCategory } from '@/components/set/BoundaryTab';
@@ -31,6 +33,7 @@ export default function SetPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const set = useSetTranslations();
+  const { isPro, tryAccess, modalOpen: premiumModalOpen, activeTrigger, closeModal } = usePremiumTrigger();
   const [tab, setTab] = useState<Tab>('codetalk');
   const [entry, setEntry] = useState('');
   const [isPublic, setIsPublic] = useState(false);
@@ -89,6 +92,7 @@ export default function SetPage() {
   });
 
   const requestCodetalkInsight = async () => {
+    if (!isPro && !tryAccess('codetalk_ai_limit')) return;
     if (!user || !todayEntry) return;
     setAiInsightLoading(true);
     try {
@@ -447,6 +451,8 @@ export default function SetPage() {
         />
       )}
       </div>
+
+      <UpgradeModal open={premiumModalOpen} trigger={activeTrigger} onClose={closeModal} />
     </div>
   );
 }

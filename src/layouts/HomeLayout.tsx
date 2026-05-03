@@ -5,6 +5,7 @@ import HoldCircle from '@/components/ai/HoldCircle';
 import AILeadOverlay from '@/components/ai/AILeadOverlay';
 import { useAuth } from '@/context/AuthContext';
 import { useMode } from '@/context/ModeContext';
+import { useDomain, type Domain } from '@/context/DomainContext';
 import { useLanguageContext } from '@/context/LanguageContext';
 
 const S = {
@@ -37,13 +38,23 @@ const RelationMirrorHome  = lazy(() => import('@/pages/home/RelationMirrorHome')
 // 탭별 포인트 컬러 (인계문서 §2 기준)
 interface TabDef { to: string; label: string; color: string; badge?: boolean }
 
-const ALL_TABS: TabDef[] = [
-  { to: '/home/vent', label: 'Vent', color: '#D4A574' },
-  { to: '/home/dig',  label: 'Dig',  color: '#A07850' },
-  { to: '/home/get',  label: 'Get',  color: '#8C7060' },
-  { to: '/home/set',  label: 'Set',  color: '#C4A355' },
-  { to: '/home/me',   label: 'Me',   color: '#E7C17A' },
-];
+// 도메인별 포인트 팔레트 — self=amber, work=sky, relation=rose, social=teal
+const DOMAIN_PALETTE: Record<Domain, readonly [string, string, string, string, string]> = {
+  self:     ['#D4A574', '#A07850', '#8C7060', '#C4A355', '#E7C17A'],
+  work:     ['#38BDF8', '#0EA5E9', '#0284C7', '#7DD3FC', '#BAE6FD'],
+  relation: ['#FB7185', '#F43F5E', '#E11D48', '#FDA4AF', '#FECDD3'],
+  social:   ['#2DD4BF', '#14B8A6', '#0D9488', '#5EEAD4', '#99F6E4'],
+};
+
+const TAB_PATHS = ['/home/vent', '/home/dig', '/home/get', '/home/set', '/home/me'] as const;
+const TAB_LABELS = ['Vent', 'Dig', 'Get', 'Set', 'Me'] as const;
+
+function buildTabs(domain: Domain): TabDef[] {
+  const palette = DOMAIN_PALETTE[domain];
+  return TAB_PATHS.map((to, i) => ({ to, label: TAB_LABELS[i], color: palette[i] }));
+}
+
+const ALL_TABS: TabDef[] = buildTabs('self');
 
 // Amber 버튼 공통
 export function AmberBtn({ onClick, flash }: { onClick: () => void; flash?: boolean }) {
@@ -163,6 +174,7 @@ export default function HomeLayout() {
   const location = useLocation();
   const { priperCompleted, personaContextsCompleted } = useAuth();
   const { mode } = useMode();
+  const { domain } = useDomain();
   const { language } = useLanguageContext();
   const s = S[language] ?? S.ko;
 
@@ -189,11 +201,12 @@ export default function HomeLayout() {
       list.map(t => t.label === 'Vent' ? { ...t, label: ventLabel } : t);
 
     const hasMultiPersona = personaContextsCompleted.length >= 2;
+    const domainTabs = buildTabs(domain);
     const base = hasMultiPersona
-      ? ALL_TABS.map(t => t.label === 'Set' ? { ...t, badge: true } : t)
-      : ALL_TABS;
+      ? domainTabs.map(t => t.label === 'Set' ? { ...t, badge: true } : t)
+      : domainTabs;
     return applyVentLabel(base);
-  }, [personaContextsCompleted, ventLabel]);
+  }, [personaContextsCompleted, ventLabel, domain]);
 
   // 현재 탭 감지
   const currentTab = location.pathname.split('/').pop() ?? '';

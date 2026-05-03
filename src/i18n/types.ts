@@ -485,6 +485,7 @@ export interface LocaleResource {
       growth: string;
       people: string;
       zone: string;
+      impact: string;
     };
     settings: string;
     seed: {
@@ -553,6 +554,21 @@ export interface LocaleResource {
       precision: string;
       frostMessage: string;
       sensitive: string;
+    };
+    impact: {
+      title: string;
+      empty: string;
+      goToGet: string;
+      statusActive: string;
+      statusDormant: string;
+      statusRevisit: string;
+      contributionTitle: string;
+      contributionEmpty: string;
+      pivotTitle: string;
+      pivotGrowth: string;
+      pivotFatigue: string;
+      pivotTransition: string;
+      lastUpdated: string;
     };
     amberDefaultName: string;
     frostDefaultName: string;

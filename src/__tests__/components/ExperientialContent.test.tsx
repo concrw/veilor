@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { renderWithProviders as render, screen, fireEvent } from '../test-utils';
 import { MemoryRouter } from 'react-router-dom';
 import ExperientialContent from '@/components/content/ExperientialContent';
 

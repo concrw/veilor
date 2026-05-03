@@ -167,26 +167,36 @@ function buildSummaryText(
   intensityLabel: string,
   eroticEmotions: string[],
   isAnxietyFrozen: boolean,
+  lang: 'ko' | 'en',
 ): string {
   if (isAnxietyFrozen) {
-    return '지금은 취향 언어보다 먼저 안전함이 필요한 상태예요. 이것은 욕구의 부재가 아니라 시스템이 스스로를 보호하는 신호입니다.';
+    return lang === 'en'
+      ? 'Right now, what you need most is safety — before any language of desire. This is not the absence of need, but a signal that your system is protecting itself.'
+      : '지금은 취향 언어보다 먼저 안전함이 필요한 상태예요. 이것은 욕구의 부재가 아니라 시스템이 스스로를 보호하는 신호입니다.';
   }
 
   if (intensityLabel === 'Vanilla') {
-    return `당신의 성적 에너지는 정서적 연결과 신뢰에서 가장 잘 활성화됩니다(Vanilla). ${expressLabel} 방식으로 파트너와 깊이 연결될 때 충족감을 느낍니다. 이것은 풍부하고 완전한 성적 자아의 한 형태입니다.`;
+    return lang === 'en'
+      ? `Your sexual energy is most activated through emotional connection and trust (Vanilla). You experience deep fulfillment when you connect intimately with a partner through a ${expressLabel} style. This is a rich and complete form of sexual selfhood.`
+      : `당신의 성적 에너지는 정서적 연결과 신뢰에서 가장 잘 활성화됩니다(Vanilla). ${expressLabel} 방식으로 파트너와 깊이 연결될 때 충족감을 느낍니다. 이것은 풍부하고 완전한 성적 자아의 한 형태입니다.`;
   }
 
   const emotionPart = eroticEmotions.length > 0
-    ? ` 당신의 에로틱 에너지는 '${eroticEmotions.join('\'과 \'')}\'에서 옵니다.`
+    ? lang === 'en'
+      ? ` Your erotic energy comes from '${eroticEmotions.join("' and '")}'.`
+      : ` 당신의 에로틱 에너지는 '${eroticEmotions.join('\'과 \'')}\'에서 옵니다.`
     : '';
 
-  return `당신은 ${roleLabel} 성향이며, ${expressLabel} 방식으로 소통하고, ${intensityLabel} 수준의 경험에서 가장 활성화됩니다.${emotionPart}`;
+  return lang === 'en'
+    ? `You lean ${roleLabel}, communicate in a ${expressLabel} style, and are most activated at the ${intensityLabel} intensity level.${emotionPart}`
+    : `당신은 ${roleLabel} 성향이며, ${expressLabel} 방식으로 소통하고, ${intensityLabel} 수준의 경험에서 가장 활성화됩니다.${emotionPart}`;
 }
 
 // ── 메인 함수 ────────────────────────────────────────────────────
 export function computeKinkLanguage(
   scores: SexSelfScores,
   profileType: SexSelfProfileType,
+  lang: 'ko' | 'en' = 'ko',
 ): KinkLanguageResult {
   const isAnxietyFrozen = detectAnxietyFrozen(scores) || profileType === 'ANXIETY_FROZEN';
   const sexAxes = convertToSexAxes(scores);
@@ -200,7 +210,7 @@ export function computeKinkLanguage(
   const eroticEmotions = isAnxietyFrozen ? [] : getEroticEmotions(sexAxes, scores);
 
   const shaSubtype = classifyShaSubtype(scores);
-  const summaryText = buildSummaryText(roleLabel, expressLabel, intensityLabel, eroticEmotions, isAnxietyFrozen);
+  const summaryText = buildSummaryText(roleLabel, expressLabel, intensityLabel, eroticEmotions, isAnxietyFrozen, lang);
 
   return {
     sexAxes,

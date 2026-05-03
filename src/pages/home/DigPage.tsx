@@ -1,5 +1,10 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useFeature } from '@growthbook/growthbook-react';
+import { FEATURES } from '@/lib/growthbook';
 import { useMode } from '@/context/ModeContext';
 import { useDigTranslations } from '@/hooks/useTranslation';
+import { useLanguageContext } from '@/context/LanguageContext';
 import { ErrorState } from '@/components/ErrorState';
 import { DigSearchForm } from '@/components/dig/DigSearchForm';
 import { DigResultList } from '@/components/dig/DigResultList';
@@ -8,9 +13,16 @@ import PartnerPatternInference from '@/components/dig/PartnerPatternInference';
 import ClearDigView from '@/components/dig/ClearDigView';
 import CodetalkExplore from '@/components/dig/CodetalkExplore';
 import { useDigPageData } from '@/hooks/useDigPageData';
+import { usePremiumTrigger } from '@/hooks/usePremiumTrigger';
+import UpgradeModal from '@/components/premium/UpgradeModal';
 
 function DigPageInner() {
   const dig = useDigTranslations();
+  const navigate = useNavigate();
+  const digToWhyNudge = useFeature(FEATURES.DIG_TO_WHY_NUDGE).value as string ?? 'on_back';
+  const { language } = useLanguageContext();
+  const [showWhyNudge, setShowWhyNudge] = useState(digToWhyNudge === 'always');
+  const { isPro, modalOpen: premiumModalOpen, activeTrigger, closeModal } = usePremiumTrigger();
   const {
     situation, setSituation,
     divisionId, setDivisionId,
@@ -32,7 +44,7 @@ function DigPageInner() {
     axisScores,
     searchMutation,
     handleSubmit,
-  } = useDigPageData();
+  } = useDigPageData({ isPro });
 
   if (selected) {
     return (
@@ -45,7 +57,7 @@ function DigPageInner() {
         patternProfiles={patternProfiles}
         interpretation={interpretation}
         interpreting={interpreting}
-        onBack={() => { setSelected(null); }}
+        onBack={() => { setSelected(null); if (digToWhyNudge === 'on_back') setShowWhyNudge(true); }}
         onSelectResult={setSelected}
       />
     );
@@ -93,6 +105,26 @@ function DigPageInner() {
             >
               {dig.ventPatternStart}
             </button>
+          </div>
+        )}
+
+        {showWhyNudge && digToWhyNudge !== 'off' && (
+          <div className="bg-indigo-500/5 border border-indigo-500/20 rounded-2xl p-4 flex items-start justify-between gap-3">
+            <div className="space-y-1">
+              <p className="text-xs font-medium text-indigo-400">
+                {language === 'en' ? 'Wondering why this pattern repeats?' : '이 패턴이 반복되는 이유가 궁금하다면?'}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {language === 'en' ? 'WHY analysis helps uncover the root values behind the pattern.' : 'WHY 분석으로 패턴 이면의 핵심 가치관을 발견할 수 있어요.'}
+              </p>
+              <button
+                onClick={() => navigate('/home/get')}
+                className="text-xs text-indigo-400 font-medium hover:underline mt-1"
+              >
+                {language === 'en' ? 'Start WHY analysis →' : 'WHY 분석 시작하기 →'}
+              </button>
+            </div>
+            <button onClick={() => setShowWhyNudge(false)} className="text-xs text-muted-foreground shrink-0">✕</button>
           </div>
         )}
 
@@ -144,6 +176,8 @@ function DigPageInner() {
           patternProfiles={patternProfiles}
         />
       </aside>
+
+      <UpgradeModal open={premiumModalOpen} trigger={activeTrigger} onClose={closeModal} />
     </div>
   );
 }

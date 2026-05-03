@@ -195,7 +195,7 @@ const RootRedirect = () => {
 const App = () => {
   useEffect(() => {
     if (import.meta.env.VITE_GROWTHBOOK_CLIENT_KEY) {
-      growthbook.loadFeatures().catch(() => {});
+      growthbook.loadFeatures().catch(() => { console.warn('[GrowthBook] Feature flag load failed'); });
     }
   }, []);
   return (

@@ -1,6 +1,9 @@
 // WhyFlow AI 분석 + M43 통합 + Prime Perspective 저장 (Step 7~10)
+import { useNavigate } from 'react-router-dom';
 import { veilorDb, supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { ToastAction } from '@/components/ui/toast';
+import { useLanguageContext } from '@/context/LanguageContext';
 import type { WhySession, JobEntry, AnalysisResult } from '@/types/why';
 import type { WhyM43Analysis } from '@/hooks/useM43WhyIntegration';
 
@@ -34,6 +37,10 @@ export function useWhyFlowAnalysis(props: UseWhyFlowAnalysisProps) {
     ppText, setPpSaving,
     m43, updateSessionStep,
   } = props;
+
+  const navigate = useNavigate();
+  const { language } = useLanguageContext();
+  const isEn = language === 'en';
 
   const buildLocalAnalysis = (): AnalysisResult => {
     const happyJobs = jobs.filter(j => j.category === 'happy');
@@ -139,7 +146,7 @@ export function useWhyFlowAnalysis(props: UseWhyFlowAnalysisProps) {
 
   const savePrimePerspective = async () => {
     if (!ppText.trim()) {
-      toast({ title: 'Prime Perspective를 작성해 주세요.', variant: 'destructive' });
+      toast({ title: isEn ? 'Please write your Prime Perspective.' : 'Prime Perspective를 작성해 주세요.', variant: 'destructive' });
       return;
     }
     setPpSaving(true);
@@ -163,7 +170,15 @@ export function useWhyFlowAnalysis(props: UseWhyFlowAnalysisProps) {
       }, { onConflict: 'user_id' });
 
       setSession(prev => prev ? { ...prev, prime_perspective: ppText.trim(), completed_at: new Date().toISOString(), status: 'completed' } : prev);
-      toast({ title: 'Prime Perspective 완성!', description: 'Get 탭 → 정체성에서 확인할 수 있어요.' });
+      toast({
+        title: isEn ? 'Prime Perspective complete!' : 'Prime Perspective 완성!',
+        description: isEn ? 'Your growth data has been updated in Me tab.' : '성장 데이터가 Me 탭에 반영됐어요.',
+        action: (
+          <ToastAction altText={isEn ? 'Go to Me' : 'Me 탭 이동'} onClick={() => navigate('/home/me')}>
+            {isEn ? 'Me tab' : 'Me 탭'}
+          </ToastAction>
+        ),
+      });
     } finally {
       setPpSaving(false);
     }

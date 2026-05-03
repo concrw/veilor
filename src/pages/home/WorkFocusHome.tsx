@@ -184,7 +184,7 @@ export default function WorkFocusHome() {
 
       {/* 로딩 */}
       {loading && (
-        <p className="text-center text-stone-600 text-xs py-4">로딩 중...</p>
+        <p className="text-center text-stone-600 text-xs py-4">{s.loading}</p>
       )}
 
       {/* 활성 태스크 목록 */}
@@ -286,7 +286,7 @@ export default function WorkFocusHome() {
       {/* 완료된 태스크 */}
       {completedTasks.length > 0 && (
         <div className="mt-2">
-          <p className="text-xs text-stone-500 mb-2">완료 {completedTasks.length}개</p>
+          <p className="text-xs text-stone-500 mb-2">{s.completedCount(completedTasks.length)}</p>
           <div className="flex flex-col gap-2">
             {completedTasks.map((task) => (
               <div

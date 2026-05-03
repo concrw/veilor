@@ -9,6 +9,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "@/hooks/use-toast";
+import { useLanguageContext } from '@/context/LanguageContext';
 
 // ============================================================================
 // TYPES
@@ -214,6 +215,8 @@ export const useAnalysisHistory = () => {
 export const useAnalyzeWhyPatterns = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { language } = useLanguageContext();
+  const isEn = language === 'en';
 
   return useMutation({
     mutationFn: async ({ sessionId }: { sessionId?: string } = {}) => {
@@ -231,20 +234,18 @@ export const useAnalyzeWhyPatterns = () => {
       return data;
     },
     onSuccess: (data) => {
-      // Invalidate related queries
       queryClient.invalidateQueries({ queryKey: ["latest-analysis", user?.id] });
       queryClient.invalidateQueries({ queryKey: ["analysis-history", user?.id] });
-
       toast({
-        title: "분석 완료!",
-        description: "Why 패턴 분석이 완료되었습니다.",
+        title: isEn ? 'Analysis complete!' : '분석 완료!',
+        description: isEn ? 'Why pattern analysis is done.' : 'Why 패턴 분석이 완료되었습니다.',
       });
     },
     onError: (error: unknown) => {
       console.error("Why analysis error:", error);
       toast({
-        title: "분석 실패",
-        description: error instanceof Error ? error.message : "Why 패턴 분석 중 오류가 발생했습니다.",
+        title: isEn ? 'Analysis failed' : '분석 실패',
+        description: error instanceof Error ? error.message : (isEn ? 'An error occurred during Why pattern analysis.' : 'Why 패턴 분석 중 오류가 발생했습니다.'),
         variant: "destructive",
       });
     },
@@ -257,6 +258,8 @@ export const useAnalyzeWhyPatterns = () => {
 export const useDeleteAnalysis = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { language } = useLanguageContext();
+  const isEn = language === 'en';
 
   return useMutation({
     mutationFn: async (analysisId: string) => {
@@ -270,17 +273,16 @@ export const useDeleteAnalysis = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["latest-analysis", user?.id] });
       queryClient.invalidateQueries({ queryKey: ["analysis-history", user?.id] });
-
       toast({
-        title: "삭제 완료",
-        description: "분석 결과가 삭제되었습니다.",
+        title: isEn ? 'Deleted' : '삭제 완료',
+        description: isEn ? 'Analysis result has been deleted.' : '분석 결과가 삭제되었습니다.',
       });
     },
     onError: (error: unknown) => {
       console.error("Delete analysis error:", error);
       toast({
-        title: "삭제 실패",
-        description: "분석 결과 삭제 중 오류가 발생했습니다.",
+        title: isEn ? 'Delete failed' : '삭제 실패',
+        description: isEn ? 'An error occurred while deleting the result.' : '분석 결과 삭제 중 오류가 발생했습니다.',
         variant: "destructive",
       });
     },

@@ -133,34 +133,34 @@ export function createEmptyNeedResponses(): NeedResponses {
 }
 
 // ── 욕구 코드 → 한국어 이름 ────────────────────────────────────────
-export const NEED_LABELS: Record<NeedCode, string> = {
-  'BIO-SLP': '수면',
-  'BIO-EAT': '식욕',
-  'BIO-SEX': '성욕',
-  'SAF-SEC': '안전감',
-  'SAF-CTL': '통제감',
-  'CON-BEL': '소속감',
-  'CON-INT': '친밀감',
-  'GRW-ACH': '성취',
-  'GRW-REC': '인정',
-  'GRW-PWR': '영향력',
-  'EXS-AUT': '자유',
-  'EXS-MNG': '의미',
+export const NEED_LABELS: Record<NeedCode, { ko: string; en: string }> = {
+  'BIO-SLP': { ko: '수면',   en: 'Sleep' },
+  'BIO-EAT': { ko: '식욕',   en: 'Appetite' },
+  'BIO-SEX': { ko: '성욕',   en: 'Sexual drive' },
+  'SAF-SEC': { ko: '안전감', en: 'Security' },
+  'SAF-CTL': { ko: '통제감', en: 'Control' },
+  'CON-BEL': { ko: '소속감', en: 'Belonging' },
+  'CON-INT': { ko: '친밀감', en: 'Intimacy' },
+  'GRW-ACH': { ko: '성취',   en: 'Achievement' },
+  'GRW-REC': { ko: '인정',   en: 'Recognition' },
+  'GRW-PWR': { ko: '영향력', en: 'Influence' },
+  'EXS-AUT': { ko: '자유',   en: 'Autonomy' },
+  'EXS-MNG': { ko: '의미',   en: 'Meaning' },
 };
 
-export const LAYER_LABELS: Record<NeedLayer, string> = {
-  BIO: '신체',
-  SAF: '안전',
-  CON: '연결',
-  GRW: '자기확장',
-  EXS: '실존',
+export const LAYER_LABELS: Record<NeedLayer, { ko: string; en: string }> = {
+  BIO: { ko: '신체',     en: 'Physical' },
+  SAF: { ko: '안전',     en: 'Safety' },
+  CON: { ko: '연결',     en: 'Connection' },
+  GRW: { ko: '자기확장', en: 'Growth' },
+  EXS: { ko: '실존',     en: 'Existential' },
 };
 
-export const GAP_LEVEL_LABELS: Record<NeedGapLevel, string> = {
-  FULFILLED: '충족',
-  MILD_GAP: '약한 결핍',
-  MODERATE_GAP: '중간 결핍',
-  SEVERE_GAP: '심각한 결핍',
+export const GAP_LEVEL_LABELS: Record<NeedGapLevel, { ko: string; en: string }> = {
+  FULFILLED:    { ko: '충족',        en: 'Fulfilled' },
+  MILD_GAP:     { ko: '약한 결핍',   en: 'Mild gap' },
+  MODERATE_GAP: { ko: '중간 결핍',   en: 'Moderate gap' },
+  SEVERE_GAP:   { ko: '심각한 결핍', en: 'Severe gap' },
 };
 
 export const GAP_LEVEL_COLORS: Record<NeedGapLevel, string> = {

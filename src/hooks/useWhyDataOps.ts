@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
+import { useLanguageContext } from "@/context/LanguageContext";
 import type { Job, SessionInfo } from "./useWhyPageFlow";
 
 export function useWhyDataOps(
@@ -11,6 +12,8 @@ export function useWhyDataOps(
   setIsNormalizing: React.Dispatch<React.SetStateAction<boolean>>,
 ) {
   const { user } = useAuth();
+  const { language } = useLanguageContext();
+  const isEn = language === 'en';
 
   const updateProfileAnalysisStatus = async () => {
     if (!user?.id) return;
@@ -100,8 +103,8 @@ export function useWhyDataOps(
 
     if (uniqueOriginal.length === 0) {
       toast({
-        title: "중복 항목",
-        description: "이미 추가된 직업입니다.",
+        title: isEn ? 'Duplicate entry' : '중복 항목',
+        description: isEn ? 'This job has already been added.' : '이미 추가된 직업입니다.',
         variant: "destructive",
       });
       return;
@@ -129,7 +132,7 @@ export function useWhyDataOps(
 
     if (error) {
       setJobs(prev => prev.filter(p => !p.id.startsWith("tmp-")));
-      toast({ title: "추가 실패", description: "잠시 후 다시 시도해주세요.", variant: "destructive" });
+      toast({ title: isEn ? 'Failed to add' : '추가 실패', description: isEn ? 'Please try again shortly.' : '잠시 후 다시 시도해주세요.', variant: "destructive" });
       return;
     }
 
@@ -203,8 +206,8 @@ export function useWhyDataOps(
 
     if (!def || !mem) {
       toast({
-        title: "입력 필요",
-        description: "정의와 각인 순간을 모두 작성하세요.",
+        title: isEn ? 'Input required' : '입력 필요',
+        description: isEn ? 'Please fill in both definition and imprinting moment.' : '정의와 각인 순간을 모두 작성하세요.',
         variant: "destructive",
       });
       return false;
@@ -216,7 +219,7 @@ export function useWhyDataOps(
       .eq("id", current.id);
 
     if (error) {
-      toast({ title: "저장 실패", description: "잠시 후 다시 시도해주세요.", variant: "destructive" });
+      toast({ title: isEn ? 'Save failed' : '저장 실패', description: isEn ? 'Please try again shortly.' : '잠시 후 다시 시도해주세요.', variant: "destructive" });
       return false;
     }
 
@@ -250,13 +253,13 @@ export function useWhyDataOps(
       await updateProfileAnalysisStatus();
 
       toast({
-        title: "WHY 분석 완료!",
-        description: "이제 Ikigai 설계와 커뮤니티 매칭을 사용할 수 있습니다.",
+        title: isEn ? 'WHY analysis complete!' : 'WHY 분석 완료!',
+        description: isEn ? 'Ikigai design and community matching are now available.' : '이제 Ikigai 설계와 커뮤니티 매칭을 사용할 수 있습니다.',
       });
       setStep(4);
     } catch (e: unknown) {
       console.error("Classification save error:", e);
-      toast({ title: "저장 실패", description: "분류 저장에 실패했습니다.", variant: "destructive" });
+      toast({ title: isEn ? 'Save failed' : '저장 실패', description: isEn ? 'Classification save failed.' : '분류 저장에 실패했습니다.', variant: "destructive" });
     }
   };
 
@@ -271,8 +274,8 @@ export function useWhyDataOps(
       setMemoText(jobNames);
 
       toast({
-        title: "수정 모드로 전환",
-        description: "기존 직업 데이터를 불러왔습니다. 수정 후 다시 진행하세요.",
+        title: isEn ? 'Switched to edit mode' : '수정 모드로 전환',
+        description: isEn ? 'Existing job data loaded. Edit and continue.' : '기존 직업 데이터를 불러왔습니다. 수정 후 다시 진행하세요.',
       });
     }
 

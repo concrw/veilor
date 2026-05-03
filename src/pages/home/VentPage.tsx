@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { supabase, veilorDb } from '@/integrations/supabase/client';
 import { invokeHeldChat } from '@/lib/heldChatClient';
 import { saveVentMessage, saveVentSummary, saveVentSessionSummary, saveVentPartialSession } from '@/hooks/useSignalPipeline';
+import { useDynamicMaskSignal } from '@/hooks/useDynamicMaskSignal';
 import { AmberBtn } from '../../layouts/HomeLayout';
 import { useAmberAttention } from '../../hooks/useAmberAttention';
 import { C, alpha } from '@/lib/colors';
@@ -18,6 +19,7 @@ import VentLayerView from '@/components/vent/VentLayerView';
 import AmberSheet from '@/components/vent/AmberSheet';
 import { useVentTranslations } from '@/hooks/useTranslation';
 import { useVentData } from '@/hooks/useVentData';
+import { useLanguageContext } from '@/context/LanguageContext';
 
 export default function VentPage() {
   const { user, axisScores, primaryMask } = useAuth();
@@ -53,6 +55,9 @@ export default function VentPage() {
   const transitionTimerRef = useRef<number | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const { saveLocal, loadLocal: _loadLocal, clearLocal } = useLocalChatHistory(user?.id);
+  const { language } = useLanguageContext();
+  const isEn = language === 'en';
+  const { recordSignal } = useDynamicMaskSignal(user?.id, primaryMask ?? null);
   const vent = useVentTranslations();
   const { EMOTIONS, EMO_DATA, QUICK_CARDS, LAYER_GROUPS, COMM_GROUPS, getTimeGreeting } = useVentData();
   const greeting = getTimeGreeting();
@@ -160,14 +165,16 @@ export default function VentPage() {
     }, 300);
   }
 
-  const AMBER_NUDGE_KEYWORDS = ['상처받았', '외로워', '혼란스러워', '외롭', '힘들'];
+  const AMBER_NUDGE_KEYWORDS_KO = ['상처받았', '외로워', '혼란스러워', '외롭', '힘들'];
+  const AMBER_NUDGE_KEYWORDS_EN = ['hurt', 'lonely', 'confused', 'exhausted', 'overwhelmed', 'lost'];
+  const nudgeKeywords = language === 'en' ? AMBER_NUDGE_KEYWORDS_EN : AMBER_NUDGE_KEYWORDS_KO;
 
   function checkAmberNudge(messages: { role: 'ai' | 'user'; text: string }[]) {
     if (sessionNudgeShownRef.current) return;
     const userMessages = messages.filter(m => m.role === 'user');
     if (userMessages.length < 4) return;
     const hasKeyword = userMessages.some(m =>
-      AMBER_NUDGE_KEYWORDS.some(kw => m.text.includes(kw)),
+      nudgeKeywords.some(kw => m.text.toLowerCase().includes(kw)),
     );
     if (!hasKeyword) return;
     sessionNudgeShownRef.current = true;
@@ -212,9 +219,17 @@ export default function VentPage() {
       saveVentMessage(user.id, curEmo, txt, newCount).then(({ crisisSeverity }) => {
         if (crisisSeverity === 'critical' || crisisSeverity === 'high') setCrisisLevel(crisisSeverity);
       });
+      recordSignal(curEmo, txt).then(({ shouldAlert, suggestedMask }) => {
+        if (shouldAlert && suggestedMask) {
+          toast({
+            title: isEn ? `Pattern detected: ${suggestedMask}` : `패턴 감지: ${suggestedMask}`,
+            description: isEn ? 'Check Me tab for details.' : 'Me 탭에서 확인해보세요.',
+          });
+        }
+      });
       supabase.functions.invoke('dm-message-filter', { body: { message: txt, userId: user.id } })
         .then(({ data: filterData }) => { if (filterData?.verdict === 'CRISIS') setCrisisLevel('critical'); })
-        .catch(() => {});
+        .catch(() => { console.warn('[VentPage] DM filter request failed'); });
     }
 
     abortControllerRef.current?.abort();
@@ -233,6 +248,7 @@ export default function VentPage() {
           userId: user?.id, similarCount: similarCount ?? undefined,
           sexselfProfile: sexselfData?.sexself_profile ?? null,
           sexselfSha: sexselfData?.sexself_sha ? Number(sexselfData.sexself_sha) : null,
+          language,
         },
         abortControllerRef.current.signal,
       );

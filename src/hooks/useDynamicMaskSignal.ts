@@ -68,7 +68,7 @@ export function useDynamicMaskSignal(userId: string | undefined, currentMask: st
           .update({ active_pattern: topMsk, last_snapshot_at: new Date().toISOString() })
           .eq('user_id', userId)
           .then(() => {})
-          .catch(() => {});
+          .catch(() => { console.warn('[DynamicMaskSignal] Pattern update failed'); });
 
         // 신호 누적 리셋 (다음 감지 사이클로)
         state.maskCounts = {};

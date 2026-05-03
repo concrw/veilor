@@ -28,7 +28,15 @@ export const growthbook = makeGrowthBook();
 
 // 피처 플래그 키 상수
 export const FEATURES = {
+  // 기존
   NEED_ALGORITHM_VERSION: "need_algorithm_version",   // "v2" | "v3"
   CLEAR_CHALLENGE_TIMING: "clear_challenge_timing",   // "immediate" | "delayed"
   AI_LEAD_ENTRY_POINT:    "ai_lead_entry_point",      // "button" | "auto"
+  // 신규
+  VENT_NUDGE_MODE:        "vent_nudge_mode",          // "passive" | "proactive"
+  DIG_DEPTH_LIMIT:        "dig_depth_limit",          // number (default 3)
+  WHY_ONBOARDING_HINT:    "why_onboarding_hint",      // "none" | "tooltip" | "modal"
+  PERSONA_REVEAL_TIMING:  "persona_reveal_timing",    // "immediate" | "after_3sessions"
+  FUNNEL_NUDGE_EMAIL:     "funnel_nudge_email",       // boolean
+  DIG_TO_WHY_NUDGE:       "dig_to_why_nudge",         // "off" | "on_back" | "always"
 } as const;

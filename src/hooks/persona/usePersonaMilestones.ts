@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
+import { useLanguageContext } from "@/context/LanguageContext";
 import { toast } from "@/hooks/use-toast";
 
 export const usePersonaMilestones = (personaId: string | null) => {
@@ -45,6 +46,8 @@ export const useAllMilestones = () => {
 
 export const useToggleMilestone = () => {
   const queryClient = useQueryClient();
+  const { language } = useLanguageContext();
+  const isEn = language === 'en';
 
   return useMutation({
     mutationFn: async ({
@@ -67,11 +70,11 @@ export const useToggleMilestone = () => {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["persona-milestones", data.persona_id] });
       queryClient.invalidateQueries({ queryKey: ["all-milestones"] });
-      toast({ title: data.is_completed ? "마일스톤 완료!" : "마일스톤 미완료로 변경" });
+      toast({ title: isEn ? (data.is_completed ? 'Milestone complete!' : 'Milestone marked incomplete') : (data.is_completed ? '마일스톤 완료!' : '마일스톤 미완료로 변경') });
     },
     onError: (error) => {
       console.error("Milestone toggle error:", error);
-      toast({ title: "마일스톤 업데이트 중 오류가 발생했습니다", variant: "destructive" });
+      toast({ title: isEn ? 'Error updating milestone' : '마일스톤 업데이트 중 오류가 발생했습니다', variant: "destructive" });
     },
   });
 };
@@ -79,6 +82,8 @@ export const useToggleMilestone = () => {
 export const useCreateMilestone = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { language } = useLanguageContext();
+  const isEn = language === 'en';
 
   return useMutation({
     mutationFn: async ({
@@ -115,11 +120,11 @@ export const useCreateMilestone = () => {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["persona-milestones", data.persona_id] });
       queryClient.invalidateQueries({ queryKey: ["all-milestones"] });
-      toast({ title: "마일스톤이 생성되었습니다" });
+      toast({ title: isEn ? 'Milestone created' : '마일스톤이 생성되었습니다' });
     },
     onError: (error) => {
       console.error("Milestone creation error:", error);
-      toast({ title: "마일스톤 생성 중 오류가 발생했습니다", variant: "destructive" });
+      toast({ title: isEn ? 'Error creating milestone' : '마일스톤 생성 중 오류가 발생했습니다', variant: "destructive" });
     },
   });
 };
