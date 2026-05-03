@@ -54,13 +54,6 @@ export default function VentPage() {
       .then(({ data }) => { if (data?.ai_settings) aiSettingsRef.current = data.ai_settings; });
   }, [user]);
 
-  useEffect(() => {
-    if (domain !== 'social' || !shouldNudge || pivotNudgeShownRef.current) return;
-    pivotNudgeShownRef.current = true;
-    setShowSocialPivotNudge(true);
-    recordPivot(pivotType ?? 'transition', '');
-  }, [domain, shouldNudge, pivotType]);
-
   const sessionSavedRef = useRef(false);
   const timerRefs = useRef<number[]>([]);
   const transitionTimerRef = useRef<number | null>(null);
@@ -71,6 +64,13 @@ export default function VentPage() {
   const isKo = language === 'ko';
   const { domain } = useDomain();
   const { shouldNudge, pivotType, recordPivot } = useSocialPivotDetection(user?.id);
+
+  useEffect(() => {
+    if (domain !== 'social' || !shouldNudge || pivotNudgeShownRef.current) return;
+    pivotNudgeShownRef.current = true;
+    setShowSocialPivotNudge(true);
+    recordPivot(pivotType ?? 'transition', '');
+  }, [domain, shouldNudge, pivotType]);
   const { recordSignal } = useDynamicMaskSignal(user?.id, primaryMask ?? null);
   const vent = useVentTranslations();
   const { EMOTIONS, EMO_DATA, QUICK_CARDS, LAYER_GROUPS, COMM_GROUPS, getTimeGreeting } = useVentData();
