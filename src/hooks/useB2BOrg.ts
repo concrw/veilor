@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { veilorDb } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguageContext } from '@/context/LanguageContext';
+import { sendB2BInviteEmail } from '@/utils/emailService';
 import type {
   B2BOrg,
   B2BOrgMember,
@@ -112,7 +113,7 @@ export function useMyOrg() {
 // ─────────────────────────────────────────────
 // 멤버 초대 (토큰 기반 — b2b_invite_tokens)
 // ─────────────────────────────────────────────
-export function useInviteMembers(orgId: string) {
+export function useInviteMembers(orgId: string, orgName: string) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [results, setResults] = useState<{ email: string; status: 'ok' | 'error'; msg?: string }[]>([]);
@@ -126,17 +127,23 @@ export function useInviteMembers(orgId: string) {
 
     for (const m of members) {
       try {
+        const token = crypto.randomUUID();
         const { error: invErr } = await veilorDb
           .from('b2b_invite_tokens')
           .insert({
             org_id: orgId,
             email: m.email,
-            token: crypto.randomUUID(),
+            token,
             member_type: m.member_type,
             birth_year: m.birth_year ?? null,
           });
 
         if (invErr) throw new Error(invErr.message);
+
+        await sendB2BInviteEmail({ to: m.email, orgName, token }).catch(() => {
+          // 이메일 발송 실패는 초대 자체를 실패로 처리하지 않음
+        });
+
         out.push({ email: m.email, status: 'ok' });
       } catch (e) {
         const msg = e instanceof Error ? e.message : '초대 중 오류';

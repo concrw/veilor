@@ -61,3 +61,14 @@ export async function sendMatchAcceptedEmail(
 ) {
   return sendEmail(requesterEmail, "match_accepted", { accepterName });
 }
+
+export async function sendB2BInviteEmail(params: {
+  to: string;
+  orgName: string;
+  token: string;
+}) {
+  return sendEmail(params.to, "b2b_invite", {
+    org_name: params.orgName,
+    invite_url: `${window.location.origin}/b2b/accept/${params.token}`,
+  });
+}

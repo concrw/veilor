@@ -86,8 +86,8 @@ const S = {
 };
 
 const PRO_TIER = 'pro';
-const STRIPE_PRICE_ID_USD = import.meta.env.VITE_STRIPE_PRO_PRICE_ID_USD ?? '';
-const STRIPE_PRICE_ID_KRW = import.meta.env.VITE_STRIPE_PRO_PRICE_ID_KRW ?? '';
+const LS_VARIANT_ID_USD = import.meta.env.VITE_LEMONSQUEEZY_PRO_VARIANT_ID_USD ?? '';
+const LS_VARIANT_ID_KRW = import.meta.env.VITE_LEMONSQUEEZY_PRO_VARIANT_ID_KRW ?? '';
 
 interface UpgradeModalProps {
   open: boolean;
@@ -107,8 +107,8 @@ export default function UpgradeModal({ open, onClose, trigger }: UpgradeModalPro
   const [error, setError] = useState<string | null>(null);
   const [interestDone, setInterestDone] = useState(false);
 
-  const stripePrice = language === 'ko' ? STRIPE_PRICE_ID_KRW : STRIPE_PRICE_ID_USD;
-  const isStripeReady = !!stripePrice;
+  const lsVariantId = language === 'ko' ? LS_VARIANT_ID_KRW : LS_VARIANT_ID_USD;
+  const isLsReady = !!lsVariantId;
 
   useEffect(() => {
     if (!open) return;
@@ -150,14 +150,14 @@ export default function UpgradeModal({ open, onClose, trigger }: UpgradeModalPro
     setLoading(true);
     setError(null);
 
-    if (!isStripeReady) {
+    if (!isLsReady) {
       await handleInterestRegister();
       return;
     }
 
     try {
       const { data, error: fnError } = await supabase.functions.invoke('create-checkout-session', {
-        body: { priceId: stripePrice, tier: PRO_TIER },
+        body: { variantId: lsVariantId, tier: PRO_TIER },
       });
 
       if (fnError) throw fnError;
@@ -165,8 +165,6 @@ export default function UpgradeModal({ open, onClose, trigger }: UpgradeModalPro
 
       if (data?.url) {
         window.location.href = data.url;
-      } else if (data?.sessionId) {
-        window.location.href = `https://checkout.stripe.com/pay/${data.sessionId}`;
       }
     } catch (err: unknown) {
       console.error('Checkout error:', err);
@@ -257,7 +255,7 @@ export default function UpgradeModal({ open, onClose, trigger }: UpgradeModalPro
                 cursor: loading ? 'default' : 'pointer', transition: 'opacity .2s',
               }}
             >
-              {loading ? s.processing : isStripeReady ? config.ctaText : s.notifyMe}
+              {loading ? s.processing : isLsReady ? config.ctaText : s.notifyMe}
             </button>
           )}
 

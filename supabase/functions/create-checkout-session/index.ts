@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import Stripe from "https://esm.sh/stripe@13.10.0";
 import { getCorsHeaders } from "../_shared/cors.ts";
 import { getAuthenticatedUser, createServiceClient } from "../_shared/auth.ts";
 
@@ -9,81 +8,85 @@ serve(async (req) => {
   }
 
   try {
-    const STRIPE_SECRET_KEY = Deno.env.get("STRIPE_SECRET_KEY");
-    if (!STRIPE_SECRET_KEY) {
+    const LEMONSQUEEZY_API_KEY = Deno.env.get("LEMONSQUEEZY_API_KEY");
+    if (!LEMONSQUEEZY_API_KEY) {
       return new Response(
-        JSON.stringify({ error: "Stripe not configured" }),
+        JSON.stringify({ error: "LemonSqueezy not configured" }),
         { status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
-    const stripe = new Stripe(STRIPE_SECRET_KEY, {
-      apiVersion: "2023-10-16",
-      httpClient: Stripe.createFetchHttpClient(),
-    });
-
     const { user } = await getAuthenticatedUser(req);
     const supabase = createServiceClient();
 
-    const { priceId, tier } = await req.json();
+    const { variantId, tier } = await req.json();
 
-    // Get or create Stripe customer
-    const { data: stripeCustomer } = await supabase
-      .from("stripe_customers")
-      .select("stripe_customer_id")
-      .eq("user_id", user.id)
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("email")
+      .eq("id", user.id)
       .single();
 
-    let customerId: string;
+    const origin = req.headers.get("origin") ?? "";
 
-    if (!stripeCustomer) {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("email")
-        .eq("id", user.id)
-        .single();
-
-      const customer = await stripe.customers.create({
-        email: profile?.email || user.email,
-        metadata: {
-          userId: user.id,
-        },
-      });
-
-      customerId = customer.id;
-
-      await supabase.from("stripe_customers").insert({
-        user_id: user.id,
-        stripe_customer_id: customerId,
-      });
-    } else {
-      customerId = stripeCustomer.stripe_customer_id;
-    }
-
-    // Create checkout session — idempotency key로 네트워크 재시도 시 중복 세션 방지
-    const idempotencyKey = `checkout-${user.id}-${priceId}-${Math.floor(Date.now() / 60000)}`; // 1분 단위 키
-    const session = await stripe.checkout.sessions.create(
-      {
-        customer: customerId,
-        line_items: [
-          {
-            price: priceId,
-            quantity: 1,
+    const body = {
+      data: {
+        type: "checkouts",
+        attributes: {
+          checkout_options: {
+            embed: false,
           },
-        ],
-        mode: "subscription",
-        success_url: `${req.headers.get("origin")}/home?success=true`,
-        cancel_url: `${req.headers.get("origin")}/home?canceled=true`,
-        metadata: {
-          userId: user.id,
-          tier,
+          checkout_data: {
+            email: profile?.email || user.email,
+            custom: {
+              userId: user.id,
+              tier,
+            },
+          },
+          expires_at: null,
+          redirect_url: `${origin}/home?success=true`,
+        },
+        relationships: {
+          store: {
+            data: {
+              type: "stores",
+              id: Deno.env.get("LEMONSQUEEZY_STORE_ID") ?? "",
+            },
+          },
+          variant: {
+            data: {
+              type: "variants",
+              id: String(variantId),
+            },
+          },
         },
       },
-      { idempotencyKey },
-    );
+    };
+
+    const res = await fetch("https://api.lemonsqueezy.com/v1/checkouts", {
+      method: "POST",
+      headers: {
+        "Accept": "application/vnd.api+json",
+        "Content-Type": "application/vnd.api+json",
+        "Authorization": `Bearer ${LEMONSQUEEZY_API_KEY}`,
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error("LemonSqueezy checkout error:", errText);
+      return new Response(
+        JSON.stringify({ error: "Failed to create checkout" }),
+        { status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
+      );
+    }
+
+    const json = await res.json();
+    const url = json.data?.attributes?.url as string | undefined;
 
     return new Response(
-      JSON.stringify({ sessionId: session.id, url: session.url }),
+      JSON.stringify({ url }),
       { status: 200, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
     );
   } catch (error) {

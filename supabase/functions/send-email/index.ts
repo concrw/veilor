@@ -60,6 +60,17 @@ const EMAIL_TEMPLATES = {
       </div>
     `,
   },
+  b2b_invite: {
+    subject: "[Veilor] 초대장이 도착했어요",
+    html: (data: Record<string, unknown>) => `
+      <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#1C1917;color:#F5F0EB;border-radius:12px;">
+        <h2 style="color:#F59E0B;margin-bottom:8px;">초대장</h2>
+        <p style="margin-bottom:24px;">${data.org_name}에서 Veilor에 초대했어요.</p>
+        <a href="${data.invite_url}" style="display:inline-block;background:#F59E0B;color:#1C1917;font-weight:700;padding:14px 28px;border-radius:8px;text-decoration:none;">초대 수락하기</a>
+        <p style="margin-top:24px;color:#78716C;font-size:13px;">이 링크는 7일 후 만료됩니다.</p>
+      </div>
+    `,
+  },
 };
 
 serve(async (req) => {

@@ -16,7 +16,7 @@ export const SUBSCRIPTION_TIERS = {
   pro: {
     name: "Pro",
     price: 9900,
-    priceId: "price_pro_monthly", // Replace with actual Stripe price ID
+    variantId: import.meta.env.VITE_LEMONSQUEEZY_PRO_VARIANT_ID_KRW || import.meta.env.VITE_LEMONSQUEEZY_PRO_VARIANT_ID_USD || "",
     features: [
       "최대 3개 페르소나 분석",
       "페르소나별 Ikigai 설계",
@@ -29,7 +29,7 @@ export const SUBSCRIPTION_TIERS = {
   elite: {
     name: "Elite",
     price: 29000,
-    priceId: "price_elite_monthly", // Replace with actual Stripe price ID
+    variantId: import.meta.env.VITE_LEMONSQUEEZY_ELITE_VARIANT_ID_KRW || import.meta.env.VITE_LEMONSQUEEZY_ELITE_VARIANT_ID_USD || "",
     features: [
       "Pro의 모든 기능",
       "최대 5개 페르소나 분석",
@@ -67,12 +67,12 @@ export function useSubscription() {
 
   const createCheckoutSession = useMutation({
     mutationFn: async ({ tier }: { tier: "pro" | "elite" }) => {
-      const priceId = SUBSCRIPTION_TIERS[tier].priceId;
+      const variantId = SUBSCRIPTION_TIERS[tier].variantId;
 
       const { data, error } = await supabase.functions.invoke(
         "create-checkout-session",
         {
-          body: { priceId, tier },
+          body: { variantId, tier },
         }
       );
 
@@ -88,12 +88,12 @@ export function useSubscription() {
 
   const cancelSubscription = useMutation({
     mutationFn: async () => {
-      if (!subscription?.stripe_subscription_id) {
+      if (!subscription?.ls_subscription_id) {
         throw new Error("No active subscription");
       }
 
       const { error } = await supabase.functions.invoke("cancel-subscription", {
-        body: { subscriptionId: subscription.stripe_subscription_id },
+        body: { subscriptionId: subscription.ls_subscription_id },
       });
 
       if (error) throw error;

@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useInviteMembers } from '@/hooks/useB2BOrg';
+import { veilorDb } from '@/integrations/supabase/client';
 import type { B2BMemberType, B2BMemberInviteInput } from '@/integrations/supabase/veilor-types';
 import { useLanguageContext } from '@/context/LanguageContext';
 
@@ -70,9 +71,17 @@ interface MemberRow extends B2BMemberInviteInput {
 export default function MemberInvite() {
   const { orgId } = useParams<{ orgId: string }>();
   const { toast } = useToast();
-  const { inviteMembers, loading } = useInviteMembers(orgId ?? '');
+  const [orgName, setOrgName] = useState('');
+  const { inviteMembers, loading } = useInviteMembers(orgId ?? '', orgName);
   const { language } = useLanguageContext();
   const s = S[language] ?? S.ko;
+
+  useEffect(() => {
+    if (!orgId) return;
+    veilorDb.from('b2b_orgs').select('name').eq('id', orgId).single().then(({ data }) => {
+      if (data?.name) setOrgName(data.name);
+    });
+  }, [orgId]);
 
   const [rows, setRows] = useState<MemberRow[]>([
     { _id: crypto.randomUUID(), email: '', member_type: 'member' },
