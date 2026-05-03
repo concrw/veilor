@@ -555,6 +555,7 @@ export const en: LocaleResource = {
       us: 'Us',
       tools: 'Tools',
       practice: 'Practice',
+      mantra: 'Mantra',
     },
     sexSelfBanner: {
       title: 'Explore Your Sexual Self',

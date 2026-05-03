@@ -35,7 +35,7 @@ export default function AlignmentRadar({ ventCount, userId }: Props) {
           <RadarChart data={radarData}>
             <PolarGrid stroke={C.border} />
             <PolarAngleAxis dataKey="axis" tick={{ fill: C.text3, fontSize: 11 }} />
-            <Radar dataKey="score" fill="#2DD4BF" fillOpacity={0.2} stroke="#2DD4BF" strokeWidth={2} />
+            <Radar dataKey="score" fill="#7FB89A" fillOpacity={0.2} stroke="#7FB89A" strokeWidth={2} />
           </RadarChart>
         </ResponsiveContainer>
       )}

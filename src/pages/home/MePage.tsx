@@ -80,7 +80,7 @@ export default function MePage() {
             const tabAccentColor =
               domain === 'work'     ? '#38BDF8' :
               domain === 'relation' ? '#FB7185' :
-              domain === 'social'   ? '#2DD4BF' :
+              domain === 'social'   ? '#7FB89A' :
               C.amberGold;
 
             const tabList: { id: Tab; label: string }[] = [

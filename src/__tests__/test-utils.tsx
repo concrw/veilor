@@ -1,5 +1,6 @@
 import { render, type RenderOptions } from '@testing-library/react';
 import { ModeProvider } from '@/context/ModeContext';
+import { DomainProvider } from '@/context/DomainContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { createContext, useContext } from 'react';
@@ -30,7 +31,9 @@ function AllProviders({ children }: { children: ReactNode }) {
     <QueryClientProvider client={qc}>
       <StubLanguageProvider>
         <ModeProvider>
-          {children}
+          <DomainProvider>
+            {children}
+          </DomainProvider>
         </ModeProvider>
       </StubLanguageProvider>
     </QueryClientProvider>

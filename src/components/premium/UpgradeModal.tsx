@@ -86,7 +86,8 @@ const S = {
 };
 
 const PRO_TIER = 'pro';
-const STRIPE_PRICE_ID = import.meta.env.VITE_STRIPE_PRO_PRICE_ID ?? '';
+const STRIPE_PRICE_ID_USD = import.meta.env.VITE_STRIPE_PRO_PRICE_ID_USD ?? '';
+const STRIPE_PRICE_ID_KRW = import.meta.env.VITE_STRIPE_PRO_PRICE_ID_KRW ?? '';
 
 interface UpgradeModalProps {
   open: boolean;
@@ -106,7 +107,8 @@ export default function UpgradeModal({ open, onClose, trigger }: UpgradeModalPro
   const [error, setError] = useState<string | null>(null);
   const [interestDone, setInterestDone] = useState(false);
 
-  const isStripeReady = !!STRIPE_PRICE_ID;
+  const stripePrice = language === 'ko' ? STRIPE_PRICE_ID_KRW : STRIPE_PRICE_ID_USD;
+  const isStripeReady = !!stripePrice;
 
   useEffect(() => {
     if (!open) return;
@@ -155,7 +157,7 @@ export default function UpgradeModal({ open, onClose, trigger }: UpgradeModalPro
 
     try {
       const { data, error: fnError } = await supabase.functions.invoke('create-checkout-session', {
-        body: { priceId: STRIPE_PRICE_ID, tier: PRO_TIER },
+        body: { priceId: stripePrice, tier: PRO_TIER },
       });
 
       if (fnError) throw fnError;

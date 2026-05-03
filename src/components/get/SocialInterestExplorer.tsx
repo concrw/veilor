@@ -79,7 +79,7 @@ const AREAS: { code: IssueCode; emoji: string; ko: string; en: string; sub_ko: s
 ];
 
 const STATUS_COLORS: Record<InterestStatus, string> = {
-  active:  '#2DD4BF',
+  active:  '#7FB89A',
   dormant: '#78716C',
   revisit: '#C4A355',
 };
@@ -212,10 +212,26 @@ export default function SocialInterestExplorer() {
           {isKo ? '관심 영역 탐색' : 'Explore Interests'}
         </h2>
         <p style={{ fontSize: 13, color: C.text3, marginTop: 4, lineHeight: 1.5 }}>
-          {isKo
-            ? '관심사는 바뀔 수 있어요. 지금 이 순간의 기록이에요.'
-            : "Your interests can change. This is a record of right now."}
+          {isKo ? '관심은 자라기도, 잠들기도 합니다' : 'Interests grow, and sometimes rest.'}
         </p>
+      </div>
+
+      {/* 오늘의 만트라 */}
+      <div style={{
+        padding: '14px 16px',
+        background: 'linear-gradient(180deg, rgba(127,184,154,.08), transparent)',
+        border: '1px solid rgba(127,184,154,.2)',
+        borderRadius: 14,
+        marginBottom: 4,
+      }}>
+        <div style={{ fontSize: 10, color: '#7FB89A', fontFamily: 'monospace', letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: 6 }}>
+          {isKo ? '오늘의 만트라' : "Today's Mantra"}
+        </div>
+        <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 15, color: C.text, fontStyle: 'italic', lineHeight: 1.5 }}>
+          {isKo
+            ? '관심은 바뀌어도 괜찮아요.\n지금 이 순간의 기록일 뿐.'
+            : 'It\'s okay for interests to change.\nThis is just a record of now.'}
+        </div>
       </div>
 
       {/* 영역 카드 목록 */}
@@ -229,7 +245,7 @@ export default function SocialInterestExplorer() {
             key={area.code}
             style={{
               background: C.bg2,
-              border: `1px solid ${checked ? '#2DD4BF44' : C.border}`,
+              border: `1px solid ${checked ? '#7FB89A44' : C.border}`,
               borderRadius: 14,
               overflow: 'hidden',
               transition: 'border-color .2s',
@@ -256,8 +272,8 @@ export default function SocialInterestExplorer() {
                   width: 20,
                   height: 20,
                   borderRadius: '50%',
-                  border: `2px solid ${checked ? '#2DD4BF' : C.border}`,
-                  background: checked ? '#2DD4BF22' : 'transparent',
+                  border: `2px solid ${checked ? '#7FB89A' : C.border}`,
+                  background: checked ? '#7FB89A22' : 'transparent',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -266,14 +282,14 @@ export default function SocialInterestExplorer() {
                 }}
               >
                 {checked && (
-                  <span style={{ color: '#2DD4BF', fontSize: 11, lineHeight: 1 }}>✓</span>
+                  <span style={{ color: '#7FB89A', fontSize: 11, lineHeight: 1 }}>✓</span>
                 )}
               </span>
 
               <span style={{ fontSize: 18 }}>{area.emoji}</span>
 
               <span style={{ flex: 1 }}>
-                <span style={{ fontSize: 15, fontWeight: 500, color: checked ? '#2DD4BF' : C.text, display: 'block' }}>
+                <span style={{ fontSize: 15, fontWeight: 500, color: checked ? '#7FB89A' : C.text, display: 'block' }}>
                   {isKo ? area.ko : area.en}
                 </span>
               </span>
@@ -343,7 +359,7 @@ export default function SocialInterestExplorer() {
                         key={idx}
                         style={{
                           background: C.bg3,
-                          border: `1px solid ${subInterest ? '#2DD4BF33' : C.border2}`,
+                          border: `1px solid ${subInterest ? '#7FB89A33' : C.border2}`,
                           borderRadius: 10,
                           padding: '10px 12px',
                         }}
@@ -355,8 +371,8 @@ export default function SocialInterestExplorer() {
                               width: 16,
                               height: 16,
                               borderRadius: '50%',
-                              border: `1.5px solid ${subInterest ? '#2DD4BF' : C.border}`,
-                              background: subInterest ? '#2DD4BF22' : 'transparent',
+                              border: `1.5px solid ${subInterest ? '#7FB89A' : C.border}`,
+                              background: subInterest ? '#7FB89A22' : 'transparent',
                               cursor: 'pointer',
                               flexShrink: 0,
                               display: 'flex',
@@ -364,7 +380,7 @@ export default function SocialInterestExplorer() {
                               justifyContent: 'center',
                             }}
                           >
-                            {subInterest && <span style={{ color: '#2DD4BF', fontSize: 9 }}>✓</span>}
+                            {subInterest && <span style={{ color: '#7FB89A', fontSize: 9 }}>✓</span>}
                           </button>
                           <span style={{ fontSize: 13, color: subInterest ? C.text : C.text2 }}>{sub}</span>
                         </div>
@@ -394,7 +410,7 @@ export default function SocialInterestExplorer() {
                                 onClick={() => saveNote(area.code, idx)}
                                 style={{
                                   fontSize: 11,
-                                  color: '#2DD4BF',
+                                  color: '#7FB89A',
                                   background: 'transparent',
                                   border: 'none',
                                   cursor: 'pointer',
@@ -413,9 +429,9 @@ export default function SocialInterestExplorer() {
                                 }}
                                 style={{
                                   fontSize: 11,
-                                  color: getInterest(`${area.code}__${idx}`, 3) ? '#C4A355' : '#2DD4BF',
+                                  color: getInterest(`${area.code}__${idx}`, 3) ? '#C4A355' : '#7FB89A',
                                   background: 'transparent',
-                                  border: `1px solid ${getInterest(`${area.code}__${idx}`, 3) ? '#C4A35544' : '#2DD4BF44'}`,
+                                  border: `1px solid ${getInterest(`${area.code}__${idx}`, 3) ? '#C4A35544' : '#7FB89A44'}`,
                                   borderRadius: 8,
                                   padding: '3px 9px',
                                   cursor: 'pointer',
@@ -427,8 +443,8 @@ export default function SocialInterestExplorer() {
 
                             {/* Level 3 패널 */}
                             {level3Open[noteKey] && (
-                              <div style={{ marginTop: 10, padding: '12px 14px', background: '#1A2420', border: '1px solid #2DD4BF22', borderRadius: 10 }}>
-                                <p style={{ fontSize: 12, color: '#2DD4BF', marginBottom: 8, lineHeight: 1.5 }}>
+                              <div style={{ marginTop: 10, padding: '12px 14px', background: '#1A2420', border: '1px solid #7FB89A22', borderRadius: 10 }}>
+                                <p style={{ fontSize: 12, color: '#7FB89A', marginBottom: 8, lineHeight: 1.5 }}>
                                   {l3.question}
                                 </p>
                                 <textarea
@@ -449,7 +465,7 @@ export default function SocialInterestExplorer() {
                                     outline: 'none',
                                     boxSizing: 'border-box',
                                   }}
-                                  onFocus={e => { e.currentTarget.style.borderColor = '#2DD4BF'; }}
+                                  onFocus={e => { e.currentTarget.style.borderColor = '#7FB89A'; }}
                                   onBlur={e => { e.currentTarget.style.borderColor = C.border; }}
                                 />
                                 <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
@@ -458,7 +474,7 @@ export default function SocialInterestExplorer() {
                                     style={{
                                       fontSize: 11,
                                       color: '#1C1917',
-                                      background: '#2DD4BF',
+                                      background: '#7FB89A',
                                       border: 'none',
                                       borderRadius: 8,
                                       padding: '5px 14px',

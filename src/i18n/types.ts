@@ -359,7 +359,7 @@ export interface LocaleResource {
       axMercerSections: Record<string, { title: string; description: string; items: Record<string, string> }>;
     };
     axmercer: Record<string, string>;
-    tabs2: { us: string; tools: string; practice: string };
+    tabs2: { us: string; tools: string; practice: string; mantra: string };
     sexSelfBanner: { title: string; desc: string };
     coupleTalk: { subtitle: string; connected: string };
     sidebarSubtitle: string;

@@ -89,22 +89,22 @@ const S = {
 // 스타일 메타
 // ──────────────────────────────────────────────────────────────────────────────
 
-const DOMAIN_META: { id: Domain; accent: string; border: string; bgSelected: string }[] = [
-  { id: 'self',     accent: 'text-amber-400',   border: 'border-amber-400/60',   bgSelected: 'bg-amber-400/10' },
-  { id: 'work',     accent: 'text-sky-400',     border: 'border-sky-400/60',     bgSelected: 'bg-sky-400/10' },
-  { id: 'relation', accent: 'text-rose-400',    border: 'border-rose-400/60',    bgSelected: 'bg-rose-400/10' },
-  { id: 'social',   accent: 'text-teal-400',    border: 'border-teal-400/60',    bgSelected: 'bg-teal-400/10' },
+const DOMAIN_META: { id: Domain; color: string }[] = [
+  { id: 'self',     color: '#D4A574' },
+  { id: 'work',     color: '#38BDF8' },
+  { id: 'relation', color: '#FB7185' },
+  { id: 'social',   color: '#7FB89A' },
 ];
 
-const MODE_META: { id: UXMode; accent: string; border: string; bgSelected: string }[] = [
-  { id: 'original', accent: 'text-amber-400',   border: 'border-amber-400/60',   bgSelected: 'bg-amber-400/10' },
-  { id: 'clear',    accent: 'text-stone-300',   border: 'border-stone-400/60',   bgSelected: 'bg-stone-400/10' },
-  { id: 'routine',  accent: 'text-amber-300',   border: 'border-amber-300/60',   bgSelected: 'bg-amber-300/10' },
-  { id: 'focus',    accent: 'text-sky-300',     border: 'border-sky-300/60',     bgSelected: 'bg-sky-300/10' },
-  { id: 'sprint',   accent: 'text-sky-400',     border: 'border-sky-400/60',     bgSelected: 'bg-sky-400/10' },
-  { id: 'connect',  accent: 'text-rose-300',    border: 'border-rose-300/60',    bgSelected: 'bg-rose-300/10' },
-  { id: 'mirror',   accent: 'text-rose-400',    border: 'border-rose-400/60',    bgSelected: 'bg-rose-400/10' },
-  { id: 'social',   accent: 'text-teal-400',   border: 'border-teal-400/60',    bgSelected: 'bg-teal-400/10' },
+const MODE_META: { id: UXMode; color: string }[] = [
+  { id: 'original', color: '#D4A574' },
+  { id: 'clear',    color: '#D6D3D1' },
+  { id: 'routine',  color: '#FCD34D' },
+  { id: 'focus',    color: '#7DD3FC' },
+  { id: 'sprint',   color: '#38BDF8' },
+  { id: 'connect',  color: '#FDA4AF' },
+  { id: 'mirror',   color: '#FB7185' },
+  { id: 'social',   color: '#7FB89A' },
 ];
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -188,22 +188,23 @@ export default function ModeSelect() {
                   <button
                     key={meta.id}
                     onClick={() => setSelectedDomain(meta.id)}
-                    className={[
-                      'text-left rounded-2xl border p-5 transition-all duration-200',
-                      isSelected ? `${meta.bgSelected} ${meta.border}` : 'border-stone-700/50 bg-stone-900/40',
-                    ].join(' ')}
+                    className="text-left rounded-2xl border p-5 transition-all duration-200"
+                    style={{
+                      borderColor: isSelected ? `${meta.color}99` : 'rgba(68,64,60,0.5)',
+                      background:  isSelected ? `${meta.color}1A` : 'rgba(28,25,23,0.4)',
+                    }}
                   >
                     <div className="flex items-start justify-between mb-1">
-                      <span className={`text-base font-semibold ${isSelected ? meta.accent : 'text-stone-200'}`}>
+                      <span className="text-base font-semibold" style={{ color: isSelected ? meta.color : '#E7E5E4' }}>
                         {dt.name}
                       </span>
                       {isSelected && (
-                        <span className={`text-xs font-medium ${meta.accent} bg-stone-800/60 px-2 py-0.5 rounded-full`}>
+                        <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ color: meta.color, background: 'rgba(41,37,36,0.6)' }}>
                           {s.selected}
                         </span>
                       )}
                     </div>
-                    <p className={`text-sm font-medium mb-1 ${isSelected ? 'text-stone-100' : 'text-stone-300'}`}>
+                    <p className="text-sm font-medium mb-1" style={{ color: isSelected ? '#E7E5E4' : '#D6D3D1' }}>
                       {dt.sub}
                     </p>
                     <p className="text-xs text-stone-400 leading-relaxed">{dt.desc}</p>
@@ -248,34 +249,34 @@ export default function ModeSelect() {
                   <button
                     key={modeId}
                     onClick={() => setSelectedMode(modeId)}
-                    className={[
-                      'text-left rounded-2xl border p-5 transition-all duration-200',
-                      isSelected ? `${meta.bgSelected} ${meta.border}` : 'border-stone-700/50 bg-stone-900/40',
-                    ].join(' ')}
+                    className="text-left rounded-2xl border p-5 transition-all duration-200"
+                    style={{
+                      borderColor: isSelected ? `${meta.color}99` : 'rgba(68,64,60,0.5)',
+                      background:  isSelected ? `${meta.color}1A` : 'rgba(28,25,23,0.4)',
+                    }}
                   >
                     <div className="flex items-start justify-between mb-2">
-                      <span className={`text-base font-semibold ${isSelected ? meta.accent : 'text-stone-200'}`}>
+                      <span className="text-base font-semibold" style={{ color: isSelected ? meta.color : '#E7E5E4' }}>
                         {mt.name}
                       </span>
                       {isSelected && (
-                        <span className={`text-xs font-medium ${meta.accent} bg-stone-800/60 px-2 py-0.5 rounded-full`}>
+                        <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ color: meta.color, background: 'rgba(41,37,36,0.6)' }}>
                           {s.selected}
                         </span>
                       )}
                     </div>
-                    <p className={`text-sm font-medium mb-3 ${isSelected ? 'text-stone-100' : 'text-stone-300'}`}>
+                    <p className="text-sm font-medium mb-3" style={{ color: isSelected ? '#E7E5E4' : '#D6D3D1' }}>
                       {mt.tagline}
                     </p>
                     <div className="flex flex-wrap gap-1.5">
                       {mt.keywords.map(kw => (
                         <span
                           key={kw}
-                          className={[
-                            'text-[10px] px-2 py-0.5 rounded-full border',
-                            isSelected
-                              ? `${meta.accent} border-current/30 opacity-80`
-                              : 'text-stone-500 border-stone-700',
-                          ].join(' ')}
+                          className="text-[10px] px-2 py-0.5 rounded-full border"
+                          style={{
+                            color:       isSelected ? meta.color : '#78716C',
+                            borderColor: isSelected ? `${meta.color}4D` : '#44403C',
+                          }}
                         >
                           {kw}
                         </span>

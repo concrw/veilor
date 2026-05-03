@@ -149,8 +149,11 @@ export interface VeilorCompatibilityMatch {
 export interface VeilorPersonaZone {
   id?: string;
   user_id: string;
+  layer: string;
   sub_zone: string;
   is_enabled?: boolean | null;
+  enabled_at?: string | null;
+  created_at?: string | null;
 }
 
 export interface VeilorCqResponse {
@@ -1086,4 +1089,141 @@ export interface VeilorSocialPivot {
   pivot_type: SocialPivotType;
   note: string | null;
   detected_at: string;
+}
+
+// ── S040 Types ────────────────────────────────────────────────────────────────
+
+export type EventType = 'meetup' | 'online' | 'workshop';
+export type ParticipantStatus = 'going' | 'maybe' | 'declined';
+export type TrainingStatus = 'active' | 'completed' | 'paused';
+export type HandoffStatus = 'pending' | 'accepted' | 'declined' | 'completed';
+export type ImportSourceType = 'url' | 'file' | 'clipboard' | 'notion' | 'twitter';
+export type ImportStatus = 'pending' | 'processing' | 'done' | 'failed';
+export type SignalType = 'quote' | 'article' | 'note' | 'link';
+export type TrustLevel = 1 | 2 | 3;
+export type TrustEventType = 'granted' | 'revoked' | 'level_up' | 'level_down';
+
+export interface CommunityEvent {
+  id: string;
+  creator_id: string;
+  title: string;
+  description: string | null;
+  event_type: EventType;
+  domain: string | null;
+  location: string | null;
+  starts_at: string;
+  ends_at: string | null;
+  max_capacity: number | null;
+  is_public: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EventParticipant {
+  id: string;
+  event_id: string;
+  user_id: string;
+  status: ParticipantStatus;
+  joined_at: string;
+}
+
+export interface ChangeTrainingSession {
+  id: string;
+  user_id: string;
+  title: string;
+  goal: string | null;
+  domain: string | null;
+  status: TrainingStatus;
+  started_at: string;
+  ended_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ChangeTrainingLog {
+  id: string;
+  session_id: string;
+  user_id: string;
+  log_date: string;
+  note: string | null;
+  mood_score: number | null;
+  created_at: string;
+}
+
+export interface SpecialistEntry {
+  id: string;
+  user_id: string | null;
+  name: string;
+  specialty: string;
+  domain: string | null;
+  bio: string | null;
+  contact_url: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SpecialistHandoff {
+  id: string;
+  requester_id: string;
+  specialist_id: string;
+  reason: string | null;
+  status: HandoffStatus;
+  requested_at: string;
+  responded_at: string | null;
+  created_at: string;
+}
+
+export interface PairTrustGrant {
+  id: string;
+  grantor_id: string;
+  grantee_id: string;
+  trust_level: TrustLevel;
+  granted_at: string;
+  expires_at: string | null;
+  is_active: boolean;
+}
+
+export interface PairTrustEvent {
+  id: string;
+  grant_id: string;
+  event_type: TrustEventType;
+  note: string | null;
+  occurred_at: string;
+}
+
+export interface ImportJob {
+  id: string;
+  user_id: string;
+  source_type: ImportSourceType;
+  source_url: string | null;
+  status: ImportStatus;
+  error_msg: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface VeilorCrisisFlag {
+  id?: string;
+  user_id: string;
+  signal_id?: string | null;
+  trigger_text: string;
+  keywords: string[];
+  severity: string;
+  status: string;
+  created_at?: string;
+  resolved_at?: string | null;
+}
+
+export interface ImportedSignal {
+  id: string;
+  job_id: string;
+  user_id: string;
+  domain: string | null;
+  signal_type: SignalType | null;
+  title: string | null;
+  body: string | null;
+  source_url: string | null;
+  tags: string[];
+  imported_at: string;
 }

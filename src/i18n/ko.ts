@@ -555,6 +555,7 @@ export const ko: LocaleResource = {
       us: 'Us',
       tools: '도구',
       practice: '실천',
+      mantra: '만트라',
     },
     sexSelfBanner: {
       title: '성적 자아 탐색',

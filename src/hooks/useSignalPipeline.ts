@@ -22,9 +22,21 @@ export async function saveVentMessage(
     p_turn_index: turnIndex,
   });
   if (error) console.error('[saveVentMessage]', error);
+  const severity: CrisisSeverity = data?.crisis_severity ?? 'none';
+  if ((severity === 'high' || severity === 'critical') && data?.signal_id) {
+    await veilorDb.from('crisis_flags').insert({
+      user_id:      userId,
+      signal_id:    data.signal_id,
+      trigger_text: userMessage,
+      keywords:     [],
+      severity,
+      status:       'open',
+      created_at:   new Date().toISOString(),
+    });
+  }
   return {
-    signalId:       data?.signal_id       ?? null,
-    crisisSeverity: data?.crisis_severity ?? 'none',
+    signalId:       data?.signal_id ?? null,
+    crisisSeverity: severity,
     saved:          !error,
   };
 }

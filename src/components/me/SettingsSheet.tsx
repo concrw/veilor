@@ -230,7 +230,7 @@ function SettingsSheet({
     sprint:   { label: s.modeSprint,   sub: s.modeSprintSub,   color: '#60a5fa'   },
     connect:  { label: s.modeConnect,  sub: s.modeConnectSub,  color: '#fb7185'   },
     mirror:   { label: s.modeMirror,   sub: s.modeMirrorSub,   color: '#f43f5e'   },
-    social:   { label: s.modeSocial,   sub: s.modeSocialSub,   color: '#2dd4bf'   },
+    social:   { label: s.modeSocial,   sub: s.modeSocialSub,   color: '#7fb89a'   },
   };
   const UX_MODES = DOMAIN_MODES[domain].map(id => ({ id, ...ALL_UX_MODES[id] }));
 
@@ -238,7 +238,7 @@ function SettingsSheet({
     { id: 'self',     label: s.domainSelf,     sub: s.domainSelfSub,     color: C.amberGold },
     { id: 'work',     label: s.domainWork,     sub: s.domainWorkSub,     color: '#38bdf8'   },
     { id: 'relation', label: s.domainRelation, sub: s.domainRelationSub, color: '#fb7185'   },
-    { id: 'social',   label: s.domainSocial,   sub: s.domainSocialSub,   color: '#2dd4bf'   },
+    { id: 'social',   label: s.domainSocial,   sub: s.domainSocialSub,   color: '#7fb89a'   },
   ];
 
   const sectionStyle: React.CSSProperties = { fontSize: 9, fontWeight: 400, letterSpacing: '.09em', textTransform: 'uppercase', color: C.text5, padding: '8px 0 4px' };

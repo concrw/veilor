@@ -23,8 +23,10 @@ import PersonaBranding from '@/components/set/PersonaBranding';
 import RelationshipSimulation from '@/components/set/RelationshipSimulation';
 import RelationshipCoaching from '@/components/set/RelationshipCoaching';
 import ExperientialContent from '@/components/content/ExperientialContent';
+import MantraCorner from '@/components/set/MantraCorner';
+import { useDomain } from '@/context/DomainContext';
 
-type Tab = 'codetalk' | 'boundary' | 'feed' | 'tools' | 'practice' | 'us';
+type Tab = 'codetalk' | 'boundary' | 'feed' | 'tools' | 'practice' | 'us' | 'mantra';
 
 type ConditionKey = 'no_cross_boundary' | 'safe_to_speak' | 'can_withdraw';
 
@@ -33,6 +35,7 @@ export default function SetPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const set = useSetTranslations();
+  const { domain } = useDomain();
   const { isPro, tryAccess, modalOpen: premiumModalOpen, activeTrigger, closeModal } = usePremiumTrigger();
   const [tab, setTab] = useState<Tab>('codetalk');
   const [entry, setEntry] = useState('');
@@ -325,6 +328,7 @@ export default function SetPage() {
   const SET_TABS: [Tab, string][] = [
     ['codetalk', set.tabs.codetalk],
     ['boundary', set.tabs.boundary],
+    ['mantra', set.tabs2.mantra],
     ['us', set.tabs2.us],
     ['tools', set.tabs2.tools],
     ['practice', set.tabs2.practice],
@@ -430,6 +434,8 @@ export default function SetPage() {
           getAxMercerProgress={getAxMercerProgress}
         />
         </>
+      ) : tab === 'mantra' ? (
+        <MantraCorner domain={domain} />
       ) : tab === 'us' ? (
         <CoupleTalkTab />
       ) : tab === 'tools' ? (

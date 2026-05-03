@@ -53,13 +53,18 @@ const B2BCoachPortal      = lazy(() => import("./pages/b2b/CoachPortal"));
 
 
 // ── Main ─────────────────────────────────────────────────────────
-const HomeLayout  = lazy(() => import("./layouts/HomeLayout"));
-const VentPage    = lazy(() => import("./pages/home/VentPage"));
-const DigPage     = lazy(() => import("./pages/home/DigPage"));
-const GetPage     = lazy(() => import("./pages/home/GetPage"));
-const SetPage     = lazy(() => import("./pages/home/SetPage"));
-const MePage      = lazy(() => import("./pages/home/MePage"));
-const DmPage      = lazy(() => import("./pages/home/DmPage"));
+const HomeLayout        = lazy(() => import("./layouts/HomeLayout"));
+const VentPage          = lazy(() => import("./pages/home/VentPage"));
+const DigPage           = lazy(() => import("./pages/home/DigPage"));
+const GetPage           = lazy(() => import("./pages/home/GetPage"));
+const SetPage           = lazy(() => import("./pages/home/SetPage"));
+const MePage            = lazy(() => import("./pages/home/MePage"));
+const DmPage            = lazy(() => import("./pages/home/DmPage"));
+const EventsPage        = lazy(() => import("./pages/home/EventsPage"));
+const ChangeTrainingPage = lazy(() => import("./pages/home/ChangeTrainingPage"));
+const SpecialistPage    = lazy(() => import("./pages/home/SpecialistPage"));
+const PairTrustPage     = lazy(() => import("./pages/home/PairTrustPage"));
+const ContentImportPage = lazy(() => import("./pages/home/ContentImportPage"));
 const SexSelfQuestions  = lazy(() => import("./pages/home/sexself/Questions"));
 const SexSelfResult     = lazy(() => import("./pages/home/sexself/Result"));
 const NeedAssessment    = lazy(() => import("./pages/home/sexself/NeedAssessment"));
@@ -254,7 +259,12 @@ const App = () => {
                   <Route path="sexself/questions"       element={<SexSelfQuestions />} />
                   <Route path="sexself/result"          element={<SexSelfResult />} />
                   <Route path="sexself/need-assessment" element={<NeedAssessment />} />
-                  <Route path="community" element={<CommunityPage />} />
+                  <Route path="community"        element={<CommunityPage />} />
+                  <Route path="events"          element={<EventsPage />} />
+                  <Route path="change-training" element={<ChangeTrainingPage />} />
+                  <Route path="specialists"     element={<SpecialistPage />} />
+                  <Route path="pair-trust"      element={<PairTrustPage />} />
+                  <Route path="content-import"  element={<ContentImportPage />} />
                 </Route>
 
                 {/* 유저 프로필 */}

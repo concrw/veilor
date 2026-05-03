@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { veilorDb } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { ZONES, TOTAL_ZONES, SEED_STAGES } from '@/data/mePageData';
 
@@ -40,7 +40,7 @@ export function useMePageState(statsData: { sessionCount: number; signalCount: n
 
   useEffect(() => {
     if (!user) return;
-    supabase
+    veilorDb
       .from('persona_zones')
       .select('sub_zone, is_enabled')
       .eq('user_id', user.id)
@@ -59,11 +59,11 @@ export function useMePageState(statsData: { sessionCount: number; signalCount: n
     if (!user) return;
     const newVal = !zoneState[id];
     setZoneState(prev => ({ ...prev, [id]: newVal }));
-    await supabase.from('persona_zones').upsert({
+    await veilorDb.from('persona_zones').upsert({
       user_id: user.id,
+      layer: ZONES.find(g => g.items.some(i => i.id === id))?.layer ?? 'social',
       sub_zone: id,
       is_enabled: newVal,
-      layer: ZONES.find(g => g.items.some(i => i.id === id))?.layer ?? 'social',
       enabled_at: new Date().toISOString(),
     }, { onConflict: 'user_id,sub_zone' });
   }, [user, zoneState]);

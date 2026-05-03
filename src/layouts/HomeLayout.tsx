@@ -38,12 +38,12 @@ const RelationMirrorHome  = lazy(() => import('@/pages/home/RelationMirrorHome')
 // 탭별 포인트 컬러 (인계문서 §2 기준)
 interface TabDef { to: string; label: string; color: string; badge?: boolean }
 
-// 도메인별 포인트 팔레트 — self=amber, work=sky, relation=rose, social=teal
+// 도메인별 포인트 팔레트 — self=amber, work=sky, relation=rose, social=sage
 const DOMAIN_PALETTE: Record<Domain, readonly [string, string, string, string, string]> = {
   self:     ['#D4A574', '#A07850', '#8C7060', '#C4A355', '#E7C17A'],
   work:     ['#38BDF8', '#0EA5E9', '#0284C7', '#7DD3FC', '#BAE6FD'],
   relation: ['#FB7185', '#F43F5E', '#E11D48', '#FDA4AF', '#FECDD3'],
-  social:   ['#2DD4BF', '#14B8A6', '#0D9488', '#5EEAD4', '#99F6E4'],
+  social:   ['#7FB89A', '#5E9E7F', '#4A8067', '#A8D4B8', '#C5E8D0'],
 };
 
 const TAB_PATHS = ['/home/vent', '/home/dig', '/home/get', '/home/set', '/home/me'] as const;

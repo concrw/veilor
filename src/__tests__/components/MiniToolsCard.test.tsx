@@ -1,6 +1,10 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { renderWithProviders as render, screen, fireEvent } from '../test-utils';
 import MiniToolsCard from '@/components/set/MiniToolsCard';
+
+vi.mock('@/context/AuthContext', () => ({
+  useAuth: () => ({ user: null }),
+}));
 
 describe('MiniToolsCard', () => {
   it('renders 4 tools', () => {

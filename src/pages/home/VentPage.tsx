@@ -19,6 +19,7 @@ import EmotionSelector from '@/components/vent/EmotionSelector';
 import ChatView from '@/components/vent/ChatView';
 import VentLayerView from '@/components/vent/VentLayerView';
 import AmberSheet from '@/components/vent/AmberSheet';
+import VoiceModeButton from '@/components/vent/VoiceModeButton';
 import { useVentTranslations } from '@/hooks/useTranslation';
 import { useVentData } from '@/hooks/useVentData';
 import { useLanguageContext } from '@/context/LanguageContext';
@@ -367,6 +368,10 @@ export default function VentPage() {
           <span className="text-[10px] font-light tracking-[.02em]" style={{ color: C.text4 }}>{vent.subtitle}</span>
         </div>
         <div className="flex-1" />
+        <VoiceModeButton
+          onTranscript={(text) => setMsgVal(prev => prev ? `${prev} ${text}` : text)}
+          accentColor={C.amber}
+        />
         <AmberBtn onClick={() => setAmberOpen(true)} flash={amberFlash} />
       </div>
 
@@ -393,29 +398,60 @@ export default function VentPage() {
             <div className="flex flex-col flex-1 overflow-hidden min-h-0" style={{ position: 'relative' }}>
               {phase === 'select' ? (
                 <>
-                  {domain === 'social' && showSocialPivotNudge && (
-                    <div style={{ margin: '12px 16px 0', padding: '12px 14px', background: '#2DD4BF10', border: '1px solid #2DD4BF33', borderRadius: 12 }}>
-                      <p style={{ fontSize: 13, color: '#2DD4BF', marginBottom: 8, lineHeight: 1.5 }}>
-                        {pivotType === 'fatigue'
-                          ? (isKo ? '최근 관심사에서 조금 멀어진 것 같아요. 지쳐있는 건 아닌지 이야기해볼까요?' : "It seems you've stepped back from some interests. Want to talk about it?")
-                          : (isKo ? '관심사의 흐름이 바뀌고 있어요. 새로운 챕터로 넘어가는 중인 걸까요?' : "Your interests seem to be shifting. Could this be a new chapter?")}
-                      </p>
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        <button
-                          onClick={() => { setShowSocialPivotNudge(false); setAmberOpen(true); }}
-                          style={{ fontSize: 12, color: '#2DD4BF', border: '1px solid #2DD4BF55', borderRadius: 8, padding: '5px 12px', background: 'transparent', cursor: 'pointer' }}
-                        >
-                          {isKo ? 'Amber와 이야기하기' : 'Talk to Amber'}
-                        </button>
-                        <button
-                          onClick={() => setShowSocialPivotNudge(false)}
-                          style={{ fontSize: 12, color: C.text4, background: 'transparent', border: 'none', cursor: 'pointer' }}
-                        >
-                          {isKo ? '괜찮아요' : "I'm fine"}
-                        </button>
+                  {domain === 'social' && showSocialPivotNudge && (() => {
+                    const PT = pivotType ?? 'transition';
+                    const PIVOT_TYPES = {
+                      growth:     { color: '#7FB89A', label: isKo ? '성장형' : 'Growth',     desc: isKo ? '더 깊고 구체적인 결로 가는 중이에요' : 'Going deeper and more specific' },
+                      fatigue:    { color: '#C97A6A', label: isKo ? '피로형' : 'Fatigue',     desc: isKo ? '마음이 지쳐 있을 수 있어요. 쉬어도 괜찮아요' : 'You may be worn out. Rest is okay.' },
+                      transition: { color: '#A89BC9', label: isKo ? '전환형' : 'Transition',  desc: isKo ? '새로운 챕터가 열리고 있어요' : 'A new chapter is opening.' },
+                    } as const;
+                    const T = PIVOT_TYPES[PT as keyof typeof PIVOT_TYPES] ?? PIVOT_TYPES.transition;
+                    return (
+                      <div style={{ margin: '12px 16px 0', background: `color-mix(in srgb, ${T.color} 8%, #1C1917)`, border: `1px solid ${T.color}44`, borderRadius: 14 }}>
+                        <div style={{ padding: '14px 16px 12px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                            <span style={{ width: 6, height: 6, borderRadius: '50%', background: T.color, display: 'inline-block', animation: 'pulse 1.8s ease-in-out infinite' }}/>
+                            <span style={{ fontSize: 10, color: T.color, fontFamily: 'monospace', letterSpacing: '.06em', textTransform: 'uppercase' }}>
+                              {isKo ? '피보팅 감지' : 'Pivot detected'} · {T.label}
+                            </span>
+                          </div>
+                          <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 15, color: '#E7E5E4', lineHeight: 1.55, fontStyle: 'italic', marginBottom: 12 }}>
+                            {T.desc}
+                          </p>
+
+                          {/* pivot type chips */}
+                          <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
+                            {(Object.entries(PIVOT_TYPES) as [string, typeof PIVOT_TYPES[keyof typeof PIVOT_TYPES]][]).map(([k, tp]) => (
+                              <span key={k} style={{
+                                flex: 1, padding: '6px 4px', fontSize: 10, textAlign: 'center',
+                                background: k === PT ? `color-mix(in srgb, ${tp.color} 14%, #242120)` : '#242120',
+                                border: k === PT ? `1px solid ${tp.color}` : '1px solid rgba(231,229,228,.06)',
+                                color: k === PT ? tp.color : '#9C9590',
+                                borderRadius: 8, fontFamily: 'monospace', letterSpacing: '.04em',
+                              }}>
+                                {tp.label}
+                              </span>
+                            ))}
+                          </div>
+
+                          <div style={{ display: 'flex', gap: 8 }}>
+                            <button
+                              onClick={() => { setShowSocialPivotNudge(false); setAmberOpen(true); }}
+                              style={{ fontSize: 12, color: T.color, border: `1px solid ${T.color}55`, borderRadius: 8, padding: '6px 14px', background: 'transparent', cursor: 'pointer' }}
+                            >
+                              {isKo ? 'Amber와 이야기하기' : 'Talk to Amber'}
+                            </button>
+                            <button
+                              onClick={() => setShowSocialPivotNudge(false)}
+                              style={{ fontSize: 12, color: '#9C9590', background: 'transparent', border: 'none', cursor: 'pointer' }}
+                            >
+                              {isKo ? '괜찮아요' : "I'm fine"}
+                            </button>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    );
+                  })()}
                   {domain === 'social' && (
                     <p style={{ fontSize: 11, color: C.text3, margin: '4px 22px 0', lineHeight: 1.5 }}>
                       {isKo ? '사회적 감정은 개인의 감정만큼 중요해요' : 'Social emotions matter as much as personal ones'}
