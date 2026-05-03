@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, RadarChart, Radar, PolarGrid,
@@ -7,6 +6,9 @@ import {
 } from "recharts";
 import B2BTab from "./B2BTab";
 import VirtualInjectTab from "./VirtualInjectTab";
+import { StatCard, Section } from "./AdminComponents";
+import { useAdminDashboardData } from "@/hooks/useAdminDashboardData";
+import type { FunnelRow, DashboardRow as Row, GroupMembership } from "@/hooks/useAdminDashboardData";
 import { useLanguageContext } from "@/context/LanguageContext";
 
 // ─────────────────────────────────────────────
@@ -125,20 +127,6 @@ const S = {
 
 const COLORS = ["#6366f1","#8b5cf6","#a78bfa","#c4b5fd","#ddd6fe","#ede9fe","#f5f3ff","#4f46e5","#7c3aed","#9333ea","#c026d3","#e879f9"];
 
-type FunnelRow = {
-  stage: string;
-  label_ko: string;
-  label_en: string;
-  count: number;
-};
-
-type Row = {
-  id: string; seq: number; primary_concern: string; relationship_status: string;
-  axis_attachment: number; axis_communication: number; axis_expression: number; axis_role: number;
-  mask_type: string; attachment_type: string; fragment_count: number; session_count: number;
-};
-type GroupMembership = { user_id: string; group_code: string; source: string };
-
 function countBy<T>(arr: T[], key: (item: T) => string) {
   const map: Record<string, number> = {};
   arr.forEach(item => { const k = key(item); map[k] = (map[k] || 0) + 1; });
@@ -149,76 +137,12 @@ function avg(arr: number[]) {
   return arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : 0;
 }
 
-const StatCard = ({ label, value, sub }: { label: string; value: string | number; sub?: string }) => (
-  <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-    <p className="text-xs text-white/50 mb-1">{label}</p>
-    <p className="text-2xl font-semibold text-white">{value}</p>
-    {sub && <p className="text-xs text-white/40 mt-1">{sub}</p>}
-  </div>
-);
-
-function Section({ title, sub, children }: { title: string; sub?: string; children: React.ReactNode }) {
-  return (
-    <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
-      <div className="mb-4">
-        <h2 className="text-base font-semibold">{title}</h2>
-        {sub && <p className="text-xs text-white/40 mt-0.5">{sub}</p>}
-      </div>
-      {children}
-    </div>
-  );
-}
 
 export default function AdminDashboard() {
-  const [rows, setRows] = useState<Row[]>([]);
-  const [fragments, setFragments] = useState<{ name_ko: string }[]>([]);
-  const [memberships, setMemberships] = useState<GroupMembership[]>([]);
-  const [funnel, setFunnel] = useState<FunnelRow[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { rows, fragments, memberships, funnel, loading } = useAdminDashboardData();
   const [activeTab, setActiveTab] = useState<'b2c' | 'b2b' | 'virtual'>('b2c');
   const { language } = useLanguageContext();
   const s = S[language] ?? S.ko;
-
-  useEffect(() => {
-    async function load() {
-      const [
-        { data: vData },
-        { data: fData },
-        { data: mData },
-        { count: s0 },
-        { count: s2 },
-        { count: s3 },
-        { count: s4 },
-        { count: s5 },
-        { count: s6 },
-      ] = await Promise.all([
-        supabase.from("admin_dashboard_stats" as never).select("*").limit(2000),
-        supabase.from("persona_fragments" as never).select("name_ko"),
-        supabase.from("user_group_memberships" as never).select("user_id,group_code,source").limit(5000),
-        supabase.from("user_profiles" as never).select("*", { count: "exact", head: true }),
-        // ≈ 세션 수 (유저 기준 아님)
-        supabase.from("dive_sessions" as never).select("user_id", { count: "exact", head: true }).eq("mode" as never, "F"),
-        // ≈ 세션 수 (유저 기준 아님)
-        supabase.from("dive_sessions" as never).select("user_id", { count: "exact", head: true }).eq("mode" as never, "D"),
-        supabase.from("why_sessions" as never).select("user_id", { count: "exact", head: true }),
-        supabase.from("why_sessions" as never).select("user_id", { count: "exact", head: true }).not("completed_at" as never, "is", null),
-        supabase.from("persona_instances" as never).select("user_id", { count: "exact", head: true }),
-      ]);
-      setRows((vData as Row[]) || []);
-      setFragments((fData as { name_ko: string }[]) || []);
-      setMemberships((mData as GroupMembership[]) || []);
-      setFunnel([
-        { stage: 'S0', label_ko: '가입', label_en: 'Sign Up', count: s0 ?? 0 },
-        { stage: 'S2', label_ko: '첫 Vent', label_en: 'First Vent', count: s2 ?? 0 },
-        { stage: 'S3', label_ko: '첫 Dig', label_en: 'First Dig', count: s3 ?? 0 },
-        { stage: 'S4', label_ko: 'WHY 시작', label_en: 'WHY Start', count: s4 ?? 0 },
-        { stage: 'S5', label_ko: 'WHY 완료', label_en: 'WHY Done', count: s5 ?? 0 },
-        { stage: 'S6', label_ko: '페르소나 검출', label_en: 'Persona Found', count: s6 ?? 0 },
-      ]);
-      setLoading(false);
-    }
-    load();
-  }, []);
 
   if (loading) return (
     <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">

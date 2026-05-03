@@ -20,6 +20,8 @@ import ChatView from '@/components/vent/ChatView';
 import VentLayerView from '@/components/vent/VentLayerView';
 import AmberSheet from '@/components/vent/AmberSheet';
 import VoiceModeButton from '@/components/vent/VoiceModeButton';
+import VentRightPanel from '@/components/vent/VentRightPanel';
+import SocialPivotNudge from '@/components/vent/SocialPivotNudge';
 import { useVentTranslations } from '@/hooks/useTranslation';
 import { useVentData } from '@/hooks/useVentData';
 import { useLanguageContext } from '@/context/LanguageContext';
@@ -293,70 +295,6 @@ export default function VentPage() {
     }
   }
 
-  // PC 우측 패널 — 최근 감정 히스토리 + 커뮤니티 그룹
-  const RightPanel = () => (
-    <aside
-      className="hidden lg:flex flex-col gap-5 overflow-y-auto flex-shrink-0"
-      style={{ width: 280, borderLeft: `1px solid ${C.border2}`, padding: '20px 16px', background: C.bg }}
-    >
-      {/* 최근 감정 */}
-      {recentEmotions && recentEmotions.length > 0 && (
-        <div>
-          <p className="text-[11px] mb-2" style={{ color: C.text4, fontFamily: "'DM Sans', sans-serif", letterSpacing: '0.04em' }}>
-            {vent.selector.recentLabel}
-          </p>
-          <div className="flex flex-col gap-1.5">
-            {recentEmotions.map((e, i) => (
-              <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-[8px]"
-                style={{ background: C.bg2 }}>
-                <span className="text-[11px] font-light" style={{ color: C.text2, fontFamily: "'DM Sans', sans-serif" }}>{e.emotion}</span>
-                <span className="ml-auto text-[10px]" style={{ color: C.text4 }}>
-                  {new Date(e.created_at).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' })}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* 빠른 시작 카드 */}
-      {phase === 'select' && (
-        <div>
-          <p className="text-[11px] mb-2" style={{ color: C.text4, fontFamily: "'DM Sans', sans-serif", letterSpacing: '0.04em' }}>
-            {vent.selector.quickCardsTitle}
-          </p>
-          <div className="flex flex-col gap-1.5">
-            {QUICK_CARDS.map(card => (
-              <button key={card.key} onClick={() => pickEmotion(card.emo)}
-                className="text-left px-3 py-2.5 rounded-[8px] transition-colors"
-                style={{ background: C.bg2, border: `1px solid ${C.border2}` }}>
-                <span className="text-[11px] font-light leading-relaxed" style={{ color: C.text2, fontFamily: "'DM Sans', sans-serif" }}>
-                  {card.text}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* 커뮤니티 그룹 */}
-      <div>
-        <p className="text-[11px] mb-2" style={{ color: C.text4, fontFamily: "'DM Sans', sans-serif", letterSpacing: '0.04em' }}>
-          {vent.community.subtitle}
-        </p>
-        <div className="flex flex-col gap-1.5">
-          {COMM_GROUPS.map((g, i) => (
-            <div key={i} className="px-3 py-2.5 rounded-[8px]" style={{ background: C.bg2 }}>
-              <p className="text-[11px] font-light mb-0.5" style={{ color: C.text, fontFamily: "'DM Sans', sans-serif" }}>{g.title}</p>
-              <p className="text-[10px]" style={{ color: C.text4, fontFamily: "'DM Sans', sans-serif" }}>{g.desc}</p>
-              <p className="text-[10px] mt-1" style={{ color: C.amber }}>{g.count}{vent.community.people}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </aside>
-  );
-
   return (
     <div className="flex flex-col" style={{ background: C.bg, minHeight: '100%', position: 'relative', overflow: 'hidden' }}>
       {crisisLevel && <CrisisBanner severity={crisisLevel} onDismiss={() => setCrisisLevel(null)} />}
@@ -398,60 +336,14 @@ export default function VentPage() {
             <div className="flex flex-col flex-1 overflow-hidden min-h-0" style={{ position: 'relative' }}>
               {phase === 'select' ? (
                 <>
-                  {domain === 'social' && showSocialPivotNudge && (() => {
-                    const PT = pivotType ?? 'transition';
-                    const PIVOT_TYPES = {
-                      growth:     { color: '#7FB89A', label: isKo ? '성장형' : 'Growth',     desc: isKo ? '더 깊고 구체적인 결로 가는 중이에요' : 'Going deeper and more specific' },
-                      fatigue:    { color: '#C97A6A', label: isKo ? '피로형' : 'Fatigue',     desc: isKo ? '마음이 지쳐 있을 수 있어요. 쉬어도 괜찮아요' : 'You may be worn out. Rest is okay.' },
-                      transition: { color: '#A89BC9', label: isKo ? '전환형' : 'Transition',  desc: isKo ? '새로운 챕터가 열리고 있어요' : 'A new chapter is opening.' },
-                    } as const;
-                    const T = PIVOT_TYPES[PT as keyof typeof PIVOT_TYPES] ?? PIVOT_TYPES.transition;
-                    return (
-                      <div style={{ margin: '12px 16px 0', background: `color-mix(in srgb, ${T.color} 8%, #1C1917)`, border: `1px solid ${T.color}44`, borderRadius: 14 }}>
-                        <div style={{ padding: '14px 16px 12px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                            <span style={{ width: 6, height: 6, borderRadius: '50%', background: T.color, display: 'inline-block', animation: 'pulse 1.8s ease-in-out infinite' }}/>
-                            <span style={{ fontSize: 10, color: T.color, fontFamily: 'monospace', letterSpacing: '.06em', textTransform: 'uppercase' }}>
-                              {isKo ? '피보팅 감지' : 'Pivot detected'} · {T.label}
-                            </span>
-                          </div>
-                          <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 15, color: '#E7E5E4', lineHeight: 1.55, fontStyle: 'italic', marginBottom: 12 }}>
-                            {T.desc}
-                          </p>
-
-                          {/* pivot type chips */}
-                          <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
-                            {(Object.entries(PIVOT_TYPES) as [string, typeof PIVOT_TYPES[keyof typeof PIVOT_TYPES]][]).map(([k, tp]) => (
-                              <span key={k} style={{
-                                flex: 1, padding: '6px 4px', fontSize: 10, textAlign: 'center',
-                                background: k === PT ? `color-mix(in srgb, ${tp.color} 14%, #242120)` : '#242120',
-                                border: k === PT ? `1px solid ${tp.color}` : '1px solid rgba(231,229,228,.06)',
-                                color: k === PT ? tp.color : '#9C9590',
-                                borderRadius: 8, fontFamily: 'monospace', letterSpacing: '.04em',
-                              }}>
-                                {tp.label}
-                              </span>
-                            ))}
-                          </div>
-
-                          <div style={{ display: 'flex', gap: 8 }}>
-                            <button
-                              onClick={() => { setShowSocialPivotNudge(false); setAmberOpen(true); }}
-                              style={{ fontSize: 12, color: T.color, border: `1px solid ${T.color}55`, borderRadius: 8, padding: '6px 14px', background: 'transparent', cursor: 'pointer' }}
-                            >
-                              {isKo ? 'Amber와 이야기하기' : 'Talk to Amber'}
-                            </button>
-                            <button
-                              onClick={() => setShowSocialPivotNudge(false)}
-                              style={{ fontSize: 12, color: '#9C9590', background: 'transparent', border: 'none', cursor: 'pointer' }}
-                            >
-                              {isKo ? '괜찮아요' : "I'm fine"}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })()}
+                  {domain === 'social' && showSocialPivotNudge && (
+                    <SocialPivotNudge
+                      pivotType={(pivotType ?? 'transition') as 'growth' | 'fatigue' | 'transition'}
+                      isKo={isKo}
+                      onTalkToAmber={() => { setShowSocialPivotNudge(false); setAmberOpen(true); }}
+                      onDismiss={() => setShowSocialPivotNudge(false)}
+                    />
+                  )}
                   {domain === 'social' && (
                     <p style={{ fontSize: 11, color: C.text3, margin: '4px 22px 0', lineHeight: 1.5 }}>
                       {isKo ? '사회적 감정은 개인의 감정만큼 중요해요' : 'Social emotions matter as much as personal ones'}
@@ -537,7 +429,14 @@ export default function VentPage() {
         </div>
 
         {/* 우측 패널 — PC 전용 */}
-        <RightPanel />
+        <VentRightPanel
+          recentEmotions={recentEmotions}
+          phase={phase}
+          QUICK_CARDS={QUICK_CARDS}
+          COMM_GROUPS={COMM_GROUPS}
+          vent={vent}
+          onPickEmotion={pickEmotion}
+        />
       </div>
 
       <AmberSheet open={amberOpen} onClose={() => setAmberOpen(false)} aiName={aiName} />
