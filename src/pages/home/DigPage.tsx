@@ -78,7 +78,7 @@ function DigPageInner() {
   return (
     <div className="flex flex-col lg:flex-row min-h-full">
       {/* 좌측: 입력 폼 영역 */}
-      <div className="flex-1 px-4 py-6 space-y-5 overflow-y-auto max-w-2xl">
+      <div className="flex-1 px-4 pt-6 pb-20 space-y-5 overflow-y-auto max-w-2xl">
         <div>
           <h2 className="text-lg font-semibold">{dig.header}</h2>
           <p className="text-sm text-muted-foreground mt-1">{dig.subtitle}</p>
