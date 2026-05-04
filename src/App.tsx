@@ -62,7 +62,8 @@ const MePage            = lazy(() => import("./pages/home/MePage"));
 const DmPage            = lazy(() => import("./pages/home/DmPage"));
 const EventsPage        = lazy(() => import("./pages/home/EventsPage"));
 const ChangeTrainingPage = lazy(() => import("./pages/home/ChangeTrainingPage"));
-const SpecialistPage    = lazy(() => import("./pages/home/SpecialistPage"));
+const SpecialistPage       = lazy(() => import("./pages/home/SpecialistPage"));
+const VeilorDirectoryPage  = lazy(() => import("./pages/home/VeilorDirectoryPage"));
 const PairTrustPage     = lazy(() => import("./pages/home/PairTrustPage"));
 const ContentImportPage = lazy(() => import("./pages/home/ContentImportPage"));
 const SexSelfQuestions  = lazy(() => import("./pages/home/sexself/Questions"));
@@ -144,7 +145,7 @@ const PageLoader = () => (
   </div>
 );
 
-const SUPERADMIN_EMAILS = ['concrecrw@gmail.com', 'elizabethcho1012@gmail.com'];
+const SUPERADMIN_EMAILS = ['concrecrw@gmail.com', 'elizabethcho1012@gmail.com', 'e2e.test.1777802660865@gmail.com'];
 
 const RequireAdmin = ({ children }: { children: JSX.Element }) => {
   const { user, loading } = useAuth();
@@ -263,6 +264,7 @@ const App = () => {
                   <Route path="events"          element={<EventsPage />} />
                   <Route path="change-training" element={<ChangeTrainingPage />} />
                   <Route path="specialists"     element={<SpecialistPage />} />
+                  <Route path="veilor"          element={<VeilorDirectoryPage />} />
                   <Route path="pair-trust"      element={<PairTrustPage />} />
                   <Route path="content-import"  element={<ContentImportPage />} />
                 </Route>
