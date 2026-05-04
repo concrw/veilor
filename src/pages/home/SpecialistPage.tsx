@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { veilorDb } from '@/integrations/supabase/client';
 import type { SpecialistEntry, SpecialistHandoff } from '@/integrations/supabase/veilor-types';
 import { C } from '@/lib/colors';
-import { UserCheck, ExternalLink, Send, Clock } from 'lucide-react';
+import { UserCheck, ExternalLink, Send, Clock, ChevronRight } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 function HandoffBadge({ status }: { status: SpecialistHandoff['status'] }) {
@@ -107,6 +108,7 @@ function SpecialistCard({ specialist }: { specialist: SpecialistEntry }) {
 }
 
 export default function SpecialistPage() {
+  const navigate = useNavigate();
   const [filterDomain, setFilterDomain] = useState<string | null>(null);
 
   const { data: specialists = [], isLoading } = useQuery({
@@ -128,6 +130,16 @@ export default function SpecialistPage() {
         <span style={{ fontSize: 22, color: C.text, fontFamily: "'Cormorant Garamond', serif" }}>Specialists</span>
         <p style={{ fontSize: 10, color: C.text4, margin: '2px 0 0', letterSpacing: '.02em' }}>전문가 연결 · 핸드오프</p>
       </div>
+
+      {/* 베일러 먼저 만나보기 핸드오프 배너 */}
+      <button onClick={() => navigate('/home/veilor')}
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '10px 20px', background: 'color-mix(in srgb, #5EEAD4 8%, #1C1917)', border: 'none', borderBottom: `1px solid ${C.border2}`, cursor: 'pointer', textAlign: 'left' }}>
+        <div>
+          <span style={{ fontSize: 12, color: '#5EEAD4' }}>베일러 먼저 만나보기 →</span>
+          <p style={{ fontSize: 10, color: C.text4, marginTop: 2 }}>전문의 전에 동료 경청인과 이야기해 보세요</p>
+        </div>
+        <ChevronRight size={14} color="#5EEAD4" />
+      </button>
 
       <div style={{ padding: '10px 20px', borderBottom: `1px solid ${C.border2}`, display: 'flex', gap: 8 }}>
         <button onClick={() => setFilterDomain(null)}

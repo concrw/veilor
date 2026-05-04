@@ -20,6 +20,12 @@ export const C = {
   amberDeep: '#D4B46A', // WCAG AA 4.8:1 (was #C4A355)
   amberDim: '#B8956A',  // WCAG AA 4.0:1 (was #A07850) — decorative
   frost: '#95BDD6',     // WCAG AA 4.7:1 on bg (was #7BA8C4 2.95:1)
+
+  // ── Domain accent colors ───────────────────────────────────────────
+  self:     '#D4A574',   // amber — Self domain
+  work:     '#38BDF8',   // sky   — Work domain
+  relation: '#FB7185',   // rose  — Relation domain
+  social:   '#7FB89A',   // teal  — Social domain
 } as const;
 
 /** 8-digit hex alpha helper: alpha(C.amber, 0.1) → '#D4A5741A' */

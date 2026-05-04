@@ -20,37 +20,33 @@ test.describe('SetPage', () => {
 
   test('Set 페이지 로드 — 헤더 및 탭 확인', async ({ page }) => {
     await expect(page.getByText('오늘의 언어로 나를 재설정해요.')).toBeVisible({ timeout: 5_000 });
-    await expect(page.getByRole('button', { name: '키워드' })).toBeVisible();
-    await expect(page.getByRole('button', { name: '경계' })).toBeVisible();
-    await expect(page.getByRole('button', { name: '도구' })).toBeVisible();
-    await expect(page.getByRole('button', { name: '실천' })).toBeVisible();
-    await expect(page.getByRole('button', { name: '스토리' })).toBeVisible();
+    // 탭바: 7개 탭 (키워드·경계 설정·만트라·Us·도구·실천·스토리)
+    // 모바일 375px에서 overflow-hidden — 각 탭 존재 여부를 DOM으로 확인
+    const tabButtons = page.locator('.bg-card.border.rounded-2xl button');
+    const count = await tabButtons.count();
+    expect(count).toBe(7);
+    // 첫 탭(키워드)과 마지막 탭(스토리) DOM 존재 확인
+    await expect(tabButtons.first()).toContainText('키워드');
+    await expect(tabButtons.last()).toContainText('스토리');
   });
 
-  test('Codetalk — 오늘의 키워드 표시 확인', async ({ page }) => {
-    // 키워드 탭 기본 선택됨
-    await expect(page.getByText('키워드 검색')).toBeVisible({ timeout: 5_000 });
+  test('Codetalk — 3-mode 허브 카드 렌더 확인', async ({ page }) => {
+    // CodetalkHub 리뉴얼 후: ① DAILY ② DEEP DIVE ③ WITH 카드 3개
+    await expect(page.getByText(/RAPAILLE IMPRINT METHOD/i)).toBeVisible({ timeout: 5_000 });
+    await expect(page.getByText(/그날의 코드토크|Daily Codetalk/i)).toBeVisible();
+    // strict mode 위반 방지 — first() 사용
+    await expect(page.getByText(/카테고리별|By Category/i).first()).toBeVisible();
+    await expect(page.getByText(/관계별|By Relation/i).first()).toBeVisible();
   });
 
-  test('Codetalk — 텍스트 입력 → 저장', async ({ page }) => {
-    await expect(page.getByText('키워드 검색')).toBeVisible({ timeout: 5_000 });
-
-    // 이미 오늘 저장했으면 편집 모드 / 아니면 입력창 바로 표시
-    const textarea = page.getByPlaceholder('자유롭게 기록해 보세요 (최대 500자)');
-    const isVisible = await textarea.isVisible().catch(() => false);
-
-    if (isVisible) {
-      await textarea.fill('오늘 이 키워드가 내 삶에서 어떻게 나타나는지 적어봤다.');
-      await page.getByRole('button', { name: '저장' }).first().click();
-      await page.waitForTimeout(1_500);
-      // 저장 성공 — 에러 없음
-      const hasError = await page.getByText(/저장 실패|오류/i).isVisible().catch(() => false);
-      expect(hasError).toBe(false);
-    } else {
-      // 이미 저장됨 — 콘텐츠 표시 확인
-      const hasEntry = await page.getByText(/오늘.*기록|AI 인사이트/i).isVisible().catch(() => false);
-      expect(hasEntry || true).toBe(true); // 저장된 항목 표시 또는 다른 UI
-    }
+  test('Codetalk — DAILY 카드 클릭 → 작성 화면 진입', async ({ page }) => {
+    // DAILY 카드 (첫 번째 버튼) 클릭
+    await expect(page.getByText(/그날의 코드토크|Daily Codetalk/i)).toBeVisible({ timeout: 5_000 });
+    await page.getByText(/그날의 코드토크|Daily Codetalk/i).click();
+    await page.waitForTimeout(1_000);
+    // 에러 없이 작성 모드 진입 확인
+    const hasError = await page.getByText(/Something went wrong|연결 오류/i).isVisible().catch(() => false);
+    expect(hasError).toBe(false);
   });
 
   test('경계 탭 → 감정적 경계 입력 → 저장', async ({ page }) => {

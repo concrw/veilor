@@ -1227,3 +1227,85 @@ export interface ImportedSignal {
   tags: string[];
   imported_at: string;
 }
+
+export type VeilorPeerModality = 'chat' | 'call' | 'night' | 'friend' | 'structured' | 'quiet';
+
+export interface VeilorPeer {
+  id: string;
+  user_id: string | null;
+  display_name: string;
+  role_label: string | null;
+  bio_short: string | null;
+  modalities: VeilorPeerModality[];
+  tags: string[];
+  rating: number | null;
+  price_chat: number | null;
+  price_call: number | null;
+  is_free: boolean;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface VeilorPeerRequest {
+  id: string;
+  requester_id: string;
+  peer_id: string;
+  modality: VeilorPeerModality;
+  message: string | null;
+  status: 'pending' | 'accepted' | 'declined' | 'completed';
+  created_at: string;
+}
+
+export interface VeilorPeerApplication {
+  id: string;
+  user_id: string;
+  modalities: VeilorPeerModality[];
+  price_chat: number | null;
+  price_call: number | null;
+  is_free: boolean;
+  qualifications_agreed: boolean;
+  status: 'draft' | 'submitted' | 'approved' | 'rejected';
+  created_at: string;
+  updated_at: string;
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Relation Domain — People registry & Relation peers
+// ──────────────────────────────────────────────────────────────────────────────
+
+export type RelationPersonType = 'family' | 'friend' | 'colleague' | 'romantic' | 'other';
+export type RelationPersonStatus = 'active' | 'distant' | 'ended';
+
+export interface RelationPerson {
+  id: string;
+  user_id: string;
+  name: string;
+  person_type: RelationPersonType;
+  status: RelationPersonStatus;
+  warmth_avg: number | null;    // 최근 체크인 평균 (1~10)
+  energy_avg: number | null;    // 최근 에너지 평균 (-5~5)
+  note: string | null;
+  emoji: string | null;
+  lang: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export type RelationPeerRole = 'mentor' | 'peer' | 'mentee' | 'buddy';
+export type RelationPeerStatus = 'active' | 'paused' | 'ended';
+
+export interface RelationPeerEntry {
+  id: string;
+  user_id: string;
+  peer_user_id: string | null;   // null = 외부 연락처
+  display_name: string;
+  role: RelationPeerRole;
+  status: RelationPeerStatus;
+  shared_domains: string[];      // 공유 관심 도메인 코드 배열
+  trust_level: TrustLevel;
+  last_interacted_at: string | null;
+  note: string | null;
+  created_at: string;
+  updated_at: string;
+}

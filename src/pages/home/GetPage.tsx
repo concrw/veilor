@@ -18,6 +18,9 @@ import IdentityTab from '@/components/get/IdentityTab';
 import IkigaiTab from '@/components/get/IkigaiTab';
 import BrandTab from '@/components/get/BrandTab';
 import CoupleAnalysis from '@/components/couple/CoupleAnalysis';
+import CommunityInlineEmbed from '@/components/community/CommunityInlineEmbed';
+
+const GET_ACCENT = '#68D391';
 
 type Tab = 'identity' | 'why' | 'ikigai' | 'brand' | 'couple';
 
@@ -197,13 +200,16 @@ export default function GetPage() {
           </div>
 
           {tab === 'identity' && (
-            <IdentityTab
-              primaryMask={primaryMask} axisScores={axisScores} pp={pp}
-              isPro={isPro} tryAccess={tryAccess}
-              totalSessions={totalSessions} ventCount={ventCount} digCount={digCount} setCount={setCount}
-              topEmotions={topEmotions} topDomain={topDomain} recentKeywords={recentKeywords}
-              signalTotal={patternSummary?.signal_total ?? 0}
-            />
+            <>
+              <IdentityTab
+                primaryMask={primaryMask} axisScores={axisScores} pp={pp}
+                isPro={isPro} tryAccess={tryAccess}
+                totalSessions={totalSessions} ventCount={ventCount} digCount={digCount} setCount={setCount}
+                topEmotions={topEmotions} topDomain={topDomain} recentKeywords={recentKeywords}
+                signalTotal={patternSummary?.signal_total ?? 0}
+              />
+              <CommunityInlineEmbed tab="get" accent={GET_ACCENT} />
+            </>
           )}
 
           {tab === 'why' && <WhyFlow />}

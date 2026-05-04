@@ -119,12 +119,12 @@ self.addEventListener('push', (event) => {
     }
   }
 
-  const title = data.title || 'PRIPER';
+  const title = data.title || 'VEILOR';
   const options = {
     body: data.body || 'You have a new notification',
     icon: '/icon-192x192.png',
     badge: '/icon-192x192.png',
-    tag: data.tag || 'priper-notification',
+    tag: data.tag || 'veilor-notification',
     data: data.url || '/',
     vibrate: [200, 100, 200],
     actions: data.actions || [],

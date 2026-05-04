@@ -22,6 +22,7 @@ import AmberSheet from '@/components/vent/AmberSheet';
 import VoiceModeButton from '@/components/vent/VoiceModeButton';
 import VentRightPanel from '@/components/vent/VentRightPanel';
 import SocialPivotNudge from '@/components/vent/SocialPivotNudge';
+import CommunityInlineEmbed from '@/components/community/CommunityInlineEmbed';
 import { useVentTranslations } from '@/hooks/useTranslation';
 import { useVentData } from '@/hooks/useVentData';
 import { useLanguageContext } from '@/context/LanguageContext';
@@ -387,6 +388,11 @@ export default function VentPage() {
                     onContinueChat={() => { setShowSummary(false); setMsgs(m => [...m, { role: 'ai', text: vent.chat.continueResponse, tone: vent.chat.toneContinue }]); }}
                     onNavigateToSexSelf={() => navigate('/home/sexself/questions')}
                   />
+                  {showSummary && (
+                    <div className="flex-shrink-0 px-4 pb-2">
+                      <CommunityInlineEmbed tab="vent" accent={C.amber} />
+                    </div>
+                  )}
                   {showAmberNudge && !showSummary && (
                     <div
                       className="flex-shrink-0 mx-4 mb-3 rounded-[12px] p-4"

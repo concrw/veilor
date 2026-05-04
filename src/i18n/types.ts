@@ -834,6 +834,25 @@ export interface LocaleResource {
       amberNoCheckin: string;
       amberLowWarmth: (name: string) => string;
       amberLowEnergy: string;
+      // concentric diagram
+      concentricTitle: string;
+      groupCore: string;
+      groupMiddle: string;
+      groupEcho: string;
+      groupOuter: string;
+      groupSuffix: (n: number) => string;
+      // person card
+      coreSectionLabel: (n: number) => string;
+      cardStrength: string;
+      cardNeed: string;
+      cardState: string;
+      cardLastContact: (n: number) => string;
+      emptyPeople: string;
+      addPersonCta: string;
+      addPersonBtn: string;
+      // AI suggestion
+      aiSuggestionPrefix: string;
+      aiWeeksAgo: (n: number) => string;
     };
     mirror: {
       section: string;
@@ -845,6 +864,33 @@ export interface LocaleResource {
       patternLabels: Record<string, string>;
       patternDescs: Record<string, string>;
       amberPattern: string;
+      // pattern callout
+      weeklyPatternLabel: string;
+      // heatmap
+      heatmapTitle: string;
+      heatmapDays: (n: number) => string;
+      // team fit
+      teamFitTitle: string;
+      teamFitDesc: string;
+      // set nav
+      setActionBtn: string;
+    };
+    // add person modal
+    addPerson: {
+      title: string;
+      namePlaceholder: string;
+      relationTypeLabel: string;
+      relationTypes: string[];
+      groupLabel: string;
+      groupDescriptions: string[];
+      strengthPlaceholder: string;
+      needPlaceholder: string;
+      statePlaceholder: string;
+      birthdayLabel: string;
+      lastMetLabel: string;
+      saveBtn: string;
+      saving: string;
+      cancel: string;
     };
   };
 }

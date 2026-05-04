@@ -14,6 +14,7 @@ import { saveSetSignal } from '@/hooks/useSignalPipeline';
 import { usePremiumTrigger } from '@/hooks/usePremiumTrigger';
 import UpgradeModal from '@/components/premium/UpgradeModal';
 import CodetalkTab from '@/components/set/CodetalkTab';
+import CodetalkHub from '@/components/set/CodetalkHub';
 import CoupleTalkTab from '@/components/set/CoupleTalkTab';
 import BoundaryTab, { ALL_AX_MERCER_KEYS, BOUNDARY_CATEGORY_KEYS, type BoundaryCategory } from '@/components/set/BoundaryTab';
 import StoryFeedTab from '@/components/set/StoryFeedTab';
@@ -24,7 +25,10 @@ import RelationshipSimulation from '@/components/set/RelationshipSimulation';
 import RelationshipCoaching from '@/components/set/RelationshipCoaching';
 import ExperientialContent from '@/components/content/ExperientialContent';
 import MantraCorner from '@/components/set/MantraCorner';
+import CommunityInlineEmbed from '@/components/community/CommunityInlineEmbed';
 import { useDomain } from '@/context/DomainContext';
+
+const SET_ACCENT = '#F59E0B';
 
 type Tab = 'codetalk' | 'boundary' | 'feed' | 'tools' | 'practice' | 'us' | 'mantra';
 
@@ -38,6 +42,7 @@ export default function SetPage() {
   const { domain } = useDomain();
   const { isPro, tryAccess, modalOpen: premiumModalOpen, activeTrigger, closeModal } = usePremiumTrigger();
   const [tab, setTab] = useState<Tab>('codetalk');
+  const [codetalkMode, setCodetalkMode] = useState<'hub' | 'daily' | 'category' | 'relation'>('hub');
   const [entry, setEntry] = useState('');
   const [isPublic, setIsPublic] = useState(false);
   const [aiInsight, setAiInsight] = useState<string | null>(null);
@@ -325,6 +330,11 @@ export default function SetPage() {
     return { checked, total, pct: total > 0 ? Math.round((checked / total) * 100) : 0 };
   })();
 
+  const handleTabChange = (t: Tab) => {
+    setTab(t);
+    if (t === 'codetalk') setCodetalkMode('hub');
+  };
+
   const SET_TABS: [Tab, string][] = [
     ['codetalk', set.tabs.codetalk],
     ['boundary', set.tabs.boundary],
@@ -345,7 +355,7 @@ export default function SetPage() {
           <p className="text-xs text-muted-foreground mt-0.5">{set.sidebarSubtitle}</p>
         </div>
         {SET_TABS.map(([t, label]) => (
-          <button key={t} onClick={() => setTab(t)}
+          <button key={t} onClick={() => handleTabChange(t)}
             className={`text-left px-3 py-2.5 rounded-xl text-sm transition-colors
               ${tab === t ? 'bg-primary text-primary-foreground font-medium' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}>
             {label}
@@ -361,7 +371,7 @@ export default function SetPage() {
         </div>
         <div className="bg-card border rounded-2xl p-1 flex mt-4">
           {SET_TABS.map(([t, label]) => (
-            <button key={t} onClick={() => setTab(t)}
+            <button key={t} onClick={() => handleTabChange(t)}
               className={`flex-1 py-2 px-0.5 rounded-xl text-xs font-medium transition-colors truncate
                 ${tab === t ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}>
               {label}
@@ -377,20 +387,72 @@ export default function SetPage() {
           <div className="flex items-center justify-center h-64">
             <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
           </div>
+        ) : codetalkMode === 'hub' ? (
+          <CodetalkHub
+            onModeSelect={setCodetalkMode}
+            keyword={keyword}
+            todayEntry={todayEntry}
+          />
+        ) : codetalkMode === 'daily' ? (
+          <>
+            <button
+              onClick={() => setCodetalkMode('hub')}
+              className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 mb-1"
+              style={{ fontFamily: 'monospace', letterSpacing: '0.04em' }}
+            >
+              ← MODES
+            </button>
+            <CodetalkTab
+              keyword={keyword}
+              todayEntry={todayEntry}
+              pastEntries={pastEntries}
+              entry={entry}
+              setEntry={setEntry}
+              isPublic={isPublic}
+              setIsPublic={setIsPublic}
+              saveMutation={saveMutation}
+              aiInsight={aiInsight}
+              aiInsightLoading={aiInsightLoading}
+              onRequestInsight={requestCodetalkInsight}
+            />
+          </>
+        ) : codetalkMode === 'category' ? (
+          <>
+            <button
+              onClick={() => setCodetalkMode('hub')}
+              className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 mb-1"
+              style={{ fontFamily: 'monospace', letterSpacing: '0.04em' }}
+            >
+              ← MODES
+            </button>
+            <CodetalkTab
+              keyword={keyword}
+              todayEntry={todayEntry}
+              pastEntries={pastEntries}
+              entry={entry}
+              setEntry={setEntry}
+              isPublic={isPublic}
+              setIsPublic={setIsPublic}
+              saveMutation={saveMutation}
+              aiInsight={aiInsight}
+              aiInsightLoading={aiInsightLoading}
+              onRequestInsight={requestCodetalkInsight}
+            />
+          </>
         ) : (
-        <CodetalkTab
-          keyword={keyword}
-          todayEntry={todayEntry}
-          pastEntries={pastEntries}
-          entry={entry}
-          setEntry={setEntry}
-          isPublic={isPublic}
-          setIsPublic={setIsPublic}
-          saveMutation={saveMutation}
-          aiInsight={aiInsight}
-          aiInsightLoading={aiInsightLoading}
-          onRequestInsight={requestCodetalkInsight}
-        />
+          <CodetalkTab
+            keyword={keyword}
+            todayEntry={todayEntry}
+            pastEntries={pastEntries}
+            entry={entry}
+            setEntry={setEntry}
+            isPublic={isPublic}
+            setIsPublic={setIsPublic}
+            saveMutation={saveMutation}
+            aiInsight={aiInsight}
+            aiInsightLoading={aiInsightLoading}
+            onRequestInsight={requestCodetalkInsight}
+          />
         )
       ) : tab === 'boundary' ? (
         <>
@@ -451,10 +513,13 @@ export default function SetPage() {
           <ExperientialContent />
         </div>
       ) : (
-        <StoryFeedTab
-          keyword={keyword}
-          publicFeed={publicFeed}
-        />
+        <>
+          <CommunityInlineEmbed tab="set" accent={SET_ACCENT} />
+          <StoryFeedTab
+            keyword={keyword}
+            publicFeed={publicFeed}
+          />
+        </>
       )}
       </div>
 

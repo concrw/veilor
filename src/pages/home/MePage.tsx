@@ -21,6 +21,7 @@ import GrowthTab from '@/components/me/GrowthTab';
 import ZoneTab from '@/components/me/ZoneTab';
 import ImpactTab from '@/components/me/ImpactTab';
 import NeedSummaryCard from '@/components/me/NeedSummaryCard';
+import CommunityInlineEmbed from '@/components/community/CommunityInlineEmbed';
 
 type Tab = 'growth' | 'people' | 'zone' | 'impact';
 
@@ -111,7 +112,12 @@ export default function MePage() {
                   <PeopleSection people={meData.people} peopleLoading={meData.peopleLoading} />
                 )}
                 {tab === 'zone' && (
-                  <ZoneTab pct={pct} closedCount={closedCount} zoneState={zoneState} toggleZone={toggleZone} />
+                  <>
+                    <ZoneTab pct={pct} closedCount={closedCount} zoneState={zoneState} toggleZone={toggleZone} />
+                    <div style={{ padding: '0 20px 16px' }}>
+                      <CommunityInlineEmbed tab="me" accent={C.amberGold} />
+                    </div>
+                  </>
                 )}
                 {tab === 'impact' && (
                   <ImpactTab />

@@ -184,14 +184,13 @@ test.describe('Set 페이지 — 코드토크 AI 인사이트 버튼', () => {
     await page.waitForTimeout(300);
   });
 
-  test('키워드 탭 — 기록 완료 시 AI 인사이트 버튼 표시', async ({ page }) => {
-    // 키워드 탭이 기본 active
+  test('키워드 탭 — CodetalkHub 또는 작성 화면 표시', async ({ page }) => {
+    // CodetalkHub 리뉴얼 후: 3-mode 카드 허브 or 작성 폼
     await page.waitForTimeout(1_500);
-    // 이미 오늘 기록이 있으면 버튼 표시, 없으면 입력 폼 표시
+    const hasHub        = await page.getByText(/RAPAILLE IMPRINT METHOD/i).isVisible().catch(() => false);
     const hasInsightBtn = await page.getByRole('button', { name: 'AI 인사이트' }).isVisible().catch(() => false);
     const hasForm       = await page.getByText('오늘 이 키워드가').isVisible().catch(() => false);
     const hasDoneCard   = await page.getByText('오늘의 기록').isVisible().catch(() => false);
-    const hasKeyword    = await page.getByText('키워드 검색').isVisible().catch(() => false);
-    expect(hasInsightBtn || hasForm || hasDoneCard || hasKeyword).toBe(true);
+    expect(hasHub || hasInsightBtn || hasForm || hasDoneCard).toBe(true);
   });
 });

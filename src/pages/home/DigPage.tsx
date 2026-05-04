@@ -15,6 +15,9 @@ import CodetalkExplore from '@/components/dig/CodetalkExplore';
 import { useDigPageData } from '@/hooks/useDigPageData';
 import { usePremiumTrigger } from '@/hooks/usePremiumTrigger';
 import UpgradeModal from '@/components/premium/UpgradeModal';
+import CommunityInlineEmbed from '@/components/community/CommunityInlineEmbed';
+
+const DIG_ACCENT = '#A78BFA';
 
 function DigPageInner() {
   const dig = useDigTranslations();
@@ -48,18 +51,23 @@ function DigPageInner() {
 
   if (selected) {
     return (
-      <DigResultList
-        selected={selected}
-        results={results}
-        situation={situation}
-        domainCounts={domainCounts}
-        comboPatternCounts={comboPatternCounts}
-        patternProfiles={patternProfiles}
-        interpretation={interpretation}
-        interpreting={interpreting}
-        onBack={() => { setSelected(null); if (digToWhyNudge === 'on_back') setShowWhyNudge(true); }}
-        onSelectResult={setSelected}
-      />
+      <div className="overflow-y-auto">
+        <DigResultList
+          selected={selected}
+          results={results}
+          situation={situation}
+          domainCounts={domainCounts}
+          comboPatternCounts={comboPatternCounts}
+          patternProfiles={patternProfiles}
+          interpretation={interpretation}
+          interpreting={interpreting}
+          onBack={() => { setSelected(null); if (digToWhyNudge === 'on_back') setShowWhyNudge(true); }}
+          onSelectResult={setSelected}
+        />
+        <div className="px-4 pb-6 max-w-sm mx-auto">
+          <CommunityInlineEmbed tab="dig" accent={DIG_ACCENT} />
+        </div>
+      </div>
     );
   }
 
