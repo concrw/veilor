@@ -136,6 +136,10 @@
   from { opacity:0; transform:translateY(7px); }
   to   { opacity:1; transform:translateY(0); }
 }
+@keyframes vr-fadeIn {
+  from { opacity:0; transform:translateY(6px); }
+  to   { opacity:1; transform:translateY(0); }
+}
 .amber-flash { animation: amber-flash 1.4s ease-out forwards; }
 .vr-fade-in  { animation: vr-fade-up .32s ease both; }
 
