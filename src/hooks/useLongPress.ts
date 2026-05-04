@@ -58,13 +58,9 @@ export function useLongPress(
   return {
     onTouchStart: start,
     onTouchEnd: stop,
-    onTouchMove: cancel,    // 스크롤 시 취소
+    onTouchMove: cancel,
     onMouseDown: start,
     onMouseUp: stop,
     onMouseLeave: cancel,
-    /** 현재 홀드 진행 시간을 계산하기 위한 시작 시간 */
-    startTimeRef,
-    /** 트리거 여부 */
-    triggeredRef,
   };
 }
