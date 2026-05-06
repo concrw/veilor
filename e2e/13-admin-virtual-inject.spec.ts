@@ -9,8 +9,9 @@
  */
 import { test, expect } from '@playwright/test';
 
-const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL ?? 'concrecrw@gmail.com';
-const ADMIN_PW    = process.env.E2E_ADMIN_PW    ?? '';
+// e2e.test.1777802660865@gmail.com — SUPERADMIN_EMAILS 등록된 전용 e2e 관리자 계정
+const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL ?? 'e2e.test.1777802660865@gmail.com';
+const ADMIN_PW    = process.env.E2E_ADMIN_PW    ?? 'E2eAdmin2026!';
 
 async function navigateToAdmin(page: import('@playwright/test').Page) {
   await page.evaluate(() => window.history.pushState({}, '', '/admin'));
@@ -18,7 +19,6 @@ async function navigateToAdmin(page: import('@playwright/test').Page) {
 }
 
 test.describe('관리자 대시보드 — 가상유저 활동 주입', () => {
-  test.skip(!ADMIN_PW, 'E2E_ADMIN_PW 환경변수가 없으면 건너뜁니다');
 
   test.beforeEach(async ({ page }) => {
     await page.goto('/auth/login');
@@ -52,7 +52,7 @@ test.describe('관리자 대시보드 — 가상유저 활동 주입', () => {
     const injectBtn = page.getByRole('button', { name: /가상유저 활동 주입/ });
     await injectBtn.click();
 
-    await expect(page.getByText('주입 중...')).toBeVisible({ timeout: 5_000 });
+    await expect(page.getByText('주입 중...')).toBeVisible({ timeout: 10_000 });
     // 성공: "주입 완료" 텍스트(green-400), 실패: "오류:" 텍스트(red-400)
     await expect(page.getByText(/^주입 완료$|^오류:/).first()).toBeVisible({ timeout: 30_000 });
   });

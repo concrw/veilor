@@ -77,7 +77,7 @@ function ProgressRing({
   const offset = circumference * (1 - progress);
 
   const isMilestone = (ROUTINE_MILESTONES as readonly number[]).includes(streak);
-  const strokeColor = isMilestone ? '#F5C98A' : '#D4A574';
+  const strokeColor = isMilestone ? '#F5C98A' : '#E0B48A';
 
   return (
     <div className="relative flex items-center justify-center">

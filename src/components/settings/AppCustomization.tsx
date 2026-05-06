@@ -62,7 +62,7 @@ const S = {
 };
 
 const THEME_PRESETS: Record<string, { accent: string; bg: string }> = {
-  default: { accent: '#D4A574', bg: '#0C0A09' },
+  default: { accent: '#E0B48A', bg: '#0C0A09' },
   calm: { accent: '#6366f1', bg: '#0f0f23' },
   warm: { accent: '#f59e0b', bg: '#1a0f00' },
   nature: { accent: '#10b981', bg: '#0a1a0f' },

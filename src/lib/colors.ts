@@ -22,13 +22,13 @@ export const C = {
   frost: '#95BDD6',     // WCAG AA 4.7:1 on bg (was #7BA8C4 2.95:1)
 
   // ── Domain accent colors ───────────────────────────────────────────
-  self:     '#D4A574',   // amber — Self domain
+  self:     '#E0B48A',   // amber — Self domain
   work:     '#38BDF8',   // sky   — Work domain
   relation: '#FB7185',   // rose  — Relation domain
   social:   '#7FB89A',   // teal  — Social domain
 } as const;
 
-/** 8-digit hex alpha helper: alpha(C.amber, 0.1) → '#D4A5741A' */
+/** 8-digit hex alpha helper: alpha(C.amber, 0.1) → '#E0B48A1A' */
 export function alpha(hex: string, opacity: number): string {
   const a = Math.round(opacity * 255).toString(16).padStart(2, '0');
   return `${hex}${a}`;

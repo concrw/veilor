@@ -56,7 +56,7 @@ function PostCard({ post, s, locale }: { post: B2BCoachPost; s: typeof S['ko']; 
       {post.is_pinned && (
         <span
           className="text-[11px] px-2 py-0.5 rounded-full mb-2 inline-block"
-          style={{ background: '#D4A57420', color: '#D4A574' }}
+          style={{ background: '#E0B48A20', color: '#E0B48A' }}
         >
           {s.pinBadge}
         </span>
@@ -68,7 +68,7 @@ function PostCard({ post, s, locale }: { post: B2BCoachPost; s: typeof S['ko']; 
       )}
       <p
         className="text-[13px] leading-relaxed whitespace-pre-line"
-        style={{ color: '#A8A29E' }}
+        style={{ color: '#B8B3AF' }}
       >
         {isLong && !expanded ? `${post.body.slice(0, 200)}…` : post.body}
       </p>
@@ -76,7 +76,7 @@ function PostCard({ post, s, locale }: { post: B2BCoachPost; s: typeof S['ko']; 
         <button
           onClick={() => setExpanded((e) => !e)}
           className="text-[12px] mt-2"
-          style={{ color: '#D4A574' }}
+          style={{ color: '#E0B48A' }}
         >
           {expanded ? s.collapse : s.expand}
         </button>
@@ -87,14 +87,14 @@ function PostCard({ post, s, locale }: { post: B2BCoachPost; s: typeof S['ko']; 
             <span
               key={t}
               className="text-[11px] px-2 py-0.5 rounded-full"
-              style={{ background: '#2A2624', color: '#78716C' }}
+              style={{ background: '#2A2624', color: '#9C9590' }}
             >
               #{t}
             </span>
           ))}
         </div>
       )}
-      <p className="text-[11px] mt-3" style={{ color: '#57534E' }}>
+      <p className="text-[11px] mt-3" style={{ color: '#87817C' }}>
         {new Date(post.created_at).toLocaleDateString(locale === 'en' ? 'en-US' : 'ko-KR')}
       </p>
     </div>
@@ -115,7 +115,7 @@ export default function CoachProfile() {
   if (loadingCoach) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: '#1C1917' }}>
-        <div className="w-6 h-6 border-2 border-[#D4A574] border-t-transparent rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 border-[#E0B48A] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -123,7 +123,7 @@ export default function CoachProfile() {
   if (!coach) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: '#1C1917' }}>
-        <p className="text-[14px]" style={{ color: '#78716C' }}>{s.notFound}</p>
+        <p className="text-[14px]" style={{ color: '#9C9590' }}>{s.notFound}</p>
       </div>
     );
   }
@@ -148,7 +148,7 @@ export default function CoachProfile() {
         <button
           onClick={() => navigate(-1)}
           className="text-[13px]"
-          style={{ color: '#78716C' }}
+          style={{ color: '#9C9590' }}
         >
           {s.back}
         </button>
@@ -163,7 +163,7 @@ export default function CoachProfile() {
           <div className="flex items-start gap-4 mb-4">
             <div
               className="w-14 h-14 rounded-full flex-shrink-0 flex items-center justify-center text-lg font-medium"
-              style={{ background: '#D4A57420', color: '#D4A574' }}
+              style={{ background: '#E0B48A20', color: '#E0B48A' }}
             >
               {coach.display_name.charAt(0)}
             </div>
@@ -178,7 +178,7 @@ export default function CoachProfile() {
                   </span>
                 )}
               </div>
-              <p className="text-[12px] mt-0.5" style={{ color: '#78716C' }}>
+              <p className="text-[12px] mt-0.5" style={{ color: '#9C9590' }}>
                 {s.sessionCount(coach.session_count)} · {s.memberCount(coach.current_members, coach.max_members)}
               </p>
             </div>
@@ -191,7 +191,7 @@ export default function CoachProfile() {
                 <span
                   key={d}
                   className="text-[11px] px-2 py-0.5 rounded-full"
-                  style={{ background: '#D4A57415', color: '#D4A574' }}
+                  style={{ background: '#E0B48A15', color: '#E0B48A' }}
                 >
                   {d}
                 </span>
@@ -206,7 +206,7 @@ export default function CoachProfile() {
                 <span
                   key={sp}
                   className="text-[11px] px-2 py-0.5 rounded-full"
-                  style={{ background: '#2A2624', color: '#A8A29E' }}
+                  style={{ background: '#2A2624', color: '#B8B3AF' }}
                 >
                   {sp}
                 </span>
@@ -216,21 +216,21 @@ export default function CoachProfile() {
 
           {/* 자격증 */}
           {coach.certifications && coach.certifications.length > 0 && (
-            <p className="text-[12px] mb-3" style={{ color: '#78716C' }}>
+            <p className="text-[12px] mb-3" style={{ color: '#9C9590' }}>
               {s.certifications(coach.certifications.join(', '))}
             </p>
           )}
 
           {/* 바이오 */}
           {coach.bio && (
-            <p className="text-[14px] leading-relaxed" style={{ color: '#A8A29E' }}>
+            <p className="text-[14px] leading-relaxed" style={{ color: '#B8B3AF' }}>
               {coach.bio}
             </p>
           )}
 
           {/* 언어 */}
           {coach.languages.length > 0 && (
-            <p className="text-[12px] mt-3" style={{ color: '#57534E' }}>
+            <p className="text-[12px] mt-3" style={{ color: '#87817C' }}>
               {coach.languages.join(' · ')}
             </p>
           )}
@@ -238,13 +238,13 @@ export default function CoachProfile() {
 
         {/* 포스트 피드 */}
         <div className="mb-4">
-          <p className="text-[13px] mb-3 px-1" style={{ color: '#57534E' }}>
+          <p className="text-[13px] mb-3 px-1" style={{ color: '#87817C' }}>
             {s.postFeedLabel(sortedPosts.length > 0 ? sortedPosts.length : null)}
           </p>
 
           {loadingPosts && (
             <div className="flex justify-center py-8">
-              <div className="w-5 h-5 border-2 border-[#D4A574] border-t-transparent rounded-full animate-spin" />
+              <div className="w-5 h-5 border-2 border-[#E0B48A] border-t-transparent rounded-full animate-spin" />
             </div>
           )}
 
@@ -253,7 +253,7 @@ export default function CoachProfile() {
               className="rounded-2xl p-8 text-center"
               style={{ background: '#242220', border: '1px solid #2E2B28' }}
             >
-              <p className="text-[13px]" style={{ color: '#57534E' }}>
+              <p className="text-[13px]" style={{ color: '#87817C' }}>
                 {s.noPosts}
               </p>
             </div>
@@ -276,8 +276,8 @@ export default function CoachProfile() {
           disabled={!available}
           className="w-full py-3 rounded-xl text-[15px] font-medium transition-opacity"
           style={{
-            background: available ? '#D4A574' : '#2A2624',
-            color: available ? '#1C1917' : '#57534E',
+            background: available ? '#E0B48A' : '#2A2624',
+            color: available ? '#1C1917' : '#87817C',
             opacity: available ? 1 : 0.6,
           }}
         >

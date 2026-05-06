@@ -127,7 +127,7 @@ export default function UserProfilePage() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: '#1C1917' }}>
-        <div className="w-6 h-6 rounded-full animate-spin" style={{ border: '2px solid #D4A574', borderTopColor: 'transparent' }} />
+        <div className="w-6 h-6 rounded-full animate-spin" style={{ border: '2px solid #E0B48A', borderTopColor: 'transparent' }} />
       </div>
     );
   }
@@ -140,14 +140,14 @@ export default function UserProfilePage() {
         <div className="hidden lg:flex flex-col flex-shrink-0 justify-center items-center border-r px-12 py-10 space-y-6" style={{ width: 320, borderColor: '#2A2624' }}>
           <div
             className="w-24 h-24 rounded-full flex items-center justify-center text-3xl font-semibold"
-            style={{ background: '#D4A57420', border: '1px solid #D4A57440', color: '#D4A574' }}
+            style={{ background: '#E0B48A20', border: '1px solid #E0B48A40', color: '#E0B48A' }}
           >
             {displayName.slice(0, 1).toUpperCase()}
           </div>
           <div className="text-center space-y-2">
             <h2 className="text-lg font-medium" style={{ color: '#F5F5F4' }}>{displayName}</h2>
             {profile?.primary_mask && (
-              <span className="inline-block text-xs px-2.5 py-1 rounded-full" style={{ background: '#D4A57415', border: '1px solid #D4A57430', color: '#D4A574' }}>
+              <span className="inline-block text-xs px-2.5 py-1 rounded-full" style={{ background: '#E0B48A15', border: '1px solid #E0B48A30', color: '#E0B48A' }}>
                 {profile.primary_mask}
               </span>
             )}
@@ -156,7 +156,7 @@ export default function UserProfilePage() {
             <button
               onClick={handleSendMessage}
               className="w-full py-3 rounded-xl text-sm font-medium"
-              style={{ background: '#D4A574', color: '#1C1917' }}
+              style={{ background: '#E0B48A', color: '#1C1917' }}
             >
               {existingRoom ? s.continueChat : s.sendMessage}
             </button>
@@ -167,18 +167,18 @@ export default function UserProfilePage() {
         <div className="flex-1 px-4 py-6" style={{ maxWidth: 600 }}>
           <div className="space-y-5">
             {/* 뒤로가기 */}
-            <button onClick={() => navigate(-1)} className="text-xs" style={{ color: '#A8A29E' }}>{s.back}</button>
+            <button onClick={() => navigate(-1)} className="text-xs" style={{ color: '#B8B3AF' }}>{s.back}</button>
 
             {/* 모바일 프로필 카드 */}
             <div className="lg:hidden rounded-2xl p-6 space-y-5" style={{ background: '#292524', border: '1px solid #44403C' }}>
               <div className="flex flex-col items-center gap-3">
-                <div className="w-16 h-16 rounded-full flex items-center justify-center text-xl font-semibold" style={{ background: '#D4A57420', border: '1px solid #D4A57440', color: '#D4A574' }}>
+                <div className="w-16 h-16 rounded-full flex items-center justify-center text-xl font-semibold" style={{ background: '#E0B48A20', border: '1px solid #E0B48A40', color: '#E0B48A' }}>
                   {displayName.slice(0, 1).toUpperCase()}
                 </div>
                 <div className="text-center space-y-1">
                   <h2 className="text-base font-medium" style={{ color: '#F5F5F4' }}>{displayName}</h2>
                   {profile?.primary_mask && (
-                    <span className="inline-block text-xs px-2 py-0.5 rounded-full" style={{ background: '#D4A57415', border: '1px solid #D4A57430', color: '#D4A574' }}>
+                    <span className="inline-block text-xs px-2 py-0.5 rounded-full" style={{ background: '#E0B48A15', border: '1px solid #E0B48A30', color: '#E0B48A' }}>
                       {profile.primary_mask}
                     </span>
                   )}
@@ -188,7 +188,7 @@ export default function UserProfilePage() {
 
             {/* 모바일 메시지 버튼 */}
             {!isOwnProfile && (
-              <button className="lg:hidden w-full py-3 rounded-xl text-sm font-medium" onClick={handleSendMessage} style={{ background: '#D4A574', color: '#1C1917' }}>
+              <button className="lg:hidden w-full py-3 rounded-xl text-sm font-medium" onClick={handleSendMessage} style={{ background: '#E0B48A', color: '#1C1917' }}>
                 {existingRoom ? s.continueChat : s.sendMessage}
               </button>
             )}
@@ -202,7 +202,7 @@ export default function UserProfilePage() {
             <div className="mx-4 max-w-xs w-full rounded-2xl p-6 space-y-4" style={{ background: '#292524', border: '1px solid #44403C' }}>
               <div className="space-y-1">
                 <h3 className="text-sm font-medium" style={{ color: '#F5F5F4' }}>{s.startChatTitle}</h3>
-                <p className="text-xs leading-relaxed" style={{ color: '#A8A29E' }}>
+                <p className="text-xs leading-relaxed" style={{ color: '#B8B3AF' }}>
                   {s.startChatDesc}
                 </p>
               </div>
@@ -211,7 +211,7 @@ export default function UserProfilePage() {
                   onClick={() => setShowConfirmModal(false)}
                   disabled={createRoomMutation.isPending}
                   className="flex-1 py-2 rounded-xl text-xs"
-                  style={{ border: '1px solid #44403C', color: '#A8A29E', background: 'transparent' }}
+                  style={{ border: '1px solid #44403C', color: '#B8B3AF', background: 'transparent' }}
                 >
                   {s.cancel}
                 </button>
@@ -219,7 +219,7 @@ export default function UserProfilePage() {
                   onClick={() => createRoomMutation.mutate()}
                   disabled={createRoomMutation.isPending}
                   className="flex-1 py-2 rounded-xl text-xs font-medium"
-                  style={{ background: '#D4A574', color: '#1C1917' }}
+                  style={{ background: '#E0B48A', color: '#1C1917' }}
                 >
                   {createRoomMutation.isPending ? s.requesting : s.start}
                 </button>

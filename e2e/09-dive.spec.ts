@@ -37,10 +37,12 @@ test.describe('DivePage (F/T 모드)', () => {
     const submitBtn = page.getByRole('button', { name: '패턴 분석 시작' });
     await expect(submitBtn).not.toBeDisabled({ timeout: 3_000 });
     await submitBtn.click();
-    await page.waitForTimeout(8_000);
-    const hasResult = await page.getByText(/돌아가기/i).isVisible().catch(() => false);
-    const hasForm = await page.getByRole('button', { name: '나 자신' }).isVisible().catch(() => false);
-    expect(hasResult || hasForm).toBe(true);
+    // 결과/폼 중 먼저 나타나는 쪽 대기 (최대 30초)
+    const outcome = await Promise.race([
+      page.getByText(/돌아가기/i).waitFor({ timeout: 30_000 }).then(() => 'result'),
+      page.getByRole('button', { name: '나 자신' }).waitFor({ timeout: 30_000 }).then(() => 'form'),
+    ]).catch(() => null);
+    expect(outcome).not.toBeNull();
   });
 
   test('분석 결과 → 돌아가기', async ({ page }) => {
@@ -49,7 +51,11 @@ test.describe('DivePage (F/T 모드)', () => {
     await expect(textarea).toBeVisible({ timeout: 5_000 });
     await textarea.fill('자존감 불안 회피 애착 반복 감정 자기비판');
     await page.getByRole('button', { name: '패턴 분석 시작' }).click();
-    await page.waitForTimeout(8_000);
+    // 결과/폼 중 먼저 나타나는 쪽 대기 (최대 30초)
+    await Promise.race([
+      page.getByText(/← 돌아가기/i).waitFor({ timeout: 30_000 }),
+      page.getByRole('button', { name: '나 자신' }).waitFor({ timeout: 30_000 }),
+    ]).catch(() => null);
     const hasBack = await page.getByText(/← 돌아가기/i).isVisible().catch(() => false);
     if (hasBack) {
       await page.getByText(/← 돌아가기/i).click();

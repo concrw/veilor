@@ -151,11 +151,11 @@ export default function CoreQuestions() {
       {/* 좌측 브랜드 패널 — PC 전용 */}
       <div className="hidden lg:flex flex-col justify-between flex-1 px-16 py-14" style={{ borderRight: '1px solid #2A2624' }}>
         <div>
-          <h1 className="text-4xl font-bold tracking-widest mb-3" style={{ color: '#D4A574', letterSpacing: '0.2em' }}>VEILOR</h1>
-          <p className="text-base font-light" style={{ color: '#A8A29E' }}>{s.subtitle}</p>
+          <h1 className="text-4xl font-bold tracking-widest mb-3" style={{ color: '#E0B48A', letterSpacing: '0.2em' }}>VEILOR</h1>
+          <p className="text-base font-light" style={{ color: '#B8B3AF' }}>{s.subtitle}</p>
         </div>
         <div className="rounded-2xl p-6 space-y-4" style={{ background: '#292524', border: '1px solid #44403C' }}>
-          <p className="text-xs font-medium" style={{ color: '#A8A29E' }}>{s.sidebarTitle}</p>
+          <p className="text-xs font-medium" style={{ color: '#B8B3AF' }}>{s.sidebarTitle}</p>
           <p className="text-sm leading-relaxed" style={{ color: '#D4D4D0' }}>
             {s.sidebarDesc1}
           </p>
@@ -164,10 +164,10 @@ export default function CoreQuestions() {
           </p>
           <div className="flex gap-1.5 pt-2">
             {QUESTIONS.map((_, i) => (
-              <div key={i} className="h-1 flex-1 rounded-full transition-colors" style={{ background: i <= current ? '#D4A574' : '#3A3530' }} />
+              <div key={i} className="h-1 flex-1 rounded-full transition-colors" style={{ background: i <= current ? '#E0B48A' : '#3A3530' }} />
             ))}
           </div>
-          <p className="text-xs" style={{ color: '#57534E' }}>{current + 1} / {QUESTIONS.length} {s.progressSuffix}</p>
+          <p className="text-xs" style={{ color: '#87817C' }}>{current + 1} / {QUESTIONS.length} {s.progressSuffix}</p>
         </div>
         <p className="text-xs" style={{ color: '#44403C' }}>© 2026 VEILOR</p>
       </div>
@@ -181,12 +181,12 @@ export default function CoreQuestions() {
             <div
               key={i}
               className="h-1 flex-1 rounded-full transition-colors"
-              style={{ background: i <= current ? '#D4A574' : '#292524' }}
+              style={{ background: i <= current ? '#E0B48A' : '#292524' }}
             />
           ))}
         </div>
 
-        <p className="text-xs mb-2" style={{ color: '#A8A29E' }}>{current + 1} / {QUESTIONS.length}</p>
+        <p className="text-xs mb-2" style={{ color: '#B8B3AF' }}>{current + 1} / {QUESTIONS.length}</p>
         <h2 className="text-xl font-semibold mb-8 leading-snug" style={{ color: '#F5F5F4' }}>{q.question}</h2>
 
         {q.type === 'choice' && (
@@ -197,9 +197,9 @@ export default function CoreQuestions() {
                 onClick={() => handleSelect(opt)}
                 className="w-full text-left px-4 py-3.5 rounded-xl text-sm transition-all"
                 style={{
-                  border: `1px solid ${answers[q.key] === opt ? '#D4A574' : '#44403C'}`,
-                  background: answers[q.key] === opt ? '#D4A57410' : 'transparent',
-                  color: answers[q.key] === opt ? '#D4A574' : '#F5F5F4',
+                  border: `1px solid ${answers[q.key] === opt ? '#E0B48A' : '#44403C'}`,
+                  background: answers[q.key] === opt ? '#E0B48A10' : 'transparent',
+                  color: answers[q.key] === opt ? '#E0B48A' : '#F5F5F4',
                   fontWeight: answers[q.key] === opt ? 500 : 400,
                   fontFamily: "'DM Sans', sans-serif",
                 }}
@@ -229,7 +229,7 @@ export default function CoreQuestions() {
               onClick={handleTextNext}
               className="w-full py-3 rounded-xl text-sm font-medium"
               style={{
-                background: '#D4A574',
+                background: '#E0B48A',
                 color: '#1C1917',
                 fontFamily: "'DM Sans', sans-serif",
               }}

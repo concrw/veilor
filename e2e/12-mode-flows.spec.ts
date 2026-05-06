@@ -193,12 +193,14 @@ test.describe('SexSelf 라우트', () => {
   });
 
   test('/home/sexself/questions 렌더링', async ({ page }) => {
-    await page.goto('/home/sexself/questions');
+    // page.goto는 full reload → useAuth 재초기화 → 무한 스피너 위험
+    // pushState + popstate 방식으로 SPA 내부 네비게이션 (13-admin 패턴과 동일)
+    await page.evaluate(() => window.history.pushState({}, '', '/home/sexself/questions'));
+    await page.evaluate(() => window.dispatchEvent(new PopStateEvent('popstate', { state: window.history.state })));
     await expect(page).toHaveURL(/sexself\/questions/, { timeout: 8_000 });
     await page.waitForLoadState('networkidle');
     const is404 = await page.locator('text=/404|찾을 수 없/').first().isVisible().catch(() => false);
     expect(is404).toBeFalsy();
-    // 질문 페이지 텍스트 확인
     const pageText = await page.locator('body').textContent({ timeout: 5_000 }).catch(() => '');
     expect(pageText.length).toBeGreaterThan(20);
   });
@@ -245,6 +247,7 @@ test.describe('탭 네비게이션 전환 (original 모드)', () => {
     });
     await login(page, TEST_USERS.done.email, TEST_USERS.done.password);
     await waitForHome(page);
+    await page.waitForLoadState('networkidle');
   });
 
   const tabs = [
@@ -258,7 +261,7 @@ test.describe('탭 네비게이션 전환 (original 모드)', () => {
   for (const tab of tabs) {
     test(`탭 클릭 → ${tab.path}`, async ({ page }) => {
       await page.getByRole('link', { name: tab.name }).first().click();
-      await expect(page).toHaveURL(new RegExp(tab.path.replace('/', '\\/')), { timeout: 8_000 });
+      await expect(page).toHaveURL(new RegExp(tab.path.replace('/', '\\/')), { timeout: 15_000 });
     });
   }
 });

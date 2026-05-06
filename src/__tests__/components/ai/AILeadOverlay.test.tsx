@@ -61,11 +61,11 @@ vi.mock('@/lib/colors', () => ({
     bg2: '#2A2624',
     text: '#E7E5E4',
     text2: '#D6D3D1',
-    text3: '#A8A29E',
-    text4: '#78716C',
-    text5: '#57534E',
+    text3: '#B8B3AF',
+    text4: '#9C9590',
+    text5: '#87817C',
     border: '#3C3835',
-    amberGold: '#D4A574',
+    amberGold: '#E0B48A',
   },
 }));
 

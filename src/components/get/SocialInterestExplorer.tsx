@@ -80,7 +80,7 @@ const AREAS: { code: IssueCode; emoji: string; ko: string; en: string; sub_ko: s
 
 const STATUS_COLORS: Record<InterestStatus, string> = {
   active:  '#7FB89A',
-  dormant: '#78716C',
+  dormant: '#9C9590',
   revisit: '#C4A355',
 };
 

@@ -149,7 +149,7 @@ function PostEditor({ coachId, userId, post, onClose, s }: PostEditorProps) {
           <h2 className="text-[16px] font-medium" style={{ color: '#E7E5E4' }}>
             {s.postEditorTitle(isEditing)}
           </h2>
-          <button onClick={onClose} className="text-[20px]" style={{ color: '#57534E' }}>×</button>
+          <button onClick={onClose} className="text-[20px]" style={{ color: '#87817C' }}>×</button>
         </div>
 
         <input
@@ -174,7 +174,7 @@ function PostEditor({ coachId, userId, post, onClose, s }: PostEditorProps) {
           onChange={(e) => setTags(e.target.value)}
           placeholder={s.tagsPlaceholder}
           className="w-full bg-transparent border-b py-2 text-[13px] outline-none"
-          style={{ borderColor: '#3C3835', color: '#A8A29E' }}
+          style={{ borderColor: '#3C3835', color: '#B8B3AF' }}
         />
 
         {isEditing && (
@@ -185,7 +185,7 @@ function PostEditor({ coachId, userId, post, onClose, s }: PostEditorProps) {
               onChange={(e) => setIsPinned(e.target.checked)}
               className="accent-amber-400"
             />
-            <span className="text-[13px]" style={{ color: '#A8A29E' }}>{s.pinLabel}</span>
+            <span className="text-[13px]" style={{ color: '#B8B3AF' }}>{s.pinLabel}</span>
           </label>
         )}
 
@@ -194,8 +194,8 @@ function PostEditor({ coachId, userId, post, onClose, s }: PostEditorProps) {
           disabled={!body.trim() || isPending}
           className="w-full py-3 rounded-xl text-[14px] font-medium"
           style={{
-            background: body.trim() && !isPending ? '#D4A574' : '#2A2624',
-            color: body.trim() && !isPending ? '#1C1917' : '#57534E',
+            background: body.trim() && !isPending ? '#E0B48A' : '#2A2624',
+            color: body.trim() && !isPending ? '#1C1917' : '#87817C',
           }}
         >
           {isPending ? s.saving : s.savePost(isEditing)}
@@ -213,9 +213,9 @@ function SessionRow({ session, coachId, s, locale }: { session: B2BCoachingSessi
   const [notes, setNotes] = useState('');
 
   const statusColor: Record<string, string> = {
-    scheduled: '#D4A574',
+    scheduled: '#E0B48A',
     completed: '#4ADE80',
-    cancelled: '#78716C',
+    cancelled: '#9C9590',
     no_show: '#EF4444',
   };
 
@@ -234,7 +234,7 @@ function SessionRow({ session, coachId, s, locale }: { session: B2BCoachingSessi
           {s.statusLabels[session.status]}
         </span>
       </div>
-      <p className="text-[12px]" style={{ color: '#78716C' }}>
+      <p className="text-[12px]" style={{ color: '#9C9590' }}>
         {s.memberId2(session.member_id.slice(0, 8))}
       </p>
       {session.status === 'scheduled' && (
@@ -242,14 +242,14 @@ function SessionRow({ session, coachId, s, locale }: { session: B2BCoachingSessi
           <button
             onClick={() => setShowNotes(true)}
             className="flex-1 py-1.5 rounded-lg text-[12px]"
-            style={{ background: '#D4A57420', color: '#D4A574' }}
+            style={{ background: '#E0B48A20', color: '#E0B48A' }}
           >
             {s.markDone}
           </button>
           <button
             onClick={() => update.mutate({ sessionId: session.id, coachId, status: 'cancelled' })}
             className="flex-1 py-1.5 rounded-lg text-[12px]"
-            style={{ background: '#3C3835', color: '#78716C' }}
+            style={{ background: '#3C3835', color: '#9C9590' }}
           >
             {s.cancelSession}
           </button>
@@ -263,7 +263,7 @@ function SessionRow({ session, coachId, s, locale }: { session: B2BCoachingSessi
             placeholder={s.coachNotes}
             rows={3}
             className="w-full text-[12px] rounded-lg p-2 outline-none resize-none"
-            style={{ background: '#1C1917', color: '#A8A29E', border: '1px solid #3C3835' }}
+            style={{ background: '#1C1917', color: '#B8B3AF', border: '1px solid #3C3835' }}
           />
           <button
             onClick={() => {
@@ -276,7 +276,7 @@ function SessionRow({ session, coachId, s, locale }: { session: B2BCoachingSessi
               setShowNotes(false);
             }}
             className="py-1.5 rounded-lg text-[12px]"
-            style={{ background: '#D4A574', color: '#1C1917' }}
+            style={{ background: '#E0B48A', color: '#1C1917' }}
           >
             {s.confirm}
           </button>
@@ -305,13 +305,13 @@ function PostManageList({ coachId, userId, s }: { coachId: string; userId: strin
       <button
         onClick={() => setShowCreate(true)}
         className="w-full py-3 rounded-xl text-[14px] font-medium mb-4"
-        style={{ background: '#D4A574', color: '#1C1917' }}
+        style={{ background: '#E0B48A', color: '#1C1917' }}
       >
         {s.newPost}
       </button>
 
       {sorted.length === 0 && (
-        <p className="text-center py-8 text-[13px]" style={{ color: '#57534E' }}>
+        <p className="text-center py-8 text-[13px]" style={{ color: '#87817C' }}>
           {s.noPost}
         </p>
       )}
@@ -324,21 +324,21 @@ function PostManageList({ coachId, userId, s }: { coachId: string; userId: strin
             style={{ background: '#2A2624', border: '1px solid #3C3835' }}
           >
             {post.is_pinned && (
-              <span className="text-[11px] mr-1" style={{ color: '#D4A574' }}>📌</span>
+              <span className="text-[11px] mr-1" style={{ color: '#E0B48A' }}>📌</span>
             )}
             {post.title && (
               <p className="text-[14px] font-medium mb-1" style={{ color: '#E7E5E4' }}>
                 {post.title}
               </p>
             )}
-            <p className="text-[12px] line-clamp-2 mb-3" style={{ color: '#A8A29E' }}>
+            <p className="text-[12px] line-clamp-2 mb-3" style={{ color: '#B8B3AF' }}>
               {post.body}
             </p>
             <div className="flex gap-2">
               <button
                 onClick={() => setEditTarget(post)}
                 className="flex-1 py-1.5 rounded-lg text-[12px]"
-                style={{ background: '#3C3835', color: '#A8A29E' }}
+                style={{ background: '#3C3835', color: '#B8B3AF' }}
               >
                 {s.editPost}
               </button>
@@ -404,7 +404,7 @@ export default function CoachPortal() {
   if (loadingProfile) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: '#1C1917' }}>
-        <div className="w-6 h-6 border-2 border-[#D4A574] border-t-transparent rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 border-[#E0B48A] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -413,13 +413,13 @@ export default function CoachPortal() {
     return (
       <div className="min-h-screen flex items-center justify-center px-5" style={{ background: '#1C1917' }}>
         <div className="text-center">
-          <p className="text-[14px] mb-4" style={{ color: '#78716C' }}>
+          <p className="text-[14px] mb-4" style={{ color: '#9C9590' }}>
             {s.notCoach}
           </p>
           <button
             onClick={() => navigate(-1)}
             className="text-[13px]"
-            style={{ color: '#D4A574' }}
+            style={{ color: '#E0B48A' }}
           >
             {s.goBack}
           </button>
@@ -442,14 +442,14 @@ export default function CoachPortal() {
         <button
           onClick={() => navigate(-1)}
           className="mb-3 text-[13px]"
-          style={{ color: '#78716C' }}
+          style={{ color: '#9C9590' }}
         >
           {s.back}
         </button>
         <div className="flex items-center gap-3 mb-3">
           <div
             className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0"
-            style={{ background: '#D4A57420', color: '#D4A574' }}
+            style={{ background: '#E0B48A20', color: '#E0B48A' }}
           >
             {myProfile.display_name.charAt(0)}
           </div>
@@ -457,7 +457,7 @@ export default function CoachPortal() {
             <h1 className="text-[16px] font-medium" style={{ color: '#E7E5E4' }}>
               {myProfile.display_name}
             </h1>
-            <p className="text-[12px]" style={{ color: '#78716C' }}>
+            <p className="text-[12px]" style={{ color: '#9C9590' }}>
               {s.responsibleCount(myProfile.current_members, myProfile.max_members)} ·{' '}
               ★ {myProfile.avg_rating.toFixed(1)}
             </p>
@@ -472,8 +472,8 @@ export default function CoachPortal() {
               onClick={() => setActiveTab(t.id)}
               className="flex-1 py-1.5 rounded-lg text-[12px] transition-colors"
               style={{
-                background: activeTab === t.id ? '#D4A574' : '#2A2624',
-                color: activeTab === t.id ? '#1C1917' : '#78716C',
+                background: activeTab === t.id ? '#E0B48A' : '#2A2624',
+                color: activeTab === t.id ? '#1C1917' : '#9C9590',
               }}
             >
               {t.label}
@@ -489,11 +489,11 @@ export default function CoachPortal() {
           <div>
             {loadingMembers && (
               <div className="flex justify-center py-10">
-                <div className="w-5 h-5 border-2 border-[#D4A574] border-t-transparent rounded-full animate-spin" />
+                <div className="w-5 h-5 border-2 border-[#E0B48A] border-t-transparent rounded-full animate-spin" />
               </div>
             )}
             {!loadingMembers && (members ?? []).length === 0 && (
-              <p className="text-center py-10 text-[13px]" style={{ color: '#57534E' }}>
+              <p className="text-center py-10 text-[13px]" style={{ color: '#87817C' }}>
                 {s.noMembers}
               </p>
             )}
@@ -526,7 +526,7 @@ export default function CoachPortal() {
                       </span>
                     )}
                   </div>
-                  <p className="text-[12px]" style={{ color: '#78716C' }}>
+                  <p className="text-[12px]" style={{ color: '#9C9590' }}>
                     {s.sessionCount(m.sessions_count)}
                     {m.latest_checkin_at ? s.latestCheckin(new Date(m.latest_checkin_at).toLocaleDateString(locale)) : ''}
                     {m.latest_c_avg != null ? s.cIndex(m.latest_c_avg.toFixed(1)) : ''}
@@ -542,11 +542,11 @@ export default function CoachPortal() {
           <div>
             {loadingSessions && (
               <div className="flex justify-center py-10">
-                <div className="w-5 h-5 border-2 border-[#D4A574] border-t-transparent rounded-full animate-spin" />
+                <div className="w-5 h-5 border-2 border-[#E0B48A] border-t-transparent rounded-full animate-spin" />
               </div>
             )}
             {!loadingSessions && (sessions ?? []).length === 0 && (
-              <p className="text-center py-10 text-[13px]" style={{ color: '#57534E' }}>
+              <p className="text-center py-10 text-[13px]" style={{ color: '#87817C' }}>
                 {s.noSessions}
               </p>
             )}

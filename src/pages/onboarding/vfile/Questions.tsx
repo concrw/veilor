@@ -94,9 +94,9 @@ export default function PriperQuestions() {
   };
 
   const choiceButtonStyle = (selected: boolean) => ({
-    border: `1px solid ${selected ? '#D4A574' : '#44403C'}`,
-    background: selected ? '#D4A57410' : 'transparent',
-    color: selected ? '#D4A574' : '#F5F5F4',
+    border: `1px solid ${selected ? '#E0B48A' : '#44403C'}`,
+    background: selected ? '#E0B48A10' : 'transparent',
+    color: selected ? '#E0B48A' : '#F5F5F4',
     fontWeight: selected ? 500 : 400,
     fontFamily: "'DM Sans', sans-serif",
   } as React.CSSProperties);
@@ -109,22 +109,22 @@ export default function PriperQuestions() {
       {/* 좌측 진행 패널 — PC 전용 */}
       <div className="hidden lg:flex flex-col justify-between flex-1 px-16 py-14" style={{ borderRight: '1px solid #2A2624' }}>
         <div>
-          <h1 className="text-4xl font-bold tracking-widest mb-3" style={{ color: '#D4A574', letterSpacing: '0.2em' }}>VEILOR</h1>
-          <p className="text-base font-light" style={{ color: '#A8A29E' }}>{s.subtitle}</p>
+          <h1 className="text-4xl font-bold tracking-widest mb-3" style={{ color: '#E0B48A', letterSpacing: '0.2em' }}>VEILOR</h1>
+          <p className="text-base font-light" style={{ color: '#B8B3AF' }}>{s.subtitle}</p>
         </div>
         <div className="space-y-6">
           <div>
-            <div className="flex justify-between text-xs mb-3" style={{ color: '#A8A29E' }}>
+            <div className="flex justify-between text-xs mb-3" style={{ color: '#B8B3AF' }}>
               <span>{s.progressLabel}</span>
               <span>{progress}%</span>
             </div>
             <div className="h-1.5 rounded-full" style={{ background: '#292524' }}>
-              <div className="h-1.5 rounded-full transition-all" style={{ width: `${progress}%`, background: '#D4A574' }} />
+              <div className="h-1.5 rounded-full transition-all" style={{ width: `${progress}%`, background: '#E0B48A' }} />
             </div>
           </div>
           <p className="text-2xl font-light leading-snug" style={{ color: '#F5F5F4' }}>
             {current + 1} / {VFILE_QUESTIONS.length}<br />
-            <span className="text-sm font-normal" style={{ color: '#78716C' }}>{s.honestHint.split('\n').map((line, i) => <span key={i}>{line}{i === 0 && <br />}</span>)}</span>
+            <span className="text-sm font-normal" style={{ color: '#9C9590' }}>{s.honestHint.split('\n').map((line, i) => <span key={i}>{line}{i === 0 && <br />}</span>)}</span>
           </p>
         </div>
         <p className="text-xs" style={{ color: '#44403C' }}>© 2026 VEILOR</p>
@@ -138,7 +138,7 @@ export default function PriperQuestions() {
           <div className="mb-3">
             <span
               className="text-xs px-2.5 py-1 rounded-full font-medium"
-              style={{ background: '#D4A57415', color: '#D4A574', border: '1px solid #D4A57430' }}
+              style={{ background: '#E0B48A15', color: '#E0B48A', border: '1px solid #E0B48A30' }}
             >
               {contextLabel.icon} {contextLabel.ko}
             </span>
@@ -147,14 +147,14 @@ export default function PriperQuestions() {
 
         {/* 진행바 */}
         <div className="mb-6">
-          <div className="flex justify-between text-xs mb-2" style={{ color: '#A8A29E' }}>
+          <div className="flex justify-between text-xs mb-2" style={{ color: '#B8B3AF' }}>
             <span>{current + 1} / {VFILE_QUESTIONS.length}</span>
             <span>{progress}%</span>
           </div>
           <div className="h-1.5 rounded-full" style={{ background: '#292524' }}>
             <div
               className="h-1.5 rounded-full transition-all"
-              style={{ width: `${progress}%`, background: '#D4A574' }}
+              style={{ width: `${progress}%`, background: '#E0B48A' }}
             />
           </div>
         </div>
@@ -163,7 +163,7 @@ export default function PriperQuestions() {
         <div className="mb-4">
           <span
             className="text-xs px-2 py-0.5 rounded-full font-medium"
-            style={{ background: '#D4A57415', color: '#D4A574' }}
+            style={{ background: '#E0B48A15', color: '#E0B48A' }}
           >
             {s.axisLabels[q.axis as 'A' | 'B' | 'C' | 'D'] ?? q.axis}
           </span>
@@ -201,11 +201,11 @@ export default function PriperQuestions() {
                 className="w-full"
               />
               <div className="flex justify-between text-xs">
-                <span style={{ color: '#A8A29E' }}>
+                <span style={{ color: '#B8B3AF' }}>
                   {language === 'en' ? (q.sliderMinEn ?? q.sliderMin) : q.sliderMin}
                 </span>
-                <span className="font-medium" style={{ color: '#D4A574' }}>{sliderVal}</span>
-                <span style={{ color: '#A8A29E' }}>
+                <span className="font-medium" style={{ color: '#E0B48A' }}>{sliderVal}</span>
+                <span style={{ color: '#B8B3AF' }}>
                   {language === 'en' ? (q.sliderMaxEn ?? q.sliderMax) : q.sliderMax}
                 </span>
               </div>
@@ -213,7 +213,7 @@ export default function PriperQuestions() {
             <button
               onClick={handleSliderConfirm}
               className="w-full py-3 rounded-xl text-sm font-medium"
-              style={{ background: '#D4A574', color: '#1C1917', fontFamily: "'DM Sans', sans-serif" }}
+              style={{ background: '#E0B48A', color: '#1C1917', fontFamily: "'DM Sans', sans-serif" }}
             >
               {s.btnNext}
             </button>
@@ -241,7 +241,7 @@ export default function PriperQuestions() {
           <button
             onClick={handlePrev}
             className="mt-6 text-xs underline underline-offset-2"
-            style={{ color: '#A8A29E' }}
+            style={{ color: '#B8B3AF' }}
           >
             {s.btnPrev}
           </button>

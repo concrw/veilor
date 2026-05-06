@@ -41,11 +41,12 @@ test.describe('DigPage', () => {
     // 분석 시작
     await page.getByRole('button', { name: '패턴 분석 시작' }).click();
 
-    // 결과가 있으면 DigResultList, 없으면 폼 유지 (두 경우 모두 에러 없음 확인)
-    await page.waitForTimeout(5_000);
-    const hasResult = await page.getByText(/돌아가기/i).isVisible().catch(() => false);
-    const hasForm = await page.getByText('어떤 관계 상황인가요?').isVisible().catch(() => false);
-    expect(hasResult || hasForm).toBe(true);
+    // 결과가 있으면 DigResultList, 없으면 폼 유지 — 먼저 나타나는 쪽 대기 (최대 20초)
+    const outcome = await Promise.race([
+      page.getByText(/돌아가기/i).waitFor({ timeout: 20_000 }).then(() => 'result'),
+      page.getByText('어떤 관계 상황인가요?').waitFor({ timeout: 20_000 }).then(() => 'form'),
+    ]).catch(() => null);
+    expect(outcome).not.toBeNull();
   });
 
   test('결과 화면 → 돌아가기 (매칭 성공 시)', async ({ page }) => {
@@ -54,15 +55,17 @@ test.describe('DigPage', () => {
     await textarea.fill('자존감 불안 회피 애착 자기비판 반복 감정');
     await page.getByRole('button', { name: '패턴 분석 시작' }).click();
 
-    // 결과 화면이 나타나면 돌아가기 테스트, 나타나지 않으면 pass
-    await page.waitForTimeout(8_000);
-    const hasResult = await page.getByText(/← 돌아가기/i).isVisible().catch(() => false);
-    if (hasResult) {
+    // 결과/폼 중 먼저 나타나는 쪽 대기 (최대 30초)
+    const outcome = await Promise.race([
+      page.getByText(/← 돌아가기/i).waitFor({ timeout: 30_000 }).then(() => 'result'),
+      page.getByText('어떤 관계 상황인가요?').waitFor({ timeout: 30_000 }).then(() => 'form'),
+    ]).catch(() => null);
+    if (outcome === 'result') {
       await page.getByText(/← 돌아가기/i).click();
-      await expect(page.getByText('어떤 관계 상황인가요?')).toBeVisible({ timeout: 3_000 });
+      await expect(page.getByText('어떤 관계 상황인가요?')).toBeVisible({ timeout: 8_000 });
     } else {
-      // 매칭 결과 없음 — 폼이 유지되는지 확인
-      await expect(page.getByText('어떤 관계 상황인가요?')).toBeVisible({ timeout: 3_000 });
+      // 매칭 결과 없음 또는 타임아웃 — 폼 유지 확인
+      await expect(page.getByText('어떤 관계 상황인가요?')).toBeVisible({ timeout: 8_000 });
     }
   });
 

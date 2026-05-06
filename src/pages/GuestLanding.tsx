@@ -57,7 +57,7 @@ interface Message { role: 'amber' | 'user'; text: string }
 
 const AMBER_AVATAR = (
   <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm flex-shrink-0"
-    style={{ background: '#D4A57415', border: '1px solid #D4A57444', color: '#D4A574' }}>A</div>
+    style={{ background: '#E0B48A15', border: '1px solid #E0B48A44', color: '#E0B48A' }}>A</div>
 );
 
 function AmberBubble({ text, typing = false }: { text: string; typing?: boolean }) {
@@ -68,7 +68,7 @@ function AmberBubble({ text, typing = false }: { text: string; typing?: boolean 
         {typing ? (
           <div className="flex gap-1 items-center h-5">
             {[0, 1, 2].map(i => (
-              <div key={i} className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background: '#A8A29E', animationDelay: `${i * 0.15}s` }} />
+              <div key={i} className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background: '#B8B3AF', animationDelay: `${i * 0.15}s` }} />
             ))}
           </div>
         ) : (
@@ -82,7 +82,7 @@ function AmberBubble({ text, typing = false }: { text: string; typing?: boolean 
 function UserBubble({ text }: { text: string }) {
   return (
     <div className="flex justify-end">
-      <div className="rounded-2xl rounded-tr-sm p-4 max-w-[80%]" style={{ background: '#D4A57415', border: '1px solid #D4A57430' }}>
+      <div className="rounded-2xl rounded-tr-sm p-4 max-w-[80%]" style={{ background: '#E0B48A15', border: '1px solid #E0B48A30' }}>
         <p className="text-sm leading-relaxed" style={{ color: '#F5F5F4' }}>{text}</p>
       </div>
     </div>
@@ -157,30 +157,30 @@ export default function GuestLanding() {
     <aside className="hidden lg:flex flex-col gap-8 flex-shrink-0 px-10 py-14 overflow-y-auto"
       style={{ width: 360, borderLeft: '1px solid #2A2624' }}>
       <div>
-        <p className="text-xs mb-1" style={{ color: '#57534E', letterSpacing: '0.06em' }}>VEILOR</p>
+        <p className="text-xs mb-1" style={{ color: '#87817C', letterSpacing: '0.06em' }}>VEILOR</p>
         <p className="text-2xl font-light leading-snug mb-2" style={{ color: '#F5F5F4', whiteSpace: 'pre-line' }}>{s.rightPanelTitle}</p>
-        <p className="text-sm font-light leading-relaxed" style={{ color: '#A8A29E' }}>{s.rightPanelDesc}</p>
+        <p className="text-sm font-light leading-relaxed" style={{ color: '#B8B3AF' }}>{s.rightPanelDesc}</p>
       </div>
       <div className="space-y-3">
         <button onClick={() => navigate('/auth/signup')}
           className="w-full py-3.5 rounded-xl text-sm font-medium"
-          style={{ background: '#D4A574', color: '#1C1917' }}>
+          style={{ background: '#E0B48A', color: '#1C1917' }}>
           {s.startFree}
         </button>
         <button onClick={() => navigate('/auth/login')}
           className="w-full py-2.5 rounded-xl text-sm"
-          style={{ color: '#A8A29E', border: '1px solid #44403C' }}>
+          style={{ color: '#B8B3AF', border: '1px solid #44403C' }}>
           {s.hasAccount}
         </button>
       </div>
       <div>
-        <p className="text-xs mb-3" style={{ color: '#57534E' }}>{s.postsTitle}</p>
+        <p className="text-xs mb-3" style={{ color: '#87817C' }}>{s.postsTitle}</p>
         <div className="space-y-3">
           {PUBLIC_POSTS.map(post => (
             <div key={post.id} className="rounded-xl p-4" style={{ background: '#292524', border: '1px solid #44403C' }}>
-              <p className="text-xs mb-2" style={{ color: '#A8A29E' }}>{post.mask} · {post.group[lang]}</p>
+              <p className="text-xs mb-2" style={{ color: '#B8B3AF' }}>{post.mask} · {post.group[lang]}</p>
               <p className="text-sm leading-relaxed" style={{ color: '#D4D4D0' }}>{post.content[lang]}</p>
-              <p className="text-xs mt-2" style={{ color: '#57534E' }}>{s.postUpvotesLabel} {post.upvotes}</p>
+              <p className="text-xs mt-2" style={{ color: '#87817C' }}>{s.postUpvotesLabel} {post.upvotes}</p>
             </div>
           ))}
         </div>
@@ -196,7 +196,7 @@ export default function GuestLanding() {
 
         <div className="text-center mb-10">
           <h1 className="text-3xl font-bold tracking-tight" style={{ color: '#F5F5F4' }}>VEILOR</h1>
-          <p className="text-xs mt-1" style={{ color: '#A8A29E' }}>{s.subtitle}</p>
+          <p className="text-xs mt-1" style={{ color: '#B8B3AF' }}>{s.subtitle}</p>
         </div>
 
         {phase === 'landing' && (
@@ -220,10 +220,10 @@ export default function GuestLanding() {
                   />
                   <div className="flex gap-2 mt-2">
                     <button onClick={sendFirstAnswer} disabled={!input.trim()} className="flex-1 py-2.5 rounded-xl text-sm font-medium transition-opacity"
-                      style={{ background: '#D4A574', color: '#1C1917', opacity: input.trim() ? 1 : 0.4 }}>
+                      style={{ background: '#E0B48A', color: '#1C1917', opacity: input.trim() ? 1 : 0.4 }}>
                       {s.sendBtn}
                     </button>
-                    <button onClick={handleSkip} className="px-4 py-2.5 rounded-xl text-sm" style={{ color: '#A8A29E', border: '1px solid #44403C' }}>
+                    <button onClick={handleSkip} className="px-4 py-2.5 rounded-xl text-sm" style={{ color: '#B8B3AF', border: '1px solid #44403C' }}>
                       {s.skipBtn}
                     </button>
                   </div>
@@ -231,17 +231,17 @@ export default function GuestLanding() {
               )}
             </div>
             <div className="mt-12">
-              <p className="text-xs mb-4" style={{ color: '#57534E' }}>{s.postsTitle}</p>
+              <p className="text-xs mb-4" style={{ color: '#87817C' }}>{s.postsTitle}</p>
               <div className="space-y-3">
                 {PUBLIC_POSTS.map(post => (
                   <div key={post.id} className="rounded-xl p-4" style={{ background: '#292524', border: '1px solid #44403C' }}>
-                    <p className="text-xs mb-2" style={{ color: '#A8A29E' }}>{post.mask} · {post.group[lang]}</p>
+                    <p className="text-xs mb-2" style={{ color: '#B8B3AF' }}>{post.mask} · {post.group[lang]}</p>
                     <p className="text-sm leading-relaxed" style={{ color: '#D4D4D0' }}>{post.content[lang]}</p>
-                    <p className="text-xs mt-2" style={{ color: '#57534E' }}>{s.postUpvotesLabel} {post.upvotes}</p>
+                    <p className="text-xs mt-2" style={{ color: '#87817C' }}>{s.postUpvotesLabel} {post.upvotes}</p>
                   </div>
                 ))}
               </div>
-              <button onClick={handleSkip} className="w-full mt-4 py-3 rounded-xl text-sm" style={{ border: '1px solid #44403C', color: '#A8A29E' }}>
+              <button onClick={handleSkip} className="w-full mt-4 py-3 rounded-xl text-sm" style={{ border: '1px solid #44403C', color: '#B8B3AF' }}>
                 {s.joinBtn}
               </button>
             </div>
@@ -269,10 +269,10 @@ export default function GuestLanding() {
                 />
                 <div className="flex gap-2">
                   <button onClick={sendSecondAnswer} disabled={!input.trim()} className="flex-1 py-2.5 rounded-xl text-sm font-medium"
-                    style={{ background: '#D4A574', color: '#1C1917', opacity: input.trim() ? 1 : 0.4 }}>
+                    style={{ background: '#E0B48A', color: '#1C1917', opacity: input.trim() ? 1 : 0.4 }}>
                     {s.chat2SendBtn}
                   </button>
-                  <button onClick={() => setPhase('insight')} className="px-4 py-2.5 rounded-xl text-sm" style={{ color: '#A8A29E', border: '1px solid #44403C' }}>
+                  <button onClick={() => setPhase('insight')} className="px-4 py-2.5 rounded-xl text-sm" style={{ color: '#B8B3AF', border: '1px solid #44403C' }}>
                     {s.skipBtn}
                   </button>
                 </div>
@@ -281,15 +281,15 @@ export default function GuestLanding() {
 
             {phase === 'insight' && (
               <div className="pt-6 space-y-3">
-                <div className="rounded-xl p-4 text-center" style={{ background: '#D4A57410', border: '1px solid #D4A57430' }}>
-                  <p className="text-xs mb-1" style={{ color: '#A8A29E' }}>{s.insightLabel}</p>
-                  <p className="text-sm font-medium" style={{ color: '#D4A574' }}>{getInsightTease(firstAnswer + ' ' + secondAnswer)[language === 'en' ? 'en' : 'ko']}</p>
-                  <p className="text-xs mt-2" style={{ color: '#78716C' }}>{s.insightSub}</p>
+                <div className="rounded-xl p-4 text-center" style={{ background: '#E0B48A10', border: '1px solid #E0B48A30' }}>
+                  <p className="text-xs mb-1" style={{ color: '#B8B3AF' }}>{s.insightLabel}</p>
+                  <p className="text-sm font-medium" style={{ color: '#E0B48A' }}>{getInsightTease(firstAnswer + ' ' + secondAnswer)[language === 'en' ? 'en' : 'ko']}</p>
+                  <p className="text-xs mt-2" style={{ color: '#9C9590' }}>{s.insightSub}</p>
                 </div>
-                <button onClick={() => navigate('/auth/signup')} className="w-full py-3.5 rounded-xl text-sm font-medium" style={{ background: '#D4A574', color: '#1C1917' }}>
+                <button onClick={() => navigate('/auth/signup')} className="w-full py-3.5 rounded-xl text-sm font-medium" style={{ background: '#E0B48A', color: '#1C1917' }}>
                   {s.insightCta}
                 </button>
-                <button onClick={() => navigate('/auth/login')} className="w-full py-2.5 rounded-xl text-sm" style={{ color: '#A8A29E', border: '1px solid #44403C' }}>
+                <button onClick={() => navigate('/auth/login')} className="w-full py-2.5 rounded-xl text-sm" style={{ color: '#B8B3AF', border: '1px solid #44403C' }}>
                   {s.hasAccount}
                 </button>
               </div>
@@ -301,22 +301,22 @@ export default function GuestLanding() {
           <div className="flex-1 flex flex-col justify-center space-y-6">
             <div className="text-center space-y-3">
               <p className="text-2xl font-semibold leading-snug" style={{ color: '#F5F5F4', whiteSpace: 'pre-line' }}>{s.gateTitle}</p>
-              <p className="text-sm leading-relaxed" style={{ color: '#A8A29E', whiteSpace: 'pre-line' }}>{s.gateDesc}</p>
+              <p className="text-sm leading-relaxed" style={{ color: '#B8B3AF', whiteSpace: 'pre-line' }}>{s.gateDesc}</p>
             </div>
             <div className="space-y-3">
-              <p className="text-xs" style={{ color: '#57534E' }}>{s.postsTitle}</p>
+              <p className="text-xs" style={{ color: '#87817C' }}>{s.postsTitle}</p>
               {PUBLIC_POSTS.slice(0, 2).map(post => (
                 <div key={post.id} className="rounded-xl p-4" style={{ background: '#292524', border: '1px solid #44403C' }}>
-                  <p className="text-xs mb-2" style={{ color: '#A8A29E' }}>{post.mask} · {post.group[lang]}</p>
+                  <p className="text-xs mb-2" style={{ color: '#B8B3AF' }}>{post.mask} · {post.group[lang]}</p>
                   <p className="text-sm leading-relaxed" style={{ color: '#D4D4D0' }}>{post.content[lang]}</p>
                 </div>
               ))}
             </div>
             <div className="space-y-3">
-              <button onClick={() => navigate('/auth/signup')} className="w-full py-3.5 rounded-xl text-sm font-medium" style={{ background: '#D4A574', color: '#1C1917' }}>
+              <button onClick={() => navigate('/auth/signup')} className="w-full py-3.5 rounded-xl text-sm font-medium" style={{ background: '#E0B48A', color: '#1C1917' }}>
                 {s.startFree}
               </button>
-              <button onClick={() => navigate('/auth/login')} className="w-full py-2.5 rounded-xl text-sm" style={{ color: '#A8A29E', border: '1px solid #44403C' }}>
+              <button onClick={() => navigate('/auth/login')} className="w-full py-2.5 rounded-xl text-sm" style={{ color: '#B8B3AF', border: '1px solid #44403C' }}>
                 {s.hasAccount}
               </button>
             </div>

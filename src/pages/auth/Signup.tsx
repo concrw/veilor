@@ -175,7 +175,7 @@ const Signup = () => {
   const getPasswordStrength = () => {
     if (password.length === 0) return { text: "", color: "" };
     if (password.length < 6) return { text: s.strengthWeak, color: "#ef4444" };
-    if (password.length < 8) return { text: s.strengthFair, color: "#D4A574" };
+    if (password.length < 8) return { text: s.strengthFair, color: "#E0B48A" };
     return { text: s.strengthStrong, color: "#86efac" };
   };
 
@@ -198,8 +198,8 @@ const Signup = () => {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: '#1C1917', fontFamily: "'DM Sans', sans-serif" }}>
         <div className="text-center">
-          <div className="w-6 h-6 rounded-full animate-spin mx-auto mb-2" style={{ border: '2px solid #D4A574', borderTopColor: 'transparent' }} />
-          <p className="text-xs" style={{ color: '#A8A29E' }}>{s.loading}</p>
+          <div className="w-6 h-6 rounded-full animate-spin mx-auto mb-2" style={{ border: '2px solid #E0B48A', borderTopColor: 'transparent' }} />
+          <p className="text-xs" style={{ color: '#B8B3AF' }}>{s.loading}</p>
         </div>
       </div>
     );
@@ -211,16 +211,16 @@ const Signup = () => {
       {/* 좌측 브랜드 패널 — PC 전용 */}
       <div className="hidden lg:flex flex-col justify-center flex-1 px-16 py-14 gap-12" style={{ borderRight: '1px solid #2A2624' }}>
         <div>
-          <h1 className="text-4xl font-bold tracking-widest mb-3" style={{ color: '#D4A574', letterSpacing: '0.2em' }}>VEILOR</h1>
-          <p className="text-base font-light" style={{ color: '#A8A29E' }}>{s.subtitle}</p>
+          <h1 className="text-4xl font-bold tracking-widest mb-3" style={{ color: '#E0B48A', letterSpacing: '0.2em' }}>VEILOR</h1>
+          <p className="text-base font-light" style={{ color: '#B8B3AF' }}>{s.subtitle}</p>
         </div>
         <div className="space-y-6">
           {FEATURES.map(item => (
             <div key={item.title} className="flex gap-4">
-              <div className="w-1 rounded-full flex-shrink-0 mt-1" style={{ background: '#D4A574', height: 40 }} />
+              <div className="w-1 rounded-full flex-shrink-0 mt-1" style={{ background: '#E0B48A', height: 40 }} />
               <div>
                 <p className="text-sm font-medium mb-0.5" style={{ color: '#E7E5E4' }}>{item.title}</p>
-                <p className="text-xs font-light leading-relaxed" style={{ color: '#78716C' }}>{item.desc}</p>
+                <p className="text-xs font-light leading-relaxed" style={{ color: '#9C9590' }}>{item.desc}</p>
               </div>
             </div>
           ))}
@@ -237,15 +237,15 @@ const Signup = () => {
       <div className="w-full max-w-sm rounded-2xl px-6 py-6" style={{ background: '#292524', border: '1px solid #44403C' }}>
         <div className="text-center pb-4">
           <h2 className="text-lg font-medium" style={{ color: '#F5F5F4' }}>{s.pageTitle}</h2>
-          <p className="text-xs mt-1" style={{ color: '#A8A29E' }}>
+          <p className="text-xs mt-1" style={{ color: '#B8B3AF' }}>
             {s.pageSubtitle}
           </p>
         </div>
 
         <div className="space-y-4">
           {error && (
-            <div className="rounded-lg p-3" style={{ border: '1px solid #D4A57450', background: '#D4A57410' }}>
-              <p className="text-xs" style={{ color: '#D4A574' }}>{error}</p>
+            <div className="rounded-lg p-3" style={{ border: '1px solid #E0B48A50', background: '#E0B48A10' }}>
+              <p className="text-xs" style={{ color: '#E0B48A' }}>{error}</p>
             </div>
           )}
 
@@ -278,7 +278,7 @@ const Signup = () => {
               />
               {password && (
                 <div className="mt-1 text-xs px-1">
-                  <span style={{ color: '#A8A29E' }}>{s.strengthLabel}</span>
+                  <span style={{ color: '#B8B3AF' }}>{s.strengthLabel}</span>
                   <span style={{ color: passwordStrength.color }}>{passwordStrength.text}</span>
                 </div>
               )}
@@ -312,12 +312,12 @@ const Signup = () => {
                 checked={agreeToTerms}
                 onChange={() => setAgreeToTerms(!agreeToTerms)}
                 disabled={submitting}
-                className="flex-shrink-0 mt-0.5 cursor-pointer accent-[#D4A574]"
+                className="flex-shrink-0 mt-0.5 cursor-pointer accent-[#E0B48A]"
               />
               <label
                 htmlFor="agree-terms"
                 className="text-xs leading-relaxed cursor-pointer"
-                style={{ color: '#A8A29E' }}
+                style={{ color: '#B8B3AF' }}
               >
                 {s.termsPrefix}{' '}
                 <a
@@ -325,7 +325,7 @@ const Signup = () => {
                   target="_blank"
                   onClick={(e) => e.stopPropagation()}
                   className="underline"
-                  style={{ color: '#D4A574' }}
+                  style={{ color: '#E0B48A' }}
                 >
                   {s.termsLink}
                 </a>
@@ -338,7 +338,7 @@ const Signup = () => {
               disabled={submitting}
               className="w-full text-sm py-3 rounded-xl font-medium transition-opacity"
               style={{
-                background: '#D4A574',
+                background: '#E0B48A',
                 color: '#1C1917',
                 opacity: submitting ? 0.6 : 1,
                 fontFamily: "'DM Sans', sans-serif",
@@ -353,7 +353,7 @@ const Signup = () => {
               <span className="w-full" style={{ borderTop: '1px solid #44403C' }} />
             </div>
             <div className="relative flex justify-center text-xs">
-              <span className="px-2" style={{ background: '#292524', color: '#A8A29E' }}>{s.divider}</span>
+              <span className="px-2" style={{ background: '#292524', color: '#B8B3AF' }}>{s.divider}</span>
             </div>
           </div>
 
@@ -364,7 +364,7 @@ const Signup = () => {
             style={{
               background: 'transparent',
               border: '1px solid #44403C',
-              color: '#A8A29E',
+              color: '#B8B3AF',
               opacity: submitting ? 0.6 : 1,
               fontFamily: "'DM Sans', sans-serif",
             }}
@@ -373,12 +373,12 @@ const Signup = () => {
           </button>
 
           <div className="text-center pt-2">
-            <p className="text-xs" style={{ color: '#A8A29E' }}>
+            <p className="text-xs" style={{ color: '#B8B3AF' }}>
               {s.hasAccount}{' '}
               <button
                 onClick={() => navigate('/auth/login')}
                 className="underline hover:no-underline bg-transparent border-none p-0 cursor-pointer"
-                style={{ color: '#D4A574' }}
+                style={{ color: '#E0B48A' }}
               >
                 {s.login}
               </button>

@@ -47,14 +47,14 @@ export default function PriperStart() {
       {/* 좌측 브랜드 패널 — PC 전용 */}
       <div className="hidden lg:flex flex-col justify-between flex-1 px-16 py-14" style={{ borderRight: '1px solid #2A2624' }}>
         <div>
-          <h1 className="text-4xl font-bold tracking-widest mb-3" style={{ color: '#D4A574', letterSpacing: '0.2em' }}>VEILOR</h1>
-          <p className="text-base font-light" style={{ color: '#A8A29E' }}>{s.subtitle}</p>
+          <h1 className="text-4xl font-bold tracking-widest mb-3" style={{ color: '#E0B48A', letterSpacing: '0.2em' }}>VEILOR</h1>
+          <p className="text-base font-light" style={{ color: '#B8B3AF' }}>{s.subtitle}</p>
         </div>
         <div className="space-y-4">
           <p className="text-2xl font-light leading-snug" style={{ color: '#F5F5F4' }}>
             {s.sidebarHeading.split('\n').map((line, i) => <span key={i}>{line}{i === 0 && <br />}</span>)}
           </p>
-          <p className="text-sm leading-relaxed" style={{ color: '#78716C' }}>
+          <p className="text-sm leading-relaxed" style={{ color: '#9C9590' }}>
             {s.sidebarSubtext.split('\n').map((line, i) => <span key={i}>{line}{i === 0 && <br />}</span>)}
           </p>
         </div>
@@ -67,14 +67,14 @@ export default function PriperStart() {
         {/* 가면 아이콘 */}
         <div
           className="w-24 h-24 mx-auto rounded-full flex items-center justify-center"
-          style={{ background: '#D4A57415', border: '1px solid #D4A57440' }}
+          style={{ background: '#E0B48A15', border: '1px solid #E0B48A40' }}
         >
           <span className="text-4xl">🎭</span>
         </div>
 
         <div className="space-y-3">
           <h2 className="text-2xl font-bold" style={{ color: '#F5F5F4' }}>{s.heading}</h2>
-          <p className="text-sm leading-relaxed" style={{ color: '#A8A29E' }}>
+          <p className="text-sm leading-relaxed" style={{ color: '#B8B3AF' }}>
             {s.subtext}
           </p>
         </div>
@@ -95,7 +95,7 @@ export default function PriperStart() {
           onClick={() => navigate('/onboarding/vfile/questions')}
           className="w-full h-12 text-base rounded-xl font-medium transition-opacity"
           style={{
-            background: '#D4A574',
+            background: '#E0B48A',
             color: '#1C1917',
             fontFamily: "'DM Sans', sans-serif",
           }}
@@ -103,7 +103,7 @@ export default function PriperStart() {
           {s.btnStart}
         </button>
 
-        <p className="text-[10px] leading-relaxed px-2" style={{ color: '#57534E' }}>
+        <p className="text-[10px] leading-relaxed px-2" style={{ color: '#87817C' }}>
           {s.disclaimer.split('\n').map((line, i, arr) => <span key={i}>{line}{i < arr.length - 1 && ' '}</span>)}
         </p>
       </div>

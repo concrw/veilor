@@ -191,7 +191,7 @@ export default function PriperResult() {
   if (!result) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: '#1C1917' }}>
-        <div className="w-8 h-8 rounded-full animate-spin" style={{ border: '2px solid #D4A574', borderTopColor: 'transparent' }} />
+        <div className="w-8 h-8 rounded-full animate-spin" style={{ border: '2px solid #E0B48A', borderTopColor: 'transparent' }} />
       </div>
     );
   }
@@ -208,14 +208,14 @@ export default function PriperResult() {
       {/* 좌측 브랜드 패널 — PC 전용 */}
       <div className="hidden lg:flex flex-col justify-between flex-1 px-16 py-14" style={{ borderRight: '1px solid #2A2624' }}>
         <div>
-          <h1 className="text-4xl font-bold tracking-widest mb-3" style={{ color: '#D4A574', letterSpacing: '0.2em' }}>VEILOR</h1>
-          <p className="text-base font-light" style={{ color: '#A8A29E' }}>{s.subtitle}</p>
+          <h1 className="text-4xl font-bold tracking-widest mb-3" style={{ color: '#E0B48A', letterSpacing: '0.2em' }}>VEILOR</h1>
+          <p className="text-base font-light" style={{ color: '#B8B3AF' }}>{s.subtitle}</p>
         </div>
         <div className="space-y-4">
           <p className="text-2xl font-light leading-snug" style={{ color: '#F5F5F4' }}>
             {s.sidebarHeading.split('\n').map((line, i) => <span key={i}>{line}{i === 0 && <br />}</span>)}
           </p>
-          <p className="text-sm leading-relaxed" style={{ color: '#78716C' }}>
+          <p className="text-sm leading-relaxed" style={{ color: '#9C9590' }}>
             {s.sidebarSubtext.split('\n').map((line, i) => <span key={i}>{line}{i === 0 && <br />}</span>)}
           </p>
         </div>
@@ -231,15 +231,15 @@ export default function PriperResult() {
             style={{ backgroundColor: result.primary.color + '20', border: `1px solid ${result.primary.color}40` }}>
             🎭
           </div>
-          <p className="text-xs uppercase tracking-widest" style={{ color: '#A8A29E' }}>
+          <p className="text-xs uppercase tracking-widest" style={{ color: '#B8B3AF' }}>
             {context !== 'general' ? `${contextLabel.icon} ${contextLabel.ko}` : s.yourVFile}
           </p>
           <h1 className="text-3xl font-bold" style={{ color: result.primary.color }}>
             {result.primary.nameKo}
           </h1>
-          <p className="text-sm" style={{ color: '#A8A29E' }}>{result.primary.archetype}</p>
+          <p className="text-sm" style={{ color: '#B8B3AF' }}>{result.primary.archetype}</p>
           {result.isComplex && (
-            <p className="text-xs" style={{ color: '#A8A29E' }}>
+            <p className="text-xs" style={{ color: '#B8B3AF' }}>
               + <span style={{ color: result.secondary.color }}>{result.secondary.nameKo}</span> {s.complexSuffix}
             </p>
           )}
@@ -250,7 +250,7 @@ export default function PriperResult() {
           <ResponsiveContainer width="100%" height={200}>
             <RadarChart data={radarData}>
               <PolarGrid stroke="#44403C" />
-              <PolarAngleAxis dataKey="axis" tick={{ fontSize: 12, fill: '#A8A29E' }} />
+              <PolarAngleAxis dataKey="axis" tick={{ fontSize: 12, fill: '#B8B3AF' }} />
               <Radar dataKey="value" fill={result.primary.color} fillOpacity={0.3}
                 stroke={result.primary.color} strokeWidth={2} />
             </RadarChart>
@@ -259,7 +259,7 @@ export default function PriperResult() {
 
         {/* 설명 */}
         <div className={`space-y-4 transition-all duration-700 delay-500 ${revealed ? 'opacity-100' : 'opacity-0'}`}>
-          <p className="text-sm leading-relaxed" style={{ color: '#A8A29E' }}>{result.primary.description}</p>
+          <p className="text-sm leading-relaxed" style={{ color: '#B8B3AF' }}>{result.primary.description}</p>
 
           {/* 인사이트 */}
           <div className="space-y-2">
@@ -287,13 +287,13 @@ export default function PriperResult() {
             <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '1.05rem', fontWeight: 300, color: '#F5F5F4', lineHeight: 1.6 }}>
               {s.declaration[0]}
             </p>
-            <p style={{ fontSize: '0.8rem', fontWeight: 300, color: '#A8A29E', lineHeight: 1.8 }}>
+            <p style={{ fontSize: '0.8rem', fontWeight: 300, color: '#B8B3AF', lineHeight: 1.8 }}>
               {s.declaration[1].split('\n').map((line, i) => <span key={i}>{line}{i === 0 && <br />}</span>)}
             </p>
-            <p style={{ fontSize: '0.8rem', fontWeight: 300, color: '#A8A29E', lineHeight: 1.8 }}>
+            <p style={{ fontSize: '0.8rem', fontWeight: 300, color: '#B8B3AF', lineHeight: 1.8 }}>
               {s.declaration[2].split('\n').map((line, i) => <span key={i}>{line}{i === 0 && <br />}</span>)}
             </p>
-            <p style={{ fontSize: '0.8rem', fontWeight: 300, color: '#A8A29E', lineHeight: 1.8 }}>
+            <p style={{ fontSize: '0.8rem', fontWeight: 300, color: '#B8B3AF', lineHeight: 1.8 }}>
               {s.declaration[3]}
             </p>
             <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '0.95rem', fontWeight: 300, color: result.primary.color, lineHeight: 1.6, paddingTop: '2px' }}>
@@ -305,7 +305,7 @@ export default function PriperResult() {
         <button
           onClick={handleEnter}
           className="w-full h-12 text-base rounded-xl font-medium transition-opacity"
-          style={{ background: '#D4A574', color: '#1C1917', fontFamily: "'DM Sans', sans-serif" }}
+          style={{ background: '#E0B48A', color: '#1C1917', fontFamily: "'DM Sans', sans-serif" }}
         >
           {isOnboarding ? s.btnStart : s.btnDone}
         </button>
@@ -314,13 +314,13 @@ export default function PriperResult() {
           <button
             onClick={() => setPaywallOpen(true)}
             className="w-full text-xs underline underline-offset-2 py-1"
-            style={{ color: '#A8A29E' }}
+            style={{ color: '#B8B3AF' }}
           >
             {s.btnPremium}
           </button>
         )}
 
-        <p className="text-[10px] leading-relaxed text-center px-2" style={{ color: '#57534E' }}>
+        <p className="text-[10px] leading-relaxed text-center px-2" style={{ color: '#87817C' }}>
           {s.disclaimer.split('\n').map((line, i) => <span key={i}>{line}{i === 0 && ' '}</span>)}
         </p>
       </div>

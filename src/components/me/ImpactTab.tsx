@@ -44,7 +44,7 @@ const AREA_META: Record<string, { emoji: string; ko: string; en: string; x: numb
 
 const STATUS_COLOR: Record<InterestStatus, string> = {
   active:  '#7FB89A',
-  dormant: '#78716C',
+  dormant: '#9C9590',
   revisit: '#C4A355',
 };
 

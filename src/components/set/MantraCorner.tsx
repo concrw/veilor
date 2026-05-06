@@ -20,7 +20,7 @@ const MANTRAS_EN: Record<Domain, string[]> = {
 };
 
 const DOMAIN_COLOR: Record<Domain, string> = {
-  self: '#D4A574', work: '#38BDF8', relation: '#FB7185', social: '#7FB89A',
+  self: '#E0B48A', work: '#38BDF8', relation: '#FB7185', social: '#7FB89A',
 };
 
 const DOMAIN_NAME: Record<Domain, { ko: string; en: string }> = {

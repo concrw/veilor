@@ -83,8 +83,8 @@ export default function Welcome() {
       {/* 좌측 브랜드 패널 — PC 전용 */}
       <div className="hidden lg:flex flex-col justify-between flex-1 px-16 py-14" style={{ borderRight: '1px solid #2A2624' }}>
         <div>
-          <h1 className="text-4xl font-bold tracking-widest mb-3" style={{ color: '#D4A574', letterSpacing: '0.2em' }}>VEILOR</h1>
-          <p className="text-base font-light" style={{ color: '#A8A29E' }}>{t.subtitle}</p>
+          <h1 className="text-4xl font-bold tracking-widest mb-3" style={{ color: '#E0B48A', letterSpacing: '0.2em' }}>VEILOR</h1>
+          <p className="text-base font-light" style={{ color: '#B8B3AF' }}>{t.subtitle}</p>
         </div>
         <div className="space-y-6">
           {[
@@ -93,10 +93,10 @@ export default function Welcome() {
             { step: '03', title: t.step3, desc: t.step3Desc },
           ].map(item => (
             <div key={item.step} className="flex gap-4">
-              <div className="text-xs font-light flex-shrink-0 mt-1 w-6" style={{ color: '#D4A57466' }}>{item.step}</div>
+              <div className="text-xs font-light flex-shrink-0 mt-1 w-6" style={{ color: '#E0B48A66' }}>{item.step}</div>
               <div>
                 <p className="text-sm font-medium mb-0.5" style={{ color: '#E7E5E4' }}>{item.title}</p>
-                <p className="text-xs font-light leading-relaxed" style={{ color: '#78716C' }}>{item.desc}</p>
+                <p className="text-xs font-light leading-relaxed" style={{ color: '#9C9590' }}>{item.desc}</p>
               </div>
             </div>
           ))}
@@ -120,8 +120,8 @@ export default function Welcome() {
                     borderRadius: 8,
                     fontSize: 11,
                     fontWeight: language === opt.value ? 600 : 400,
-                    background: language === opt.value ? '#D4A574' : 'transparent',
-                    color: language === opt.value ? '#1C1917' : '#78716C',
+                    background: language === opt.value ? '#E0B48A' : 'transparent',
+                    color: language === opt.value ? '#1C1917' : '#9C9590',
                     border: 'none',
                     cursor: 'pointer',
                     transition: 'all .2s',
@@ -137,7 +137,7 @@ export default function Welcome() {
           {/* 로고 — 모바일에서만 */}
           <div className="lg:hidden text-center mb-8">
             <h1 className="text-3xl font-bold tracking-tight" style={{ color: '#F5F5F4' }}>VEILOR</h1>
-            <p className="text-xs mt-1" style={{ color: '#A8A29E' }}>{t.subtitle}</p>
+            <p className="text-xs mt-1" style={{ color: '#B8B3AF' }}>{t.subtitle}</p>
           </div>
 
           {/* AI 대화형 진입 */}
@@ -147,7 +147,7 @@ export default function Welcome() {
               <div className="flex items-start gap-3">
                 <div
                   className="w-8 h-8 rounded-full flex items-center justify-center text-sm flex-shrink-0"
-                  style={{ background: '#D4A57415', border: '1px solid #D4A57444', color: '#D4A574' }}
+                  style={{ background: '#E0B48A15', border: '1px solid #E0B48A44', color: '#E0B48A' }}
                 >
                   A
                 </div>
@@ -158,7 +158,7 @@ export default function Welcome() {
                   <p className="text-sm leading-relaxed" style={{ color: '#F5F5F4' }}>
                     {t.amberhello}
                   </p>
-                  <p className="text-sm leading-relaxed mt-2" style={{ color: '#A8A29E' }}>
+                  <p className="text-sm leading-relaxed mt-2" style={{ color: '#B8B3AF' }}>
                     {t.amberdesc}
                   </p>
                 </div>
@@ -171,7 +171,7 @@ export default function Welcome() {
                 <div className="flex items-start gap-3">
                   <div
                     className="w-8 h-8 rounded-full flex items-center justify-center text-sm flex-shrink-0"
-                    style={{ background: '#D4A57415', border: '1px solid #D4A57444', color: '#D4A574' }}
+                    style={{ background: '#E0B48A15', border: '1px solid #E0B48A44', color: '#E0B48A' }}
                   >
                     A
                   </div>
@@ -182,7 +182,7 @@ export default function Welcome() {
                     <p className="text-sm leading-relaxed font-medium" style={{ color: '#F5F5F4' }}>
                       {t.question}
                     </p>
-                    <p className="text-xs mt-1" style={{ color: '#A8A29E' }}>
+                    <p className="text-xs mt-1" style={{ color: '#B8B3AF' }}>
                       {t.questionHint}
                     </p>
                   </div>
@@ -217,7 +217,7 @@ export default function Welcome() {
               onClick={handleStart}
               className="w-full h-12 text-base rounded-xl font-medium transition-opacity"
               style={{
-                background: '#D4A574',
+                background: '#E0B48A',
                 color: '#1C1917',
                 fontFamily: "'DM Sans', sans-serif",
               }}
@@ -227,11 +227,11 @@ export default function Welcome() {
             <button
               onClick={handleSkipToDiagnosis}
               className="w-full text-xs py-2 transition-colors"
-              style={{ color: '#A8A29E' }}
+              style={{ color: '#B8B3AF' }}
             >
               {t.skipToVfile}
             </button>
-            <p className="text-[10px] leading-relaxed text-center" style={{ color: '#57534E' }}>
+            <p className="text-[10px] leading-relaxed text-center" style={{ color: '#87817C' }}>
               {t.disclaimer}
             </p>
           </div>

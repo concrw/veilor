@@ -244,7 +244,7 @@ export default function ChatView({
         ) : (
           <div className="flex-shrink-0 flex items-center gap-2" style={{ padding: '8px 16px 14px', borderTop: `1px solid ${C.border2}` }}>
             <button aria-label={vent.chat.voiceInput} className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ border: `1px solid ${C.border}`, background: 'transparent' }}>
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="5" y="1" width="6" height="9" rx="3" stroke="#78716C" strokeWidth="1.2"/><path d="M2 7.5C2 10.538 4.686 13 8 13s6-2.462 6-5.5" stroke="#78716C" strokeWidth="1.2" strokeLinecap="round" fill="none"/><line x1="8" y1="13" x2="8" y2="15" stroke="#78716C" strokeWidth="1.2" strokeLinecap="round"/></svg>
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="5" y="1" width="6" height="9" rx="3" stroke="#9C9590" strokeWidth="1.2"/><path d="M2 7.5C2 10.538 4.686 13 8 13s6-2.462 6-5.5" stroke="#9C9590" strokeWidth="1.2" strokeLinecap="round" fill="none"/><line x1="8" y1="13" x2="8" y2="15" stroke="#9C9590" strokeWidth="1.2" strokeLinecap="round"/></svg>
             </button>
             <input
               aria-label={vent.chat.messageInput}

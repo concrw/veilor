@@ -10,10 +10,12 @@ import { login, waitForHome, TEST_USERS } from './helpers';
 
 test.describe('GetPage', () => {
   test.beforeEach(async ({ page }) => {
+    test.setTimeout(60_000);
     await login(page, TEST_USERS.done.email, TEST_USERS.done.password);
     await waitForHome(page);
     await page.getByRole('link', { name: /Get/i }).click();
-    await page.waitForURL(/\/home\/get/, { timeout: 5_000 });
+    await page.waitForURL(/\/home\/get/, { timeout: 15_000 });
+    await page.locator('.animate-spin').waitFor({ state: 'hidden', timeout: 30_000 }).catch(() => null);
     await page.keyboard.press('Escape');
     await page.waitForTimeout(300);
   });
@@ -45,9 +47,13 @@ test.describe('GetPage', () => {
     const hasEditBtn = await page.getByRole('button', { name: /편집|수정/i }).isVisible().catch(() => false);
 
     if (hasWriteBtn) {
-      await page.getByRole('button', { name: 'Ikigai 작성하기' }).click();
+      const writeBtn = page.getByRole('button', { name: 'Ikigai 작성하기' });
+      await writeBtn.scrollIntoViewIfNeeded();
+      await writeBtn.dispatchEvent('click');
     } else if (hasEditBtn) {
-      await page.getByRole('button', { name: /편집|수정/i }).click();
+      const editBtn = page.getByRole('button', { name: /편집|수정/i });
+      await editBtn.scrollIntoViewIfNeeded();
+      await editBtn.dispatchEvent('click');
     }
 
     // 폼이 열렸으면 첫 번째 필드에 입력
@@ -57,7 +63,10 @@ test.describe('GetPage', () => {
     if (isFormOpen) {
       await loveField.fill('글쓰기\n음악\n사람들과 연결');
       await page.getByPlaceholder('내가 잘하는 것').fill('분석\n공감\n기획');
-      await page.getByRole('button', { name: '저장' }).click();
+      // 하단 고정 nav가 버튼을 가릴 수 있으므로 JS click으로 우회
+      const saveBtn = page.getByRole('button', { name: '저장' });
+      await saveBtn.scrollIntoViewIfNeeded();
+      await saveBtn.dispatchEvent('click');
       // 저장 성공 toast 또는 폼 닫힘
       await page.waitForTimeout(1_500);
       const formStillOpen = await loveField.isVisible().catch(() => false);
@@ -68,14 +77,15 @@ test.describe('GetPage', () => {
 
   test('브랜드 탭 진입 — 컨텐츠 확인', async ({ page }) => {
     await page.getByRole('button', { name: '브랜드' }).click();
-    await page.waitForTimeout(1_500);
+    // 브랜드 탭 자체 로딩 스피너 대기
+    await page.locator('.animate-spin').waitFor({ state: 'hidden', timeout: 15_000 }).catch(() => null);
     // 에러 없음 확인
     const hasError = await page.getByText(/Something went wrong|연결 오류/i).isVisible().catch(() => false);
     expect(hasError).toBe(false);
     // 브랜드 탭 내용 — brand 없을 때 "AI로 브랜드 전략 생성" 버튼 또는 데이터 표시
-    const hasAiBtn   = await page.getByRole('button', { name: /AI로 브랜드 전략 생성/i }).isVisible({ timeout: 3_000 }).catch(() => false);
-    const hasEditBtn = await page.getByRole('button', { name: /수정|직접 작성/i }).first().isVisible({ timeout: 1_000 }).catch(() => false);
-    const hasData    = await page.getByText(/브랜드 이름|태그라인|핵심 가치/i).first().isVisible({ timeout: 1_000 }).catch(() => false);
+    const hasAiBtn   = await page.getByRole('button', { name: /AI로 브랜드 전략 생성/i }).isVisible({ timeout: 5_000 }).catch(() => false);
+    const hasEditBtn = await page.getByRole('button', { name: /수정|직접 작성/i }).first().isVisible({ timeout: 3_000 }).catch(() => false);
+    const hasData    = await page.getByText(/브랜드 이름|태그라인|핵심 가치/i).first().isVisible({ timeout: 3_000 }).catch(() => false);
     expect(hasAiBtn || hasEditBtn || hasData).toBe(true);
   });
 

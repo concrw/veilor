@@ -25,7 +25,7 @@ const NotFound = () => {
         <p className="text-6xl font-bold mb-4" style={{ color: "#F59E0B" }}>
           404
         </p>
-        <p className="text-lg mb-8" style={{ color: "#A8A29E" }}>
+        <p className="text-lg mb-8" style={{ color: "#B8B3AF" }}>
           {s.desc}
         </p>
         <button

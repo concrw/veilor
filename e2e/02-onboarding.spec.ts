@@ -48,14 +48,15 @@ test.describe('온보딩 플로우', () => {
       process.env.E2E_USER_FRESH_PW ?? 'Veilor2026!'
     );
     await page.getByRole('button', { name: '로그인', exact: true }).click();
-    await page.waitForURL(/\/onboarding/, { timeout: 8_000 });
+    await page.waitForURL(/\/onboarding/, { timeout: 60_000 });
+    // URL 도달 후 PageLoader 스피너 소멸 대기 (syncOnboarding + lazy chunk 완료)
+    await page.locator('.animate-spin').waitFor({ state: 'hidden', timeout: 30_000 }).catch(() => null);
 
-    // Welcome 화면 — AI 대화 등장 후 시작 버튼
-    await page.waitForTimeout(2_500); // 타이핑 애니메이션 대기
+    // Welcome 화면 — phase 전환 2초 후 버튼 등장 + 프로덕션 cold start 여유 (최대 20초 대기)
     const startBtn = page.getByRole('button', { name: /시작|진단|다음/i }).first();
-    await expect(startBtn).toBeVisible({ timeout: 5_000 });
+    await expect(startBtn).toBeVisible({ timeout: 20_000 });
     await startBtn.click();
 
-    await expect(page).toHaveURL(/\/onboarding\/cq/, { timeout: 5_000 });
+    await expect(page).toHaveURL(/\/onboarding\/cq/, { timeout: 8_000 });
   });
 });

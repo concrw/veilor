@@ -158,9 +158,9 @@ export function useUserMeData() {
       if (!data || data.length === 0) return [];
 
       const LAYER_COLOR: Record<string, string> = {
-        social: '#7BA8C4',
-        daily:  '#D4A574',
-        secret: '#A07850',
+        social: '#95BDD6',
+        daily:  '#E0B48A',
+        secret: '#B8956A',
       };
 
       return (data as PersonaInstanceRow[]).map(row => {
@@ -177,7 +177,7 @@ export function useUserMeData() {
         return {
           id: row.id,
           name: `"${row.persona_label ?? '알 수 없음'}" 나`,
-          color: LAYER_COLOR[row.persona_layer ?? 'daily'] ?? '#D4A574',
+          color: LAYER_COLOR[row.persona_layer ?? 'daily'] ?? '#E0B48A',
           zone: row.layer_group ?? row.persona_layer ?? '',
           desc: insights.slice(0, 2).map((ins) =>
             typeof ins === 'string' ? ins : ins?.description ?? ''
@@ -329,10 +329,10 @@ export function useUserMeData() {
       if (!data || data.length === 0) return [];
 
       const VALENCE_COLOR = (v: number | null) => {
-        if (v === null) return '#A8A29E';
-        if (v >= 0.3) return '#D4A574';
-        if (v <= -0.3) return '#7BA8C4';
-        return '#A07850';
+        if (v === null) return '#B8B3AF';
+        if (v >= 0.3) return '#E0B48A';
+        if (v <= -0.3) return '#95BDD6';
+        return '#B8956A';
       };
 
       return (data as RelationshipEntityRow[]).map(row => {

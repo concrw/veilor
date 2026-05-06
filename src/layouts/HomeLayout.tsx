@@ -40,7 +40,7 @@ interface TabDef { to: string; label: string; color: string; badge?: boolean }
 
 // 도메인별 포인트 팔레트 — self=amber, work=sky, relation=rose, social=sage
 const DOMAIN_PALETTE: Record<Domain, readonly [string, string, string, string, string]> = {
-  self:     ['#D4A574', '#A07850', '#8C7060', '#C4A355', '#E7C17A'],
+  self:     ['#E0B48A', '#B8956A', '#8C7060', '#D4B46A', '#EDD08E'],
   work:     ['#38BDF8', '#0EA5E9', '#0284C7', '#7DD3FC', '#BAE6FD'],
   relation: ['#FB7185', '#F43F5E', '#E11D48', '#FDA4AF', '#FECDD3'],
   social:   ['#7FB89A', '#5E9E7F', '#4A8067', '#A8D4B8', '#C5E8D0'],
@@ -65,13 +65,13 @@ export function AmberBtn({ onClick, flash }: { onClick: () => void; flash?: bool
       onClick={onClick}
       aria-label={s.amberAriaLabel}
       className={`relative w-[30px] h-[30px] rounded-full flex items-center justify-center flex-shrink-0 cursor-pointer ${flash ? 'amber-flash' : ''}`}
-      style={{ background: '#D4A57415', border: '1px solid #D4A57444' }}
+      style={{ background: '#E0B48A15', border: '1px solid #E0B48A44' }}
     >
       <span
         className="absolute inset-[-3px] rounded-full"
-        style={{ border: '1px solid #D4A57418', animation: 'ai-pulse 3s ease-in-out infinite' }}
+        style={{ border: '1px solid #E0B48A18', animation: 'ai-pulse 3s ease-in-out infinite' }}
       />
-      <span className="w-[19px] h-[19px] rounded-full block" style={{ background: '#D4A574' }} />
+      <span className="w-[19px] h-[19px] rounded-full block" style={{ background: '#E0B48A' }} />
     </button>
   );
 }
@@ -85,13 +85,13 @@ export function FrostBtn({ onClick }: { onClick: () => void }) {
       onClick={onClick}
       aria-label={s.frostAriaLabel}
       className="relative w-[30px] h-[30px] rounded-full flex items-center justify-center flex-shrink-0 cursor-pointer"
-      style={{ background: '#7BA8C415', border: '1px solid #7BA8C444' }}
+      style={{ background: '#95BDD615', border: '1px solid #95BDD644' }}
     >
       <span
         className="absolute inset-[-3px] rounded-full"
-        style={{ border: '1px solid #7BA8C418', animation: 'ai-pulse 3.4s ease-in-out infinite .4s' }}
+        style={{ border: '1px solid #95BDD618', animation: 'ai-pulse 3.4s ease-in-out infinite .4s' }}
       />
-      <span className="w-[19px] h-[19px] rounded-full block" style={{ background: '#7BA8C4' }} />
+      <span className="w-[19px] h-[19px] rounded-full block" style={{ background: '#95BDD6' }} />
     </button>
   );
 }
@@ -116,7 +116,7 @@ function DesktopSidebar({ tabs }: { tabs: TabDef[] }) {
       >
         <span
           className="text-lg tracking-[0.12em] font-light"
-          style={{ color: '#D4A574', fontFamily: "'DM Sans', sans-serif", letterSpacing: '0.15em' }}
+          style={{ color: '#E0B48A', fontFamily: "'DM Sans', sans-serif", letterSpacing: '0.15em' }}
         >
           VEILOR
         </span>
@@ -145,7 +145,7 @@ function DesktopSidebar({ tabs }: { tabs: TabDef[] }) {
                 <span
                   className="text-[14px] transition-colors"
                   style={{
-                    color: isActive ? color : '#78716C',
+                    color: isActive ? color : '#9C9590',
                     fontWeight: isActive ? 400 : 300,
                     fontFamily: "'DM Sans', sans-serif",
                   }}
@@ -318,7 +318,7 @@ export default function HomeLayout() {
                   <span
                     className="text-[11px] font-light transition-colors"
                     style={{
-                      color: isActive ? color : '#57534E',
+                      color: isActive ? color : '#87817C',
                       fontWeight: isActive ? 400 : 300,
                       fontFamily: "'DM Sans', sans-serif",
                     }}

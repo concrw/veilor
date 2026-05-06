@@ -58,7 +58,7 @@ function CoachCard({ coach, onClick, s }: { coach: B2BCoach; onClick: () => void
           {/* 아바타 */}
           <div
             className="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center text-sm font-medium"
-            style={{ background: '#D4A57420', color: '#D4A574' }}
+            style={{ background: '#E0B48A20', color: '#E0B48A' }}
           >
             {coach.display_name.charAt(0)}
           </div>
@@ -66,7 +66,7 @@ function CoachCard({ coach, onClick, s }: { coach: B2BCoach; onClick: () => void
             <p className="text-[15px] font-medium truncate" style={{ color: '#E7E5E4' }}>
               {coach.display_name}
             </p>
-            <p className="text-[12px]" style={{ color: '#78716C' }}>
+            <p className="text-[12px]" style={{ color: '#9C9590' }}>
               {s.sessionCount(coach.session_count)}
             </p>
           </div>
@@ -83,8 +83,8 @@ function CoachCard({ coach, onClick, s }: { coach: B2BCoach; onClick: () => void
           <span
             className="text-[11px] px-2 py-0.5 rounded-full"
             style={{
-              background: available ? '#16A34A15' : '#57534E20',
-              color: available ? '#4ADE80' : '#78716C',
+              background: available ? '#16A34A15' : '#87817C20',
+              color: available ? '#4ADE80' : '#9C9590',
             }}
           >
             {available ? s.available : s.full}
@@ -99,13 +99,13 @@ function CoachCard({ coach, onClick, s }: { coach: B2BCoach; onClick: () => void
             <span
               key={d}
               className="text-[11px] px-2 py-0.5 rounded-full"
-              style={{ background: '#D4A57415', color: '#D4A574' }}
+              style={{ background: '#E0B48A15', color: '#E0B48A' }}
             >
               {d}
             </span>
           ))}
           {coach.domains.length > 4 && (
-            <span className="text-[11px]" style={{ color: '#57534E' }}>
+            <span className="text-[11px]" style={{ color: '#87817C' }}>
               +{coach.domains.length - 4}
             </span>
           )}
@@ -116,7 +116,7 @@ function CoachCard({ coach, onClick, s }: { coach: B2BCoach; onClick: () => void
       {coach.bio && (
         <p
           className="text-[13px] leading-relaxed line-clamp-2"
-          style={{ color: '#A8A29E' }}
+          style={{ color: '#B8B3AF' }}
         >
           {coach.bio}
         </p>
@@ -124,7 +124,7 @@ function CoachCard({ coach, onClick, s }: { coach: B2BCoach; onClick: () => void
 
       {/* 언어 */}
       {coach.languages.length > 0 && (
-        <p className="text-[11px] mt-2" style={{ color: '#57534E' }}>
+        <p className="text-[11px] mt-2" style={{ color: '#87817C' }}>
           {coach.languages.join(' · ')}
         </p>
       )}
@@ -165,14 +165,14 @@ export default function CoachList() {
         <button
           onClick={() => navigate(-1)}
           className="mb-4 text-[13px]"
-          style={{ color: '#78716C' }}
+          style={{ color: '#9C9590' }}
         >
           {s.back}
         </button>
         <h1 className="text-[20px] font-medium mb-1" style={{ color: '#E7E5E4' }}>
           {s.title}
         </h1>
-        <p className="text-[13px]" style={{ color: '#78716C' }}>
+        <p className="text-[13px]" style={{ color: '#9C9590' }}>
           {s.subtitle}
         </p>
 
@@ -185,8 +185,8 @@ export default function CoachList() {
                 onClick={() => setDomainFilter(d)}
                 className="flex-shrink-0 text-[12px] px-3 py-1 rounded-full transition-colors"
                 style={{
-                  background: domainFilter === d ? '#D4A574' : '#2A2624',
-                  color: domainFilter === d ? '#1C1917' : '#78716C',
+                  background: domainFilter === d ? '#E0B48A' : '#2A2624',
+                  color: domainFilter === d ? '#1C1917' : '#9C9590',
                 }}
               >
                 {d}
@@ -200,13 +200,13 @@ export default function CoachList() {
       <div className="px-4 py-4 pb-10">
         {isLoading && (
           <div className="flex justify-center py-16">
-            <div className="w-6 h-6 border-2 border-[#D4A574] border-t-transparent rounded-full animate-spin" />
+            <div className="w-6 h-6 border-2 border-[#E0B48A] border-t-transparent rounded-full animate-spin" />
           </div>
         )}
 
         {error && (
           <div className="text-center py-16">
-            <p className="text-[14px]" style={{ color: '#78716C' }}>
+            <p className="text-[14px]" style={{ color: '#9C9590' }}>
               {s.loadError}
             </p>
           </div>
@@ -214,7 +214,7 @@ export default function CoachList() {
 
         {!isLoading && !error && filtered.length === 0 && (
           <div className="text-center py-16">
-            <p className="text-[14px]" style={{ color: '#78716C' }}>
+            <p className="text-[14px]" style={{ color: '#9C9590' }}>
               {domainFilter === s.allFilter ? s.noCoaches : s.noDomainCoaches(domainFilter)}
             </p>
           </div>

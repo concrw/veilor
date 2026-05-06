@@ -20,7 +20,7 @@ const IKIGAI_CIRCLES: {
   {
     id: 'self',     cx: 0,   cy: -52, lx: 0,    ly: -135,
     labelKo: '자기', labelEn: 'Self',
-    color: '#D4A574',
+    color: '#E0B48A',
     coreQ: { ko: '나는 지금 무엇을 느끼고 있는가?', en: 'What am I feeling right now?' },
   },
   {
@@ -190,14 +190,14 @@ const S = {
 // ──────────────────────────────────────────────────────────────────────────────
 
 const DOMAIN_META: { id: Domain; color: string }[] = [
-  { id: 'self',     color: '#D4A574' },
+  { id: 'self',     color: '#E0B48A' },
   { id: 'work',     color: '#38BDF8' },
   { id: 'relation', color: '#FB7185' },
   { id: 'social',   color: '#7FB89A' },
 ];
 
 const MODE_META: { id: UXMode; color: string }[] = [
-  { id: 'original', color: '#D4A574' },
+  { id: 'original', color: '#E0B48A' },
   { id: 'clear',    color: '#D6D3D1' },
   { id: 'routine',  color: '#FCD34D' },
   { id: 'focus',    color: '#7DD3FC' },

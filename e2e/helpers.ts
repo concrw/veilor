@@ -25,9 +25,11 @@ export async function login(page: Page, email: string, password: string) {
 
 export async function waitForHome(page: Page) {
   // 로그인 후 syncOnboarding 완료까지 대기
-  // /onboarding/welcome 을 거쳐서 /home 으로 이동하는 흐름 수용
+  // 프로덕션 cold start + Supabase syncOnboarding 쿼리 시간 수용 (60초)
   await page.waitForURL(
     (url) => url.pathname.startsWith('/home'),
-    { timeout: 30_000 }
+    { timeout: 60_000 }
   );
+  // URL 도달 후 PageLoader 스피너 소멸 대기 (lazy chunk 완료)
+  await page.locator('.animate-spin').waitFor({ state: 'hidden', timeout: 30_000 }).catch(() => null);
 }
