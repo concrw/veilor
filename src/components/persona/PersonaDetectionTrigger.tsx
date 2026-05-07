@@ -24,9 +24,9 @@ const S = {
     mainBadge: '메인',
     subBadge: '서브',
     multiTitle: '멀티 페르소나 발견',
-    multiDesc: '무료 버전에서는 메인 페르소나 1개만 상세 분석할 수 있습니다. 모든 페르소나를 확인하려면 Pro로 업그레이드하세요.',
+    multiDesc: '무료 버전에서는 메인 페르소나 1개만 상세 분석할 수 있습니다. 전체 분석은 Pro 전용 기능입니다.',
     ctaMain: '메인 페르소나 확인하기',
-    ctaPro: '모든 페르소나 보기 (Pro)',
+    ctaPro: '모든 페르소나 보기 (Pro 전용)',
     ctaLater: '나중에 하기',
   },
   en: {
@@ -37,9 +37,9 @@ const S = {
     mainBadge: 'Main',
     subBadge: 'Sub',
     multiTitle: 'Multiple Personas Found',
-    multiDesc: 'The free version only lets you see detailed analysis for 1 main persona. Upgrade to Pro to view all personas.',
+    multiDesc: 'The free version only lets you see detailed analysis for 1 main persona. Full analysis is a Pro feature.',
     ctaMain: 'View Main Persona',
-    ctaPro: 'See All Personas (Pro)',
+    ctaPro: 'See All Personas (Pro only)',
     ctaLater: 'Maybe later',
   },
 };

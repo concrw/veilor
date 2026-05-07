@@ -23,7 +23,7 @@ const S = {
       discovery: (n: number) => ({ title: `${n}개의 페르소나가 발견되었습니다`, description: "하지만 무료 버전에서는 가장 강한 1개 페르소나만 확인할 수 있습니다." }),
       ikigai: () => ({ title: "여러 페르소나의 Ikigai를 설계하고 싶으신가요?", description: "좋아하는 것이 너무 달라서 하나로 정리가 안 될 때, 각 페르소나별 Ikigai를 만들어보세요." }),
       branding: () => ({ title: "여러 분야를 통합한 브랜딩 전략이 필요하신가요?", description: "여러 분야를 다루고 싶지만 브랜드가 산만해 보이지 않도록 전략을 제시해드립니다." }),
-      default: () => ({ title: "Pro로 업그레이드", description: "모든 페르소나를 활용하세요." }),
+      default: () => ({ title: "Pro 전용 기능", description: "모든 페르소나를 활용하세요." }),
     },
     freeLabel: '무료 버전',
     freeFeatures: ['메인 페르소나 1개만 분석', '기본 Prime Perspective', '단일 페르소나 Ikigai'],
@@ -36,19 +36,15 @@ const S = {
       '통합 브랜딩 전략 (3가지 옵션)',
       '페르소나별 성장 추적',
     ],
-    price: '9,900원',
-    perMonth: '/월',
-    annualNote: '연간 결제 시 99,000원 (2개월 무료)',
-    ctaTrial: '7일 무료 체험 시작하기',
     ctaLater: '나중에 하기',
-    trustNote: '언제든지 취소 가능 • 카드 정보 불필요',
+    webOnlyNotice: 'Pro 전용 기능입니다.',
   },
   en: {
     triggers: {
       discovery: (n: number) => ({ title: `${n} personas discovered`, description: "But the free version only lets you view the 1 strongest persona." }),
       ikigai: () => ({ title: "Want to design an Ikigai for each persona?", description: "When your interests are too different to consolidate, create an Ikigai for each persona." }),
       branding: () => ({ title: "Need a branding strategy across multiple areas?", description: "We'll suggest a strategy so your brand stays coherent even when spanning multiple fields." }),
-      default: () => ({ title: "Upgrade to Pro", description: "Use all your personas." }),
+      default: () => ({ title: "Pro feature", description: "Use all your personas." }),
     },
     freeLabel: 'Free',
     freeFeatures: ['Analysis of 1 main persona only', 'Basic Prime Perspective', 'Single persona Ikigai'],
@@ -61,12 +57,8 @@ const S = {
       'Unified branding strategy (3 options)',
       'Growth tracking per persona',
     ],
-    price: '$8.99',
-    perMonth: '/mo',
-    annualNote: '$89.99/year — 2 months free',
-    ctaTrial: 'Start 7-day free trial',
     ctaLater: 'Maybe later',
-    trustNote: 'Cancel anytime • No card required',
+    webOnlyNotice: 'This is a Pro feature.',
   },
 };
 
@@ -122,25 +114,14 @@ export function PersonaPaywall({
                 ))}
               </ul>
 
-              <div className="border-t pt-3">
-                <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-bold">{s.price}</span>
-                  <span className="text-sm text-muted-foreground">{s.perMonth}</span>
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">{s.annualNote}</p>
-              </div>
             </div>
           </div>
 
           <div className="flex flex-col gap-2 pt-2">
-            <Button size="lg" className="w-full">{s.ctaTrial}</Button>
+            <p className="text-sm text-center text-muted-foreground">{s.webOnlyNotice}</p>
             <Button variant="outline" size="lg" className="w-full" onClick={() => onOpenChange(false)}>
               {s.ctaLater}
             </Button>
-          </div>
-
-          <div className="text-center">
-            <p className="text-xs text-muted-foreground">{s.trustNote}</p>
           </div>
         </div>
       </DialogContent>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase, veilorDb } from '@/integrations/supabase/client';
+import { veilorDb } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { C } from '@/lib/colors';
 import { useLanguageContext } from '@/context/LanguageContext';
@@ -30,7 +30,7 @@ const KO_CONFIGS: TriggerConfigMap = {
   priper_result: { icon: '🔓', title: '패턴의 전체를 보세요', description: '지금 보신 건 빙산의 일각이에요. 숨겨진 패턴과 변화 가능성이 더 있습니다.', benefit: 'Premium에서는 AI가 당신의 관계 패턴을 심층 분석하고, 실제 변화를 위한 맞춤 인사이트를 매주 제공해요.', ctaText: 'Premium으로 전체 분석 보기' },
   onboarding_complete: { icon: '✨', title: '베일러와 함께 더 깊이 탐색하세요', description: 'V-File 완료를 축하해요. 이제 진짜 여정이 시작됩니다.', benefit: 'Premium에서는 AI 상담, 파트너 교차 분석, 관계 변화 타임라인을 무제한으로 이용할 수 있어요.', ctaText: 'Premium 시작하기' },
   partner_analysis: { icon: '💫', title: '우리의 패턴 — 전체 분석', description: '파트너와의 관계 역학을 표면적 유형 비교 너머로 분석해요.', benefit: 'Premium에서는 두 사람의 충돌 지점, 성장 방향, 관계 변화 가능성을 AI가 깊이 분석해 드려요.', ctaText: 'Premium으로 파트너 분석 보기' },
-  codetalk_ai_limit: { icon: '🧠', title: 'AI 조언이 더 필요하신가요?', description: '무료 플랜에서는 AI 인사이트를 하루 3회까지 받을 수 있어요.', benefit: 'Pro 플랜에서는 무제한 AI 조언과 깊은 패턴 분석을 이용할 수 있어요.', ctaText: 'Pro로 업그레이드' },
+  codetalk_ai_limit: { icon: '🧠', title: 'AI 조언이 더 필요하신가요?', description: '무료 플랜에서는 AI 인사이트를 하루 3회까지 받을 수 있어요.', benefit: 'Pro 플랜에서는 무제한 AI 조언과 깊은 패턴 분석을 이용할 수 있어요.', ctaText: 'Pro 전용 기능' },
   multi_persona_analysis: { icon: '🎭', title: '멀티페르소나 분석', description: '여러 페르소나 간의 충돌 패턴과 자원 배분을 시각화해요.', benefit: '각 페르소나의 시간축 변화, 억압 패턴, 역할 간 긴장 관계를 볼 수 있어요.', ctaText: 'Pro로 잠금 해제' },
   ikigai_design: { icon: '🌀', title: 'Ikigai 설계', description: '사랑, 재능, 소명, 천직의 교차점에서 삶의 방향을 설계해요.', benefit: 'AI가 당신의 패턴을 분석해 개인화된 Ikigai 인사이트를 제공해요.', ctaText: 'Pro로 설계 시작' },
   brand_identity: { icon: '💎', title: '브랜드 정체성 설계', description: '나만의 언어와 방향성으로 개인 브랜드를 구축해요.', benefit: 'AI가 당신의 Why, Ikigai를 기반으로 브랜드 전략을 설계해 줘요.', ctaText: 'Pro로 브랜드 설계' },
@@ -42,7 +42,7 @@ const EN_CONFIGS: TriggerConfigMap = {
   priper_result: { icon: '🔓', title: 'See the full picture', description: "What you've seen is just the tip of the iceberg. There are hidden patterns and more possibilities for change.", benefit: 'With Premium, AI deeply analyzes your relationship patterns and delivers personalized insights every week.', ctaText: 'See full analysis with Premium' },
   onboarding_complete: { icon: '✨', title: 'Explore deeper with VEILOR', description: 'Congratulations on completing your V-File. Now the real journey begins.', benefit: 'With Premium, enjoy unlimited AI counseling, partner cross-analysis, and relationship change timelines.', ctaText: 'Start Premium' },
   partner_analysis: { icon: '💫', title: 'Our patterns — full analysis', description: 'Analyze relationship dynamics with your partner beyond surface-level type comparisons.', benefit: "With Premium, AI deeply analyzes both people's clash points, growth directions, and relationship change potential.", ctaText: 'See partner analysis with Premium' },
-  codetalk_ai_limit: { icon: '🧠', title: 'Need more AI advice?', description: 'The free plan includes up to 3 AI insights per day.', benefit: 'With the Pro plan, enjoy unlimited AI advice and deep pattern analysis.', ctaText: 'Upgrade to Pro' },
+  codetalk_ai_limit: { icon: '🧠', title: 'Need more AI advice?', description: 'The free plan includes up to 3 AI insights per day.', benefit: 'With the Pro plan, enjoy unlimited AI advice and deep pattern analysis.', ctaText: 'Pro feature' },
   multi_persona_analysis: { icon: '🎭', title: 'Multi-persona analysis', description: 'Visualize collision patterns and resource allocation across multiple personas.', benefit: "See each persona's timeline changes, suppression patterns, and role tensions.", ctaText: 'Unlock with Pro' },
   ikigai_design: { icon: '🌀', title: 'Ikigai Design', description: 'Design your life direction at the intersection of love, talent, calling, and vocation.', benefit: 'AI analyzes your patterns to deliver personalized Ikigai insights.', ctaText: 'Start designing with Pro' },
   brand_identity: { icon: '💎', title: 'Brand identity design', description: 'Build your personal brand with your own language and direction.', benefit: 'AI designs your brand strategy based on your Why and Ikigai.', ctaText: 'Design your brand with Pro' },
@@ -66,28 +66,26 @@ const S = {
   ko: {
     features: ['무제한 AI 조언', '멀티페르소나', 'Ikigai 설계', '브랜드 전략', '상세 리포트'],
     errorRetry: '잠시 후 다시 시도해 주세요.',
-    errorCheckout: '결제 페이지를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.',
     interestDoneTitle: '관심 등록 완료',
     interestDoneDesc: 'Premium 출시 시 가장 먼저 알려드릴게요.',
     processing: '처리 중...',
     notifyMe: '출시 알림 받기',
     dismiss: '나중에 할게요',
+    webOnlyNotice: 'Pro 전용 기능입니다.',
   },
   en: {
     features: ['Unlimited AI', 'Multi-persona', 'Ikigai Design', 'Brand Strategy', 'Full Reports'],
     errorRetry: 'Please try again in a moment.',
-    errorCheckout: "Couldn't load the payment page. Please try again in a moment.",
     interestDoneTitle: 'Interest registered',
     interestDoneDesc: "We'll let you know first when Premium launches.",
     processing: 'Processing...',
     notifyMe: 'Notify me at launch',
     dismiss: 'Maybe later',
+    webOnlyNotice: 'This is a Pro feature.',
   },
 };
 
 const PRO_TIER = 'pro';
-const LS_VARIANT_ID_USD = import.meta.env.VITE_LEMONSQUEEZY_PRO_VARIANT_ID_USD ?? '';
-const LS_VARIANT_ID_KRW = import.meta.env.VITE_LEMONSQUEEZY_PRO_VARIANT_ID_KRW ?? '';
 
 interface UpgradeModalProps {
   open: boolean;
@@ -107,9 +105,6 @@ export default function UpgradeModal({ open, onClose, trigger }: UpgradeModalPro
   const [error, setError] = useState<string | null>(null);
   const [interestDone, setInterestDone] = useState(false);
 
-  const lsVariantId = language === 'ko' ? LS_VARIANT_ID_KRW : LS_VARIANT_ID_USD;
-  const isLsReady = !!lsVariantId;
-
   useEffect(() => {
     if (!open) return;
     const handleEscape = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -122,7 +117,7 @@ export default function UpgradeModal({ open, onClose, trigger }: UpgradeModalPro
     veilorDb.from('paywall_events').insert({
       user_id: user.id,
       trigger_type: trigger,
-      action: action as 'shown' | 'dismissed' | 'interest_registered' | 'checkout_started' | 'converted',
+      action: action as 'shown' | 'dismissed' | 'interest_registered' | 'converted',
     }).then(() => {});
   };
 
@@ -146,32 +141,7 @@ export default function UpgradeModal({ open, onClose, trigger }: UpgradeModalPro
   };
 
   const handleUpgrade = async () => {
-    if (!user) return;
-    setLoading(true);
-    setError(null);
-
-    if (!isLsReady) {
-      await handleInterestRegister();
-      return;
-    }
-
-    try {
-      const { data, error: fnError } = await supabase.functions.invoke('create-checkout-session', {
-        body: { variantId: lsVariantId, tier: PRO_TIER },
-      });
-
-      if (fnError) throw fnError;
-      logEvent('checkout_started');
-
-      if (data?.url) {
-        window.location.href = data.url;
-      }
-    } catch (err: unknown) {
-      console.error('Checkout error:', err);
-      setError(s.errorCheckout);
-    } finally {
-      setLoading(false);
-    }
+    await handleInterestRegister();
   };
 
   const handleDismiss = async () => {
@@ -245,18 +215,9 @@ export default function UpgradeModal({ open, onClose, trigger }: UpgradeModalPro
               <p style={{ fontSize: 12, color: C.text2, lineHeight: 1.6 }}>{s.interestDoneDesc}</p>
             </div>
           ) : (
-            <button
-              onClick={handleUpgrade}
-              disabled={loading}
-              style={{
-                width: '100%', padding: '14px 0', borderRadius: 12, border: 'none',
-                background: loading ? `${C.amberGold}66` : `linear-gradient(135deg, ${C.amberGold}, ${C.amber})`,
-                fontFamily: "'DM Sans', sans-serif", fontSize: 14, fontWeight: 500, color: C.bg,
-                cursor: loading ? 'default' : 'pointer', transition: 'opacity .2s',
-              }}
-            >
-              {loading ? s.processing : isLsReady ? config.ctaText : s.notifyMe}
-            </button>
+            <div style={{ background: `${C.surface}`, border: `1px solid ${C.border}`, borderRadius: 12, padding: '16px', textAlign: 'center' }}>
+              <p style={{ fontSize: 13, color: C.text2, lineHeight: 1.6 }}>{s.webOnlyNotice}</p>
+            </div>
           )}
 
           <button

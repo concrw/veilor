@@ -126,7 +126,7 @@ export interface ExtendedProfile {
   avatar_url: string | null;
   has_multiple_personas: boolean;
   active_persona_id: string | null;
-  subscription_tier: "free" | "pro" | "elite";
+  subscription_tier: "free" | "pro" | "premium";
   created_at: string;
   updated_at: string;
 }

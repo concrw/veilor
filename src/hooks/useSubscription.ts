@@ -26,10 +26,10 @@ export const SUBSCRIPTION_TIERS = {
       "우선 매칭",
     ],
   },
-  elite: {
-    name: "Elite",
+  premium: {
+    name: "Premium",
     price: 29000,
-    variantId: import.meta.env.VITE_LEMONSQUEEZY_ELITE_VARIANT_ID_KRW || import.meta.env.VITE_LEMONSQUEEZY_ELITE_VARIANT_ID_USD || "",
+    variantId: import.meta.env.VITE_LEMONSQUEEZY_PREMIUM_VARIANT_ID_KRW || import.meta.env.VITE_LEMONSQUEEZY_PREMIUM_VARIANT_ID_USD || "",
     features: [
       "Pro의 모든 기능",
       "최대 5개 페르소나 분석",
@@ -65,27 +65,6 @@ export function useSubscription() {
     enabled: !!user?.id,
   });
 
-  const createCheckoutSession = useMutation({
-    mutationFn: async ({ tier }: { tier: "pro" | "elite" }) => {
-      const variantId = SUBSCRIPTION_TIERS[tier].variantId;
-
-      const { data, error } = await supabase.functions.invoke(
-        "create-checkout-session",
-        {
-          body: { variantId, tier },
-        }
-      );
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: (data) => {
-      if (data.url) {
-        window.location.href = data.url;
-      }
-    },
-  });
-
   const cancelSubscription = useMutation({
     mutationFn: async () => {
       if (!subscription?.ls_subscription_id) {
@@ -117,7 +96,7 @@ export function useSubscription() {
       return false;
     }
 
-    return subscription.tier === "pro" || subscription.tier === "elite";
+    return subscription.tier === "pro" || subscription.tier === "premium";
   };
 
   const canAccessPersona = (personaCount: number): boolean => {
@@ -129,7 +108,7 @@ export function useSubscription() {
       return personaCount <= 3;
     }
 
-    if (subscription.tier === "elite") {
+    if (subscription.tier === "premium") {
       return personaCount <= 5;
     }
 
@@ -139,8 +118,6 @@ export function useSubscription() {
   return {
     subscription,
     isLoading,
-    createCheckoutSession: createCheckoutSession.mutate,
-    isCreatingSession: createCheckoutSession.isPending,
     cancelSubscription: cancelSubscription.mutate,
     isCanceling: cancelSubscription.isPending,
     hasFeature,

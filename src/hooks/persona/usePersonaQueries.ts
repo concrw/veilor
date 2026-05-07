@@ -130,7 +130,7 @@ export const useHasMultiplePersonas = () => {
 
       return {
         hasMultiple: data.has_multiple_personas,
-        subscriptionTier: data.subscription_tier as "free" | "pro" | "elite",
+        subscriptionTier: data.subscription_tier as "free" | "pro" | "premium",
         canAccessAll: data.subscription_tier !== "free",
       };
     },

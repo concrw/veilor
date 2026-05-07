@@ -1028,7 +1028,7 @@ export interface RelationCheckin {
 // ──────────────────────────────────────────────────────────────────────────────
 
 export type B2BInviteStatus = 'pending' | 'accepted' | 'expired';
-export type SubscriptionTier = 'free' | 'pro' | 'elite';
+export type SubscriptionTier = 'free' | 'pro' | 'premium';
 
 export interface B2BInviteToken {
   id: string;

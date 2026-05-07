@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
 import { supabase, veilorDb } from '@/integrations/supabase/client';
 
-export type SubscriptionTier = 'free' | 'basic' | 'premium' | 'pro' | 'elite';
+export type SubscriptionTier = 'free' | 'basic' | 'pro' | 'premium';
 
 // check_user_access가 지원하는 feature 목록
 export type VeilorFeature =
@@ -52,7 +52,7 @@ export function useVeilorSubscription() {
   });
 
   const currentRole = role ?? 'basic';
-  const isPro       = currentRole === 'premium' || currentRole === 'pro' || currentRole === 'elite';
+  const isPro       = currentRole === 'pro' || currentRole === 'premium';
   const isResearcher = currentRole === 'researcher' || currentRole === 'admin';
   const isAdmin     = currentRole === 'admin';
   const isLoading   = roleLoading || accessLoading;
@@ -68,8 +68,7 @@ export function useVeilorSubscription() {
     isAdmin,
     isLoading,
     can,
-    // 하위 호환 — 기존 코드의 tier/isElite 참조 대응
     tier: currentRole as SubscriptionTier,
-    isElite: currentRole === 'elite',
+    isPremium: currentRole === 'premium',
   };
 }

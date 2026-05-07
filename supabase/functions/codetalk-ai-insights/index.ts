@@ -50,7 +50,7 @@ serve(async (req) => {
 
     const tier = profile.subscription_tier as string;
     const expiresAt = profile.subscription_expires_at as string | null;
-    const isPro = tier === "pro" || tier === "elite" || tier === "premium" || tier === "enterprise";
+    const isPro = tier === "pro" || tier === "premium" || tier === "enterprise";
 
     // 만료일 체크 (서버 시간 기준)
     if (!isPro) {

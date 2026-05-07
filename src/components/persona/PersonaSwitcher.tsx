@@ -3,8 +3,8 @@ import { useAccessiblePersonas, useSetActivePersona } from "@/hooks/usePersonas"
 import { useLanguageContext } from "@/context/LanguageContext";
 
 const S = {
-  ko: { upgradeLabel: 'Pro로 업그레이드', manageLabel: '페르소나 관리', manageBtn: '관리' },
-  en: { upgradeLabel: 'Upgrade to Pro', manageLabel: 'Manage Personas', manageBtn: 'Manage' },
+  ko: { upgradeLabel: 'Pro 전용 기능', manageLabel: '페르소나 관리', manageBtn: '관리' },
+  en: { upgradeLabel: 'Pro feature', manageLabel: 'Manage Personas', manageBtn: 'Manage' },
 };
 import {
   Select,

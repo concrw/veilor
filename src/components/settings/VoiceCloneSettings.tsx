@@ -12,8 +12,8 @@ const MAX_SECONDS = 300;
 const S = {
   ko: {
     proOnly: 'Pro 전용 기능',
-    proDesc: '내 목소리로 엠버와 대화하고 싶다면\nPro 플랜으로 업그레이드하세요.',
-    proCta: 'Pro 플랜 보기',
+    proDesc: '내 목소리로 엠버와 대화하는 기능은\nPro 전용입니다.',
+    proCta: '확인',
     intro: (min: number) => `자신의 목소리로 녹음하면 엠버가 그 목소리로 대화합니다.\n최소 ${min}초 이상 자연스럽게 말해주세요.`,
     voiceRegistered: '내 목소리 등록됨',
     voiceAmberUsing: '엠버가 이 목소리로 대화합니다',
@@ -33,8 +33,8 @@ const S = {
   },
   en: {
     proOnly: 'Pro Feature',
-    proDesc: "Want to talk to Amber with your own voice?\nUpgrade to the Pro plan.",
-    proCta: 'View Pro Plan',
+    proDesc: "Talking to Amber with your own voice\nis a Pro feature.",
+    proCta: 'OK',
     intro: (min: number) => `Record with your voice and Amber will use it in conversation.\nPlease speak naturally for at least ${min} seconds.`,
     voiceRegistered: 'My voice registered',
     voiceAmberUsing: 'Amber will use this voice',
@@ -73,16 +73,7 @@ export default function VoiceCloneSettings() {
         <p style={{ fontSize: 12, color: C.text3, lineHeight: 1.7, marginBottom: 20 }}>
           {s.proDesc.split('\n').map((line, i) => <span key={i}>{line}{i === 0 && <br />}</span>)}
         </p>
-        <button
-          onClick={() => window.location.href = '/settings/subscription'}
-          style={{
-            padding: '10px 24px', borderRadius: 10,
-            background: C.amberGold, border: 'none', cursor: 'pointer',
-            color: C.bg, fontSize: 13, fontWeight: 500,
-          }}
-        >
-          {s.proCta}
-        </button>
+        <p style={{ fontSize: 12, color: C.text3 }}>{s.proCta}</p>
       </div>
     );
   }
