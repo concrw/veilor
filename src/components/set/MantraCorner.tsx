@@ -149,6 +149,7 @@ export default function MantraCorner({ domain }: MantraCornerProps) {
         display: 'flex',
         flexDirection: 'column',
         background: `radial-gradient(60% 50% at 50% 30%, color-mix(in oklch, ${color} 6%, transparent), transparent 70%), var(--background)`,
+        paddingTop: 'env(safe-area-inset-top)',
       }}
     >
       {/* 상단 헤더 */}

@@ -299,6 +299,7 @@ export default function AILeadOverlay({
       style={{
         position: 'fixed', inset: 0, zIndex: 9999, background: C.bg,
         display: 'flex', flexDirection: 'column',
+        paddingTop: 'env(safe-area-inset-top)',
       }}
     >
       {/* ── 접근성 공지 영역 3개 — 항상 DOM에 존재 (내용만 바뀜) ─────────── */}
