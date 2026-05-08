@@ -165,7 +165,10 @@ const Login = () => {
       {/* 좌측 브랜드 패널 — PC 전용 */}
       <div className="hidden lg:flex flex-col justify-center flex-1 px-16 py-14 gap-12" style={{ borderRight: '1px solid #2A2624' }}>
         <div>
-          <h1 className="text-4xl font-bold tracking-widest mb-3" style={{ color: '#E0B48A', letterSpacing: '0.2em' }}>VEILOR</h1>
+          <div className="flex items-center gap-4 mb-3">
+            <img src="/icon-192x192.png" alt="VEILOR" className="w-12 h-12 rounded-xl" />
+            <h1 className="text-4xl font-bold tracking-widest" style={{ color: '#E0B48A', letterSpacing: '0.2em' }}>VEILOR</h1>
+          </div>
           <p className="text-base font-light" style={{ color: '#B8B3AF' }}>{s.subtitle}</p>
         </div>
         <div className="space-y-6">
@@ -185,7 +188,7 @@ const Login = () => {
       <div className="flex flex-col flex-1 lg:flex-none lg:w-[480px] items-center justify-center px-8 py-10">
         {/* 모바일 헤더 */}
         <div className="lg:hidden text-center mb-8">
-          <h1 className="text-3xl font-bold tracking-tight" style={{ color: '#F5F5F4' }}>VEILOR</h1>
+          <img src="/icon-192x192.png" alt="VEILOR" className="w-16 h-16 rounded-2xl mx-auto" />
         </div>
 
       <div className="w-full max-w-sm rounded-2xl px-6 py-6" style={{ background: '#292524', border: '1px solid #44403C' }}>

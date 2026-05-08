@@ -109,7 +109,10 @@ export default function PriperQuestions() {
       {/* 좌측 진행 패널 — PC 전용 */}
       <div className="hidden lg:flex flex-col justify-between flex-1 px-16 py-14" style={{ borderRight: '1px solid #2A2624' }}>
         <div>
-          <h1 className="text-4xl font-bold tracking-widest mb-3" style={{ color: '#E0B48A', letterSpacing: '0.2em' }}>VEILOR</h1>
+          <div className="flex items-center gap-4 mb-3">
+            <img src="/icon-192x192.png" alt="VEILOR" className="w-12 h-12 rounded-xl" />
+            <h1 className="text-4xl font-bold tracking-widest" style={{ color: '#E0B48A', letterSpacing: '0.2em' }}>VEILOR</h1>
+          </div>
           <p className="text-base font-light" style={{ color: '#B8B3AF' }}>{s.subtitle}</p>
         </div>
         <div className="space-y-6">

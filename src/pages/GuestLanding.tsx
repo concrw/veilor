@@ -28,7 +28,7 @@ const S = {
     rightPanelDesc: 'V-File 진단으로 4분 만에 나만의 관계 언어를 발견하세요.',
   },
   en: {
-    subtitle: 'Discover your relationship language',
+    subtitle: 'Discover your relationship language with Veilor',
     amberGreet: "Hi, I'm Amber. I'm an AI that explores relationship patterns with you.",
     amberQuestion: "Is there anything on your mind about relationships lately? Share it in one line.",
     inputPlaceholder: "e.g. I don't know why I push people away when I get close",
@@ -157,7 +157,6 @@ export default function GuestLanding() {
     <aside className="hidden lg:flex flex-col gap-8 flex-shrink-0 px-10 py-14 overflow-y-auto"
       style={{ width: 360, borderLeft: '1px solid #2A2624' }}>
       <div>
-        <p className="text-xs mb-1" style={{ color: '#87817C', letterSpacing: '0.06em' }}>VEILOR</p>
         <p className="text-2xl font-light leading-snug mb-2" style={{ color: '#F5F5F4', whiteSpace: 'pre-line' }}>{s.rightPanelTitle}</p>
         <p className="text-sm font-light leading-relaxed" style={{ color: '#B8B3AF' }}>{s.rightPanelDesc}</p>
       </div>
@@ -195,7 +194,7 @@ export default function GuestLanding() {
       <div className="max-w-sm w-full mx-auto flex-1 flex flex-col px-6 py-10">
 
         <div className="text-center mb-10">
-          <h1 className="text-3xl font-bold tracking-tight" style={{ color: '#F5F5F4' }}>VEILOR</h1>
+          <img src="/icon-192x192.png" alt="VEILOR" className="w-14 h-14 rounded-2xl mx-auto mb-3" />
           <p className="text-xs mt-1" style={{ color: '#B8B3AF' }}>{s.subtitle}</p>
         </div>
 

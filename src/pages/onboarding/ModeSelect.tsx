@@ -246,7 +246,10 @@ export default function ModeSelect() {
         style={{ borderRight: `1px solid ${C.border2}` }}
       >
         <div>
-          <h1 className="text-4xl font-bold tracking-widest mb-3" style={{ color: C.amber, letterSpacing: '0.2em' }}>VEILOR</h1>
+          <div className="flex items-center gap-4 mb-3">
+            <img src="/icon-192x192.png" alt="VEILOR" className="w-12 h-12 rounded-xl" />
+            <h1 className="text-4xl font-bold tracking-widest" style={{ color: C.amber, letterSpacing: '0.2em' }}>VEILOR</h1>
+          </div>
           <p className="text-base font-light" style={{ color: C.text3 }}>{s.brandSubtitle}</p>
         </div>
         <div className="space-y-6">
@@ -304,7 +307,6 @@ export default function ModeSelect() {
         {step === 1 && (
           <>
             <div className="text-center mb-8 w-full max-w-sm">
-              <p className="text-xs tracking-[0.3em] uppercase mb-3" style={{ color: C.text3 }}>Veilor</p>
               <h1 className="text-2xl font-semibold leading-snug" style={{ color: C.text, whiteSpace: 'pre-line' }}>
                 {s.step1Header}
               </h1>
@@ -376,7 +378,6 @@ export default function ModeSelect() {
         {step === 2 && (
           <>
             <div className="text-center mb-10 w-full max-w-sm">
-              <p className="text-xs tracking-[0.3em] uppercase mb-3" style={{ color: C.text3 }}>Veilor</p>
               <h1 className="text-2xl font-semibold leading-snug" style={{ color: C.text, whiteSpace: 'pre-line' }}>
                 {s.step2Header}
               </h1>
