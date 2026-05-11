@@ -86,8 +86,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, sess) => {
       // TOKEN_REFRESH_FAILED — 세션 만료 강제 로그아웃
-      if (event === 'TOKEN_REFRESHED' && !sess) {
-        console.warn('Token refresh returned no session — signing out');
+      if (event === 'TOKEN_REFRESH_FAILED') {
+        console.warn('Token refresh failed — signing out');
         await supabase.auth.signOut();
         toast({ title: t.auth.sessionExpiredTitle, description: t.auth.sessionExpiredDesc, variant: 'destructive' });
         setSession(null);
