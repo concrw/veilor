@@ -184,7 +184,7 @@ function buildSummaryText(
   const emotionPart = eroticEmotions.length > 0
     ? lang === 'en'
       ? ` Your erotic energy comes from '${eroticEmotions.join("' and '")}'.`
-      : ` 당신의 에로틱 에너지는 '${eroticEmotions.join('\'과 \'')}\'에서 옵니다.`
+      : ` 당신의 에로틱 에너지는 '${eroticEmotions.join("'과 '")}' 에서 옵니다.`
     : '';
 
   return lang === 'en'

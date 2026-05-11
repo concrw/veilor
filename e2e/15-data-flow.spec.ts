@@ -125,8 +125,9 @@ test.describe('Dig → M43 패턴 분석 데이터 플로우', () => {
     // 분석 없이 현재 Dig 페이지 상태만 확인 — 크래시 없음
     const hasError = await page.getByText(/Something went wrong|연결 오류/i).isVisible().catch(() => false);
     expect(hasError).toBe(false);
-    // Dig 페이지 핵심 UI 존재
-    const hasDigContent = await page.getByRole('heading').first().isVisible({ timeout: 5_000 }).catch(() => false);
+    // Dig 페이지 핵심 UI 존재 (폼 버튼 또는 입력창)
+    const hasDigContent = await page.getByRole('button', { name: /패턴 분석|시작|분석/i }).first().isVisible({ timeout: 5_000 }).catch(() => false)
+      || await page.locator('textarea').first().isVisible({ timeout: 2_000 }).catch(() => false);
     expect(hasDigContent).toBe(true);
   });
 });

@@ -59,7 +59,7 @@ export default function MePage() {
     <div style={{ fontFamily: "'DM Sans', sans-serif", background: C.bg, minHeight: '100%', display: 'flex', flexDirection: 'column', maxWidth: 860, width: '100%', margin: '0 auto' }}>
       <div style={{ padding: '8px 16px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: `1px solid ${C.border2}`, flexShrink: 0 }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1 }}>
-          <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 400, fontSize: 22, color: C.text, lineHeight: 1 }}>ME</span>
+          <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 400, fontSize: 22, color: C.text, lineHeight: 1 }}>Me</span>
           <span style={{ fontSize: 10, fontWeight: 300, color: C.text4, letterSpacing: '.02em' }}>{me.subtitle}</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

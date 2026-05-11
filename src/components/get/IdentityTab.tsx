@@ -121,7 +121,7 @@ export default function IdentityTab({
   const { language } = useLanguageContext();
 
   const resolveMask = (mask: string): { code: string; name: string; categoryKey: 'predatory' | 'prey' } | null => {
-    let code = MSK_CATEGORY[mask] !== undefined ? mask : NAME_TO_MSK[mask];
+    const code = MSK_CATEGORY[mask] !== undefined ? mask : NAME_TO_MSK[mask];
     if (!code) return null;
     const category = MSK_CATEGORY[code];
     if (!category) return null;

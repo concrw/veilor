@@ -147,7 +147,7 @@ const RequireOnboarding = ({ children }: { children: JSX.Element }) => {
   const { onboardingStep, loading } = useAuth();
   if (loading) return <PageLoader />;
   const stepPath: Record<OnboardingStep, string> = {
-    welcome: '/onboarding/welcome', cq: '/onboarding/cq',
+    welcome: '/onboarding/vfile/start', cq: '/onboarding/vfile/start',
     priper: '/onboarding/vfile/start', completed: '/home',
   };
   if (onboardingStep !== 'completed') return <Navigate to={stepPath[onboardingStep]} replace />;
@@ -172,7 +172,7 @@ const RootRedirect = () => {
     return <Navigate to="/onboarding/mode-select" replace />;
   }
   const stepPath: Record<OnboardingStep, string> = {
-    welcome: '/onboarding/welcome', cq: '/onboarding/cq',
+    welcome: '/onboarding/vfile/start', cq: '/onboarding/vfile/start',
     priper: '/onboarding/vfile/start', completed: '/home',
   };
   return <Navigate to={stepPath[onboardingStep]} replace />;

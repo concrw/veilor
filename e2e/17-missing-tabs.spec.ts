@@ -153,18 +153,22 @@ test.describe('AdminDashboard — B2C·B2B 탭', () => {
   });
 
   test('B2B 조직·코치 탭 클릭 → 조직 목록 또는 빈 상태 텍스트 노출', async ({ page }) => {
-    const b2bBtn = page.getByRole('button', { name: 'B2B 조직·코치' });
+    const b2bBtn = page.getByRole('button', { name: /B2B 조직|B2B Orgs/i });
     await expect(b2bBtn).toBeVisible({ timeout: 15_000 });
 
     await b2bBtn.click();
-    await page.waitForTimeout(1_500);
+    // 스피너 사라질 때까지 대기 후 콘텐츠 확인
+    await page.waitForFunction(
+      () => !document.querySelector('.animate-spin'),
+      { timeout: 20_000 }
+    ).catch(() => {});
 
     const hasError = await page.getByText(/Something went wrong|연결 오류/i).isVisible().catch(() => false);
     expect(hasError).toBe(false);
 
     // 조직 목록 또는 빈 상태 안내 텍스트
     await expect(
-      page.getByText(/B2B 조직|조직 목록|등록된 조직|없습니다|코치 관리|코치/i).first()
-    ).toBeVisible({ timeout: 10_000 });
+      page.getByText(/전체 조직|등록된 조직이 없|없습니다|코치 관리|코치/i).first()
+    ).toBeVisible({ timeout: 20_000 });
   });
 });

@@ -162,6 +162,22 @@ export default function SexSelfQuestions() {
 
   const handleSliderConfirm = () => handleAnswer(sliderVal);
 
+  const bind = useDrag(
+    ({ last, movement: [mx], direction: [dx], axis }) => {
+      if (!last) return;
+      if (axis !== 'x') return;
+      if (Math.abs(mx) < 60) return;
+      if (dx < 0) {
+        const q = SEX_SELF_QUESTIONS[current];
+        if (q.type === 'slider') handleSliderConfirm();
+        else if (responses[q.id] !== undefined) handleAnswer(responses[q.id]);
+      } else {
+        handlePrev();
+      }
+    },
+    { axis: 'x', filterTaps: true },
+  );
+
   const handlePrev = () => {
     if (gate !== 'answering') {
       setGate('answering');
@@ -288,24 +304,6 @@ export default function SexSelfQuestions() {
     current < STAGE_1_END ? s.stageLabels[0] :
     current < STAGE_2_END ? s.stageLabels[1] : s.stageLabels[2];
 
-  // 스와이프: 좌 → 다음(슬라이더/선택값 확인), 우 → 이전
-  // axis < 0 이면 오른쪽→왼쪽 스와이프 (다음), axis > 0 이면 왼쪽→오른쪽 (이전)
-  const bind = useDrag(
-    ({ last, movement: [mx], direction: [dx], axis }) => {
-      if (!last) return;
-      if (axis !== 'x') return; // 수직 드래그 무시 (슬라이더 충돌 방지)
-      if (Math.abs(mx) < 60) return; // 임계값 미만 무시
-      if (dx < 0) {
-        // 왼쪽 스와이프 → 다음
-        if (q.type === 'slider') handleSliderConfirm();
-        else if (responses[q.id] !== undefined) handleAnswer(responses[q.id]);
-      } else {
-        // 오른쪽 스와이프 → 이전
-        handlePrev();
-      }
-    },
-    { axis: 'x', filterTaps: true },
-  );
 
   return (
     <div className="min-h-screen flex flex-col px-6 py-8" style={{ background: C.bg }}>

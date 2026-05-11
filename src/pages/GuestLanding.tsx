@@ -48,7 +48,7 @@ export default function GuestLanding() {
   const s = t.guestLanding;
   const lang = language === 'en' ? 'en' : 'ko';
 
-  const [phase, setPhase] = useState<Phase>('landing');
+  const [phase, setPhase] = useState<Phase>('gate');
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [typing, setTyping] = useState(false);

@@ -149,12 +149,6 @@ export default function Welcome() {
             <div className={`transition-all duration-700 ${phase !== 'greeting' ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}>
               <div className="flex items-start gap-3">
                 <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-sm flex-shrink-0"
-                  style={{ background: '#E0B48A15', border: '1px solid #E0B48A44', color: '#E0B48A' }}
-                >
-                  A
-                </div>
-                <div
                   className="rounded-2xl rounded-tl-sm p-4 max-w-[85%]"
                   style={{ background: '#292524', border: '1px solid #44403C' }}
                 >
@@ -172,12 +166,6 @@ export default function Welcome() {
             {(phase === 'question' || phase === 'ready') && (
               <div className="transition-all duration-700 opacity-100 translate-y-0 space-y-4">
                 <div className="flex items-start gap-3">
-                  <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center text-sm flex-shrink-0"
-                    style={{ background: '#E0B48A15', border: '1px solid #E0B48A44', color: '#E0B48A' }}
-                  >
-                    A
-                  </div>
                   <div
                     className="rounded-2xl rounded-tl-sm p-4 max-w-[85%]"
                     style={{ background: '#292524', border: '1px solid #44403C' }}

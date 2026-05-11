@@ -505,7 +505,7 @@ export default function VeilorDirectoryPage() {
     queryKey: ['veilor_peers', filter],
     queryFn: async () => {
       try {
-        let q = veilorDb.from('veilor_peers').select('*').eq('is_active', true);
+        const q = veilorDb.from('veilor_peers').select('*').eq('is_active', true);
         const { data, error } = await q.order('rating', { ascending: false });
         if (error) return MOCK_PEERS;
         const list = (data ?? []) as VeilorPeer[];

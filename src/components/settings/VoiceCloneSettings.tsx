@@ -16,23 +16,6 @@ export default function VoiceCloneSettings() {
   const s = t.voiceCloneSettings;
   const { state, errorMsg, clonedVoiceId, startRecording, stopRecordingAndUpload, cancelRecording, reset } = useVoiceClone();
 
-  if (!isPro) {
-    return (
-      <div style={{
-        padding: '24px 20px', borderRadius: 14,
-        background: `${C.amberGold}08`, border: `1px solid ${C.amberGold}22`,
-        textAlign: 'center',
-      }}>
-        <p style={{ fontSize: 22, marginBottom: 12 }}>🔒</p>
-        <p style={{ fontSize: 14, fontWeight: 500, color: C.text, marginBottom: 8 }}>{s.proOnly}</p>
-        <p style={{ fontSize: 12, color: C.text3, lineHeight: 1.7, marginBottom: 20 }}>
-          {s.proDesc.split('\n').map((line, i) => <span key={i}>{line}{i === 0 && <br />}</span>)}
-        </p>
-        <p style={{ fontSize: 12, color: C.text3 }}>{s.proCta}</p>
-      </div>
-    );
-  }
-
   const [seconds,      setSeconds]      = useState(0);
   const [savedVoiceId, setSavedVoiceId] = useState<string | null>(null);
   const [voiceName,    setVoiceName]    = useState(s.defaultVoiceName);
@@ -58,6 +41,22 @@ export default function VoiceCloneSettings() {
     }), 1000);
     return () => clearInterval(id);
   }, [state, stopRecordingAndUpload, voiceName]);
+
+  if (!isPro) {
+    return (
+      <div style={{
+        padding: '24px 20px', borderRadius: 14,
+        background: `${C.amberGold}08`, border: `1px solid ${C.amberGold}22`,
+        textAlign: 'center',
+      }}>
+        <p style={{ fontSize: 14, fontWeight: 500, color: C.text, marginBottom: 8 }}>{s.proOnly}</p>
+        <p style={{ fontSize: 12, color: C.text3, lineHeight: 1.7, marginBottom: 20 }}>
+          {s.proDesc.split('\n').map((line, i) => <span key={i}>{line}{i === 0 && <br />}</span>)}
+        </p>
+        <p style={{ fontSize: 12, color: C.text3 }}>{s.proCta}</p>
+      </div>
+    );
+  }
 
   const canStop = state === 'recording' && seconds >= MIN_SECONDS;
   const progress = Math.min(seconds / MIN_SECONDS, 1);
