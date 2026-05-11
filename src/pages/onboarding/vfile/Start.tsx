@@ -1,11 +1,13 @@
 import { useNavigate } from 'react-router-dom';
 import { useT } from '@/i18n/useT';
 import { VenetianMask } from 'lucide-react';
+import { useLanguageContext } from '@/context/LanguageContext';
 
 export default function PriperStart() {
   const navigate = useNavigate();
   const t = useT();
   const s = t.vfileStart;
+  const { language, setLanguage } = useLanguageContext();
 
   return (
     <div
@@ -35,6 +37,24 @@ export default function PriperStart() {
       {/* 우측 콘텐츠 영역 */}
       <div className="flex flex-col flex-1 lg:flex-none lg:w-[480px] items-center justify-center px-6 text-center">
       <div className="max-w-sm w-full space-y-8">
+        {/* 언어 토글 */}
+        <div className="flex justify-end">
+          <div className="flex rounded-lg overflow-hidden" style={{ border: '1px solid #44403C' }}>
+            {(['ko', 'en'] as const).map(lang => (
+              <button
+                key={lang}
+                onClick={() => setLanguage(lang)}
+                className="px-3 py-1.5 text-xs font-medium transition-colors"
+                style={{
+                  background: language === lang ? '#E0B48A' : 'transparent',
+                  color: language === lang ? '#1C1917' : '#B8B3AF',
+                }}
+              >
+                {lang === 'ko' ? '한국어' : 'EN'}
+              </button>
+            ))}
+          </div>
+        </div>
         {/* 가면 아이콘 */}
         <div
           className="w-24 h-24 mx-auto rounded-full flex items-center justify-center"
