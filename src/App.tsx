@@ -167,6 +167,15 @@ const RootRedirect = () => {
   if (loading || !isReady) return <PageLoader />;
   // 비로그인 → 게스트 랜딩
   if (!user) return <GuestLanding />;
+  // 비로그인 진단 결과가 sessionStorage에 있으면 → result 페이지로 복귀
+  const savedResult = sessionStorage.getItem('veilor:vfile-result');
+  if (savedResult) {
+    try {
+      const { responses, context } = JSON.parse(savedResult);
+      sessionStorage.removeItem('veilor:vfile-result');
+      return <Navigate to="/onboarding/vfile/result" state={{ responses, context }} replace />;
+    } catch { sessionStorage.removeItem('veilor:vfile-result'); }
+  }
   // 온보딩 완료 후 최초 진입 시 → 모드 선택 화면
   if (onboardingStep === 'completed' && isFirstVisit) {
     return <Navigate to="/onboarding/mode-select" replace />;
@@ -215,15 +224,9 @@ const App = () => {
                 <Route path="/onboarding/cq" element={
                   <RequireAuth><OnboardingGuard><CoreQuestions /></OnboardingGuard></RequireAuth>
                 } />
-                <Route path="/onboarding/vfile/start" element={
-                  <RequireAuth><OnboardingGuard><VFileStart /></OnboardingGuard></RequireAuth>
-                } />
-                <Route path="/onboarding/vfile/questions" element={
-                  <RequireAuth><OnboardingGuard><VFileQuestions /></OnboardingGuard></RequireAuth>
-                } />
-                <Route path="/onboarding/vfile/result" element={
-                  <RequireAuth><OnboardingGuard><VFileResult /></OnboardingGuard></RequireAuth>
-                } />
+                <Route path="/onboarding/vfile/start" element={<VFileStart />} />
+                <Route path="/onboarding/vfile/questions" element={<VFileQuestions />} />
+                <Route path="/onboarding/vfile/result" element={<VFileResult />} />
 
                 {/* 메인 앱 */}
                 <Route path="/home" element={

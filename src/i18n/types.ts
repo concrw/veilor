@@ -2853,6 +2853,7 @@ export interface LocaleResource {
     declaration: string[];
     btnStart: string;
     btnDone: string;
+    btnSignup: string;
     disclaimer: string;
   };
 

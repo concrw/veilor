@@ -127,10 +127,15 @@ export default function PriperResult() {
 
   const handleEnter = async () => {
     if (!result) return;
+    if (!user) {
+      // 비로그인: 결과를 sessionStorage에 보관 후 회원가입으로
+      sessionStorage.setItem('veilor:vfile-result', JSON.stringify({ responses: stateData?.responses, context }));
+      navigate('/auth/signup');
+      return;
+    }
     if (isOnboarding) {
       await completePriper(result.primary.nameKo, result.secondary.nameKo, result.scores, result.primary.mskCode);
     }
-    // V-File 완료 후 관련 캐시 갱신
     qc.invalidateQueries({ queryKey: ['prime-perspective'] });
     qc.invalidateQueries({ queryKey: ['me-diagnosis'] });
     qc.invalidateQueries({ queryKey: ['me-radar'] });
@@ -260,7 +265,7 @@ export default function PriperResult() {
           className="w-full h-12 text-base rounded-xl font-medium transition-opacity"
           style={{ background: '#E0B48A', color: '#1C1917', fontFamily: "'DM Sans', sans-serif" }}
         >
-          {isOnboarding ? s.btnStart : s.btnDone}
+          {!user ? s.btnSignup : isOnboarding ? s.btnStart : s.btnDone}
         </button>
 
         <p className="text-[10px] leading-relaxed text-center px-2" style={{ color: '#87817C' }}>

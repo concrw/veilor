@@ -3820,6 +3820,7 @@ export const ko: LocaleResource = {
     ],
     btnStart: '여정 시작 →',
     btnDone: '결과 확인 완료',
+    btnSignup: '회원가입하고 저장하기 →',
     disclaimer: '이 결과는 자기탐색을 위한 참고 자료이며, 심리 진단이 아닙니다.\n정확한 평가를 원하시면 전문 심리상담사와 상담해 주세요.',
   },
 

@@ -3802,6 +3802,7 @@ export const en: LocaleResource = {
     ],
     btnStart: 'Begin the journey →',
     btnDone: 'Done',
+    btnSignup: 'Sign up to save results →',
     disclaimer: 'This result is a reference for self-exploration, not a clinical diagnosis.\nFor a thorough evaluation, please consult a licensed therapist.',
   },
 
