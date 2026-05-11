@@ -111,7 +111,7 @@ export const en: LocaleResource = {
 
   // ─── vent ──────────────────────────────────────────────────
   vent: {
-    header: 'VENT',
+    header: 'Vent',
     subtitle: "It's okay to let it all out right now",
     sections: {
       mood: 'How I feel',
@@ -748,7 +748,7 @@ export const en: LocaleResource = {
 
   // ─── me ────────────────────────────────────────────────────
   me: {
-    header: 'ME',
+    header: 'Me',
     subtitle: 'Getting to know myself',
     tabs: {
       growth: 'My Growth',

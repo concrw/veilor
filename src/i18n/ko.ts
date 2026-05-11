@@ -111,7 +111,7 @@ export const ko: LocaleResource = {
 
   // ─── vent ──────────────────────────────────────────────────
   vent: {
-    header: 'VENT',
+    header: 'Vent',
     subtitle: '지금 다 쏟아내도 돼요',
     sections: {
       mood: '지금 기분',
@@ -748,7 +748,7 @@ export const ko: LocaleResource = {
 
   // ─── me ────────────────────────────────────────────────────
   me: {
-    header: 'ME',
+    header: 'Me',
     subtitle: '나를 알아가고 있어요',
     tabs: {
       growth: '나의 성장',
