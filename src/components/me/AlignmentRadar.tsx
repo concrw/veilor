@@ -1,6 +1,7 @@
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer } from 'recharts';
 import { useIkigaiAlignment } from '@/hooks/useIkigaiAlignment';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useT } from '@/i18n/useT';
 import { C } from '@/lib/colors';
 
 interface Props {
@@ -14,6 +15,7 @@ const AXIS_KEYS = ['self', 'work', 'relation', 'social'] as const;
 
 export default function AlignmentRadar({ ventCount, userId }: Props) {
   const { language } = useTranslation();
+  const t = useT();
   const isKo = language === 'ko';
   const { scores, isLoading, patterns } = useIkigaiAlignment({ userId, ventCount });
 
@@ -25,7 +27,7 @@ export default function AlignmentRadar({ ventCount, userId }: Props) {
   return (
     <div className="vr-fade-in" style={{ background: C.bg2, border: `1px solid ${C.border}`, borderRadius: 14, padding: '15px 17px' }}>
       <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: 16, color: C.text, display: 'block', marginBottom: 12 }}>
-        {isKo ? '4축 정렬' : 'Axis Alignment'}
+        {t.me.impact.axisAlignment}
       </span>
 
       {isLoading ? (

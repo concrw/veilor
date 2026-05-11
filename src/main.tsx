@@ -1,5 +1,7 @@
 import { createRoot } from 'react-dom/client'
 import * as Sentry from '@sentry/react'
+import { StatusBar, Style } from '@capacitor/status-bar'
+import { Capacitor } from '@capacitor/core'
 import App from './App.tsx'
 import './index.css'
 import { registerServiceWorker } from './utils/registerSW'
@@ -15,6 +17,11 @@ if (SENTRY_DSN) {
     replaysOnErrorSampleRate: 1.0,
     integrations: [Sentry.replayIntegration({ maskAllText: true, blockAllMedia: false })],
   });
+}
+
+if (Capacitor.isNativePlatform()) {
+  StatusBar.setOverlaysWebView({ overlay: true });
+  StatusBar.setStyle({ style: Style.Dark });
 }
 
 createRoot(document.getElementById("root")!).render(<App />);

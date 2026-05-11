@@ -5,6 +5,8 @@ import { createHmac } from "https://deno.land/std@0.168.0/node/crypto.ts";
 const log = (level: "info" | "warn" | "error", msg: string, data?: Record<string, unknown>) =>
   console[level](JSON.stringify({ ts: new Date().toISOString(), level, msg, ...data }));
 
+const veilor = (supabase: ReturnType<typeof createClient>) => supabase.schema("veilor");
+
 serve(async (req) => {
   const LEMONSQUEEZY_WEBHOOK_SECRET = Deno.env.get("LEMONSQUEEZY_WEBHOOK_SECRET");
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -19,7 +21,6 @@ serve(async (req) => {
   const signature = req.headers.get("x-signature");
   const body = await req.text();
 
-  // 서명 검증
   const hmac = createHmac("sha256", LEMONSQUEEZY_WEBHOOK_SECRET);
   hmac.update(body);
   const digest = hmac.digest("hex");
@@ -45,7 +46,7 @@ serve(async (req) => {
 
   // 중복 이벤트 방어
   if (eventId) {
-    const { data: existing } = await supabase
+    const { data: existing } = await veilor(supabase)
       .from("lemonsqueezy_webhook_events")
       .select("id")
       .eq("event_id", eventId)
@@ -56,7 +57,7 @@ serve(async (req) => {
       return new Response(JSON.stringify({ received: true, duplicate: true }), { status: 200 });
     }
 
-    await supabase.from("lemonsqueezy_webhook_events").insert({
+    await veilor(supabase).from("lemonsqueezy_webhook_events").insert({
       event_id: eventId,
       event_name: eventName,
       processed_at: new Date().toISOString(),
@@ -76,16 +77,24 @@ serve(async (req) => {
         if (userId && status === "paid") {
           const firstSubItem = attributes?.first_subscription_item as Record<string, unknown> | undefined;
           const subscriptionId = firstSubItem?.subscription_id as string | undefined;
+          const expiresAt = (attributes?.renews_at as string) ?? null;
 
-          await supabase.from("subscriptions").upsert({
+          await veilor(supabase).from("subscriptions").upsert({
             user_id: userId,
             ls_subscription_id: String(subscriptionId ?? data?.id ?? ""),
             ls_customer_id: String(attributes?.customer_id ?? ""),
             status: "active",
             tier,
-            current_period_end: attributes?.renews_at as string ?? null,
+            current_period_end: expiresAt,
             updated_at: new Date().toISOString(),
           }, { onConflict: "ls_subscription_id" });
+
+          await veilor(supabase).from("user_profiles")
+            .update({
+              subscription_tier: tier,
+              subscription_expires_at: expiresAt,
+            })
+            .eq("user_id", userId);
 
           log("info", "Subscription activated via order", { userId, tier });
         }
@@ -95,18 +104,26 @@ serve(async (req) => {
       case "subscription_created": {
         const userId = customData?.userId as string | undefined;
         const tier = (customData?.tier as string | undefined) ?? "pro";
+        const expiresAt = (attributes?.renews_at as string) ?? null;
 
         if (userId) {
-          await supabase.from("subscriptions").upsert({
+          await veilor(supabase).from("subscriptions").upsert({
             user_id: userId,
             ls_subscription_id: String(data?.id ?? ""),
             ls_customer_id: String(attributes?.customer_id ?? ""),
-            status: attributes?.status as string ?? "active",
+            status: (attributes?.status as string) ?? "active",
             tier,
-            current_period_start: attributes?.created_at as string ?? null,
-            current_period_end: attributes?.renews_at as string ?? null,
+            current_period_start: (attributes?.created_at as string) ?? null,
+            current_period_end: expiresAt,
             updated_at: new Date().toISOString(),
           }, { onConflict: "ls_subscription_id" });
+
+          await veilor(supabase).from("user_profiles")
+            .update({
+              subscription_tier: tier,
+              subscription_expires_at: expiresAt,
+            })
+            .eq("user_id", userId);
 
           log("info", "Subscription created", { userId, tier });
         }
@@ -117,12 +134,12 @@ serve(async (req) => {
         const lsSubId = String(data?.id ?? "");
         const status = attributes?.status as string;
 
-        await supabase
+        await veilor(supabase)
           .from("subscriptions")
           .update({
             status,
-            current_period_end: attributes?.renews_at as string ?? null,
-            cancel_at_period_end: attributes?.cancelled as boolean ?? false,
+            current_period_end: (attributes?.renews_at as string) ?? null,
+            cancel_at_period_end: (attributes?.cancelled as boolean) ?? false,
             updated_at: new Date().toISOString(),
           })
           .eq("ls_subscription_id", lsSubId);
@@ -135,7 +152,7 @@ serve(async (req) => {
       case "subscription_expired": {
         const lsSubId = String(data?.id ?? "");
 
-        const { data: sub } = await supabase
+        const { data: sub } = await veilor(supabase)
           .from("subscriptions")
           .update({ status: "canceled", updated_at: new Date().toISOString() })
           .eq("ls_subscription_id", lsSubId)
@@ -143,10 +160,10 @@ serve(async (req) => {
           .single();
 
         if (sub) {
-          await supabase
-            .from("profiles")
-            .update({ subscription_tier: "free" })
-            .eq("id", sub.user_id);
+          await veilor(supabase)
+            .from("user_profiles")
+            .update({ subscription_tier: "free", subscription_expires_at: null })
+            .eq("user_id", sub.user_id);
         }
 
         log("info", "Subscription canceled", { lsSubId });
@@ -155,14 +172,14 @@ serve(async (req) => {
 
       case "subscription_payment_success": {
         const lsSubId = String(data?.id ?? "");
-        const { data: sub } = await supabase
+        const { data: sub } = await veilor(supabase)
           .from("subscriptions")
           .select("user_id")
           .eq("ls_subscription_id", lsSubId)
           .maybeSingle();
 
         if (sub) {
-          await supabase.from("payment_history").insert({
+          await veilor(supabase).from("payment_history").insert({
             user_id: sub.user_id,
             ls_order_id: String(attributes?.order_id ?? ""),
             amount: Number(attributes?.total ?? 0),
@@ -175,14 +192,14 @@ serve(async (req) => {
 
       case "subscription_payment_failed": {
         const lsSubId = String(data?.id ?? "");
-        const { data: sub } = await supabase
+        const { data: sub } = await veilor(supabase)
           .from("subscriptions")
           .select("user_id")
           .eq("ls_subscription_id", lsSubId)
           .maybeSingle();
 
         if (sub) {
-          await supabase.from("payment_history").insert({
+          await veilor(supabase).from("payment_history").insert({
             user_id: sub.user_id,
             ls_order_id: String(attributes?.order_id ?? ""),
             amount: Number(attributes?.total ?? 0),

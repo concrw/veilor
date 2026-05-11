@@ -6,67 +6,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDrag } from '@use-gesture/react';
 import { useLanguageContext } from '@/context/LanguageContext';
-
-const S = {
-  ko: {
-    stageLabels: ['1단계', '2단계', '3단계'],
-    privacy: '이 내용은 나만 볼 수 있어요',
-    btnExit: '← 나가기',
-    axisLabels: {
-      DES: '욕망의 실체',
-      SHA: '수치심 탐색',
-      PWR: '권력·통제',
-      BDY: '몸과의 관계',
-      HIS: '성적 역사',
-      FAN: '판타지·금기',
-      CON: '연결 방식',
-    },
-    btnNext: '다음',
-    btnPrev: '이전 문항으로',
-    noAnswer: '정답은 없어요. 지금 느끼는 것 그대로가 답이에요.',
-    // stage1_gate
-    gate1Title: '여기서 멈출 수 있어요',
-    gate1Body: '지금까지 답한 내용만으로도 결과를 받을 수 있어요.\n\n더 깊이 들어가고 싶다면 계속할 수 있어요 —\n아직 탐색하지 않은 영역(억제 요인, 몸과의 관계, 권력 역학)으로 이어집니다.',
-    gate1Note: '언제든 나가거나 멈출 수 있어요.',
-    gate1Continue: '더 깊이 탐색할게요 →',
-    gate1Finish: '여기서 결과 받기',
-    // stage2_gate
-    gate2Title: '가장 깊은 층으로',
-    gate2Body: '이 단계는 자기 탐색의 가장 깊은 층입니다 —\n신체 탐색, 트라우마 경험, 판타지와 금기의 영역.\n\n불편한 기억이 올라올 수 있어요. 언제든 멈출 수 있고,\n여기까지로도 충분히 깊은 결과를 받을 수 있어요.',
-    gate2Note: '이 내용은 나만 볼 수 있어요.',
-    gate2Continue: '바닥까지 가볼게요 →',
-    gate2Finish: '여기서 결과 받기',
-  },
-  en: {
-    stageLabels: ['Stage 1', 'Stage 2', 'Stage 3'],
-    privacy: 'Only you can see this',
-    btnExit: '← Exit',
-    axisLabels: {
-      DES: 'Desire',
-      SHA: 'Shame exploration',
-      PWR: 'Power & control',
-      BDY: 'Body relationship',
-      HIS: 'Sexual history',
-      FAN: 'Fantasy & taboo',
-      CON: 'Connection style',
-    },
-    btnNext: 'Next',
-    btnPrev: 'Previous question',
-    noAnswer: "There are no right answers. What you feel right now is the answer.",
-    // stage1_gate
-    gate1Title: 'You can stop here',
-    gate1Body: "You can receive results based on what you've answered so far.\n\nIf you'd like to go deeper, you can continue —\nit leads into unexplored areas (inhibition factors, body relationship, power dynamics).",
-    gate1Note: 'You can exit or stop at any time.',
-    gate1Continue: "I'll explore deeper →",
-    gate1Finish: 'Get results here',
-    // stage2_gate
-    gate2Title: 'Into the deepest layer',
-    gate2Body: "This stage is the deepest layer of self-exploration —\nbody exploration, trauma experiences, fantasy and taboo.\n\nDifficult memories may surface. You can stop at any time,\nand you can still receive deeply meaningful results up to this point.",
-    gate2Note: 'Only you can see this.',
-    gate2Continue: "I'll go all the way →",
-    gate2Finish: 'Get results here',
-  },
-};
+import { useT } from '@/i18n/useT';
 import {
   SEX_SELF_QUESTIONS,
   STAGE_1_END,
@@ -115,7 +55,8 @@ type GateState =
 export default function SexSelfQuestions() {
   const navigate = useNavigate();
   const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.sexSelfQuestions;
 
   const [current, setCurrent] = useState(0);
   const [responses, setResponses] = useState<Record<string, number>>(() => {

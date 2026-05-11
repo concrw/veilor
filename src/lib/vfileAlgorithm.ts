@@ -4,10 +4,10 @@ import type { AxisScores } from '@/context/AuthContext';
 // ── 멀티페르소나 컨텍스트 ─────────────────────────────────────────
 export type VFileContext = 'social' | 'general' | 'secret';
 
-export const VFILE_CONTEXT_LABELS: Record<VFileContext, { ko: string; desc: string; icon: string }> = {
-  general: { ko: '일반적인 나', desc: '평소의 나, 가장 자연스러운 상태', icon: '🌿' },
-  social:  { ko: '사회적인 나', desc: '직장·모임에서 보여주는 나', icon: '🏢' },
-  secret:  { ko: '비밀스러운 나', desc: '아무도 모르는, 가장 솔직한 나', icon: '🌙' },
+export const VFILE_CONTEXT_LABELS: Record<VFileContext, { ko: string; en: string; desc: string; descEn: string; icon: string }> = {
+  general: { ko: '일반적인 나', en: 'Everyday Self',  desc: '평소의 나, 가장 자연스러운 상태', descEn: 'Your natural, everyday state', icon: '🌿' },
+  social:  { ko: '사회적인 나', en: 'Social Self',    desc: '직장·모임에서 보여주는 나',     descEn: 'How you show up at work or in groups', icon: '🏢' },
+  secret:  { ko: '비밀스러운 나', en: 'Hidden Self',  desc: '아무도 모르는, 가장 솔직한 나', descEn: 'Your most honest, unseen self', icon: '🌙' },
 };
 
 // ── M43 확정 12종 가면 + MSK 코드 ──────────────────────────────────
@@ -20,6 +20,7 @@ export interface MaskProfile {
   nameEn: string;
   category: MaskCategory; // 포식형/피식형
   archetype: string;
+  archetypeEn: string;
   description: string;
   scores: AxisScores;
   coreWound: string;
@@ -35,7 +36,7 @@ export const MASK_PROFILES: MaskProfile[] = [
   {
     id: 'controller', mskCode: 'PWR', nameKo: '통제자', nameEn: 'Controller',
     category: 'predatory',
-    archetype: '불안 억제, 환경 장악',
+    archetype: '불안 억제, 환경 장악', archetypeEn: 'Suppress anxiety, dominate environment',
     description: '당신은 관계에서 주도권을 잡으려 합니다. 환경을 통제해야 안전하다고 느끼고, 불확실함을 견디기 어렵습니다. 권력과 지위가 안전감의 원천입니다.',
     scores: { A: 20, B: 20, C: 25, D: 90 },
     coreWound: '무력했던 순간의 트라우마',
@@ -48,7 +49,7 @@ export const MASK_PROFILES: MaskProfile[] = [
   {
     id: 'achiever', mskCode: 'NRC', nameKo: '공허자', nameEn: 'Void',
     category: 'predatory',
-    archetype: '접근 차단, 고립 유지',
+    archetype: '접근 차단, 고립 유지', archetypeEn: 'Block access, maintain isolation',
     description: '당신은 관계에서 접근을 차단합니다. 반복된 배신이 타인을 거울로 사용하게 만들었고, 고립이 유일한 안전지대가 되었습니다.',
     scores: { A: 15, B: 15, C: 15, D: 30 },
     coreWound: '반복된 배신이 신뢰를 파괴했다',
@@ -61,7 +62,7 @@ export const MASK_PROFILES: MaskProfile[] = [
   {
     id: 'rebel', mskCode: 'SCP', nameKo: '반항자', nameEn: 'Rebel',
     category: 'predatory',
-    archetype: '경계 표시, 자율성 확보',
+    archetype: '경계 표시, 자율성 확보', archetypeEn: 'Assert boundaries, secure autonomy',
     description: '당신은 사회적 규칙을 인지하지만 내면화하지 않습니다. 자율성이 최우선이고, 누구도 당신을 가두지 못합니다.',
     scores: { A: 20, B: 70, C: 75, D: 70 },
     coreWound: '억압적 환경에서 자아가 짓밟혔다',
@@ -74,7 +75,7 @@ export const MASK_PROFILES: MaskProfile[] = [
   {
     id: 'charmer', mskCode: 'MKV', nameKo: '매혹자', nameEn: 'Charmer',
     category: 'predatory',
-    archetype: '욕망 유발, 권력 확보',
+    archetype: '욕망 유발, 권력 확보', archetypeEn: 'Trigger desire, secure power',
     description: '당신은 관계를 전략적으로 설계합니다. 매력과 감각적 자원을 자연스럽게 활용하지만, 진짜 자신이 드러나는 것은 두렵습니다.',
     scores: { A: 55, B: 75, C: 85, D: 80 },
     coreWound: '있는 그대로의 나는 매력적이지 않다',
@@ -87,7 +88,7 @@ export const MASK_PROFILES: MaskProfile[] = [
   {
     id: 'player', mskCode: 'MNY', nameKo: '유희자', nameEn: 'Player',
     category: 'predatory',
-    archetype: '긴장 해소, 접근 허용',
+    archetype: '긴장 해소, 접근 허용', archetypeEn: 'Dissolve tension, allow closeness',
     description: '당신은 유머와 자원으로 관계의 구조를 만듭니다. 긴장을 해소하고 접근을 허용하지만, 그 이면에는 회피 전략이 숨어 있습니다.',
     scores: { A: 25, B: 30, C: 75, D: 90 },
     coreWound: '진지하면 다칠 수 있다는 것을 배웠다',
@@ -100,7 +101,7 @@ export const MASK_PROFILES: MaskProfile[] = [
   {
     id: 'explorer', mskCode: 'PSP', nameKo: '탐험자', nameEn: 'Explorer',
     category: 'predatory',
-    archetype: '자극 추구, 경계 실험',
+    archetype: '자극 추구, 경계 실험', archetypeEn: 'Seek stimulation, test boundaries',
     description: '당신은 새로운 경험과 경계의 실험을 추구합니다. 정서적 연결보다 자극이 관계의 동력이 됩니다.',
     scores: { A: 85, B: 80, C: 85, D: 80 },
     coreWound: '안전기지가 없었다',
@@ -115,7 +116,7 @@ export const MASK_PROFILES: MaskProfile[] = [
   {
     id: 'mirror', mskCode: 'EMP', nameKo: '거울', nameEn: 'Mirror',
     category: 'prey',
-    archetype: '융합, 자기 소거',
+    archetype: '융합, 자기 소거', archetypeEn: 'Merge with other, erase self',
     description: '당신은 타인의 감정을 자신의 것처럼 느낍니다. 경계가 사라지고, 상대와 융합하면서 자기를 소거합니다.',
     scores: { A: 75, B: 25, C: 20, D: 15 },
     coreWound: '나 자신으로 있으면 사랑받지 못한다',
@@ -128,7 +129,7 @@ export const MASK_PROFILES: MaskProfile[] = [
   {
     id: 'caregiver', mskCode: 'GVR', nameKo: '돌봄자', nameEn: 'Caregiver',
     category: 'prey',
-    archetype: '관계 유지, 거절 회피',
+    archetype: '관계 유지, 거절 회피', archetypeEn: 'Sustain bonds, avoid rejection',
     description: '당신은 끊임없이 주는 것이 사랑이라고 믿습니다. 경계를 설정하지 못하고, 내 필요를 말하면 짐이 된다고 느낍니다.',
     scores: { A: 75, B: 75, C: 30, D: 25 },
     coreWound: '내 필요를 말하면 짐이 된다',
@@ -141,7 +142,7 @@ export const MASK_PROFILES: MaskProfile[] = [
   {
     id: 'striver', mskCode: 'APV', nameKo: '성취자', nameEn: 'Striver',
     category: 'prey',
-    archetype: '가치 증명, 인정 획득',
+    archetype: '가치 증명, 인정 획득', archetypeEn: 'Prove worth, earn approval',
     description: '당신은 인정받을 때만 자신이 존재한다고 느낍니다. 완벽해야 사랑받을 수 있다는 믿음이 관계 패턴을 형성합니다.',
     scores: { A: 70, B: 75, C: 30, D: 75 },
     coreWound: '잘해야만 사랑받을 수 있었다',
@@ -154,7 +155,7 @@ export const MASK_PROFILES: MaskProfile[] = [
   {
     id: 'victim', mskCode: 'DEP', nameKo: '희생자', nameEn: 'Victim',
     category: 'prey',
-    archetype: '보호 유발, 책임 회피',
+    archetype: '보호 유발, 책임 회피', archetypeEn: 'Elicit protection, avoid responsibility',
     description: '당신은 홀로 존재하는 것이 불가능합니다. 상대가 있어야 완성되고, 무력감이 보호를 유발하는 전략이 되었습니다.',
     scores: { A: 80, B: 80, C: 70, D: 20 },
     coreWound: '혼자서는 아무것도 할 수 없었다',
@@ -167,7 +168,7 @@ export const MASK_PROFILES: MaskProfile[] = [
   {
     id: 'sage', mskCode: 'AVD', nameKo: '현자', nameEn: 'Sage',
     category: 'prey',
-    archetype: '우월성 확보, 친밀감 회피',
+    archetype: '우월성 확보, 친밀감 회피', archetypeEn: 'Establish superiority, avoid intimacy',
     description: '당신은 지적 우월로 관계를 유지하면서 동시에 친밀감을 회피합니다. 감정을 드러내는 것을 약함으로 여깁니다.',
     scores: { A: 60, B: 25, C: 25, D: 25 },
     coreWound: '감정을 드러냈을 때 무시당했다',
@@ -180,7 +181,7 @@ export const MASK_PROFILES: MaskProfile[] = [
   {
     id: 'martyr', mskCode: 'SAV', nameKo: '순교자', nameEn: 'Martyr',
     category: 'prey',
-    archetype: '도덕적 우위, 죄책감 유발',
+    archetype: '도덕적 우위, 죄책감 유발', archetypeEn: 'Moral high ground, induce guilt',
     description: '당신은 누군가를 구해야 자신의 가치를 증명할 수 있습니다. 희생이 미덕이라고 학습했고, 그것이 관계의 유일한 방식이 되었습니다.',
     scores: { A: 65, B: 75, C: 75, D: 30 },
     coreWound: '나의 가치는 남을 구할 때만 증명된다',
@@ -311,12 +312,16 @@ export function generateInsights(
 export interface VProfileType {
   code: string;       // 예: "AOEP" (불안-개방-표현-주도)
   nameKo: string;
+  nameEn: string;
   description: string;
+  descriptionEn: string;
   axes: { A: 'high' | 'low'; B: 'high' | 'low'; C: 'high' | 'low'; D: 'high' | 'low' };
 }
 
 const AXIS_LABEL_HIGH: Record<string, string> = { A: '불안', B: '개방', C: '표현', D: '주도' };
 const AXIS_LABEL_LOW: Record<string, string> = { A: '회피', B: '폐쇄', C: '억압', D: '수용' };
+const AXIS_LABEL_HIGH_EN: Record<string, string> = { A: 'Anxious', B: 'Open', C: 'Expressive', D: 'Proactive' };
+const AXIS_LABEL_LOW_EN: Record<string, string> = { A: 'Avoidant', B: 'Closed', C: 'Suppressed', D: 'Receptive' };
 const AXIS_CODE_HIGH: Record<string, string> = { A: 'A', B: 'O', C: 'E', D: 'P' };
 const AXIS_CODE_LOW: Record<string, string> = { A: 'V', B: 'C', C: 'S', D: 'R' };
 
@@ -337,18 +342,23 @@ export function classifyVProfile(scores: AxisScores): VProfileType {
     axes[k] === 'high' ? AXIS_LABEL_HIGH[k] : AXIS_LABEL_LOW[k]
   ).join('-');
 
+  const nameEn = (['A', 'B', 'C', 'D'] as const).map(k =>
+    axes[k] === 'high' ? AXIS_LABEL_HIGH_EN[k] : AXIS_LABEL_LOW_EN[k]
+  ).join('-');
+
   // 간략한 유형 설명 생성
   const traits: string[] = [];
-  if (axes.A === 'high') traits.push('관계에서 상대의 반응에 민감');
-  else traits.push('독립적이고 거리를 유지');
-  if (axes.B === 'high') traits.push('감정 표현에 개방적');
-  else traits.push('내면을 쉽게 드러내지 않음');
-  if (axes.C === 'high') traits.push('욕구를 직접적으로 표현');
-  else traits.push('필요를 억누르는 경향');
-  if (axes.D === 'high') traits.push('관계를 주도하려는 성향');
-  else traits.push('상대에 맞추는 성향');
+  const traitsEn: string[] = [];
+  if (axes.A === 'high') { traits.push('관계에서 상대의 반응에 민감'); traitsEn.push('sensitive to others\' reactions in relationships'); }
+  else { traits.push('독립적이고 거리를 유지'); traitsEn.push('independent and emotionally distanced'); }
+  if (axes.B === 'high') { traits.push('감정 표현에 개방적'); traitsEn.push('open to expressing emotions'); }
+  else { traits.push('내면을 쉽게 드러내지 않음'); traitsEn.push('tends not to reveal inner feelings easily'); }
+  if (axes.C === 'high') { traits.push('욕구를 직접적으로 표현'); traitsEn.push('expresses needs directly'); }
+  else { traits.push('필요를 억누르는 경향'); traitsEn.push('tends to suppress personal needs'); }
+  if (axes.D === 'high') { traits.push('관계를 주도하려는 성향'); traitsEn.push('inclined to lead in relationships'); }
+  else { traits.push('상대에 맞추는 성향'); traitsEn.push('naturally adapts to the other person'); }
 
-  return { code, nameKo, description: traits.join('. ') + '.', axes };
+  return { code, nameKo, nameEn, description: traits.join('. ') + '.', descriptionEn: traitsEn.join(', ') + '.', axes };
 }
 
 // ── 전체 분석 실행 ───────────────────────────────────────────────────

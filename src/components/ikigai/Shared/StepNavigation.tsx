@@ -1,19 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight } from "lucide-react";
-import { useLanguageContext } from "@/context/LanguageContext";
-
-const S = {
-  ko: {
-    previous: "이전",
-    next: "다음",
-    complete: "IKIGAI 최종 완성",
-  },
-  en: {
-    previous: "Previous",
-    next: "Next",
-    complete: "Complete IKIGAI",
-  },
-};
+import { useT } from "@/i18n/useT";
 
 interface Step {
   title: string;
@@ -40,8 +27,7 @@ export const StepNavigation = ({
   isLastStep,
   canGoNext = true
 }: StepNavigationProps) => {
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
 
   return (
     <>
@@ -78,12 +64,12 @@ export const StepNavigation = ({
           className="text-xs"
         >
           <ArrowLeft className="w-3 h-3 mr-2" />
-          {s.previous}
+          {t.ikigaiStepNav.previous}
         </Button>
 
         {isLastStep ? (
           <Button onClick={onComplete} className="text-xs">
-            {s.complete}
+            {t.ikigaiStepNav.complete}
           </Button>
         ) : (
           <Button
@@ -91,7 +77,7 @@ export const StepNavigation = ({
             disabled={!canGoNext}
             className="text-xs"
           >
-            {s.next}
+            {t.ikigaiStepNav.next}
             <ArrowRight className="w-3 h-3 ml-2" />
           </Button>
         )}

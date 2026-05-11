@@ -2,6 +2,8 @@
 import { useState } from 'react';
 import { C } from '@/lib/colors';
 import { useMeTranslations } from '@/hooks/useTranslation';
+import { useLanguageContext } from '@/context/LanguageContext';
+import { MASK_PROFILES } from '@/lib/vfileAlgorithm';
 
 const DIAG_AXIS_BADGE_STYLE = { display: 'flex' as const, alignItems: 'center' as const, gap: 4, padding: '3px 8px', background: C.bg, border: `1px solid ${C.border}`, borderRadius: 6 } as const;
 const DIAG_AXIS_LABEL_STYLE = { fontSize: 9, fontWeight: 300, color: C.text4 } as const;
@@ -18,10 +20,28 @@ interface DiagnosisSectionProps {
 
 export default function DiagnosisSection({ diagnosis: diag }: DiagnosisSectionProps) {
   const me = useMeTranslations();
+  const { language } = useLanguageContext();
   const [diagOpen, setDiagOpen] = useState(false);
 
-  const diagAxes = diag?.axisScores ?? { axes: ['애착', '소통', '욕구', '역할'], vals: [52, 44, 38, 81] };
-  const maskLabel = diag?.primaryMask ?? '모든 관계에서 나를 잃어버리는 사람';
+  const isEn = language === 'en';
+  const fallbackAxes = isEn
+    ? { axes: ['Attachment', 'Communication', 'Desire', 'Role'], vals: [52, 44, 38, 81] }
+    : { axes: ['애착', '소통', '욕구', '역할'], vals: [52, 44, 38, 81] };
+  const rawAxes = diag?.axisScores ?? fallbackAxes;
+  const axisLabelMap: Record<string, string> = isEn
+    ? { '애착': 'Attachment', '소통': 'Communication', '욕구': 'Desire', '역할': 'Role' }
+    : {};
+  const diagAxes = {
+    vals: rawAxes.vals,
+    axes: rawAxes.axes.map(a => axisLabelMap[a] ?? a),
+  };
+
+  const rawMask = diag?.primaryMask ?? null;
+  const maskProfile = rawMask ? MASK_PROFILES.find(m => m.nameKo === rawMask || m.mskCode === rawMask) : null;
+  const maskLabel = maskProfile
+    ? (isEn ? maskProfile.nameEn : maskProfile.nameKo)
+    : (rawMask ?? (isEn ? 'Unknown pattern' : '모든 관계에서 나를 잃어버리는 사람'));
+
   const maxIdx = diagAxes.vals.indexOf(Math.max(...diagAxes.vals));
   const maxAxis = diagAxes.axes[maxIdx];
   const maxVal = diagAxes.vals[maxIdx];

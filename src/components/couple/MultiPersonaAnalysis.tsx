@@ -2,35 +2,15 @@ import { useAuth } from '@/context/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { veilorDb } from '@/integrations/supabase/client';
 import { MASK_PROFILES } from '@/lib/vfileAlgorithm';
+import { useT } from '@/i18n/useT';
 import { useLanguageContext } from '@/context/LanguageContext';
 
-const S = {
-  ko: {
-    title: '멀티페르소나 분석',
-    emptyDesc: '2가지 이상 맥락(사회적/일반적/비밀스러운)의 V-File을 완료하면 교차 분석이 가능해요',
-    emptyHint: 'Get 탭 → 세 개의 나 → 추가 진단',
-    contextGeneral: '일반적인 나',
-    contextSocial: '사회적인 나',
-    contextSecret: '비밀스러운 나',
-    allSameMask: '모든 맥락에서 같은 가면을 쓰고 있어요. 일관된 관계 패턴을 가지고 있습니다.',
-    diffMask: '맥락에 따라 다른 가면이 나타나요. 상황별로 다른 전략을 사용하고 있습니다.',
-  },
-  en: {
-    title: 'Multi-Persona Analysis',
-    emptyDesc: 'Complete V-Files in 2+ contexts (social/general/secret) to unlock cross-analysis',
-    emptyHint: 'Get tab → Three Selves → Additional Diagnosis',
-    contextGeneral: 'General Me',
-    contextSocial: 'Social Me',
-    contextSecret: 'Secret Me',
-    allSameMask: 'You wear the same mask in every context — consistent relational pattern.',
-    diffMask: 'Different masks emerge per context — you use different strategies by situation.',
-  },
-};
 
 export default function MultiPersonaAnalysis() {
   const { user } = useAuth();
+  const t = useT();
+  const s = t.coupleDomain.multiPersonaAnalysis;
   const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
 
   const { data: personas } = useQuery({
     queryKey: ['multi-persona-analysis', user?.id],
@@ -76,7 +56,7 @@ export default function MultiPersonaAnalysis() {
             </div>
             <div className="flex-1">
               <p className="text-xs font-medium" style={{ color: m.mask?.color }}>
-                {m.mask?.nameKo ?? '?'}
+                {m.mask ? (language === 'en' ? m.mask.nameEn : m.mask.nameKo) : '?'}
               </p>
               <p className="text-[10px] text-muted-foreground">
                 {m.context === 'general' ? s.contextGeneral : m.context === 'social' ? s.contextSocial : s.contextSecret}

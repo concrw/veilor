@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { veilorDb } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useLanguageContext } from '@/context/LanguageContext';
+import { getT } from '@/i18n/useT';
 import type { WhySession, JobEntry } from '@/types/why';
 
 interface UseWhyJobsProps {
@@ -30,7 +31,6 @@ export function useWhyJobs(props: UseWhyJobsProps) {
   } = props;
 
   const { language } = useLanguageContext();
-  const isEn = language === 'en';
 
   // Step 1 (브레인스토밍)
   const [memoText, setMemoText] = useState('');
@@ -94,11 +94,12 @@ export function useWhyJobs(props: UseWhyJobsProps) {
 
   // ── Step 1: 브레인스토밍 완료 ──
   const handleStep1Done = async () => {
+    const t = getT(language);
     if (timerRef.current) window.clearInterval(timerRef.current);
 
     const lines = memoText.split(/[,\n]/).map(s => s.trim()).filter(s => s.length > 0);
     if (lines.length === 0) {
-      toast({ title: isEn ? 'Please enter at least one job.' : '직업을 1개 이상 입력해 주세요.', variant: 'destructive' });
+      toast({ title: t.why.toasts.enterAtLeastOne, variant: 'destructive' });
       return;
     }
 
@@ -121,7 +122,7 @@ export function useWhyJobs(props: UseWhyJobsProps) {
       .select();
 
     if (error) {
-      toast({ title: isEn ? 'Failed to save jobs' : '직업 저장 실패', variant: 'destructive' });
+      toast({ title: t.why.toasts.saveFailed, variant: 'destructive' });
       return;
     }
 
@@ -134,20 +135,21 @@ export function useWhyJobs(props: UseWhyJobsProps) {
       .eq('id', sess.id);
     setSession(prev => prev ? { ...prev, current_step: 2 } : prev);
     setStep(2);
-    toast({ title: isEn ? `${lines.length} job(s) saved` : `${lines.length}개 직업 저장 완료` });
+    toast({ title: t.why.toasts.jobsSavedFmt(lines.length) });
   };
 
   // ── Step 2: 정의 저장 ──
   const saveDefinition = async () => {
+    const t = getT(language);
     if (!defText.trim()) {
-      toast({ title: isEn ? 'Please enter your personal definition.' : '나만의 정의를 입력해 주세요.', variant: 'destructive' });
+      toast({ title: t.why.toasts.enterDefinition, variant: 'destructive' });
       return false;
     }
     const { error } = await veilorDb
       .from('why_job_entries')
       .update({ definition: defText.trim(), updated_at: new Date().toISOString() })
       .eq('id', currentJobForDef.id);
-    if (error) { toast({ title: isEn ? 'Save failed' : '저장 실패', variant: 'destructive' }); return false; }
+    if (error) { toast({ title: t.why.toasts.saveFailed, variant: 'destructive' }); return false; }
     setJobs(prev => prev.map(j => j.id === currentJobForDef.id ? { ...j, definition: defText.trim() } : j));
     return true;
   };
@@ -168,15 +170,16 @@ export function useWhyJobs(props: UseWhyJobsProps) {
   const currentJobForMem = jobs[jobIdx];
 
   const saveMemory = async () => {
+    const t = getT(language);
     if (!memText.trim()) {
-      toast({ title: isEn ? 'Please enter an imprinting moment.' : '각인 순간을 입력해 주세요.', variant: 'destructive' });
+      toast({ title: t.why.toasts.enterMemory, variant: 'destructive' });
       return false;
     }
     const { error } = await veilorDb
       .from('why_job_entries')
       .update({ first_memory: memText.trim(), updated_at: new Date().toISOString() })
       .eq('id', currentJobForMem.id);
-    if (error) { toast({ title: isEn ? 'Save failed' : '저장 실패', variant: 'destructive' }); return false; }
+    if (error) { toast({ title: t.why.toasts.saveFailed, variant: 'destructive' }); return false; }
     setJobs(prev => prev.map(j => j.id === currentJobForMem.id ? { ...j, first_memory: memText.trim() } : j));
     return true;
   };
@@ -204,8 +207,9 @@ export function useWhyJobs(props: UseWhyJobsProps) {
   };
 
   const handleStep4Done = async () => {
+    const t = getT(language);
     if (happySet.size === 0) {
-      toast({ title: isEn ? 'Please select at least one fulfilling job.' : '행복한 직업을 1개 이상 선택해 주세요.', variant: 'destructive' });
+      toast({ title: t.why.toasts.selectAtLeastOne, variant: 'destructive' });
       return;
     }
     const updates = jobs.map(j => ({
@@ -226,15 +230,16 @@ export function useWhyJobs(props: UseWhyJobsProps) {
 
   // ── Step 5: 이유 ──
   const saveReason = async () => {
+    const t = getT(language);
     if (!reasonText.trim()) {
-      toast({ title: isEn ? 'Please enter a reason.' : '이유를 입력해 주세요.', variant: 'destructive' });
+      toast({ title: t.why.toasts.enterReason, variant: 'destructive' });
       return false;
     }
     const { error } = await veilorDb
       .from('why_job_entries')
       .update({ reason: reasonText.trim(), updated_at: new Date().toISOString() })
       .eq('id', currentJobForReason.id);
-    if (error) { toast({ title: isEn ? 'Save failed' : '저장 실패', variant: 'destructive' }); return false; }
+    if (error) { toast({ title: t.why.toasts.saveFailed, variant: 'destructive' }); return false; }
     setJobs(prev => prev.map(j => j.id === currentJobForReason.id ? { ...j, reason: reasonText.trim() } : j));
     return true;
   };
@@ -253,11 +258,12 @@ export function useWhyJobs(props: UseWhyJobsProps) {
 
   // ── Step 6: 경험 ──
   const saveExp = async () => {
+    const t = getT(language);
     const { error } = await veilorDb
       .from('why_job_entries')
       .update({ has_experience: hasExp, experience_note: expNote.trim() || null, updated_at: new Date().toISOString() })
       .eq('id', currentJobForExp.id);
-    if (error) { toast({ title: isEn ? 'Save failed' : '저장 실패', variant: 'destructive' }); return false; }
+    if (error) { toast({ title: t.why.toasts.saveFailed, variant: 'destructive' }); return false; }
     setJobs(prev => prev.map(j => j.id === currentJobForExp.id ? { ...j, has_experience: hasExp, experience_note: expNote.trim() || null } : j));
     return true;
   };

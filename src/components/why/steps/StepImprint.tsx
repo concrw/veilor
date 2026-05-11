@@ -1,30 +1,8 @@
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { useLanguageContext } from '@/context/LanguageContext';
+import { useT } from '@/i18n/useT';
 import type { JobEntry } from '@/types/why';
 
-const S = {
-  ko: {
-    stepLabel: '3단계',
-    title: '각인 순간 기록',
-    promptMain: '이 직업을 처음 알게 된 순간을 떠올려 보세요.',
-    promptSub: '언제 / 어디서 / 누구와 / 무엇을 / 왜 기억나는지 / 어떤 감정이었는지',
-    placeholder: '초등학교 때 할머니 병원에서 의사 선생님을 보고 처음으로 따뜻하다고 느꼈다...',
-    prev: '← 이전',
-    nextCareer: '다음 직업 →',
-    toClassify: '분류 단계로 →',
-  },
-  en: {
-    stepLabel: 'Step 3',
-    title: 'Record Imprint Moment',
-    promptMain: 'Think of the moment you first learned about this career.',
-    promptSub: 'When / Where / With whom / What / Why you remember it / What feeling you had',
-    placeholder: 'In elementary school, I saw a doctor at my grandmother\'s hospital and felt warmth for the first time...',
-    prev: '← Prev',
-    nextCareer: 'Next career →',
-    toClassify: 'To classification →',
-  },
-};
 
 interface StepImprintProps {
   job: JobEntry;
@@ -37,8 +15,8 @@ interface StepImprintProps {
 }
 
 export function StepImprint({ job, jobIdx, totalJobs, memText, setMemText, onPrev, onNext }: StepImprintProps) {
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.why.imprint;
 
   return (
     <div className="space-y-4">

@@ -3,26 +3,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { veilorDb } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
-import { useLanguageContext } from '@/context/LanguageContext';
-
-const S = {
-  ko: {
-    title: '러닝메이트',
-    sameMask: '같은 가면',
-    desc: (mask: string) => `"${mask}" 가면을 가진 분들이에요. 함께 탐색하면 더 깊어져요.`,
-    anon: '익명',
-    defaultAliases: ['익명의 탐험자', '조용한 달', '깊은 안개'],
-    connect: '연결',
-  },
-  en: {
-    title: 'Learning Mates',
-    sameMask: 'Same mask',
-    desc: (mask: string) => `These people share the "${mask}" mask. Exploring together goes deeper.`,
-    anon: 'Anonymous',
-    defaultAliases: ['Anonymous Explorer', 'Quiet Moon', 'Deep Mist'],
-    connect: 'Connect',
-  },
-} as const;
+import { useT } from '@/i18n/useT';
 
 interface Mate {
   user_id: string;
@@ -50,8 +31,8 @@ const VIRTUAL_NICKNAMES: Record<string, string[]> = {
 export default function LearningMateCard() {
   const { user, primaryMask } = useAuth();
   const navigate = useNavigate();
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.communityDomain.learningMateCard;
 
   const { data: mates } = useQuery({
     queryKey: ['learning-mates', user?.id, primaryMask],

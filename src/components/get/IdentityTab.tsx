@@ -8,6 +8,7 @@ import { useAuth } from '@/context/AuthContext';
 import { veilorDb } from '@/integrations/supabase/client';
 import RadarTimeCompare from './RadarTimeCompare';
 import { useGetTranslations } from '@/hooks/useTranslation';
+import { useLanguageContext } from '@/context/LanguageContext';
 
 // V-File 가면명 → MSK 코드 역매핑 (DB에 한글 가면명이 저장된 경우)
 const NAME_TO_MSK: Record<string, string> = {};
@@ -117,6 +118,7 @@ export default function IdentityTab({
   const { user } = useAuth();
   const get = useGetTranslations();
   const id = get.identity;
+  const { language } = useLanguageContext();
 
   const resolveMask = (mask: string): { code: string; name: string; categoryKey: 'predatory' | 'prey' } | null => {
     let code = MSK_CATEGORY[mask] !== undefined ? mask : NAME_TO_MSK[mask];
@@ -252,9 +254,9 @@ export default function IdentityTab({
               <>
                 <div className="flex items-center gap-2">
                   <span className="text-xl font-bold font-mono tracking-wider">{vp.code}</span>
-                  <span className="text-xs text-muted-foreground">{vp.nameKo}</span>
+                  <span className="text-xs text-muted-foreground">{language === 'en' ? vp.nameEn : vp.nameKo}</span>
                 </div>
-                <p className="text-xs text-muted-foreground leading-relaxed">{vp.description}</p>
+                <p className="text-xs text-muted-foreground leading-relaxed">{language === 'en' ? vp.descriptionEn : vp.description}</p>
                 <div className="flex gap-1.5 pt-1">
                   {(['A', 'B', 'C', 'D'] as const).map(k => (
                     <span key={k} className={`text-[10px] px-2 py-0.5 rounded-full ${
@@ -309,7 +311,7 @@ export default function IdentityTab({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="text-base">{ctxLabel.icon}</span>
-                    <span className="text-sm font-medium">{ctxLabel.ko}</span>
+                    <span className="text-sm font-medium">{language === 'en' ? ctxLabel.en : ctxLabel.ko}</span>
                   </div>
                   {resolved ? (
                     <div className="flex items-center gap-1.5">

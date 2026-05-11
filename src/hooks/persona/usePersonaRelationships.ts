@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguageContext } from "@/context/LanguageContext";
+import { getT } from "@/i18n/useT";
 import { toast } from "@/hooks/use-toast";
 
 export const usePersonaRelationships = () => {
@@ -29,7 +30,6 @@ export const useAnalyzePersonaRelationships = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { language } = useLanguageContext();
-  const isEn = language === 'en';
 
   return useMutation({
     mutationFn: async () => {
@@ -44,12 +44,14 @@ export const useAnalyzePersonaRelationships = () => {
       return data;
     },
     onSuccess: () => {
+      const t = getT(language);
       queryClient.invalidateQueries({ queryKey: ["persona-relationships", user?.id] });
-      toast({ title: isEn ? 'Persona relationship analysis complete' : '페르소나 관계 분석이 완료되었습니다' });
+      toast({ title: t.personaDomain.toasts.relationshipAnalysisComplete });
     },
     onError: (error) => {
+      const t = getT(language);
       console.error("Relationship analysis error:", error);
-      toast({ title: isEn ? 'Error analyzing relationships' : '관계 분석 중 오류가 발생했습니다', variant: "destructive" });
+      toast({ title: t.personaDomain.toasts.relationshipAnalysisError, variant: "destructive" });
     },
   });
 };

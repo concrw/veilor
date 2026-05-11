@@ -3,6 +3,8 @@ import { veilorDb } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { C } from '@/lib/colors';
 import { useLanguageContext } from '@/context/LanguageContext';
+import { useT } from '@/i18n/useT';
+import { isNativeApp } from '@/lib/platform';
 
 export type TriggerType =
   | 'codetalk_ai_limit'
@@ -30,7 +32,7 @@ const KO_CONFIGS: TriggerConfigMap = {
   priper_result: { icon: '🔓', title: '패턴의 전체를 보세요', description: '지금 보신 건 빙산의 일각이에요. 숨겨진 패턴과 변화 가능성이 더 있습니다.', benefit: 'Premium에서는 AI가 당신의 관계 패턴을 심층 분석하고, 실제 변화를 위한 맞춤 인사이트를 매주 제공해요.', ctaText: 'Premium으로 전체 분석 보기' },
   onboarding_complete: { icon: '✨', title: '베일러와 함께 더 깊이 탐색하세요', description: 'V-File 완료를 축하해요. 이제 진짜 여정이 시작됩니다.', benefit: 'Premium에서는 AI 상담, 파트너 교차 분석, 관계 변화 타임라인을 무제한으로 이용할 수 있어요.', ctaText: 'Premium 시작하기' },
   partner_analysis: { icon: '💫', title: '우리의 패턴 — 전체 분석', description: '파트너와의 관계 역학을 표면적 유형 비교 너머로 분석해요.', benefit: 'Premium에서는 두 사람의 충돌 지점, 성장 방향, 관계 변화 가능성을 AI가 깊이 분석해 드려요.', ctaText: 'Premium으로 파트너 분석 보기' },
-  codetalk_ai_limit: { icon: '🧠', title: 'AI 조언이 더 필요하신가요?', description: '무료 플랜에서는 AI 인사이트를 하루 3회까지 받을 수 있어요.', benefit: 'Pro 플랜에서는 무제한 AI 조언과 깊은 패턴 분석을 이용할 수 있어요.', ctaText: 'Pro 전용 기능' },
+  codetalk_ai_limit: { icon: '🧠', title: '이번 달 AI 한도에 도달했어요', description: '이번 달 기본 AI 크레딧($7)을 모두 사용했어요.', benefit: '추가 크레딧(₩4,900/$4)을 구매하면 바로 계속 이용할 수 있어요. 다음 달 1일에는 자동으로 한도가 초기화돼요.', ctaText: '추가 크레딧 구매' },
   multi_persona_analysis: { icon: '🎭', title: '멀티페르소나 분석', description: '여러 페르소나 간의 충돌 패턴과 자원 배분을 시각화해요.', benefit: '각 페르소나의 시간축 변화, 억압 패턴, 역할 간 긴장 관계를 볼 수 있어요.', ctaText: 'Pro로 잠금 해제' },
   ikigai_design: { icon: '🌀', title: 'Ikigai 설계', description: '사랑, 재능, 소명, 천직의 교차점에서 삶의 방향을 설계해요.', benefit: 'AI가 당신의 패턴을 분석해 개인화된 Ikigai 인사이트를 제공해요.', ctaText: 'Pro로 설계 시작' },
   brand_identity: { icon: '💎', title: '브랜드 정체성 설계', description: '나만의 언어와 방향성으로 개인 브랜드를 구축해요.', benefit: 'AI가 당신의 Why, Ikigai를 기반으로 브랜드 전략을 설계해 줘요.', ctaText: 'Pro로 브랜드 설계' },
@@ -42,7 +44,7 @@ const EN_CONFIGS: TriggerConfigMap = {
   priper_result: { icon: '🔓', title: 'See the full picture', description: "What you've seen is just the tip of the iceberg. There are hidden patterns and more possibilities for change.", benefit: 'With Premium, AI deeply analyzes your relationship patterns and delivers personalized insights every week.', ctaText: 'See full analysis with Premium' },
   onboarding_complete: { icon: '✨', title: 'Explore deeper with VEILOR', description: 'Congratulations on completing your V-File. Now the real journey begins.', benefit: 'With Premium, enjoy unlimited AI counseling, partner cross-analysis, and relationship change timelines.', ctaText: 'Start Premium' },
   partner_analysis: { icon: '💫', title: 'Our patterns — full analysis', description: 'Analyze relationship dynamics with your partner beyond surface-level type comparisons.', benefit: "With Premium, AI deeply analyzes both people's clash points, growth directions, and relationship change potential.", ctaText: 'See partner analysis with Premium' },
-  codetalk_ai_limit: { icon: '🧠', title: 'Need more AI advice?', description: 'The free plan includes up to 3 AI insights per day.', benefit: 'With the Pro plan, enjoy unlimited AI advice and deep pattern analysis.', ctaText: 'Pro feature' },
+  codetalk_ai_limit: { icon: '🧠', title: "You've reached this month's AI limit", description: "You've used your monthly AI credit ($7) for this month.", benefit: 'Purchase extra credits (₩4,900/$4) to continue right away. Your limit resets automatically on the 1st of next month.', ctaText: 'Buy extra credits' },
   multi_persona_analysis: { icon: '🎭', title: 'Multi-persona analysis', description: 'Visualize collision patterns and resource allocation across multiple personas.', benefit: "See each persona's timeline changes, suppression patterns, and role tensions.", ctaText: 'Unlock with Pro' },
   ikigai_design: { icon: '🌀', title: 'Ikigai Design', description: 'Design your life direction at the intersection of love, talent, calling, and vocation.', benefit: 'AI analyzes your patterns to deliver personalized Ikigai insights.', ctaText: 'Start designing with Pro' },
   brand_identity: { icon: '💎', title: 'Brand identity design', description: 'Build your personal brand with your own language and direction.', benefit: 'AI designs your brand strategy based on your Why and Ikigai.', ctaText: 'Design your brand with Pro' },
@@ -62,28 +64,6 @@ const ACCENT_COLORS: Record<TriggerType, string> = {
   auto_translate: C.frost,
 };
 
-const S = {
-  ko: {
-    features: ['무제한 AI 조언', '멀티페르소나', 'Ikigai 설계', '브랜드 전략', '상세 리포트'],
-    errorRetry: '잠시 후 다시 시도해 주세요.',
-    interestDoneTitle: '관심 등록 완료',
-    interestDoneDesc: 'Premium 출시 시 가장 먼저 알려드릴게요.',
-    processing: '처리 중...',
-    notifyMe: '출시 알림 받기',
-    dismiss: '나중에 할게요',
-    webOnlyNotice: 'Pro 전용 기능입니다.',
-  },
-  en: {
-    features: ['Unlimited AI', 'Multi-persona', 'Ikigai Design', 'Brand Strategy', 'Full Reports'],
-    errorRetry: 'Please try again in a moment.',
-    interestDoneTitle: 'Interest registered',
-    interestDoneDesc: "We'll let you know first when Premium launches.",
-    processing: 'Processing...',
-    notifyMe: 'Notify me at launch',
-    dismiss: 'Maybe later',
-    webOnlyNotice: 'This is a Pro feature.',
-  },
-};
 
 const PRO_TIER = 'pro';
 
@@ -96,10 +76,12 @@ interface UpgradeModalProps {
 export default function UpgradeModal({ open, onClose, trigger }: UpgradeModalProps) {
   const { user } = useAuth();
   const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.upgradeModal;
   const configs = language === 'en' ? EN_CONFIGS : KO_CONFIGS;
   const configBase = configs[trigger];
   const config: TriggerConfig = { ...configBase, accentColor: ACCENT_COLORS[trigger] };
+  const nativeApp = isNativeApp();
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -111,6 +93,17 @@ export default function UpgradeModal({ open, onClose, trigger }: UpgradeModalPro
     window.addEventListener('keydown', handleEscape);
     return () => window.removeEventListener('keydown', handleEscape);
   }, [open, onClose]);
+
+  useEffect(() => {
+    if (!open || !user) return;
+    // AI 관심 클릭 기록 (앱에서만)
+    if (nativeApp) {
+      veilorDb.from('ai_interest_clicks' as never).insert({
+        user_id: user.id,
+        feature: trigger,
+      } as never).then(() => {});
+    }
+  }, [open, user, trigger, nativeApp]);
 
   const logEvent = (action: string) => {
     if (!user) return;
@@ -209,7 +202,12 @@ export default function UpgradeModal({ open, onClose, trigger }: UpgradeModalPro
             <p style={{ fontSize: 12, color: '#E57373', textAlign: 'center' }}>{error}</p>
           )}
 
-          {interestDone ? (
+          {nativeApp ? (
+            // 앱스토어 정책 준수: 결제 링크/CTA 버튼 없음, 안내 텍스트만
+            <div style={{ background: `${C.surface}`, border: `1px solid ${C.border}`, borderRadius: 12, padding: '16px', textAlign: 'center' }}>
+              <p style={{ fontSize: 13, color: C.text2, lineHeight: 1.6 }}>{s.appNotice}</p>
+            </div>
+          ) : interestDone ? (
             <div style={{ background: `${C.amberGold}10`, border: `1px solid ${C.amberGold}33`, borderRadius: 12, padding: '16px', textAlign: 'center' }}>
               <p style={{ fontSize: 14, color: C.amberGold, fontWeight: 500, marginBottom: 4 }}>{s.interestDoneTitle}</p>
               <p style={{ fontSize: 12, color: C.text2, lineHeight: 1.6 }}>{s.interestDoneDesc}</p>

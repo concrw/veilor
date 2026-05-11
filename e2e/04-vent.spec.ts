@@ -50,7 +50,7 @@ test.describe('VentPage', () => {
   });
 
   test('Amber 시트 열기 → 메시지 전송', async ({ page }) => {
-    await page.getByRole('button', { name: /Amber AI 상담 열기/i }).click();
+    await page.getByRole('button', { name: /Amber AI 채팅 열기/i }).click();
     // AmberSheet 안의 메시지 (dialog 밖 별도 레이어)
     await expect(page.getByText('지금 어떤 감정인지 꺼내놔도 괜찮아요. 여기 있어요.')).toBeVisible({ timeout: 3_000 });
 

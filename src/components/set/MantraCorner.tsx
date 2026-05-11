@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguageContext } from '@/context/LanguageContext';
+import { useT } from '@/i18n/useT';
 import { veilorDb } from '@/integrations/supabase/client';
 import type { Domain } from '@/context/DomainContext';
 
@@ -39,6 +40,8 @@ interface MantraCornerProps {
 export default function MantraCorner({ domain }: MantraCornerProps) {
   const { user } = useAuth();
   const { language } = useLanguageContext();
+  const t = useT();
+  const s = t.set.mantraCorner;
 
   const mantras = language === 'en' ? MANTRAS_EN[domain] : MANTRAS[domain];
   const color = DOMAIN_COLOR[domain];
@@ -170,7 +173,7 @@ export default function MantraCorner({ domain }: MantraCornerProps) {
             color,
           }}
         >
-          만트라 · {domainName}
+          {s.header}{domainName}
         </span>
         <button
           onClick={closeModal}
@@ -211,7 +214,7 @@ export default function MantraCorner({ domain }: MantraCornerProps) {
               color,
             }}
           >
-            {language === 'en' ? 'Training complete today ✓' : '오늘 훈련 완료 ✓'}
+            {s.trainingComplete}
           </p>
         ) : (
           <>
@@ -224,7 +227,7 @@ export default function MantraCorner({ domain }: MantraCornerProps) {
                 color: 'var(--muted-foreground)',
               }}
             >
-              {modalCount} OF 10
+              {modalCount}{s.countOf}
             </span>
             <p
               style={{
@@ -244,7 +247,7 @@ export default function MantraCorner({ domain }: MantraCornerProps) {
                 color: 'var(--muted-foreground)',
               }}
             >
-              {language === 'en' ? 'Say it aloud, then tap' : '소리 내어 말한 후 탭하세요'}
+              {s.sayAloud}
             </p>
           </>
         )}
@@ -267,7 +270,7 @@ export default function MantraCorner({ domain }: MantraCornerProps) {
               letterSpacing: '0.02em',
             }}
           >
-            {language === 'en' ? 'Said it ✓' : '말했어요 ✓'}
+            {s.saidIt}
           </button>
           <div style={{ display: 'flex', height: '3px' }}>
             {Array.from({ length: TOTAL }).map((_, i) => (
@@ -294,7 +297,7 @@ export default function MantraCorner({ domain }: MantraCornerProps) {
           style={{ borderBottom: `1px solid ${color}22` }}>
           <span className="text-[10px] font-semibold tracking-widest uppercase"
             style={{ color }}>
-            만트라 · {domainName}
+            {s.header}{domainName}
           </span>
         </div>
 
@@ -313,12 +316,10 @@ export default function MantraCorner({ domain }: MantraCornerProps) {
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-xs text-muted-foreground">
-                {completed
-                  ? (language === 'en' ? 'Complete!' : '완료!')
-                  : (language === 'en' ? `${count} / ${TOTAL}` : `${count} / ${TOTAL}`)}
+                {completed ? s.complete : `${count} / ${TOTAL}`}
               </span>
               <span className="text-xs text-muted-foreground">
-                {language === 'en' ? 'Repeat 10 times' : '10회 반복'}
+                {s.repeatTimes}
               </span>
             </div>
             <div className="flex gap-1">
@@ -346,7 +347,7 @@ export default function MantraCorner({ domain }: MantraCornerProps) {
                   border: 'none',
                 }}
               >
-                {language === 'en' ? 'Start Training' : '훈련 시작'}
+                {s.startTraining}
               </button>
               <button
                 onClick={handleSpeak}
@@ -357,7 +358,7 @@ export default function MantraCorner({ domain }: MantraCornerProps) {
                   border: `1.5px solid ${color}40`,
                 }}
               >
-                {language === 'en' ? 'Said it ✓' : '말했어요 ✓'}
+                {s.saidIt}
               </button>
             </div>
           ) : (
@@ -366,7 +367,7 @@ export default function MantraCorner({ domain }: MantraCornerProps) {
                 className="w-full py-3 rounded-xl text-sm font-semibold text-center"
                 style={{ background: `${color}18`, color }}
               >
-                {language === 'en' ? '🎉 Training complete today!' : '🎉 오늘 훈련 완료'}
+                🎉 {s.trainingComplete}
               </div>
               <button
                 onClick={goNextMantra}
@@ -377,7 +378,7 @@ export default function MantraCorner({ domain }: MantraCornerProps) {
                   border: '1px solid var(--border)',
                 }}
               >
-                {language === 'en' ? 'Next mantra →' : '다음 만트라로 →'}
+                {s.nextMantra}
               </button>
             </div>
           )}

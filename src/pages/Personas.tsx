@@ -8,58 +8,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { PersonaPaywall } from "@/components/persona/PersonaPaywall";
 import { ArrowRight, Lock, Users, Zap } from "lucide-react";
 import { ARCHETYPE_CONFIGS } from "@/integrations/supabase/persona-types";
-import { useLanguageContext } from "@/context/LanguageContext";
+import { useT } from '@/i18n/useT';
 
-const S = {
-  ko: {
-    noPersonaTitle: '페르소나가 아직 생성되지 않았습니다',
-    noPersonaDesc: 'Why 분석을 완료하면 자동으로 페르소나가 감지됩니다.',
-    noPersonaCta: 'Why 분석 시작하기',
-    pageTitle: '나의 페르소나들',
-    multiPersonaFmt: (count: number) => `${count}개의 페르소나가 발견되었습니다`,
-    mainPersonaOnly: '메인 페르소나를 확인하세요',
-    badgeMain: '메인',
-    strengthFmt: (pct: number) => `${pct}% 강도`,
-    themeLabel: '테마',
-    keywordLabel: '키워드',
-    viewPrimePerspective: 'Prime Perspective 보기',
-    ikigaiDesign: 'Ikigai 설계',
-    subPersonasTitle: '추가 페르소나',
-    proOnly: 'Pro 전용',
-    lockedDesc: '이 페르소나의 상세 분석은 Pro 전용 기능입니다.',
-    relationshipTitle: '페르소나 관계 분석',
-    relationshipDesc: '여러 페르소나 간의 시너지와 충돌을 분석하고 통합 브랜딩 전략을 설계하세요',
-    relationshipCta: '관계 분석 시작하기',
-  },
-  en: {
-    noPersonaTitle: 'No personas created yet',
-    noPersonaDesc: 'Complete the Why analysis and your personas will be detected automatically.',
-    noPersonaCta: 'Start Why Analysis',
-    pageTitle: 'My Personas',
-    multiPersonaFmt: (count: number) => `${count} personas discovered`,
-    mainPersonaOnly: 'Check your main persona',
-    badgeMain: 'Main',
-    strengthFmt: (pct: number) => `${pct}% strength`,
-    themeLabel: 'Theme',
-    keywordLabel: 'Keywords',
-    viewPrimePerspective: 'View Prime Perspective',
-    ikigaiDesign: 'Design Ikigai',
-    subPersonasTitle: 'Additional Personas',
-    proOnly: 'Pro only',
-    lockedDesc: 'Detailed analysis for this persona is a Pro feature.',
-    relationshipTitle: 'Persona Relationship Analysis',
-    relationshipDesc: 'Analyze synergies and conflicts between personas and design an integrated branding strategy',
-    relationshipCta: 'Start Relationship Analysis',
-  },
-};
 
 export default function Personas() {
   const navigate = useNavigate();
   const { data: personas, isLoading: personasLoading } = usePersonas();
   const { data: multiPersonaInfo, isLoading: multiInfoLoading } = useHasMultiplePersonas();
   const [paywallOpen, setPaywallOpen] = useState(false);
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.personaPages.personas;
 
   const isLoading = personasLoading || multiInfoLoading;
 

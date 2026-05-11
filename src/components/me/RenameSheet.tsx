@@ -1,19 +1,15 @@
 import { useState, useEffect } from 'react';
 import { C } from '@/lib/colors';
-import { useLanguageContext } from '@/context/LanguageContext';
+import { useT } from '@/i18n/useT';
 
-const S = {
-  ko: { closeLabel: '시트 닫기', closeBtn: '닫기', hint: '이 캐릭터를 뭐라고 부를까요? 언제든 바꿀 수 있어요.', srLabel: '새 이름', placeholder: '새 이름을 입력해요...', apply: '적용하기' },
-  en: { closeLabel: 'Close sheet', closeBtn: 'Close', hint: "What would you like to call this character? You can change it anytime.", srLabel: 'New name', placeholder: 'Enter a new name...', apply: 'Apply' },
-};
 
 function RenameSheet({
   open, onClose, title, currentName, onApply,
 }: {
   open: boolean; onClose: () => void; title: string; currentName: string; onApply: (n: string) => void;
 }) {
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.meExtra.renameSheet;
 
   const [val, setVal] = useState('');
   useEffect(() => { if (open) setVal(currentName); }, [open, currentName]);

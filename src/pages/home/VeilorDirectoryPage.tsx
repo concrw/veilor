@@ -7,95 +7,11 @@ import type { VeilorPeer, VeilorPeerModality, VeilorPeerApplication } from '@/in
 import { C } from '@/lib/colors';
 import { Star, MessageCircle, Phone, Moon, Users, AlignLeft, Volume2, Plus, Check, X } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { getT } from '@/i18n/useT';
 
 const SOCIAL = '#5EEAD4';
 
-const S = {
-  ko: {
-    title: '베일러',
-    subtitle: '잘 들어주는 사람들 · 누구나 신청',
-    apply: '+ 신청',
-    filterAll: '전체',
-    bannerTitle: '베일러 ≠ 전문의',
-    bannerDesc: '베일러는 훈련된 동료 경청인입니다. 위기 상황이나 전문 진단이 필요한 경우에는 전문의 연결을 이용하세요.',
-    requestBtn: '대화 요청',
-    free: '무료',
-    perSession: '/ 회',
-    rating: '평점',
-    noData: '등록된 베일러가 없습니다',
-    loading: '불러오는 중...',
-    applyTitle: '베일러 신청',
-    applySubtitle: '아래 요건을 모두 확인해 주세요',
-    qualifications: [
-      '공감적 경청 경험이 있습니다 (비전문직 포함)',
-      '비밀 유지 원칙을 이해하고 동의합니다',
-      '정신 건강 위기 신호를 전문가에게 연결할 의향이 있습니다',
-      '주 1회 이상 활동 가능합니다',
-      '베일러 커뮤니티 행동 강령에 동의합니다',
-    ],
-    modalityLabel: '활동 방식',
-    priceLabel: '가격 설정',
-    priceChatLabel: '채팅 (원/회)',
-    priceCallLabel: '전화 (원/회)',
-    freeToggle: '무료 활동',
-    nextStep: '동의 단계 →',
-    dashTitle: '내 베일러 페이지',
-    tabRequests: '요청',
-    tabProfile: '프로필',
-    tabPrice: '가격',
-    tabSettle: '정산',
-    savePrice: '저장',
-    priceSaved: '가격이 저장됐습니다',
-    noRequests: '들어온 요청이 없습니다',
-    pending: '대기 중',
-    accepted: '수락됨',
-    declined: '거절됨',
-    completed: '완료',
-  },
-  en: {
-    title: 'Veilors',
-    subtitle: 'Caring listeners · Anyone can apply',
-    apply: '+ Apply',
-    filterAll: 'All',
-    bannerTitle: 'Veilors ≠ Specialists',
-    bannerDesc: 'Veilors are trained peer listeners. For crisis or clinical needs, please use specialist referral.',
-    requestBtn: 'Request chat',
-    free: 'Free',
-    perSession: '/ session',
-    rating: 'Rating',
-    noData: 'No veilors registered yet',
-    loading: 'Loading...',
-    applyTitle: 'Become a Veilorleisten',
-    applySubtitle: 'Please confirm all requirements below',
-    qualifications: [
-      'Have experience in empathic listening (non-clinical included)',
-      'Understand and agree to confidentiality principles',
-      'Willing to refer crisis signals to professionals',
-      'Available at least once a week',
-      'Agree to Veilor community code of conduct',
-    ],
-    modalityLabel: 'Activity modes',
-    priceLabel: 'Set pricing',
-    priceChatLabel: 'Chat (USD/session)',
-    priceCallLabel: 'Call (USD/session)',
-    freeToggle: 'Offer for free',
-    nextStep: 'Agreement step →',
-    dashTitle: 'My Veilorleisten Page',
-    tabRequests: 'Requests',
-    tabProfile: 'Profile',
-    tabPrice: 'Price',
-    tabSettle: 'Earnings',
-    savePrice: 'Save',
-    priceSaved: 'Price saved',
-    noRequests: 'No requests yet',
-    pending: 'Pending',
-    accepted: 'Accepted',
-    declined: 'Declined',
-    completed: 'Completed',
-  },
-} as const;
-
-type LangKey = keyof typeof S;
+type LangKey = 'ko' | 'en';
 
 const MODALITY_FILTERS: { id: VeilorPeerModality | 'all'; labelKo: string; labelEn: string; icon: React.ReactNode }[] = [
   { id: 'all', labelKo: '전체', labelEn: 'All', icon: null },
@@ -167,7 +83,7 @@ function TagChip({ label }: { label: string }) {
 function PeerCard({ peer, lang }: { peer: VeilorPeer; lang: LangKey }) {
   const { user } = useAuth();
   const qc = useQueryClient();
-  const s = S[lang];
+  const s = getT(lang).veilorDirectory;
   const [showForm, setShowForm] = useState(false);
   const [msg, setMsg] = useState('');
 
@@ -184,7 +100,7 @@ function PeerCard({ peer, lang }: { peer: VeilorPeer; lang: LangKey }) {
 
   const { mutate: sendRequest, isPending } = useMutation({
     mutationFn: async () => {
-      if (!user) throw new Error('로그인 필요');
+      if (!user) throw new Error('Login required');
       const { error } = await veilorDb.from('veilor_peer_requests').insert({
         requester_id: user.id, peer_id: peer.id, modality: peer.modalities[0] ?? 'chat',
         message: msg || null, status: 'pending',
@@ -194,13 +110,13 @@ function PeerCard({ peer, lang }: { peer: VeilorPeer; lang: LangKey }) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['peer_request', peer.id, user?.id] });
       setMsg(''); setShowForm(false);
-      toast({ title: lang === 'en' ? 'Request sent' : '요청을 보냈습니다' });
+      toast({ title: s.requestSent });
     },
     onError: () => {
       // table may not exist yet — show optimistic success for mock peers
       if (peer.id.startsWith('mock-')) {
         setMsg(''); setShowForm(false);
-        toast({ title: lang === 'en' ? 'Request sent (demo)' : '요청을 보냈습니다 (데모)' });
+        toast({ title: s.requestSentDemo });
       }
     },
   });
@@ -294,7 +210,7 @@ function PeerCard({ peer, lang }: { peer: VeilorPeer; lang: LangKey }) {
       {showForm && !myRequest && (
         <div style={{ marginTop: 12 }}>
           <textarea value={msg} onChange={e => setMsg(e.target.value)} rows={2}
-            placeholder={lang === 'en' ? 'Message (optional)' : '메시지 (선택)'}
+            placeholder={s.messagePlaceholder}
             style={{ width: '100%', background: '#2A2724', border: `1px solid ${C.border2}`, borderRadius: 10, padding: '8px 12px', color: C.text, fontSize: 13, outline: 'none', resize: 'none', boxSizing: 'border-box', marginBottom: 8 }} />
           <button onClick={() => sendRequest()} disabled={isPending}
             style={{ width: '100%', padding: 9, borderRadius: 10, background: SOCIAL, color: '#1C1917', border: 'none', fontSize: 13, cursor: 'pointer', fontWeight: 600 }}>
@@ -309,7 +225,7 @@ function PeerCard({ peer, lang }: { peer: VeilorPeer; lang: LangKey }) {
 // ── VeilorApply ───────────────────────────────────────────────────────────────
 
 function VeilorApply({ lang, onClose }: { lang: LangKey; onClose: () => void }) {
-  const s = S[lang];
+  const s = getT(lang).veilorDirectory;
   const { user } = useAuth();
   const [checked, setChecked] = useState<boolean[]>(Array(s.qualifications.length).fill(false));
   const [modalities, setModalities] = useState<VeilorPeerModality[]>([]);
@@ -326,7 +242,7 @@ function VeilorApply({ lang, onClose }: { lang: LangKey; onClose: () => void }) 
 
   const { mutate: submit, isPending } = useMutation({
     mutationFn: async () => {
-      if (!user) throw new Error('로그인 필요');
+      if (!user) throw new Error('Login required');
       const payload: Partial<VeilorPeerApplication> = {
         user_id: user.id,
         modalities,
@@ -340,12 +256,12 @@ function VeilorApply({ lang, onClose }: { lang: LangKey; onClose: () => void }) 
       if (error) throw error;
     },
     onSuccess: () => {
-      toast({ title: lang === 'en' ? 'Application submitted!' : '신청이 접수됐습니다!' });
+      toast({ title: s.applicationSubmitted });
       onClose();
     },
     onError: () => {
       // table may not exist yet — show optimistic toast
-      toast({ title: lang === 'en' ? 'Application submitted (demo)' : '신청이 접수됐습니다 (데모)' });
+      toast({ title: s.applicationSubmittedDemo });
       onClose();
     },
   });
@@ -441,7 +357,7 @@ function VeilorApply({ lang, onClose }: { lang: LangKey; onClose: () => void }) 
 // ── VeilorMyDashboard ─────────────────────────────────────────────────────────
 
 function VeilorMyDashboard({ peer, lang, onClose }: { peer: VeilorPeer; lang: LangKey; onClose: () => void }) {
-  const s = S[lang];
+  const s = getT(lang).veilorDirectory;
   const { user } = useAuth();
   const qc = useQueryClient();
   const [tab, setTab] = useState<'requests' | 'profile' | 'price' | 'settle'>('requests');
@@ -566,7 +482,7 @@ function VeilorMyDashboard({ peer, lang, onClose }: { peer: VeilorPeer; lang: La
 
         {tab === 'settle' && (
           <p style={{ fontSize: 13, color: C.text4, textAlign: 'center', marginTop: 24 }}>
-            {lang === 'en' ? 'Earnings summary coming soon.' : '정산 기능은 준비 중입니다.'}
+            {s.settlingComingSoon}
           </p>
         )}
       </div>
@@ -580,7 +496,7 @@ export default function VeilorDirectoryPage() {
   const { user } = useAuth();
   const { language } = useLanguageContext();
   const lang = (language === 'en' ? 'en' : 'ko') as LangKey;
-  const s = S[lang];
+  const s = getT(lang).veilorDirectory;
   const [filter, setFilter] = useState<VeilorPeerModality | 'all'>('all');
   const [showApply, setShowApply] = useState(false);
   const [showDash, setShowDash] = useState(false);
@@ -629,7 +545,7 @@ export default function VeilorDirectoryPage() {
             {myPeer && (
               <button onClick={() => setShowDash(true)}
                 style={{ fontSize: 11, padding: '6px 12px', borderRadius: 8, cursor: 'pointer', border: `1px solid ${SOCIAL}`, background: 'transparent', color: SOCIAL }}>
-                {lang === 'en' ? 'My page' : '내 페이지'}
+                {s.myPage}
               </button>
             )}
             <button onClick={() => setShowApply(true)}

@@ -8,40 +8,7 @@ import { useAuth } from '@/context/AuthContext';
 import { veilorDb } from '@/integrations/supabase/client';
 import { hasCheckedInToday } from '@/components/routine/RoutineCheckinModal';
 import { ROUTINE_MILESTONES } from '@/data/routineConstants';
-import { useLanguageContext } from '@/context/LanguageContext';
-
-const S = {
-  ko: {
-    section: '루틴',
-    daysSuffix: '일째',
-    checkedGreetFmt: (name: string) => `${name}님, 오늘도 기록했어요`,
-    notCheckedGreetFmt: (name: string) => `${name}님, 오늘 체크인을 해볼까요?`,
-    milestone: (n: number) => `🏆 ${n}일 마일스톤 달성!`,
-    recentDays: '최근 7일',
-    nextGoal: '다음 목표',
-    daysFmt: (n: number) => `${n}일`,
-    daysLeft: (n: number) => `${n}일 남았어요`,
-    checkinCta: '오늘 체크인 — 30초',
-    checkedDone: '✓ 오늘 체크인 완료',
-    defaultName: '오늘도',
-    dayLabels: ['일', '월', '화', '수', '목', '금', '토'],
-  },
-  en: {
-    section: 'ROUTINE',
-    daysSuffix: ' days',
-    checkedGreetFmt: (name: string) => `${name}, you checked in today`,
-    notCheckedGreetFmt: (name: string) => `${name}, ready to check in today?`,
-    milestone: (n: number) => `🏆 ${n}-day milestone!`,
-    recentDays: 'Recent 7 days',
-    nextGoal: 'Next goal',
-    daysFmt: (n: number) => `${n}d`,
-    daysLeft: (n: number) => `${n} days to go`,
-    checkinCta: "Today's check-in — 30 sec",
-    checkedDone: '✓ Checked in today',
-    defaultName: 'Hello',
-    dayLabels: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
-  },
-};
+import { useT } from '@/i18n/useT';
 
 const RoutineCheckinModal = lazy(() => import('@/components/routine/RoutineCheckinModal'));
 
@@ -166,8 +133,8 @@ function WeekDots({ checkins, dayLabels }: { checkins: CheckinRecord[]; dayLabel
 
 export default function RoutineHome() {
   const { user } = useAuth();
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.routineHome;
   const [showCheckin, setShowCheckin] = useState(false);
   const [checkedToday, setCheckedToday] = useState(hasCheckedInToday());
   const [streak, setStreak] = useState(0);

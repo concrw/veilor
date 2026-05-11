@@ -6,63 +6,10 @@ import { useToast } from '@/hooks/use-toast';
 import { useInviteMembers } from '@/hooks/useB2BOrg';
 import { veilorDb } from '@/integrations/supabase/client';
 import type { B2BMemberType, B2BMemberInviteInput } from '@/integrations/supabase/veilor-types';
-import { useLanguageContext } from '@/context/LanguageContext';
+import { useT } from '@/i18n/useT';
 
 // ─────────────────────────────────────────────
 // 이중언어 문자열
-// ─────────────────────────────────────────────
-const S = {
-  ko: {
-    invalidEmail: '유효한 이메일을 입력해주세요.',
-    inviteDone: (n: number) => `${n}명 초대 완료`,
-    inviteFail: (n: number) => `${n}건 실패`,
-    resultTitle: '초대 결과',
-    inviteDoneLabel: '초대 완료',
-    failLabel: '실패',
-    addMore: '추가 초대',
-    toDashboard: '대시보드로',
-    title: '멤버 초대',
-    subtitle: '이메일로 멤버를 초대합니다. 초대 링크가 이메일로 발송되며, 수락 시 자동으로 Pro 권한이 부여됩니다.',
-    notice1: '• 개인 세션 내용은 소속사에 공개되지 않습니다.',
-    notice2: '• 트레이니(미성년)는 보호자 동의 절차가 추가됩니다.',
-    notice3: '• 멤버는 언제든 탈퇴하고 자신의 데이터를 가져갈 수 있습니다.',
-    emailPlaceholder: (n: number) => `이메일 ${n}`,
-    birthYearPlaceholder: '출생연도 (예: 2010)',
-    addMember: '+ 멤버 추가',
-    inviting: '초대 중...',
-    inviteCount: (n: number) => `${n}명 초대하기`,
-    memberTypeLabels: {
-      member:  '성인 멤버 (선수/아이돌/직원)',
-      trainee: '트레이니 (미성년)',
-      admin:   '어드민 (담당자)',
-    } as Record<B2BMemberType, string>,
-  },
-  en: {
-    invalidEmail: 'Please enter a valid email address.',
-    inviteDone: (n: number) => `${n} invited successfully`,
-    inviteFail: (n: number) => `${n} failed`,
-    resultTitle: 'Invitation Results',
-    inviteDoneLabel: 'Invited',
-    failLabel: 'Failed',
-    addMore: 'Invite More',
-    toDashboard: 'Go to Dashboard',
-    title: 'Invite Members',
-    subtitle: 'Invite members by email. An invitation link will be sent, and Pro access is granted automatically upon acceptance.',
-    notice1: '• Individual session content is not shared with the organization.',
-    notice2: '• Trainees (minors) require additional guardian consent.',
-    notice3: '• Members can leave and take their data at any time.',
-    emailPlaceholder: (n: number) => `Email ${n}`,
-    birthYearPlaceholder: 'Birth year (e.g. 2010)',
-    addMember: '+ Add Member',
-    inviting: 'Inviting...',
-    inviteCount: (n: number) => `Invite ${n}`,
-    memberTypeLabels: {
-      member:  'Adult Member (Athlete/Idol/Employee)',
-      trainee: 'Trainee (Minor)',
-      admin:   'Admin (Staff)',
-    } as Record<B2BMemberType, string>,
-  },
-} as const;
 
 interface MemberRow extends B2BMemberInviteInput {
   _id: string;
@@ -73,8 +20,8 @@ export default function MemberInvite() {
   const { toast } = useToast();
   const [orgName, setOrgName] = useState('');
   const { inviteMembers, loading } = useInviteMembers(orgId ?? '', orgName);
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.b2bDomain.memberInvite;
 
   useEffect(() => {
     if (!orgId) return;

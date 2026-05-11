@@ -5,7 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { veilorDb } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { ToastAction } from '@/components/ui/toast';
-import { useLanguageContext } from '@/context/LanguageContext';
+import { useT } from '@/i18n/useT';
 import type { EmotionScore } from '@/components/charts/EmotionWheel';
 import {
   type ClearCheckin,
@@ -16,14 +16,12 @@ import {
   markClearCheckinToday,
 } from './clearHomeTypes';
 
-const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
-
 export function useClearHomeData() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const { language } = useLanguageContext();
-  const isEn = language === 'en';
+  const t = useT();
+  const DAY_LABELS = t.routineHome.dayLabels;
 
   const [checkedToday, setCheckedToday] = useState(hasClearCheckinToday);
   const [todayMood, setTodayMood] = useState<number | null>(null);
@@ -169,11 +167,11 @@ export function useClearHomeData() {
       setTodayActivities(activities);
       if (moodScore <= 4) {
         toast({
-          title: isEn ? 'Feeling low today?' : '감정이 많이 쌓인 것 같아요.',
-          description: isEn ? "Vent can help you release what's building up." : 'Vent에서 털어내보는 건 어떨까요?',
+          title: t.clear.lowMoodToastTitle,
+          description: t.clear.lowMoodToastDesc,
           action: (
-            <ToastAction altText={isEn ? 'Go to Vent' : 'Vent 이동'} onClick={() => navigate('/home/vent')}>
-              {isEn ? 'Vent' : 'Vent 이동'}
+            <ToastAction altText={t.clear.lowMoodToastAction} onClick={() => navigate('/home/vent')}>
+              {t.clear.lowMoodToastAction}
             </ToastAction>
           ),
         });

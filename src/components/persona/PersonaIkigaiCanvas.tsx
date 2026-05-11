@@ -1,20 +1,6 @@
 import { useEffect, useState } from "react";
-import { useLanguageContext } from "@/context/LanguageContext";
+import { useT } from '@/i18n/useT';
 
-const S = {
-  ko: {
-    emptyDesc: 'Vent, Dig, Codetalk에서 대화를 나누면 자동으로 페르소나가 감지됩니다.',
-    mainBadge: '메인',
-    strengthFmt: (n: number) => `💪 강도: ${n}%`,
-    keywordsFmt: (kws: string) => `키워드: ${kws}`,
-  },
-  en: {
-    emptyDesc: 'Chat in Vent, Dig, or Codetalk and personas will be detected automatically.',
-    mainBadge: 'Main',
-    strengthFmt: (n: number) => `💪 Strength: ${n}%`,
-    keywordsFmt: (kws: string) => `Keywords: ${kws}`,
-  },
-};
 import { useSearchParams } from "react-router-dom";
 import { usePersonas } from "@/hooks/usePersonas";
 import { PersonaWithDetails } from "@/integrations/supabase/persona-types";
@@ -29,8 +15,8 @@ interface PersonaIkigaiCanvasProps {
 }
 
 export function PersonaIkigaiCanvas({ children }: PersonaIkigaiCanvasProps) {
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.personaDomain.ikigaiCanvas;
   const [searchParams] = useSearchParams();
   const { data: personas, isLoading } = usePersonas();
   const [activePersona, setActivePersona] = useState<PersonaWithDetails | null>(null);

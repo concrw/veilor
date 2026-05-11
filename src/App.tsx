@@ -77,28 +77,9 @@ import { toast as sonnerToast } from "sonner";
 import { GrowthBookProvider } from "@growthbook/growthbook-react";
 import { growthbook } from "./lib/growthbook";
 import { safeGetItem } from "@/lib/storage";
-import { useLanguageContext } from "@/context/LanguageContext";
+import { useT, getT } from "@/i18n/useT";
 
-const S = {
-  ko: {
-    skipToMain: '본문으로 건너뛰기',
-    dataFetchError: '데이터를 불러오지 못했습니다',
-    connectionError: '연결 오류',
-    saveError: '저장 오류',
-    requestError: '요청 처리 중 오류가 발생했습니다',
-  },
-  en: {
-    skipToMain: 'Skip to main content',
-    dataFetchError: 'Failed to load data',
-    connectionError: 'Connection error',
-    saveError: 'Save error',
-    requestError: 'An error occurred while processing the request',
-  },
-} as const;
-
-type LangKey = keyof typeof S;
-
-function getLang(): LangKey {
+function getLang(): 'ko' | 'en' {
   const stored = safeGetItem('veilor_lang');
   if (stored === 'ko' || stored === 'en') return stored;
   if (typeof navigator !== 'undefined' && navigator.language?.startsWith('en')) return 'en';
@@ -106,11 +87,10 @@ function getLang(): LangKey {
 }
 
 function SkipLink() {
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
   return (
     <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:bg-background focus:text-foreground focus:px-4 focus:py-2 focus:rounded">
-      {s.skipToMain}
+      {t.errors.skipToMain}
     </a>
   );
 }
@@ -118,16 +98,16 @@ function SkipLink() {
 const queryClient = new QueryClient({
   queryCache: new QueryCache({
     onError: (error) => {
-      const s = S[getLang()];
-      const msg = error instanceof Error ? error.message : s.dataFetchError;
-      sonnerToast.error(s.connectionError, { description: msg, duration: 4000 });
+      const t = getT(getLang());
+      const msg = error instanceof Error ? error.message : t.errors.dataLoadFailed;
+      sonnerToast.error(t.errors.connectionError, { description: msg, duration: 4000 });
     },
   }),
   mutationCache: new MutationCache({
     onError: (error) => {
-      const s = S[getLang()];
-      const msg = error instanceof Error ? error.message : s.requestError;
-      sonnerToast.error(s.saveError, { description: msg, duration: 4000 });
+      const t = getT(getLang());
+      const msg = error instanceof Error ? error.message : t.errors.saveErrorDesc;
+      sonnerToast.error(t.errors.saveError, { description: msg, duration: 4000 });
     },
   }),
   defaultOptions: {

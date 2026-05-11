@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { veilorDb } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
+import { useLanguageContext } from '@/context/LanguageContext';
 import { ZONES, TOTAL_ZONES, SEED_STAGES } from '@/data/mePageData';
 
 export function calcPrecision(
@@ -15,11 +16,15 @@ export function calcPrecision(
   return Math.min(Math.round(zonePct * 40 + sessionScore * 25 + signalScore * 20 + patternScore * 15), 100);
 }
 
-export function getSeedTitle(pct: number): string {
-  if (pct < 40) return '씨앗을 심었어요';
-  if (pct < 65) return '패턴이 보이기 시작했어요';
-  if (pct < 85) return '뿌리를 내리는 중';
-  return '꽃이 피어나고 있어요';
+const SEED_TITLES_KO = ['씨앗을 심었어요', '패턴이 보이기 시작했어요', '뿌리를 내리는 중', '꽃이 피어나고 있어요'];
+const SEED_TITLES_EN = ['Planted a seed', 'Patterns are emerging', 'Taking root', 'Flowers are blooming'];
+
+export function getSeedTitle(pct: number, lang: 'ko' | 'en' = 'ko'): string {
+  const titles = lang === 'en' ? SEED_TITLES_EN : SEED_TITLES_KO;
+  if (pct < 40) return titles[0];
+  if (pct < 65) return titles[1];
+  if (pct < 85) return titles[2];
+  return titles[3];
 }
 
 export function getStageStatus(pct: number, i: number, stages: { threshold: number }[]): 'done' | 'active' | 'none' {
@@ -31,6 +36,7 @@ export function getStageStatus(pct: number, i: number, stages: { threshold: numb
 
 export function useMePageState(statsData: { sessionCount: number; signalCount: number; patternAreaCount: number } | null | undefined) {
   const { user } = useAuth();
+  const { language } = useLanguageContext();
 
   const [zoneState, setZoneState] = useState<Record<string, boolean>>(() => {
     const init: Record<string, boolean> = {};
@@ -70,7 +76,7 @@ export function useMePageState(statsData: { sessionCount: number; signalCount: n
 
   const pct = calcPrecision(zoneState, statsData);
   const closedCount = Object.values(zoneState).filter(v => !v).length;
-  const seedTitle = getSeedTitle(pct);
+  const seedTitle = getSeedTitle(pct, language);
   const stageStatus = (i: number) => getStageStatus(pct, i, SEED_STAGES);
 
   return { zoneState, toggleZone, pct, closedCount, seedTitle, stageStatus };

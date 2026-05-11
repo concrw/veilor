@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useLanguageContext } from '@/context/LanguageContext';
+import { useT } from '@/i18n/useT';
 
 interface Props {
   messageCount: number;
@@ -8,70 +8,10 @@ interface Props {
   onSaveNote?: (note: string) => void;
 }
 
-const S = {
-  ko: {
-    breathingSteps: [
-      { text: '코로 천천히 들이쉬세요', duration: 4000, phase: 'in' as const },
-      { text: '잠깐 멈추세요', duration: 2000, phase: 'hold' as const },
-      { text: '입으로 천천히 내쉬세요', duration: 4000, phase: 'out' as const },
-    ],
-    closingPrompts: [
-      '오늘 대화에서 가장 마음에 남는 것 하나를 적어보세요.',
-      '지금 이 순간, 몸 어디에 감정이 머물고 있나요?',
-      '오늘 나에게 해주고 싶은 말 한마디를 적어보세요.',
-      '이 대화를 마치며, 무엇을 알아챘나요?',
-    ],
-    introTitle: '오늘 대화를 마무리할게요',
-    introDescMany: (n: number) => `${n}번의 대화를 함께했어요. 잠깐 숨 고르고 마무리해요.`,
-    introDescFew: '짧은 호흡 훈련으로 마무리해요.',
-    introWithEmotion: (e: string) => ` 오늘 느낀 '${e}' 감정과 함께.`,
-    btnBreathing: '호흡으로 마무리',
-    btnReflection: '바로 기록으로',
-    btnSkip: '그냥 끝내기',
-    breathingCountFmt: (n: number) => `호흡 ${n}/3`,
-    breathDuration: { in: '4초', hold: '2초', out: '4초' },
-    reflectionTitle: '오늘의 한 줄',
-    placeholder: '자유롭게 적어보세요...',
-    btnSave: '저장하고 마무리',
-    btnSkipReflection: '건너뛰기',
-    doneTitle: '잘 마무리됐어요',
-    doneDesc: '오늘 이 공간에 와준 것만으로 충분해요. 다음에 또 이야기해요.',
-    btnClose: '닫기',
-  },
-  en: {
-    breathingSteps: [
-      { text: 'Slowly breathe in through your nose', duration: 4000, phase: 'in' as const },
-      { text: 'Hold for a moment', duration: 2000, phase: 'hold' as const },
-      { text: 'Slowly breathe out through your mouth', duration: 4000, phase: 'out' as const },
-    ],
-    closingPrompts: [
-      "Write one thing from today's conversation that stayed with you.",
-      'Where in your body do you feel your emotions right now?',
-      'Write one thing you want to say to yourself today.',
-      "As you finish this conversation, what did you notice?",
-    ],
-    introTitle: "Let's wrap up today's session",
-    introDescMany: (n: number) => `We had ${n} exchanges today. Take a breath and let's close.`,
-    introDescFew: "Let's finish with a short breathing exercise.",
-    introWithEmotion: (e: string) => ` Together with the '${e}' feeling you felt today.`,
-    btnBreathing: 'Close with breathing',
-    btnReflection: 'Go straight to reflection',
-    btnSkip: 'Just close',
-    breathingCountFmt: (n: number) => `Breath ${n}/3`,
-    breathDuration: { in: '4s', hold: '2s', out: '4s' },
-    reflectionTitle: "Today's one line",
-    placeholder: 'Write freely...',
-    btnSave: 'Save and finish',
-    btnSkipReflection: 'Skip',
-    doneTitle: 'Well done',
-    doneDesc: "Just showing up today was enough. Let's talk again next time.",
-    btnClose: 'Close',
-  },
-};
 
 export default function SessionClosingProtocol({ messageCount, lastEmotion, onClose, onSaveNote }: Props) {
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.sessionClosing;
 
   const [step, setStep] = useState<'intro' | 'breathing' | 'reflection' | 'done'>('intro');
   const [breathStep, setBreathStep] = useState(0);

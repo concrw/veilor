@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { veilorDb } from '@/integrations/supabase/client';
+import { useT } from '@/i18n/useT';
 import { useLanguageContext } from '@/context/LanguageContext';
 import { useUserLanguages } from '@/hooks/useUserLanguages';
 
@@ -10,41 +11,13 @@ interface TabCommunityFeedProps {
   tab: 'vent' | 'dig' | 'get' | 'set';
 }
 
-const S = {
-  ko: {
-    tabLabels: {
-      vent: { title: '감정 나눔', placeholder: '오늘 느낀 감정을 나눠보세요...' },
-      dig: { title: '패턴 공유', placeholder: '발견한 관계 패턴을 공유해보세요...' },
-      get: { title: '통찰 교류', placeholder: 'V-File에서 발견한 것을 나눠보세요...' },
-      set: { title: '실천 인증', placeholder: '오늘의 실천을 기록해보세요...' },
-    } as Record<string, { title: string; placeholder: string }>,
-    postCount: (n: number) => `${n}개 글`,
-    noPosts: '아직 글이 없어요. 첫 번째로 나눠보세요!',
-    cancel: '취소',
-    share: '공유',
-    shareButton: '+ 나누기',
-  },
-  en: {
-    tabLabels: {
-      vent: { title: 'Emotion Sharing', placeholder: 'Share what you felt today...' },
-      dig: { title: 'Pattern Sharing', placeholder: 'Share a relationship pattern you discovered...' },
-      get: { title: 'Insight Exchange', placeholder: 'Share what you found in your V-File...' },
-      set: { title: 'Action Log', placeholder: "Record today's practice..." },
-    } as Record<string, { title: string; placeholder: string }>,
-    postCount: (n: number) => `${n} posts`,
-    noPosts: 'No posts yet. Be the first to share!',
-    cancel: 'Cancel',
-    share: 'Share',
-    shareButton: '+ Share',
-  },
-} as const;
-
 export default function TabCommunityFeed({ tab }: TabCommunityFeedProps) {
   const { user } = useAuth();
   const qc = useQueryClient();
   const { language } = useLanguageContext();
+  const t = useT();
+  const s = t.communityDomain.tabCommunityFeed;
   const userLanguages = useUserLanguages();
-  const s = S[language] ?? S.ko;
   const [text, setText] = useState('');
   const [showInput, setShowInput] = useState(false);
 

@@ -1,55 +1,13 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
-import { useLanguageContext } from '@/context/LanguageContext';
 import { veilorDb } from '@/integrations/supabase/client';
 import type { ChangeTrainingSession, ChangeTrainingLog } from '@/integrations/supabase/veilor-types';
 import { C } from '@/lib/colors';
 import { Flame, Plus, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-
-const S = {
-  ko: {
-    subtitle: '변화 훈련 · 일지 기록',
-    cancel: '취소',
-    newSession: '새 세션',
-    titlePlaceholder: '훈련 주제',
-    goalPlaceholder: '목표 (선택)',
-    creating: '생성 중...',
-    startSession: '세션 시작',
-    loading: '불러오는 중...',
-    empty: '훈련 세션이 없습니다',
-    emptySub: '새 세션을 시작해보세요',
-    notePlaceholder: '오늘의 기록...',
-    saving: '저장 중...',
-    addLog: '일지 추가',
-    noLogs: '아직 기록이 없습니다',
-    logAdded: '일지가 기록됐습니다',
-    sessionCreated: '훈련 세션이 생성됐습니다',
-    loginRequired: '로그인 필요',
-    moodLabels: ['매우 힘듦', '힘듦', '보통', '좋음', '매우 좋음'] as string[],
-  },
-  en: {
-    subtitle: 'Change Training · Daily Log',
-    cancel: 'Cancel',
-    newSession: 'New Session',
-    titlePlaceholder: 'Training topic',
-    goalPlaceholder: 'Goal (optional)',
-    creating: 'Creating...',
-    startSession: 'Start Session',
-    loading: 'Loading...',
-    empty: 'No training sessions',
-    emptySub: 'Start a new session',
-    notePlaceholder: "Today's note...",
-    saving: 'Saving...',
-    addLog: 'Add Log',
-    noLogs: 'No logs yet',
-    logAdded: 'Log recorded',
-    sessionCreated: 'Training session created',
-    loginRequired: 'Login required',
-    moodLabels: ['Very Hard', 'Hard', 'Normal', 'Good', 'Very Good'] as string[],
-  },
-};
+import { useT } from '@/i18n/useT';
+import type { LocaleResource } from '@/i18n/types';
 
 function LogItem({ log, moodLabels }: { log: ChangeTrainingLog; moodLabels: string[] }) {
   const score = log.mood_score ?? 3;
@@ -65,7 +23,7 @@ function LogItem({ log, moodLabels }: { log: ChangeTrainingLog; moodLabels: stri
   );
 }
 
-function SessionCard({ session, s }: { session: ChangeTrainingSession; s: typeof S.ko }) {
+function SessionCard({ session, s }: { session: ChangeTrainingSession; s: LocaleResource['changeTraining'] }) {
   const { user } = useAuth();
   const qc = useQueryClient();
   const [expanded, setExpanded] = useState(false);
@@ -116,12 +74,12 @@ function SessionCard({ session, s }: { session: ChangeTrainingSession; s: typeof
         <div style={{ padding: '0 16px 16px', borderTop: `1px solid ${C.border2}` }}>
           <div style={{ paddingTop: 14, marginBottom: 12 }}>
             <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
-              {[1,2,3,4,5].map(s => (
-                <button key={s} onClick={() => setMood(s)}
+              {[1,2,3,4,5].map(score => (
+                <button key={score} onClick={() => setMood(score)}
                   style={{ flex: 1, padding: '6px 0', borderRadius: 8, fontSize: 11, cursor: 'pointer', border: 'none',
-                    background: mood === s ? `color-mix(in srgb, ${C.amber} 20%, #1C1917)` : '#2A2724',
-                    color: mood === s ? C.amber : C.text4 }}>
-                  {s}
+                    background: mood === score ? `color-mix(in srgb, ${C.amber} 20%, #1C1917)` : '#2A2724',
+                    color: mood === score ? C.amber : C.text4 }}>
+                  {score}
                 </button>
               ))}
             </div>
@@ -144,8 +102,8 @@ function SessionCard({ session, s }: { session: ChangeTrainingSession; s: typeof
 
 export default function ChangeTrainingPage() {
   const { user } = useAuth();
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.changeTraining;
   const qc = useQueryClient();
   const [creating, setCreating] = useState(false);
   const [newTitle, setNewTitle] = useState('');

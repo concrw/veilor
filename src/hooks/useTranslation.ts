@@ -1,126 +1,26 @@
-import { useMemo } from 'react';
+import { useT } from '@/i18n/useT';
 import { useLanguageContext } from '@/context/LanguageContext';
-import { locales } from '@/i18n';
-import type { TranslationFunction, LocaleResource } from '@/i18n/types';
+import type { LocaleResource } from '@/i18n/types';
 
+// useT()를 내부적으로 사용하는 얇은 래퍼 — 기존 import 경로 호환 유지
 export const useTranslation = () => {
+  const translations = useT();
   const { language, isLoading } = useLanguageContext();
-
-  const translations: LocaleResource = useMemo(() => {
-    return locales[language];
-  }, [language]);
-
-  const t: TranslationFunction = useMemo(() => {
-    return (key: string, params?: Record<string, string | number>) => {
-      // Navigate through nested object using dot notation
-      const keys = key.split('.');
-      let value: unknown = translations;
-
-      for (const k of keys) {
-        if (value && typeof value === 'object' && k in (value as Record<string, unknown>)) {
-          value = (value as Record<string, unknown>)[k];
-        } else {
-          console.warn(`Translation key not found: ${key}`);
-          return key; // Return the key if translation is not found
-        }
-      }
-
-      if (typeof value !== 'string') {
-        console.warn(`Translation value is not a string: ${key}`);
-        return key;
-      }
-
-      // Replace parameters in the string
-      if (params) {
-        return value.replace(/\{([^}]+)\}/g, (match: string, paramKey: string) => {
-          return params[paramKey]?.toString() || match;
-        });
-      }
-
-      return value;
-    };
-  }, [translations]);
-
-  return {
-    t,
-    language,
-    isLoading,
-    translations,
-  };
+  return { translations, language, isLoading };
 };
 
-// Convenience hooks for specific sections
-export const useCommonTranslations = () => {
-  const { translations } = useTranslation();
-  return translations.common;
-};
-
-export const useNavTranslations = () => {
-  const { translations } = useTranslation();
-  return translations.nav;
-};
-
-export const useAuthTranslations = () => {
-  const { translations } = useTranslation();
-  return translations.auth;
-};
-
-export const useOnboardingTranslations = () => {
-  const { translations } = useTranslation();
-  return translations.onboarding;
-};
-
-export const useVentTranslations = () => {
-  const { translations } = useTranslation();
-  return translations.vent;
-};
-
-export const useDigTranslations = () => {
-  const { translations } = useTranslation();
-  return translations.dig;
-};
-
-export const useSetTranslations = () => {
-  const { translations } = useTranslation();
-  return translations.set;
-};
-
-export const useGetTranslations = () => {
-  const { translations } = useTranslation();
-  return translations.get;
-};
-
-export const useMeTranslations = () => {
-  const { translations } = useTranslation();
-  return translations.me;
-};
-
-export const useCrisisTranslations = () => {
-  const { translations } = useTranslation();
-  return translations.crisis;
-};
-
-export const useClearTranslations = () => {
-  const { translations } = useTranslation();
-  return translations.clear;
-};
-
-export const useErrorTranslations = () => {
-  const { translations } = useTranslation();
-  return translations.errors;
-};
-
-export const useCommunityTranslations = () => {
-  const { translations } = useTranslation();
-  return translations.community;
-};
-
-export const useRelationTranslations = () => {
-  const { translations } = useTranslation();
-  return translations.relation;
-};
-
-export const useWorkTranslations = () => {
-  const { translations } = useTranslation();
-  return translations.work;
-};
+export const useCommonTranslations = (): LocaleResource['common'] => useT().common;
+export const useNavTranslations = (): LocaleResource['nav'] => useT().nav;
+export const useAuthTranslations = (): LocaleResource['auth'] => useT().auth;
+export const useOnboardingTranslations = (): LocaleResource['onboarding'] => useT().onboarding;
+export const useVentTranslations = (): LocaleResource['vent'] => useT().vent;
+export const useDigTranslations = (): LocaleResource['dig'] => useT().dig;
+export const useSetTranslations = (): LocaleResource['set'] => useT().set;
+export const useGetTranslations = (): LocaleResource['get'] => useT().get;
+export const useMeTranslations = (): LocaleResource['me'] => useT().me;
+export const useCrisisTranslations = (): LocaleResource['crisis'] => useT().crisis;
+export const useClearTranslations = (): LocaleResource['clear'] => useT().clear;
+export const useErrorTranslations = (): LocaleResource['errors'] => useT().errors;
+export const useCommunityTranslations = (): LocaleResource['community'] => useT().community;
+export const useRelationTranslations = (): LocaleResource['relation'] => useT().relation;
+export const useWorkTranslations = (): LocaleResource['work'] => useT().work;

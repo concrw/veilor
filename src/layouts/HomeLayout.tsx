@@ -3,29 +3,11 @@ import { Outlet, NavLink, useLocation } from 'react-router-dom';
 import { useLongPress } from '@/hooks/useLongPress';
 import HoldCircle from '@/components/ai/HoldCircle';
 import AILeadOverlay from '@/components/ai/AILeadOverlay';
+import UpgradeModal from '@/components/premium/UpgradeModal';
 import { useAuth } from '@/context/AuthContext';
 import { useMode } from '@/context/ModeContext';
 import { useDomain, type Domain } from '@/context/DomainContext';
-import { useLanguageContext } from '@/context/LanguageContext';
-
-const S = {
-  ko: {
-    amberAriaLabel: 'Amber AI 상담 열기',
-    frostAriaLabel: 'Frost AI 분석 열기',
-    newFeatureBadge: '새 기능 알림',
-    mainNavDesktop: '메인 탭 네비게이션 (데스크톱)',
-    mainNav: '메인 탭 네비게이션',
-    openAiMode: 'AI 대화 모드 열기 (Ctrl+Shift+A)',
-  },
-  en: {
-    amberAriaLabel: 'Open Amber AI chat',
-    frostAriaLabel: 'Open Frost AI analysis',
-    newFeatureBadge: 'New feature',
-    mainNavDesktop: 'Main tab navigation (desktop)',
-    mainNav: 'Main tab navigation',
-    openAiMode: 'Open AI conversation mode (Ctrl+Shift+A)',
-  },
-} as const;
+import { useT } from '@/i18n/useT';
 
 const RoutineHome        = lazy(() => import('@/pages/home/RoutineHome'));
 const ClearHome          = lazy(() => import('@/pages/home/ClearHome'));
@@ -58,12 +40,11 @@ const ALL_TABS: TabDef[] = buildTabs('self');
 
 // Amber 버튼 공통
 export function AmberBtn({ onClick, flash }: { onClick: () => void; flash?: boolean }) {
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
   return (
     <button
       onClick={onClick}
-      aria-label={s.amberAriaLabel}
+      aria-label={t.homeLayout.amberAriaLabel}
       className={`relative w-[30px] h-[30px] rounded-full flex items-center justify-center flex-shrink-0 cursor-pointer ${flash ? 'amber-flash' : ''}`}
       style={{ background: '#E0B48A15', border: '1px solid #E0B48A44' }}
     >
@@ -78,12 +59,11 @@ export function AmberBtn({ onClick, flash }: { onClick: () => void; flash?: bool
 
 // Frost 버튼 공통
 export function FrostBtn({ onClick }: { onClick: () => void }) {
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
   return (
     <button
       onClick={onClick}
-      aria-label={s.frostAriaLabel}
+      aria-label={t.homeLayout.frostAriaLabel}
       className="relative w-[30px] h-[30px] rounded-full flex items-center justify-center flex-shrink-0 cursor-pointer"
       style={{ background: '#95BDD615', border: '1px solid #95BDD644' }}
     >
@@ -98,8 +78,7 @@ export function FrostBtn({ onClick }: { onClick: () => void }) {
 
 // 데스크톱 사이드바
 function DesktopSidebar({ tabs }: { tabs: TabDef[] }) {
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
   return (
     <aside
       className="hidden lg:flex flex-col fixed left-0 top-0 bottom-0 z-20"
@@ -123,7 +102,7 @@ function DesktopSidebar({ tabs }: { tabs: TabDef[] }) {
       </div>
 
       {/* 탭 목록 */}
-      <nav aria-label={s.mainNavDesktop} className="flex flex-col gap-1 px-3 py-4 flex-1">
+      <nav aria-label={t.homeLayout.mainNavDesktop} className="flex flex-col gap-1 px-3 py-4 flex-1">
         {tabs.map(({ to, label, color, badge }) => (
           <NavLink
             key={to}
@@ -156,7 +135,7 @@ function DesktopSidebar({ tabs }: { tabs: TabDef[] }) {
                   <span
                     className="absolute top-2 right-3 w-[6px] h-[6px] rounded-full"
                     style={{ background: color }}
-                    aria-label={s.newFeatureBadge}
+                    aria-label={t.homeLayout.newFeatureBadge}
                   />
                 )}
               </>
@@ -171,12 +150,12 @@ function DesktopSidebar({ tabs }: { tabs: TabDef[] }) {
 export default function HomeLayout() {
   const [aiLeadOpen, setAiLeadOpen] = useState(false);
   const [holding, setHolding] = useState(false);
+  const [aiLimitOpen, setAiLimitOpen] = useState(false);
   const location = useLocation();
   const { priperCompleted, personaContextsCompleted } = useAuth();
   const { mode } = useMode();
   const { domain } = useDomain();
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
 
   // vent 탭 진입 시 모드별 홈 분기
   const isVentTab = location.pathname === '/home/vent' || location.pathname === '/home';
@@ -228,6 +207,13 @@ export default function HomeLayout() {
     return () => window.removeEventListener('keydown', handler);
   }, []);
 
+  // AI 월 한도 초과 이벤트 — 깊이 중첩된 컴포넌트에서 발행
+  useEffect(() => {
+    const handler = () => setAiLimitOpen(true);
+    window.addEventListener('veilor:ai-limit-reached', handler);
+    return () => window.removeEventListener('veilor:ai-limit-reached', handler);
+  }, []);
+
   const longPressHandlers = useLongPress(openAILead, {
     threshold: 600,
     vibrate: true,
@@ -246,7 +232,7 @@ export default function HomeLayout() {
         className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:bg-black focus:text-white focus:px-3 focus:py-2 focus:rounded"
         onClick={() => setAiLeadOpen(true)}
       >
-        {s.openAiMode}
+        {t.homeLayout.openAiMode}
       </button>
 
       {/* 롱프레스 홀드 서클 */}
@@ -259,6 +245,9 @@ export default function HomeLayout() {
         currentTab={currentTab}
       />
 
+      {/* AI 월 한도 초과 모달 — veilor:ai-limit-reached 이벤트로 열림 */}
+      <UpgradeModal open={aiLimitOpen} onClose={() => setAiLimitOpen(false)} trigger="codetalk_ai_limit" />
+
       {/* 데스크톱 사이드바 (lg 이상에서만 표시) */}
       <DesktopSidebar tabs={tabs} />
 
@@ -270,8 +259,7 @@ export default function HomeLayout() {
           className="flex-1 overflow-y-auto"
           style={{ paddingBottom: 'var(--bottom-nav-height, 64px)' }}
         >
-          {/* 콘텐츠 너비 — 모바일: sm, 태블릿: lg, 데스크톱: full */}
-          <div className="w-full max-w-sm md:max-w-lg lg:max-w-none mx-auto">
+          <div className="w-full lg:max-w-none mx-auto">
             {showModeHome ? (
               <Suspense fallback={<div className="min-h-screen bg-[#1C1917]" />}>
                 {mode === 'routine'  && <RoutineHome />}
@@ -289,7 +277,7 @@ export default function HomeLayout() {
 
         {/* 하단 탭 nav — lg 미만에서만 표시 */}
         <nav
-          aria-label={s.mainNav}
+          aria-label={t.homeLayout.mainNav}
           className="lg:hidden fixed bottom-0 left-0 right-0 z-20 flex justify-around"
           style={{
             background: '#1C1917',
@@ -309,14 +297,7 @@ export default function HomeLayout() {
               {({ isActive }) => (
                 <>
                   <span
-                    className="w-[5px] h-[5px] rounded-full transition-all"
-                    style={{
-                      background: isActive ? color : '#3C3835',
-                      transform: isActive ? 'scale(1.3)' : 'scale(1)',
-                    }}
-                  />
-                  <span
-                    className="text-[11px] font-light transition-colors"
+                    className="text-[13px] font-light transition-colors"
                     style={{
                       color: isActive ? color : '#87817C',
                       fontWeight: isActive ? 400 : 300,
@@ -329,7 +310,7 @@ export default function HomeLayout() {
                     <span
                       className="absolute -top-0.5 -right-0.5 w-[6px] h-[6px] rounded-full"
                       style={{ background: color }}
-                      aria-label={s.newFeatureBadge}
+                      aria-label={t.homeLayout.newFeatureBadge}
                     />
                   )}
                 </>

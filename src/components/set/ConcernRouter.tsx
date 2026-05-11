@@ -1,39 +1,12 @@
 // #10 고민 유형 분기 — 고민 카테고리별 맞춤 경로 안내
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useLanguageContext } from '@/context/LanguageContext';
-
-const S = {
-  ko: {
-    title: '지금 무엇이 고민인가요?',
-    tabSuffix: '탭으로 이동',
-    concerns: [
-      { id: 'breakup', label: '이별/단절', icon: '💔', route: '/home/vent', desc: '감정을 먼저 쏟아내세요' },
-      { id: 'conflict', label: '갈등/다툼', icon: '⚡', route: '/home/dig', desc: '패턴을 파고들어 보세요' },
-      { id: 'anxiety', label: '관계 불안', icon: '😰', route: '/home/vent', desc: '불안의 뿌리를 찾아가요' },
-      { id: 'communication', label: '소통 문제', icon: '🗣️', route: '/home/set', desc: '경계와 합의를 설정해요' },
-      { id: 'identity', label: '나를 모르겠어', icon: '🎭', route: '/home/get', desc: 'V-File로 가면을 탐색해요' },
-      { id: 'growth', label: '성장하고 싶어', icon: '🌱', route: '/home/me', desc: '변화를 추적하고 기록해요' },
-    ],
-  },
-  en: {
-    title: "What's on your mind?",
-    tabSuffix: 'tab',
-    concerns: [
-      { id: 'breakup', label: 'Breakup / Loss', icon: '💔', route: '/home/vent', desc: 'Let your feelings out first' },
-      { id: 'conflict', label: 'Conflict', icon: '⚡', route: '/home/dig', desc: 'Dig into the pattern' },
-      { id: 'anxiety', label: 'Relationship anxiety', icon: '😰', route: '/home/vent', desc: 'Find the root of your anxiety' },
-      { id: 'communication', label: 'Communication issues', icon: '🗣️', route: '/home/set', desc: 'Set boundaries and agreements' },
-      { id: 'identity', label: "I don't know myself", icon: '🎭', route: '/home/get', desc: 'Explore your masks with V-File' },
-      { id: 'growth', label: 'I want to grow', icon: '🌱', route: '/home/me', desc: 'Track and record your changes' },
-    ],
-  },
-};
+import { useT } from '@/i18n/useT';
 
 export default function ConcernRouter() {
   const navigate = useNavigate();
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.concernRouter;
   const [selected, setSelected] = useState<string | null>(null);
 
   const concern = s.concerns.find(c => c.id === selected);

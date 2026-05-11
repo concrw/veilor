@@ -5,121 +5,8 @@ import { useToast } from '@/hooks/use-toast';
 import { veilorDb } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { useSubmitCheckin } from '@/hooks/useB2BOrg';
-import { useLanguageContext } from '@/context/LanguageContext';
-
-// ─────────────────────────────────────────────
-// 이중언어 문자열
-// ─────────────────────────────────────────────
-const S = {
-  ko: {
-    saveError: '저장 실패',
-    saveErrorDesc: '다시 시도해주세요.',
-    doneTitle: '오늘 체크인 완료!',
-    doneSubtitle: '잘했어 👍',
-    highAlert: '코치 선생님한테 연락이 갈 거야.',
-    highAlertDesc: '지금 많이 힘들면 1393에 전화해도 돼. 항상 열려 있어.',
-    mediumAlert: '코치 선생님이 곧 연락할 거야 💛',
-    backBtn: '돌아가기',
-    // 9~11세
-    emoji911Title: '오늘 기분이 어때?',
-    emoji911Sub: '하나를 골라봐',
-    goodThingPrompt: '오늘 연습에서 잘한 것 하나 써볼래? (안 써도 돼)',
-    goodThingPlaceholder: '예: 오늘 점프를 더 높이 뛰었어',
-    doneBtn: '완료!',
-    lowScoreMsg: '힘들다고 느끼는 건 자연스러운 거야. 코치 선생님이 도와줄 거야 💛',
-    // 12~14세
-    diaryTitle: '오늘 하고 싶은 말 있어?',
-    diarySubtitle: '안 써도 돼. 소속사엔 안 보여.',
-    diaryPlaceholder: '어떤 순간이 어려웠는지, 뭐가 좋았는지 자유롭게 써봐',
-    prev: '이전',
-    next: '다음',
-    scaleLeft: '별로 그렇지 않아',
-    scaleRight: '완전 그래!',
-    // 15~17세
-    optionalInput: '선택 입력',
-    freeTextTitle: '지금 하고 싶은 말이 있나요?',
-    freeTextSubtitle: '소속사에는 공개되지 않습니다.',
-    freeTextPlaceholder: '자유롭게 적어보세요...',
-    lastOne: '마지막으로',
-    done2: '완료',
-    // 이모지 옵션
-    emojiOptions: [
-      { emoji: '😄', label: '최고야!',   score: 9 },
-      { emoji: '🙂', label: '괜찮아',    score: 7 },
-      { emoji: '😐', label: '그냥저냥',  score: 5 },
-      { emoji: '😟', label: '좀 힘들어', score: 3 },
-      { emoji: '😢', label: '많이 힘들어', score: 1 },
-    ],
-    // 12~14 슬라이더 질문
-    slider1214: [
-      { key: 'c_control' as const,    q: '오늘 내 감정이 내 편인 것 같아?' },
-      { key: 'c_commitment' as const, q: '지금 하고 있는 것에 계속하고 싶은 마음이 있어?' },
-      { key: 'c_challenge' as const,  q: '어려운 일이 생겼을 때 해볼 수 있을 것 같아?' },
-      { key: 'c_confidence' as const, q: '나 자신을 믿을 수 있어?' },
-    ],
-    // 15~17 축 질문
-    axes1517: [
-      { key: 'c_control' as const,    label: 'Control',    q: '지금 내 감정과 상황을 내가 조절하고 있다' },
-      { key: 'c_commitment' as const, label: 'Commitment', q: '지금 내 목표를 향한 의지가 흔들리지 않는다' },
-      { key: 'c_challenge' as const,  label: 'Challenge',  q: '지금 내가 마주한 어려움이 성장의 기회로 느껴진다' },
-      { key: 'c_confidence' as const, label: 'Confidence', q: '지금 내 능력과 판단을 스스로 신뢰하고 있다' },
-    ],
-  },
-  en: {
-    saveError: 'Save failed',
-    saveErrorDesc: 'Please try again.',
-    doneTitle: "Today's Check-in Complete!",
-    doneSubtitle: 'Great job 👍',
-    highAlert: 'Your coach will be notified.',
-    highAlertDesc: "If you're feeling very down, you can call 1393. It's always open.",
-    mediumAlert: 'Your coach will contact you soon 💛',
-    backBtn: 'Go Back',
-    // 9~11
-    emoji911Title: "How are you feeling today?",
-    emoji911Sub: 'Pick one',
-    goodThingPrompt: "Can you write one thing you did well in practice today? (No need to write)",
-    goodThingPlaceholder: 'e.g. I jumped higher today',
-    doneBtn: 'Done!',
-    lowScoreMsg: "Feeling down is natural. Your coach will help you 💛",
-    // 12~14
-    diaryTitle: 'Anything you want to share today?',
-    diarySubtitle: "You don't have to. It won't be shared with your organization.",
-    diaryPlaceholder: 'Write freely about what was hard or what went well',
-    prev: 'Previous',
-    next: 'Next',
-    scaleLeft: 'Not really',
-    scaleRight: 'Definitely!',
-    // 15~17
-    optionalInput: 'Optional',
-    freeTextTitle: 'Anything you want to share?',
-    freeTextSubtitle: 'This will not be shared with your organization.',
-    freeTextPlaceholder: 'Write freely...',
-    lastOne: 'Last one',
-    done2: 'Done',
-    // emoji options
-    emojiOptions: [
-      { emoji: '😄', label: 'Amazing!',   score: 9 },
-      { emoji: '🙂', label: "I'm okay",   score: 7 },
-      { emoji: '😐', label: 'So-so',      score: 5 },
-      { emoji: '😟', label: 'A bit hard', score: 3 },
-      { emoji: '😢', label: 'Very hard',  score: 1 },
-    ],
-    // 12~14 slider questions
-    slider1214: [
-      { key: 'c_control' as const,    q: 'Do you feel like your emotions are on your side today?' },
-      { key: 'c_commitment' as const, q: 'Do you still want to keep going with what you are doing?' },
-      { key: 'c_challenge' as const,  q: 'When something difficult comes up, do you think you can handle it?' },
-      { key: 'c_confidence' as const, q: 'Do you believe in yourself?' },
-    ],
-    // 15~17 axes
-    axes1517: [
-      { key: 'c_control' as const,    label: 'Control',    q: 'I am in control of my emotions and situation right now.' },
-      { key: 'c_commitment' as const, label: 'Commitment', q: 'My commitment to my goals is unwavering right now.' },
-      { key: 'c_challenge' as const,  label: 'Challenge',  q: 'The challenges I face right now feel like opportunities for growth.' },
-      { key: 'c_confidence' as const, label: 'Confidence', q: 'I trust my own abilities and judgment right now.' },
-    ],
-  },
-} as const;
+import { useT } from '@/i18n/useT';
+import type { LocaleResource } from '@/i18n/types';
 
 // ─────────────────────────────────────────────
 // 연령 그룹별 설정
@@ -130,7 +17,7 @@ type Scores = { c_control: number; c_commitment: number; c_challenge: number; c_
 // ─────────────────────────────────────────────
 // 9~11세 체크인
 // ─────────────────────────────────────────────
-function Checkin911({ onDone, s }: { onDone: (scores: Scores, text: string) => void; s: typeof S['ko'] }) {
+function Checkin911({ onDone, s }: { onDone: (scores: Scores, text: string) => void; s: LocaleResource['b2bDomain']['traineeCheckin'] }) {
   const [picked, setPicked] = useState<number | null>(null);
   const [goodThing, setGoodThing] = useState('');
 
@@ -194,7 +81,7 @@ function Checkin911({ onDone, s }: { onDone: (scores: Scores, text: string) => v
 // ─────────────────────────────────────────────
 // 12~14세 체크인
 // ─────────────────────────────────────────────
-function Checkin1214({ onDone, s }: { onDone: (scores: Scores, text: string) => void; s: typeof S['ko'] }) {
+function Checkin1214({ onDone, s }: { onDone: (scores: Scores, text: string) => void; s: LocaleResource['b2bDomain']['traineeCheckin'] }) {
   const [step, setStep] = useState(0);
   const [scores, setScores] = useState<Scores>({ c_control: 5, c_commitment: 5, c_challenge: 5, c_confidence: 5 });
   const [diary, setDiary] = useState('');
@@ -280,7 +167,7 @@ function Checkin1214({ onDone, s }: { onDone: (scores: Scores, text: string) => 
 // ─────────────────────────────────────────────
 // 15~17세 체크인 (성인과 동일 구조)
 // ─────────────────────────────────────────────
-function Checkin1517({ onDone, s }: { onDone: (scores: Scores, text: string) => void; s: typeof S['ko'] }) {
+function Checkin1517({ onDone, s }: { onDone: (scores: Scores, text: string) => void; s: LocaleResource['b2bDomain']['traineeCheckin'] }) {
   const [step, setStep] = useState(0);
   const [scores, setScores] = useState<Scores>({ c_control: 5, c_commitment: 5, c_challenge: 5, c_confidence: 5 });
   const [freeText, setFreeText] = useState('');
@@ -359,8 +246,8 @@ export default function TraineeCheckin() {
   const { user } = useAuth();
   const { toast } = useToast();
   const { submitCheckin, loading } = useSubmitCheckin();
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.b2bDomain.traineeCheckin;
 
   const [ageGroup, setAgeGroup] = useState<AgeGroup | null>(null);
   const [done, setDone] = useState(false);

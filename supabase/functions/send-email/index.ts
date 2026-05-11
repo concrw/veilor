@@ -60,6 +60,26 @@ const EMAIL_TEMPLATES = {
       </div>
     `,
   },
+  ai_subscription_nudge: {
+    subject: "[VEILOR] AI 기능을 사용해보세요",
+    html: (data: Record<string, unknown>) => `
+      <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#1C1917;color:#E7E5E4;border-radius:12px;">
+        <h2 style="color:#E0B48A;margin-bottom:8px;font-weight:300;letter-spacing:-0.01em;">AI 기능을 만나보세요</h2>
+        <p style="margin-bottom:8px;color:#B8B3AF;font-size:14px;">안녕하세요${data.name ? `, ${data.name}님` : ''}.</p>
+        <p style="margin-bottom:24px;color:#B8B3AF;font-size:14px;line-height:1.7;">
+          VEILOR 앱에서 AI 기능에 관심을 보여주셨네요.<br/>
+          감정 대화, 패턴 분석, 관계 코칭 등 AI 기능은<br/>
+          <strong style="color:#E7E5E4;">veilor.kr</strong>에서 구독하시면 바로 이용하실 수 있습니다.
+        </p>
+        <a href="https://veilor.kr/pricing" style="display:inline-block;background:#E0B48A;color:#1C1917;font-weight:500;padding:14px 28px;border-radius:20px;text-decoration:none;font-size:14px;">
+          veilor.kr에서 구독하기
+        </a>
+        <p style="margin-top:24px;color:#87817C;font-size:12px;">
+          구독 후 앱을 재실행하시면 AI 기능이 바로 활성화됩니다.
+        </p>
+      </div>
+    `,
+  },
   b2b_invite: {
     subject: "[Veilor] 초대장이 도착했어요",
     html: (data: Record<string, unknown>) => `

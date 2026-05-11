@@ -131,7 +131,7 @@ export default function ImpactTab() {
       {/* 섹션 A — 관심 지도 (SVG 별자리) */}
       <section>
         <p style={{ fontSize: 11, fontWeight: 400, color: C.text3, marginBottom: 10, letterSpacing: '.06em', textTransform: 'uppercase', fontFamily: 'var(--mono, monospace)' }}>
-          {isKo ? '관심 지도' : 'Interest Map'}
+          {t.title}
         </p>
 
         {interests.length === 0 ? (
@@ -177,9 +177,9 @@ export default function ImpactTab() {
             </div>
 
             <div style={{ display: 'flex', gap: 12, marginTop: 8, fontSize: 10, color: C.text4, fontFamily: 'var(--mono, monospace)', letterSpacing: '.06em' }}>
-              <span>● {isKo ? '살아있음' : 'Active'} {activeCount}</span>
-              <span style={{ opacity: .6 }}>○ {isKo ? '다시 볼 때' : 'Revisit'} {revisitCount}</span>
-              <span style={{ opacity: .35 }}>· {isKo ? '잠듦' : 'Dormant'} {dormantCount}</span>
+              <span>● {t.statusActive} {activeCount}</span>
+              <span style={{ opacity: .6 }}>○ {t.statusRevisit} {revisitCount}</span>
+              <span style={{ opacity: .35 }}>· {t.statusDormant} {dormantCount}</span>
             </div>
 
             {/* 이모티콘 목록 보조 */}
@@ -302,7 +302,7 @@ export default function ImpactTab() {
         fontSize: 11.5, color: C.text2,
         fontFamily: 'var(--serif, serif)', fontStyle: 'italic', lineHeight: 1.5,
       }}>
-        {isKo ? '관심사는 바뀔 수 있어요. 지금 이 순간의 기록이에요.' : 'Interests can shift. This is your record of this moment.'}
+        {t.shiftNote}
       </div>
     </div>
   );

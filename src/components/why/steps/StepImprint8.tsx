@@ -1,30 +1,8 @@
 import { Button } from '@/components/ui/button';
-import { useLanguageContext } from '@/context/LanguageContext';
+import { useT } from '@/i18n/useT';
 import type { JobEntry } from '@/types/why';
 import type { WhyM43Analysis } from '@/hooks/useM43WhyIntegration';
 
-const S = {
-  ko: {
-    step: '8단계',
-    title: '각인 순간 연결',
-    subtitle: '각 직업을 처음 알게 된 순간이 관계 심리 도메인과 어떻게 맞닿아 있는지 보여드립니다.',
-    noMatchMain: '각인 순간과 도메인 사이의 직접적 키워드 일치가 발견되지 않았습니다.',
-    noMatchSub: '이는 정상적이며, 더 깊은 탐색을 통해 연결이 드러날 수 있습니다.',
-    imprintSectionTitle: '기록한 각인 순간들',
-    prev: '← 도메인 분석',
-    next: '가치관 매핑 보기 →',
-  },
-  en: {
-    step: 'Step 8',
-    title: 'Imprint Moment Connection',
-    subtitle: 'Shows how the moment you first learned about each career connects to relationship psychology domains.',
-    noMatchMain: 'No direct keyword match was found between the imprint moment and domain.',
-    noMatchSub: 'This is normal — connections may emerge through deeper exploration.',
-    imprintSectionTitle: 'Recorded imprint moments',
-    prev: '← Domain analysis',
-    next: 'View value mapping →',
-  },
-};
 
 interface StepImprint8Props {
   jobs: JobEntry[];
@@ -34,8 +12,8 @@ interface StepImprint8Props {
 }
 
 export function StepImprint8({ jobs, m43Analysis, onPrev, onNext }: StepImprint8Props) {
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.why.imprint8;
 
   return (
     <div className="space-y-4">

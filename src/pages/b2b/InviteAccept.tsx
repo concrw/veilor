@@ -2,37 +2,14 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useAcceptB2BInvite } from '@/hooks/useB2BOrg';
-import { useLanguageContext } from '@/context/LanguageContext';
-
-const S = {
-  ko: {
-    title: 'VEILOR 초대',
-    accepting: '초대를 수락하는 중...',
-    success: 'Pro 멤버십이 활성화되었습니다.',
-    successSub: '베일러의 모든 기능을 이용할 수 있습니다.',
-    goHome: '시작하기',
-    loginRequired: '초대를 수락하려면 로그인이 필요합니다.',
-    loginBtn: '로그인',
-    errorTitle: '초대 수락 실패',
-  },
-  en: {
-    title: 'VEILOR Invitation',
-    accepting: 'Accepting invitation...',
-    success: 'Pro membership activated.',
-    successSub: 'You now have full access to VEILOR.',
-    goHome: 'Get Started',
-    loginRequired: 'Please log in to accept this invitation.',
-    loginBtn: 'Log In',
-    errorTitle: 'Invitation Failed',
-  },
-} as const;
+import { useT } from '@/i18n/useT';
 
 export default function InviteAccept() {
   const { token } = useParams<{ token: string }>();
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.b2bDomain.inviteAccept;
 
   const { acceptInvite, loading, error } = useAcceptB2BInvite(token ?? '');
   const [done, setDone] = useState(false);

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguageContext } from '@/context/LanguageContext';
+import { getT } from '@/i18n/useT';
 
 interface SocialNeed {
   id: string;
@@ -37,7 +38,6 @@ interface MasterData {
 
 export const useMasterData = (): MasterData => {
   const { language } = useLanguageContext();
-  const isEn = language === 'en';
   const [socialNeeds, setSocialNeeds] = useState<SocialNeed[]>([]);
   const [customerCohorts, setCustomerCohorts] = useState<CustomerCohort[]>([]);
   const [skillCategories, setSkillCategories] = useState<SkillCategory[]>([]);
@@ -45,6 +45,7 @@ export const useMasterData = (): MasterData => {
   const [error, setError] = useState<string | null>(null);
 
   const loadMasterData = async () => {
+    const t = getT(language);
     try {
       setLoading(true);
       setError(null);
@@ -57,7 +58,7 @@ export const useMasterData = (): MasterData => {
         .order('sort_order', { ascending: true });
 
       if (socialNeedsError) {
-        throw new Error(`${isEn ? 'Social values load failed' : '사회적 가치 로드 실패'}: ${socialNeedsError.message}`);
+        throw new Error(`${t.errors.socialNeedsLoadFailed}: ${socialNeedsError.message}`);
       }
 
       // 고객 코호트 로드
@@ -68,7 +69,7 @@ export const useMasterData = (): MasterData => {
         .order('sort_order', { ascending: true });
 
       if (cohortsError) {
-        throw new Error(`${isEn ? 'Customer cohort load failed' : '고객 코호트 로드 실패'}: ${cohortsError.message}`);
+        throw new Error(`${t.errors.cohortLoadFailed}: ${cohortsError.message}`);
       }
 
       // 스킬 카테고리 로드
@@ -79,7 +80,7 @@ export const useMasterData = (): MasterData => {
         .order('sort_order', { ascending: true });
 
       if (skillCategoriesError) {
-        throw new Error(`${isEn ? 'Skill categories load failed' : '스킬 카테고리 로드 실패'}: ${skillCategoriesError.message}`);
+        throw new Error(`${t.errors.skillCategoriesLoadFailed}: ${skillCategoriesError.message}`);
       }
 
       setSocialNeeds(socialNeedsData || []);
@@ -87,9 +88,10 @@ export const useMasterData = (): MasterData => {
       setSkillCategories(skillCategoriesData || []);
 
     } catch (err) {
+      const isEn = language === 'en';
       console.error('Master data loading error:', err);
-      setError(err instanceof Error ? err.message : (isEn ? 'An error occurred while loading master data.' : '마스터 데이터 로드 중 오류가 발생했습니다.'));
-      
+      setError(err instanceof Error ? err.message : t.errors.masterDataError);
+
       // Fallback 데이터 제공
       setSocialNeeds([
         { id: 'fallback-1', need_text: isEn ? 'Climate action'     : '기후 변화 대응', category: isEn ? 'Environment' : '환경', is_active: true, sort_order: 1 },

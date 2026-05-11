@@ -6,41 +6,12 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCoachList } from '@/hooks/useB2BCoach';
 import type { B2BCoach } from '@/integrations/supabase/veilor-types';
-import { useLanguageContext } from '@/context/LanguageContext';
-
-// ─────────────────────────────────────────────
-// 이중언어 문자열
-// ─────────────────────────────────────────────
-const S = {
-  ko: {
-    back: '← 뒤로',
-    title: '코치 소개',
-    subtitle: '전문 코치와 함께 성장하세요',
-    allFilter: '전체',
-    sessionCount: (n: number) => `세션 ${n}회`,
-    available: '상담 가능',
-    full: '마감',
-    loadError: '코치 목록을 불러오지 못했습니다',
-    noCoaches: '등록된 코치가 없습니다',
-    noDomainCoaches: (domain: string) => `'${domain}' 도메인 코치가 없습니다`,
-  },
-  en: {
-    back: '← Back',
-    title: 'Meet Our Coaches',
-    subtitle: 'Grow with expert coaches',
-    allFilter: 'All',
-    sessionCount: (n: number) => `${n} sessions`,
-    available: 'Available',
-    full: 'Full',
-    loadError: 'Failed to load coach list',
-    noCoaches: 'No coaches registered',
-    noDomainCoaches: (domain: string) => `No coaches in '${domain}' domain`,
-  },
-} as const;
+import { useT } from '@/i18n/useT';
+import type { LocaleResource } from '@/i18n/types';
 
 // ── 코치 카드 ──────────────────────────────────────────────────────────
 
-function CoachCard({ coach, onClick, s }: { coach: B2BCoach; onClick: () => void; s: typeof S['ko'] }) {
+function CoachCard({ coach, onClick, s }: { coach: B2BCoach; onClick: () => void; s: LocaleResource['b2bDomain']['coachList'] }) {
   const available = coach.current_members < coach.max_members;
 
   return (
@@ -137,8 +108,8 @@ function CoachCard({ coach, onClick, s }: { coach: B2BCoach; onClick: () => void
 export default function CoachList() {
   const navigate = useNavigate();
   const { data: coaches, isLoading, error } = useCoachList();
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.b2bDomain.coachList;
 
   const [domainFilter, setDomainFilter] = useState<string>(s.allFilter);
 

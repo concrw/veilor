@@ -1,16 +1,10 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
-import { useLanguageContext } from "@/context/LanguageContext";
-
-const S = {
-  ko: { desc: '페이지를 찾을 수 없어요', cta: '홈으로 돌아가기' },
-  en: { desc: 'Page not found', cta: 'Go to Home' },
-};
+import { useT } from "@/i18n/useT";
 
 const NotFound = () => {
   const navigate = useNavigate();
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
 
   useEffect(() => {
     console.error("404: Page not found:", window.location.pathname);
@@ -26,14 +20,14 @@ const NotFound = () => {
           404
         </p>
         <p className="text-lg mb-8" style={{ color: "#B8B3AF" }}>
-          {s.desc}
+          {t.notFound.desc}
         </p>
         <button
           onClick={() => navigate("/")}
           className="px-6 py-3 rounded-xl font-semibold text-sm"
           style={{ background: "#F59E0B", color: "#1C1917" }}
         >
-          {s.cta}
+          {t.notFound.cta}
         </button>
       </div>
     </div>

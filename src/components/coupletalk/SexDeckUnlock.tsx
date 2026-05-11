@@ -1,41 +1,10 @@
 import { ShieldCheck, Lock } from 'lucide-react';
 import { C, alpha } from '@/lib/colors';
-import { useLanguageContext } from '@/context/LanguageContext';
+import { useT } from '@/i18n/useT';
 import { useConsentSexDeck } from '@/hooks/useCoupleTalk';
 import type { CoupleTalkSession } from '@/integrations/supabase/veilor-types';
 
 const SEX_COLOR = '#C4748A';
-
-const S = {
-  ko: {
-    backButton: '← 덱 선택으로',
-    titleUnlocked: '🫦 섹스 이야기 덱이 열렸어요',
-    titleLocked: '🫦 섹스 이야기 잠금 해제',
-    description: '이 카드 덱은 두 사람 모두의 동의가 필요해요.\n편안할 때 언제든 동의할 수 있어요.',
-    me: '나',
-    partner: '파트너',
-    consented: '동의 ✓',
-    notConsented: '미동의',
-    processing: '처리 중...',
-    agreeButton: '나는 동의해요',
-    waitingPartner: '파트너의 동의를 기다리고 있어요',
-    safetyNotice: '이 카드 덱의 질문들은 성적인 주제를 다룹니다. 언제든 대화를 멈출 수 있고, 불편한 질문은 건너뛰어도 괜찮아요. 두 사람의 경계가 항상 우선입니다.',
-  },
-  en: {
-    backButton: '← Back to decks',
-    titleUnlocked: '🫦 Sex Talk deck is now unlocked',
-    titleLocked: '🫦 Unlock Sex Talk',
-    description: 'This deck requires consent from both partners.\nYou can agree whenever you feel comfortable.',
-    me: 'Me',
-    partner: 'Partner',
-    consented: 'Agreed ✓',
-    notConsented: 'Not agreed',
-    processing: 'Processing...',
-    agreeButton: 'I agree',
-    waitingPartner: 'Waiting for your partner to agree',
-    safetyNotice: 'The questions in this deck cover sexual topics. You can stop the conversation at any time, and it\'s okay to skip questions that feel uncomfortable. Your boundaries always come first.',
-  },
-};
 
 interface Props {
   session: CoupleTalkSession;
@@ -44,8 +13,8 @@ interface Props {
 }
 
 export function SexDeckUnlock({ session, currentUserId, onBack }: Props) {
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.coupleTalkSexDeck;
 
   const consentMutation = useConsentSexDeck();
   const isUserA = session.user_a_id === currentUserId;

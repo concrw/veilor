@@ -4,38 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
-import { useLanguageContext } from '@/context/LanguageContext';
-
-const S = {
-  ko: {
-    normalizing: '직업 항목 정규화 중...',
-    back: '뒤로가기',
-    sessionLabel: '세션: ',
-    definitionLabel: '이 직업에 대한 당신만의 정의',
-    definitionPlaceholder: '예) 사람과 기술을 연결해 문제를 해결하는 역할',
-    memoryLabel: '처음 각인된 순간 (언제/어디서/누구와/무엇을/왜/어떻게)',
-    memoryPlaceholder: '예) 2018년 도서관에서 친구와 진로 상담 중 기사에서 처음 접함...',
-    prev: '이전',
-    review: '검토로',
-    next: '다음',
-    step1: '1단계로',
-    nextStep: '다음 단계',
-  },
-  en: {
-    normalizing: 'Normalizing career items...',
-    back: 'Back',
-    sessionLabel: 'Session: ',
-    definitionLabel: 'Your personal definition of this career',
-    definitionPlaceholder: 'e.g., A role that connects people and technology to solve problems',
-    memoryLabel: 'First imprint moment (when/where/with whom/what/why/how)',
-    memoryPlaceholder: 'e.g., First encountered it in a 2018 newspaper while discussing careers with a friend at the library...',
-    prev: 'Prev',
-    review: 'Review',
-    next: 'Next',
-    step1: 'Step 1',
-    nextStep: 'Next step',
-  },
-};
+import { useT } from '@/i18n/useT';
 
 interface Job {
   id: string;
@@ -75,8 +44,8 @@ export const Step2DefinitionSection = ({
   onNextStep,
   canGoStep3
 }: Step2DefinitionSectionProps) => {
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.why.step2;
 
   const [defDraft, setDefDraft] = useState("");
   const [memDraft, setMemDraft] = useState("");

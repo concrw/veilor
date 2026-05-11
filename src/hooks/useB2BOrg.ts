@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { veilorDb } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguageContext } from '@/context/LanguageContext';
+import { getT } from '@/i18n/useT';
 import { sendB2BInviteEmail } from '@/utils/emailService';
 import type {
   B2BOrg,
@@ -22,12 +23,12 @@ import type {
 export function useCreateOrg() {
   const { user } = useAuth();
   const { language } = useLanguageContext();
-  const isEn = language === 'en';
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const createOrg = async (input: B2BOrgOnboardingInput): Promise<B2BOrg | null> => {
-    if (!user) { setError(isEn ? 'Login required.' : '로그인이 필요합니다.'); return null; }
+    const t = getT(language);
+    if (!user) { setError(t.b2bDomain.errors.loginRequired); return null; }
     setLoading(true);
     setError(null);
 
@@ -60,7 +61,7 @@ export function useCreateOrg() {
 
       return org as B2BOrg;
     } catch (e) {
-      const msg = e instanceof Error ? e.message : (isEn ? 'Failed to create organization.' : '고객사 생성 중 오류가 발생했습니다.');
+      const msg = e instanceof Error ? e.message : t.b2bDomain.errors.createOrgFailed;
       setError(msg);
       return null;
     } finally {
@@ -77,7 +78,6 @@ export function useCreateOrg() {
 export function useMyOrg() {
   const { user } = useAuth();
   const { language } = useLanguageContext();
-  const isEn = language === 'en';
   const [org, setOrg] = useState<B2BOrg | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -100,7 +100,8 @@ export function useMyOrg() {
       if (err && err.code !== 'PGRST116') throw new Error(err.message);
       if (data?.b2b_orgs) setOrg(data.b2b_orgs as unknown as B2BOrg);
     } catch (e) {
-      const msg = e instanceof Error ? e.message : (isEn ? 'Failed to load organization info.' : '고객사 정보를 불러오지 못했습니다.');
+      const t = getT(language);
+      const msg = e instanceof Error ? e.message : t.b2bDomain.errors.loadOrgFailed;
       setError(msg);
     } finally {
       setLoading(false);
@@ -165,12 +166,12 @@ export function useInviteMembers(orgId: string, orgName: string) {
 export function useAcceptB2BInvite(token: string) {
   const { user } = useAuth();
   const { language } = useLanguageContext();
-  const isEn = language === 'en';
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const acceptInvite = async (): Promise<boolean> => {
-    if (!user) { setError(isEn ? 'Login required to accept invitation.' : '로그인 후 수락 가능합니다.'); return false; }
+    const t = getT(language);
+    if (!user) { setError(t.b2bDomain.errors.loginRequired); return false; }
     setLoading(true);
     setError(null);
     try {
@@ -182,7 +183,7 @@ export function useAcceptB2BInvite(token: string) {
         .gt('expires_at', new Date().toISOString())
         .single();
 
-      if (fetchErr || !inv) throw new Error(isEn ? 'Invalid or expired invitation.' : '유효하지 않거나 만료된 초대입니다.');
+      if (fetchErr || !inv) throw new Error(t.b2bDomain.errors.inviteExpired);
 
       await veilorDb.from('b2b_org_members').insert({
         org_id: inv.org_id,
@@ -204,7 +205,7 @@ export function useAcceptB2BInvite(token: string) {
 
       return true;
     } catch (e) {
-      setError(e instanceof Error ? e.message : '초대 수락 중 오류');
+      setError(e instanceof Error ? e.message : getT(language).b2bDomain.errors.inviteAcceptFailed);
       return false;
     } finally {
       setLoading(false);
@@ -241,7 +242,6 @@ export function useOrgWorkAggregate(orgId: string, weeks = 4) {
 // ─────────────────────────────────────────────
 export function useOrgMembers(orgId: string) {
   const { language } = useLanguageContext();
-  const isEn = language === 'en';
   const [members, setMembers] = useState<B2BOrgMember[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -260,7 +260,8 @@ export function useOrgMembers(orgId: string) {
       if (err) throw new Error(err.message);
       setMembers((data ?? []) as B2BOrgMember[]);
     } catch (e) {
-      setError(e instanceof Error ? e.message : (isEn ? 'Failed to load members.' : '멤버 목록 조회 실패'));
+      const t = getT(language);
+      setError(e instanceof Error ? e.message : t.b2bDomain.errors.loadMembersFailed);
     } finally {
       setLoading(false);
     }
@@ -275,12 +276,12 @@ export function useOrgMembers(orgId: string) {
 export function useSubmitCheckin() {
   const { user } = useAuth();
   const { language } = useLanguageContext();
-  const isEn = language === 'en';
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const submitCheckin = async (input: B2BCheckinInput): Promise<B2BCheckinSession | null> => {
-    if (!user) { setError(isEn ? 'Login required to submit check-in.' : '로그인이 필요합니다.'); return null; }
+    const t = getT(language);
+    if (!user) { setError(t.b2bDomain.errors.loadCheckinFailed); return null; }
     setLoading(true);
     setError(null);
 
@@ -315,7 +316,7 @@ export function useSubmitCheckin() {
 
       return data as B2BCheckinSession;
     } catch (e) {
-      setError(e instanceof Error ? e.message : '체크인 저장 중 오류');
+      setError(e instanceof Error ? e.message : getT(language).b2bDomain.errors.checkinSaveFailed);
       return null;
     } finally {
       setLoading(false);
@@ -330,7 +331,6 @@ export function useSubmitCheckin() {
 // ─────────────────────────────────────────────
 export function useOrgAggregate(orgId: string, weeks = 4) {
   const { language } = useLanguageContext();
-  const isEn = language === 'en';
   const [aggregates, setAggregates] = useState<B2BOrgAggregate[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -349,7 +349,8 @@ export function useOrgAggregate(orgId: string, weeks = 4) {
       if (err) throw new Error(err.message);
       setAggregates((data ?? []) as B2BOrgAggregate[]);
     } catch (e) {
-      setError(e instanceof Error ? e.message : (isEn ? 'Failed to load aggregated data.' : '집계 데이터 조회 실패'));
+      const t = getT(language);
+      setError(e instanceof Error ? e.message : t.b2bDomain.errors.loadAggregateFailed);
     } finally {
       setLoading(false);
     }
@@ -363,7 +364,6 @@ export function useOrgAggregate(orgId: string, weeks = 4) {
 // ─────────────────────────────────────────────
 export function useOrgEvents(orgId: string) {
   const { language } = useLanguageContext();
-  const isEn = language === 'en';
   const [events, setEvents] = useState<B2BOrgEvent[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -382,7 +382,8 @@ export function useOrgEvents(orgId: string) {
       if (err) throw new Error(err.message);
       setEvents((data ?? []) as B2BOrgEvent[]);
     } catch (e) {
-      setError(e instanceof Error ? e.message : (isEn ? 'Failed to load events.' : '이벤트 조회 실패'));
+      const t = getT(language);
+      setError(e instanceof Error ? e.message : t.b2bDomain.errors.loadEventsFailed);
     } finally {
       setLoading(false);
     }

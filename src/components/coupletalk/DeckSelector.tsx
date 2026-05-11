@@ -1,36 +1,7 @@
 import { Lock } from 'lucide-react';
 import { C, alpha } from '@/lib/colors';
-import { useLanguageContext } from '@/context/LanguageContext';
+import { useT } from '@/i18n/useT';
 import type { CoupleTalkCategory } from '@/integrations/supabase/veilor-types';
-
-const S = {
-  ko: {
-    heading: '어떤 이야기를 나눌까요?',
-    subheading: '카드를 뒤집으며 대화해보세요',
-    deckAriaLabel: (label: string) => `${label} 덱 선택`,
-    lockHint: '커플 양쪽 동의 후 해제',
-    decks: {
-      story:  { label: '우리의 이야기', sublabel: '일상, 추억, 습관' },
-      heart:  { label: '마음속 이야기', sublabel: '솔직한 감정, 두려움' },
-      future: { label: '미래 이야기',   sublabel: '계획, 꿈, 바라는 것' },
-      desire: { label: '욕망 이야기',   sublabel: '원하는 것, 경계, 설렘' },
-      sex:    { label: '섹스 이야기',   sublabel: '성적 취향, 원하는 것' },
-    },
-  },
-  en: {
-    heading: 'What would you like to talk about?',
-    subheading: 'Flip cards and start a conversation',
-    deckAriaLabel: (label: string) => `Select ${label} deck`,
-    lockHint: 'Unlocked when both partners agree',
-    decks: {
-      story:  { label: 'Our Story',    sublabel: 'Daily life, memories, habits' },
-      heart:  { label: 'Heart Talk',   sublabel: 'Honest feelings, fears' },
-      future: { label: 'Future Talk',  sublabel: 'Plans, dreams, hopes' },
-      desire: { label: 'Desire Talk',  sublabel: 'Wants, boundaries, excitement' },
-      sex:    { label: 'Sex Talk',     sublabel: 'Sexual preferences, desires' },
-    },
-  },
-};
 
 interface DeckConfig {
   category: CoupleTalkCategory;
@@ -53,8 +24,8 @@ interface Props {
 }
 
 export function DeckSelector({ onSelect, sexUnlocked, onSexLockClick }: Props) {
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.coupleTalkDeckSelector;
 
   return (
     <div style={{ padding: '0 20px 20px' }}>

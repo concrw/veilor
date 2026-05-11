@@ -2,6 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguageContext } from "@/context/LanguageContext";
+import { getT } from "@/i18n/useT";
 import type { Job, SessionInfo } from "./useWhyPageFlow";
 
 export function useWhyDataOps(
@@ -13,7 +14,6 @@ export function useWhyDataOps(
 ) {
   const { user } = useAuth();
   const { language } = useLanguageContext();
-  const isEn = language === 'en';
 
   const updateProfileAnalysisStatus = async () => {
     if (!user?.id) return;
@@ -102,9 +102,10 @@ export function useWhyDataOps(
     }
 
     if (uniqueOriginal.length === 0) {
+      const t = getT(language);
       toast({
-        title: isEn ? 'Duplicate entry' : '중복 항목',
-        description: isEn ? 'This job has already been added.' : '이미 추가된 직업입니다.',
+        title: t.why.toasts.duplicateEntry,
+        description: t.why.toasts.duplicateEntryDesc,
         variant: "destructive",
       });
       return;
@@ -131,8 +132,9 @@ export function useWhyDataOps(
       .select("id, job_name, definition, first_memory, category");
 
     if (error) {
+      const t = getT(language);
       setJobs(prev => prev.filter(p => !p.id.startsWith("tmp-")));
-      toast({ title: isEn ? 'Failed to add' : '추가 실패', description: isEn ? 'Please try again shortly.' : '잠시 후 다시 시도해주세요.', variant: "destructive" });
+      toast({ title: t.why.toasts.addFailed, description: t.why.toasts.saveFailedDesc, variant: "destructive" });
       return;
     }
 
@@ -205,9 +207,10 @@ export function useWhyDataOps(
     const mem = memory.trim();
 
     if (!def || !mem) {
+      const t = getT(language);
       toast({
-        title: isEn ? 'Input required' : '입력 필요',
-        description: isEn ? 'Please fill in both definition and imprinting moment.' : '정의와 각인 순간을 모두 작성하세요.',
+        title: t.why.toasts.inputRequired,
+        description: t.why.toasts.inputRequiredDesc,
         variant: "destructive",
       });
       return false;
@@ -219,7 +222,8 @@ export function useWhyDataOps(
       .eq("id", current.id);
 
     if (error) {
-      toast({ title: isEn ? 'Save failed' : '저장 실패', description: isEn ? 'Please try again shortly.' : '잠시 후 다시 시도해주세요.', variant: "destructive" });
+      const t = getT(language);
+      toast({ title: t.why.toasts.saveFailed, description: t.why.toasts.saveFailedDesc, variant: "destructive" });
       return false;
     }
 
@@ -252,14 +256,16 @@ export function useWhyDataOps(
 
       await updateProfileAnalysisStatus();
 
+      const t = getT(language);
       toast({
-        title: isEn ? 'WHY analysis complete!' : 'WHY 분석 완료!',
-        description: isEn ? 'Ikigai design and community matching are now available.' : '이제 Ikigai 설계와 커뮤니티 매칭을 사용할 수 있습니다.',
+        title: t.why.toasts.classificationSaved,
+        description: t.why.toasts.classificationSavedDesc,
       });
       setStep(4);
     } catch (e: unknown) {
+      const t = getT(language);
       console.error("Classification save error:", e);
-      toast({ title: isEn ? 'Save failed' : '저장 실패', description: isEn ? 'Classification save failed.' : '분류 저장에 실패했습니다.', variant: "destructive" });
+      toast({ title: t.why.toasts.classificationFailed, description: t.why.toasts.classificationFailedDesc, variant: "destructive" });
     }
   };
 
@@ -270,12 +276,13 @@ export function useWhyDataOps(
     resetTimer: () => void,
   ) => {
     if (jobs.length > 0) {
+      const t = getT(language);
       const jobNames = jobs.map(j => j.job_name).join(', ');
       setMemoText(jobNames);
 
       toast({
-        title: isEn ? 'Switched to edit mode' : '수정 모드로 전환',
-        description: isEn ? 'Existing job data loaded. Edit and continue.' : '기존 직업 데이터를 불러왔습니다. 수정 후 다시 진행하세요.',
+        title: t.why.toasts.editModeTitle,
+        description: t.why.toasts.editModeDesc,
       });
     }
 

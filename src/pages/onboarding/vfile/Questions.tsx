@@ -5,25 +5,7 @@ import { VFILE_CONTEXT_LABELS } from '@/lib/vfileAlgorithm';
 import type { VFileContext } from '@/lib/vfileAlgorithm';
 import { Slider } from '@/components/ui/slider';
 import { useLanguageContext } from '@/context/LanguageContext';
-
-const S = {
-  ko: {
-    subtitle: 'V-File 진단',
-    progressLabel: '진행률',
-    honestHint: '질문에 솔직하게 답할수록\n더 정확한 결과를 얻습니다',
-    axisLabels: { A: '애착', B: '소통', C: '욕구표현', D: '역할' },
-    btnNext: '다음',
-    btnPrev: '이전 문항으로',
-  },
-  en: {
-    subtitle: 'V-File Diagnosis',
-    progressLabel: 'Progress',
-    honestHint: 'The more honest your answers,\nthe more accurate your results',
-    axisLabels: { A: 'Attachment', B: 'Communication', C: 'Expression', D: 'Role' },
-    btnNext: 'Next',
-    btnPrev: 'Previous question',
-  },
-};
+import { useT } from '@/i18n/useT';
 
 const STORAGE_KEY = 'veilor:priper-progress';
 
@@ -31,7 +13,8 @@ export default function PriperQuestions() {
   const navigate = useNavigate();
   const location = useLocation();
   const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.vfileQuestions;
   const context = ((location.state as Record<string, unknown>)?.context as VFileContext) ?? 'general';
   const storageKey = context === 'general' ? STORAGE_KEY : `${STORAGE_KEY}-${context}`;
 

@@ -44,6 +44,10 @@ export default function AmberSheet({ open, onClose, aiName }: Props) {
       setMsgs(m => [...m, { role: 'ai', text: result.response, tone: vent.amberSheet.toneListening }]);
     } catch (err: unknown) {
       if (err instanceof Error && err.name === 'AbortError') return;
+      if (err instanceof Error && err.message === 'MONTHLY_LIMIT_REACHED') {
+        window.dispatchEvent(new Event('veilor:ai-limit-reached'));
+        return;
+      }
       setMsgs(m => [...m, { role: 'ai', text: vent.amberSheet.fallbackText, tone: vent.amberSheet.toneDig }]);
     } finally {
       setThinking(false);

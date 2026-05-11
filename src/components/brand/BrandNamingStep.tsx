@@ -5,68 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Plus, X, Lightbulb, Sparkles } from "lucide-react";
 import { useState } from "react";
-import { useLanguageContext } from "@/context/LanguageContext";
+import { useT } from '@/i18n/useT';
 
-const S = {
-  ko: {
-    cardTitle: "브랜드명 선택",
-    cardDesc: "브랜드를 대표할 이름을 선택하거나 새로 생성하세요",
-    aiSuggestedLabel: "AI 추천 브랜드명",
-    selectedBadge: "선택됨",
-    noAiNames: "AI가 추천한 브랜드명이 없습니다",
-    customInputLabel: "직접 입력",
-    customInputPlaceholder: "브랜드명 직접 입력",
-    generateTitle: "추가 브랜드명 생성",
-    favoriteWordsLabel: "좋아하는 단어들",
-    favoriteWordsPlaceholder: "예: 혁신, 창의, 자유, 성장 (콤마로 구분)",
-    favoriteBrandsLabel: "좋아하는 브랜드들",
-    favoriteBrandsPlaceholder: "예: Apple, Nike, Tesla (콤마로 구분)",
-    generateBtn: "AI로 추가 브랜드명 생성",
-    selectedNameTitle: "선택된 브랜드명",
-    selectedNameConfirm: "이 이름으로 브랜드를 시작하시겠습니까?",
-    noSelectedName: "브랜드명을 선택하거나 입력해주세요",
-    tipsTitle: "브랜드명 선택 팁",
-    tip1: "기억하기 쉬운",
-    tip1Desc: " 이름을 선택하세요",
-    tip2: "발음하기 쉽고",
-    tip2Desc: " 검색하기 좋은 이름",
-    tip3: "브랜드 컨셉",
-    tip3Desc: "과 일치하는 느낌의 이름",
-    tip4: "도메인과 SNS",
-    tip4Desc: " 계정 확보 가능성 확인",
-    tip5: "확장성",
-    tip5Desc: "을 고려한 이름 (너무 제한적이지 않게)",
-  },
-  en: {
-    cardTitle: "Brand Name Selection",
-    cardDesc: "Select or create a name to represent your brand",
-    aiSuggestedLabel: "AI-Recommended Brand Names",
-    selectedBadge: "Selected",
-    noAiNames: "No AI-recommended brand names yet",
-    customInputLabel: "Enter Manually",
-    customInputPlaceholder: "Enter brand name directly",
-    generateTitle: "Generate More Brand Names",
-    favoriteWordsLabel: "Favorite Words",
-    favoriteWordsPlaceholder: "e.g. Innovative, Creative, Free, Growth (comma-separated)",
-    favoriteBrandsLabel: "Favorite Brands",
-    favoriteBrandsPlaceholder: "e.g. Apple, Nike, Tesla (comma-separated)",
-    generateBtn: "Generate More Names with AI",
-    selectedNameTitle: "Selected Brand Name",
-    selectedNameConfirm: "Would you like to start your brand with this name?",
-    noSelectedName: "Please select or enter a brand name",
-    tipsTitle: "Brand Naming Tips",
-    tip1: "Easy to remember",
-    tip1Desc: " — choose a name people won't forget",
-    tip2: "Easy to pronounce",
-    tip2Desc: " and search-friendly",
-    tip3: "Brand concept",
-    tip3Desc: " — the name should feel aligned with your concept",
-    tip4: "Domain & SNS",
-    tip4Desc: " — check availability for domain and social accounts",
-    tip5: "Scalability",
-    tip5Desc: " — avoid names that are too limiting",
-  },
-};
 
 interface BrandNamingStepProps {
   brandNames: string[];
@@ -81,8 +21,8 @@ export const BrandNamingStep = ({
   onNameSelect,
   onUpdateNames
 }: BrandNamingStepProps) => {
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.brandDomain.naming;
 
   const [customName, setCustomName] = useState("");
   const [favoriteWords, setFavoriteWords] = useState("");

@@ -1,29 +1,8 @@
 import { useState, useEffect } from 'react';
 import { C, alpha } from '@/lib/colors';
-import { useLanguageContext } from '@/context/LanguageContext';
+import { useT } from '@/i18n/useT';
 import { useSaveCoupleTalkAnswer } from '@/hooks/useCoupleTalk';
 import type { CoupleTalkAnswer } from '@/integrations/supabase/veilor-types';
-
-const S = {
-  ko: {
-    myAnswerLabel: '나의 답변',
-    editButton: '수정하기',
-    placeholder: '솔직하게 적어보세요...',
-    saving: '저장 중...',
-    save: '저장',
-    partnerAnswerLabel: '파트너의 답변',
-    partnerPending: '파트너가 아직 답변하지 않았어요',
-  },
-  en: {
-    myAnswerLabel: 'My Answer',
-    editButton: 'Edit',
-    placeholder: 'Be honest...',
-    saving: 'Saving...',
-    save: 'Save',
-    partnerAnswerLabel: "Partner's Answer",
-    partnerPending: 'Your partner has not answered yet',
-  },
-};
 
 interface Props {
   sessionId: string;
@@ -35,8 +14,8 @@ interface Props {
 }
 
 export function AnswerPanel({ sessionId, cardId, currentUserId, partnerId, answers, cardColor }: Props) {
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.coupleTalkAnswer;
 
   const myAnswer = answers.find(a => a.user_id === currentUserId);
   const partnerAnswer = partnerId ? answers.find(a => a.user_id === partnerId) : null;

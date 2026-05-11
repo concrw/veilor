@@ -14,18 +14,7 @@ import { MESSAGES } from "@/constants/messages";
 import { UI_TEXT } from "@/constants/ui";
 import { PLACEHOLDERS } from "@/constants/placeholders";
 import { UNLOCK_HOUR, LOCK_HOUR } from "@/lib/constants";
-import { useLanguageContext } from "@/context/LanguageContext";
-
-const S = {
-  ko: {
-    defTooLong: '정의는 500자 이내로 입력해주세요.',
-    memTooLong: '기억은 500자 이내로 입력해주세요.',
-  },
-  en: {
-    defTooLong: 'Definition must be 500 characters or fewer.',
-    memTooLong: 'Memory must be 500 characters or fewer.',
-  },
-} as const;
+import { useT } from "@/i18n/useT";
 
 interface TodayKeywordProps {
   keyword: string;
@@ -43,8 +32,8 @@ export function TodayKeyword({
   hasParticipated
 }: TodayKeywordProps) {
   const { toast } = useToast();
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.codetalkTodayKeyword;
   const [definition, setDefinition] = useState("");
   const [memory, setMemory] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);

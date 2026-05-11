@@ -7,7 +7,8 @@ import {
 } from "@/hooks/usePersonas";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
-import { useLanguageContext } from "@/context/LanguageContext";
+import { useT } from '@/i18n/useT';
+import { useLanguageContext } from '@/context/LanguageContext';
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -27,52 +28,6 @@ import {
 } from "lucide-react";
 import { ARCHETYPE_CONFIGS } from "@/integrations/supabase/persona-types";
 
-const S = {
-  ko: {
-    emptyState: '성장 대시보드는 페르소나가 생성된 후 사용할 수 있습니다.',
-    title: '페르소나 성장 추적',
-    subtitle: '각 페르소나의 발전 과정을 추적하고 목표를 달성하세요',
-    strengthLabel: '강도',
-    prevLabel: (n: number) => `이전: ${n}%`,
-    currentLabel: (n: number) => `현재: ${n}%`,
-    milestonesTab: '마일스톤',
-    growthTab: '성장 추이',
-    goalDesc: '성장 목표 및 달성 현황',
-    noMilestones: '아직 마일스톤이 없습니다. 첫 마일스톤을 만들어보세요!',
-    completed: '완료',
-    completedDate: (d: string) => `완료일: ${d}`,
-    targetDate: (d: string) => `목표일: ${d}`,
-    growthTitle: '성장 추이',
-    growthDesc: (name: string) => `${name}의 강도 변화 및 발전 방향`,
-    currentStrength: '현재 강도',
-    prevMeasure: '이전 측정',
-    changeAmount: '변화량',
-    notEnoughData: '아직 성장 데이터가 충분하지 않습니다.',
-    growthTip: '💡 페르소나 강도는 관련 활동(Ikigai 설계, 콘텐츠 발행, 커뮤니티 참여 등)을 통해 성장합니다. 꾸준히 활동하여 이 페르소나를 발전시켜 보세요!',
-  },
-  en: {
-    emptyState: 'The growth dashboard is available after a persona has been created.',
-    title: 'Persona Growth Tracking',
-    subtitle: "Track each persona's development and achieve your goals",
-    strengthLabel: 'Strength',
-    prevLabel: (n: number) => `Before: ${n}%`,
-    currentLabel: (n: number) => `Current: ${n}%`,
-    milestonesTab: 'Milestones',
-    growthTab: 'Growth Trend',
-    goalDesc: 'Growth goals and achievement status',
-    noMilestones: 'No milestones yet. Create your first milestone!',
-    completed: 'Done',
-    completedDate: (d: string) => `Completed: ${d}`,
-    targetDate: (d: string) => `Target: ${d}`,
-    growthTitle: 'Growth Trend',
-    growthDesc: (name: string) => `${name}'s strength changes and direction`,
-    currentStrength: 'Current Strength',
-    prevMeasure: 'Previous Measure',
-    changeAmount: 'Change',
-    notEnoughData: 'Not enough growth data yet.',
-    growthTip: '💡 Persona strength grows through related activities (Ikigai design, content publishing, community engagement, etc.). Keep active to develop this persona!',
-  },
-};
 
 interface GrowthSummaryRow {
   persona_id: string;
@@ -93,8 +48,9 @@ interface MilestoneRow {
 
 export function PersonaGrowthDashboard() {
   const { user } = useAuth();
+  const t = useT();
+  const s = t.personaDomain.growthDashboard;
   const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
   const queryClient = useQueryClient();
   const { data: personas, isLoading: personasLoading } = usePersonas();
   const { data: growthSummary, isLoading: growthLoading } = useGrowthSummary();

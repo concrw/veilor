@@ -1,34 +1,5 @@
 import { C, alpha } from '@/lib/colors';
-import { useLanguageContext } from '@/context/LanguageContext';
-
-const S = {
-  ko: {
-    milestoneLabels: ['탐색', '발견', '직면', '재정의', '완성'] as const,
-    milestoneMessages: {
-      90: '마지막 구간입니다. 100일의 여정이 하나로 모이고 있어요.',
-      75: '재정의 구간 — 당신만의 언어가 형태를 갖추고 있어요.',
-      50: '직면 구간 — 더 깊은 곳으로 향하고 있어요.',
-      25: '발견 구간 — 반복되는 패턴이 보이기 시작해요.',
-      10: '탐색 구간 — 자기 언어의 윤곽이 드러나고 있어요.',
-    } as Record<number, string>,
-    streakDays: (n: number) => `${n}일 연속`,
-    complete: (n: number) => `${n}% 완료`,
-    todayKeyword: '오늘의 키워드',
-  },
-  en: {
-    milestoneLabels: ['Explore', 'Discover', 'Confront', 'Redefine', 'Complete'] as const,
-    milestoneMessages: {
-      90: 'Final stretch. The 100-day journey is converging.',
-      75: 'Redefine phase — your own language is taking shape.',
-      50: 'Confront phase — heading into deeper territory.',
-      25: 'Discover phase — recurring patterns are emerging.',
-      10: 'Explore phase — the outline of your inner language is appearing.',
-    } as Record<number, string>,
-    streakDays: (n: number) => `${n}-day streak`,
-    complete: (n: number) => `${n}% done`,
-    todayKeyword: "Today's keyword",
-  },
-} as const;
+import { useT } from '@/i18n/useT';
 
 const MILESTONE_DAYS = [10, 25, 50, 75, 100] as const;
 
@@ -48,8 +19,8 @@ function getMilestoneMessage(day: number, msgs: Record<number, string>): string 
 }
 
 export function KeywordCard({ keyword, streakCount, streakMessage }: KeywordCardProps) {
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.codetalkKeywordCard;
   const dayNumber = keyword?.day_number ?? 1;
 
   const MILESTONES = MILESTONE_DAYS.map((day, i) => ({

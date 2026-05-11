@@ -1,5 +1,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useLanguageContext } from '@/context/LanguageContext';
+import { getT } from '@/i18n/useT';
 
 const SUPABASE_URL  = import.meta.env.VITE_SUPABASE_URL as string;
 const TTS_ENDPOINT  = `${SUPABASE_URL}/functions/v1/elevenlabs-tts`;
@@ -12,6 +14,7 @@ export interface UseElevenLabsTTSOptions {
 
 export function useElevenLabsTTS(options: UseElevenLabsTTSOptions = {}) {
   const { lang = 'ko-KR', voiceId, onEnd } = options;
+  const { language } = useLanguageContext();
   const [speaking, setSpeaking] = useState(false);
   const [error,    setError]    = useState<string | null>(null);
 
@@ -38,7 +41,8 @@ export function useElevenLabsTTS(options: UseElevenLabsTTSOptions = {}) {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
-      if (!token) throw new Error('로그인이 필요합니다.');
+      const s = getT(language).voiceCloneSettings;
+      if (!token) throw new Error(s.errTtsLoginRequired);
 
       const res = await fetch(TTS_ENDPOINT, {
         method: 'POST',
@@ -51,7 +55,7 @@ export function useElevenLabsTTS(options: UseElevenLabsTTSOptions = {}) {
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({})) as { error?: string };
-        throw new Error(err.error ?? `TTS 오류 (${res.status})`);
+        throw new Error(err.error ?? s.errTts(res.status));
       }
 
       const blob = URL.createObjectURL(await res.blob());
@@ -74,7 +78,7 @@ export function useElevenLabsTTS(options: UseElevenLabsTTSOptions = {}) {
       await audio.play();
     } catch (err) {
       setSpeaking(false);
-      setError(err instanceof Error ? err.message : '알 수 없는 오류');
+      setError(err instanceof Error ? err.message : getT(language).voiceCloneSettings.errTtsUnknown);
       onEndRef.current?.();
     }
   }, [voiceId, lang, stop]);

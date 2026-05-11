@@ -1,48 +1,17 @@
 import { useState } from 'react';
 import { Copy, Check } from 'lucide-react';
 import { C, alpha } from '@/lib/colors';
-import { useLanguageContext } from '@/context/LanguageContext';
+import { useT } from '@/i18n/useT';
 import { useCreateCoupleTalkSession, useJoinCoupleTalkSession } from '@/hooks/useCoupleTalk';
 import type { CoupleTalkSession } from '@/integrations/supabase/veilor-types';
-
-const S = {
-  ko: {
-    heading: '파트너와 함께해요',
-    subheading: '초대코드로 파트너를 연결하면 함께 카드를 뒤집을 수 있어요',
-    inviteTitle: '파트너 초대하기',
-    tokenExpiry: '7일 후 만료 · 1회 사용 가능',
-    copyAriaLabel: '초대코드 복사',
-    issuingCode: '발급 중...',
-    issueButton: '초대코드 발급하기',
-    enterCodeTitle: '초대코드 입력하기',
-    enterCodeSub: '파트너에게 받은 코드를 입력하세요',
-    connecting: '연결 중...',
-    connectButton: '연결하기',
-    defaultError: '오류가 발생했습니다',
-  },
-  en: {
-    heading: 'Connect with your partner',
-    subheading: 'Link your partner with an invite code to flip cards together',
-    inviteTitle: 'Invite partner',
-    tokenExpiry: 'Expires in 7 days · Single use',
-    copyAriaLabel: 'Copy invite code',
-    issuingCode: 'Generating...',
-    issueButton: 'Generate invite code',
-    enterCodeTitle: 'Enter invite code',
-    enterCodeSub: 'Enter the code you received from your partner',
-    connecting: 'Connecting...',
-    connectButton: 'Connect',
-    defaultError: 'An error occurred',
-  },
-};
 
 interface Props {
   existingSession: CoupleTalkSession | null;
 }
 
 export function PartnerInvite({ existingSession }: Props) {
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.coupleTalkPartnerInvite;
 
   const [copied, setCopied] = useState(false);
   const [codeInput, setCodeInput] = useState('');
@@ -54,8 +23,8 @@ export function PartnerInvite({ existingSession }: Props) {
 
   const token = existingSession?.invite_token;
 
-  const handleCopy = (t: string) => {
-    navigator.clipboard.writeText(t).then(() => {
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });

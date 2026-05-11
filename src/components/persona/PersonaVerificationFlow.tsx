@@ -1,44 +1,8 @@
 import { useState } from "react";
 import { useVerifyPersona, useUpdatePersona } from "@/hooks/usePersonas";
 import { PersonaWithDetails } from "@/integrations/supabase/persona-types";
-import { useLanguageContext } from "@/context/LanguageContext";
+import { useT } from '@/i18n/useT';
 
-const S = {
-  ko: {
-    titleEdit: '페르소나 수정',
-    titleVerify: '페르소나 검증',
-    descEdit: 'AI가 제안한 내용을 수정할 수 있습니다',
-    descVerify: 'AI가 분석한 페르소나가 정확한가요?',
-    strengthSuffix: (n: number) => `${n}% 강도`,
-    themeLabel: '테마 설명',
-    keywordsLabel: '관련 키워드',
-    btnAccept: '정확해요',
-    btnEdit: '수정할래요',
-    nameLabel: '페르소나 이름',
-    namePlaceholder: '예: 돕는 나, 창작하는 나',
-    descLabel: '테마 설명',
-    descPlaceholder: '이 페르소나를 설명하는 문장을 작성하세요',
-    cancel: '취소',
-    saveVerify: '저장하고 검증 완료',
-  },
-  en: {
-    titleEdit: 'Edit Persona',
-    titleVerify: 'Verify Persona',
-    descEdit: 'You can edit the AI-suggested details',
-    descVerify: 'Is the AI-analyzed persona accurate?',
-    strengthSuffix: (n: number) => `${n}% strength`,
-    themeLabel: 'Theme Description',
-    keywordsLabel: 'Related Keywords',
-    btnAccept: 'Looks right',
-    btnEdit: 'Edit it',
-    nameLabel: 'Persona Name',
-    namePlaceholder: 'e.g. Helper Me, Creative Me',
-    descLabel: 'Theme Description',
-    descPlaceholder: 'Write a sentence that describes this persona',
-    cancel: 'Cancel',
-    saveVerify: 'Save & Complete Verification',
-  },
-};
 import {
   Dialog,
   DialogContent,
@@ -67,8 +31,8 @@ export function PersonaVerificationFlow({
   onOpenChange,
   onVerified,
 }: PersonaVerificationFlowProps) {
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.personaDomain.verificationFlow;
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(persona.persona_name);
   const [editedDescription, setEditedDescription] = useState(persona.theme_description);

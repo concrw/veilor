@@ -1,76 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { useLanguageContext } from "@/context/LanguageContext";
-
-const S = {
-  ko: {
-    loading: '로딩 중...',
-    subtitle: '관계의 가면을 발견하는 여정',
-    feature1Title: '나의 관계 언어',
-    feature1Desc: 'V-File 진단으로 내가 관계에서 반복하는 패턴과 가면을 발견해요.',
-    feature2Title: 'AI 엠버와 대화',
-    feature2Desc: '감정을 판단 없이 들어주는 AI와 함께 속마음을 꺼내보세요.',
-    feature3Title: '패턴 분석 Dig',
-    feature3Desc: '왜 이런 상황이 반복되는지 심층적으로 파고들어요.',
-    pageTitle: '로그인',
-    pageSubtitle: '당신의 관계 언어를 발견하세요',
-    emailPlaceholder: '이메일',
-    passwordPlaceholder: '비밀번호',
-    submitting: '로그인 중...',
-    submit: '로그인',
-    divider: '또는',
-    googleLogin: 'Google로 로그인',
-    noAccount: '계정이 없으신가요?',
-    signup: '회원가입',
-    errRequired: '이메일과 비밀번호를 입력해주세요.',
-    errGeneric: '로그인 중 오류가 발생했습니다.',
-    errInvalidCredentials: '이메일 또는 비밀번호가 올바르지 않습니다.',
-    errEmailNotConfirmed: '이메일 인증이 필요합니다. 받은 편지함을 확인해 주세요.',
-    errRateLimit: '잠시 후 다시 시도해 주세요.',
-    errUserNotFound: '등록되지 않은 이메일입니다.',
-    errNetwork: '네트워크 오류가 발생했습니다. 인터넷 연결을 확인해 주세요.',
-    errLoginFailed: '로그인에 실패했습니다. 다시 시도해 주세요.',
-    errGoogleFailed: 'Google 로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.',
-    errGoogleGeneric: 'Google 로그인 중 오류가 발생했습니다.',
-  },
-  en: {
-    loading: 'Loading...',
-    subtitle: 'Discover your relationship language',
-    feature1Title: 'My Relationship Language',
-    feature1Desc: "Discover the patterns and masks you repeat in relationships through V-File diagnosis.",
-    feature2Title: 'Chat with AI Amber',
-    feature2Desc: "Open up your inner thoughts with an AI that listens without judgment.",
-    feature3Title: 'Pattern Analysis Dig',
-    feature3Desc: "Dig deep into why the same situations keep repeating.",
-    pageTitle: 'Sign In',
-    pageSubtitle: 'Discover your relationship language',
-    emailPlaceholder: 'Email',
-    passwordPlaceholder: 'Password',
-    submitting: 'Signing in...',
-    submit: 'Sign In',
-    divider: 'or',
-    googleLogin: 'Sign in with Google',
-    noAccount: "Don't have an account?",
-    signup: 'Sign Up',
-    errRequired: 'Please enter your email and password.',
-    errGeneric: 'An error occurred while signing in.',
-    errInvalidCredentials: 'Incorrect email or password.',
-    errEmailNotConfirmed: 'Email verification required. Please check your inbox.',
-    errRateLimit: 'Please try again later.',
-    errUserNotFound: 'No account found with this email.',
-    errNetwork: 'A network error occurred. Please check your internet connection.',
-    errLoginFailed: 'Sign in failed. Please try again.',
-    errGoogleFailed: 'Google sign-in failed. Please try again later.',
-    errGoogleGeneric: 'An error occurred during Google sign-in.',
-  },
-};
+import { useT } from "@/i18n/useT";
 
 const Login = () => {
   const { user, loading, signIn, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.loginPage;
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -160,7 +97,7 @@ const Login = () => {
   }
 
   return (
-    <main className="min-h-screen flex" style={{ background: '#1C1917', fontFamily: "'DM Sans', sans-serif" }}>
+    <main className="h-dvh flex" style={{ background: '#1C1917', fontFamily: "'DM Sans', sans-serif" }}>
 
       {/* 좌측 브랜드 패널 — PC 전용 */}
       <div className="hidden lg:flex flex-col justify-center flex-1 px-16 py-14 gap-12" style={{ borderRight: '1px solid #2A2624' }}>
@@ -185,14 +122,11 @@ const Login = () => {
       </div>
 
       {/* 우측 폼 영역 */}
-      <div className="flex flex-col flex-1 lg:flex-none lg:w-[480px] items-center justify-center px-8 py-10">
-        {/* 모바일 헤더 */}
-        <div className="lg:hidden text-center mb-8">
-          <img src="/icon-192x192.png" alt="VEILOR" className="w-16 h-16 rounded-2xl mx-auto" />
-        </div>
+      <div className="flex flex-col flex-1 h-full lg:flex-none lg:w-[480px] items-center justify-center px-8 py-10">
 
       <div className="w-full max-w-sm rounded-2xl px-6 py-6" style={{ background: '#292524', border: '1px solid #44403C' }}>
         <div className="text-center pb-4">
+          <img src="/icon-192x192.png" alt="VEILOR" className="lg:hidden w-12 h-12 rounded-xl mx-auto mb-3" />
           <h2 className="text-lg font-medium" style={{ color: '#F5F5F4' }}>{s.pageTitle}</h2>
           <p className="text-xs mt-1" style={{ color: '#B8B3AF' }}>
             {s.pageSubtitle}
@@ -214,12 +148,13 @@ const Login = () => {
               onChange={(e) => setEmail(e.target.value)}
               disabled={submitting}
               onKeyPress={handleKeyPress}
-              className="w-full text-sm rounded-xl px-4 py-3 outline-none transition-colors"
+              className="w-full rounded-xl px-4 py-3 outline-none transition-colors"
               style={{
                 background: '#1C1917',
                 border: '1px solid #44403C',
                 color: '#F5F5F4',
                 fontFamily: "'DM Sans', sans-serif",
+                fontSize: 16,
               }}
             />
 
@@ -230,12 +165,13 @@ const Login = () => {
               onChange={(e) => setPassword(e.target.value)}
               disabled={submitting}
               onKeyPress={handleKeyPress}
-              className="w-full text-sm rounded-xl px-4 py-3 outline-none transition-colors"
+              className="w-full rounded-xl px-4 py-3 outline-none transition-colors"
               style={{
                 background: '#1C1917',
                 border: '1px solid #44403C',
                 color: '#F5F5F4',
                 fontFamily: "'DM Sans', sans-serif",
+                fontSize: 16,
               }}
             />
 

@@ -7,110 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { veilorDb } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { ROUTINE_MILESTONES } from '@/data/routineConstants';
-import { useLanguageContext } from '@/context/LanguageContext';
-
-// ──────────────────────────────────────────────────────────────────────────────
-// i18n
-// ──────────────────────────────────────────────────────────────────────────────
-
-const S = {
-  ko: {
-    moodItems: [
-      { label: '😫', text: '힘들어' },
-      { label: '😔', text: '별로야' },
-      { label: '😐', text: '그냥' },
-      { label: '😊', text: '괜찮아' },
-      { label: '😄', text: '좋아' },
-    ],
-    energyItems: [
-      { label: '🪫', text: '완전 방전' },
-      { label: '🔋', text: '조금 남음' },
-      { label: '⚡', text: '보통' },
-      { label: '🔥', text: '에너지 있음' },
-    ],
-    activityItems: [
-      '일했어', '공부했어', '운동했어', '사람 만났어',
-      '혼자 있었어', '쉬었어', '뭔가 만들었어', '바깥에 나갔어',
-    ],
-    mood: {
-      stepLabel: '오늘의 감정',
-      title: '지금 기분이 어때요?',
-      hint: '선택하면 다음으로 넘어가요',
-    },
-    energy: {
-      stepLabel: '에너지',
-      title: '에너지는요?',
-      hint: '선택하면 다음으로 넘어가요',
-      back: '← 뒤로',
-    },
-    activity: {
-      stepLabel: '오늘 한 것 (선택)',
-      title: '오늘 뭐 했어요?',
-      back: '← 뒤로',
-      save: '오늘 체크인 완료',
-      saving: '저장 중...',
-      skip: '그냥 건너뛰고 완료',
-    },
-    done: {
-      streakUnit: '일',
-      milestoneTitle: (streak: number) => `${streak}일 달성!`,
-      milestoneDesc: '마일스톤을 넘었어요. 이게 쌓이는 거예요.',
-      regularTitle: (streak: number) => `${streak}일째`,
-      regularDesc: '오늘도 기록했어요. 내일도 이어가요.',
-      currentStreak: '현재 스트릭',
-      home: '홈으로',
-    },
-    saveError: '저장 중 오류가 발생했습니다',
-  },
-  en: {
-    moodItems: [
-      { label: '😫', text: 'Tough' },
-      { label: '😔', text: 'Not great' },
-      { label: '😐', text: 'Okay' },
-      { label: '😊', text: 'Good' },
-      { label: '😄', text: 'Great' },
-    ],
-    energyItems: [
-      { label: '🪫', text: 'Drained' },
-      { label: '🔋', text: 'Low' },
-      { label: '⚡', text: 'Normal' },
-      { label: '🔥', text: 'Energized' },
-    ],
-    activityItems: [
-      'Worked', 'Studied', 'Exercised', 'Met people',
-      'Was alone', 'Rested', 'Made something', 'Went outside',
-    ],
-    mood: {
-      stepLabel: "Today's mood",
-      title: 'How are you feeling?',
-      hint: 'Select to continue',
-    },
-    energy: {
-      stepLabel: 'Energy',
-      title: 'How is your energy?',
-      hint: 'Select to continue',
-      back: '← Back',
-    },
-    activity: {
-      stepLabel: 'What you did today (optional)',
-      title: 'What did you do today?',
-      back: '← Back',
-      save: "Today's check-in done",
-      saving: 'Saving...',
-      skip: 'Skip and complete',
-    },
-    done: {
-      streakUnit: 'days',
-      milestoneTitle: (streak: number) => `${streak}-day milestone!`,
-      milestoneDesc: "You've hit a milestone. It all adds up.",
-      regularTitle: (streak: number) => `Day ${streak}`,
-      regularDesc: 'Recorded again today. Keep it going tomorrow.',
-      currentStreak: 'Current streak',
-      home: 'Go home',
-    },
-    saveError: 'An error occurred while saving',
-  },
-} as const;
+import { useT } from '@/i18n/useT';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // 타입
@@ -153,8 +50,8 @@ type Step = 'mood' | 'energy' | 'activity' | 'done';
 
 export default function RoutineCheckinModal({ onClose, onComplete }: Props) {
   const { user } = useAuth();
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.routineCheckin;
   const [step, setStep] = useState<Step>('mood');
   const [mood, setMood] = useState<number | null>(null);
   const [energy, setEnergy] = useState<number | null>(null);

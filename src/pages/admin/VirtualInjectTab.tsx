@@ -2,53 +2,10 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { veilorDb } from "@/integrations/supabase/client";
 import { StatCard, Section } from "./AdminComponents";
-import { useLanguageContext } from "@/context/LanguageContext";
+import { useT } from '@/i18n/useT';
 
 // ─────────────────────────────────────────────
 // 이중언어 문자열
-// ─────────────────────────────────────────────
-const S = {
-  ko: {
-    todayActivityTitle: '오늘 활동 현황',
-    todayCommPosts: '오늘 커뮤니티 포스트',
-    todayCodetalkEntries: '오늘 코드탁 엔트리',
-    totalCommPosts: '전체 커뮤니티 포스트',
-    totalCodetalkEntries: '전체 코드탁 엔트리',
-    injectTitle: '가상유저 활동 주입',
-    injectSub: '버튼을 누르면 가상유저들이 오늘 날짜에 불규칙한 시간으로 활동을 남깁니다',
-    commLabel: '커뮤니티 포스트 수 (명)',
-    commNote: '오늘 이미 활동한 유저는 자동 제외됩니다',
-    codetalkLabel: '코드탁 엔트리 수 (명)',
-    codetalkNote: '오늘 이미 작성한 유저는 자동 제외됩니다',
-    injecting: '주입 중...',
-    injectBtn: (commCount: number, codetalkCount: number) => `가상유저 활동 주입 (커뮤니티 ${commCount}명 + 코드탁 ${codetalkCount}명)`,
-    injectDone: '주입 완료',
-    dateLabel: '기준일: ',
-    commResult: (inserted: number, skipped: number) => `커뮤니티: ${inserted}건 삽입 / ${skipped}명 중복 제외`,
-    codetalkResult: (inserted: number, skipped: number) => `코드탁: ${inserted}건 삽입 / ${skipped}명 중복 제외`,
-    errorPrefix: '오류: ',
-  },
-  en: {
-    todayActivityTitle: "Today's Activity",
-    todayCommPosts: "Today's Community Posts",
-    todayCodetalkEntries: "Today's Codetalk Entries",
-    totalCommPosts: 'Total Community Posts',
-    totalCodetalkEntries: 'Total Codetalk Entries',
-    injectTitle: 'Inject Virtual User Activity',
-    injectSub: 'Clicking the button will have virtual users leave activity at irregular times today',
-    commLabel: 'Community Posts (users)',
-    commNote: 'Users who already posted today will be skipped',
-    codetalkLabel: 'Codetalk Entries (users)',
-    codetalkNote: 'Users who already posted today will be skipped',
-    injecting: 'Injecting...',
-    injectBtn: (commCount: number, codetalkCount: number) => `Inject Virtual Activity (Community ${commCount} + Codetalk ${codetalkCount})`,
-    injectDone: 'Injection Complete',
-    dateLabel: 'Date: ',
-    commResult: (inserted: number, skipped: number) => `Community: ${inserted} inserted / ${skipped} duplicates skipped`,
-    codetalkResult: (inserted: number, skipped: number) => `Codetalk: ${inserted} inserted / ${skipped} duplicates skipped`,
-    errorPrefix: 'Error: ',
-  },
-} as const;
 
 
 export default function VirtualInjectTab() {
@@ -70,8 +27,8 @@ export default function VirtualInjectTab() {
     total_community: number;
     total_codetalk: number;
   } | null>(null);
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.adminDomain.virtualInjectTab;
 
   const today = new Date().toISOString().slice(0, 10);
 

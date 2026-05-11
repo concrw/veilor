@@ -105,7 +105,7 @@ export default function WorkFocusHome() {
   });
 
   return (
-    <div className="min-h-screen bg-[#1C1917] px-4 py-6 max-w-sm mx-auto">
+    <div className="min-h-screen bg-[#1C1917] px-4 py-6">
       {/* 헤더 */}
       <div className="mb-6">
         <p className="text-xs text-stone-500 mb-1">{dateLabel}</p>

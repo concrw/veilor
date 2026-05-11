@@ -6,80 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Plus, X, Lightbulb } from "lucide-react";
 import { useState } from "react";
-import { useLanguageContext } from "@/context/LanguageContext";
+import { useT } from '@/i18n/useT';
 
-const S = {
-  ko: {
-    cardTitle: "콘텐츠 전략",
-    cardDesc: "브랜드 콘텐츠의 주제, 형식, 채널을 설정하세요",
-    topicsLabel: "콘텐츠 주제",
-    topicPlaceholder: "새 주제 입력",
-    suggestedTopics: "추천 주제:",
-    formatsLabel: "콘텐츠 형식",
-    formatPlaceholder: "새 형식 입력",
-    suggestedFormats: "추천 형식:",
-    channelsLabel: "배포 채널",
-    channelPlaceholder: "새 채널 입력",
-    suggestedChannels: "추천 채널:",
-    cadenceLabel: "발행 빈도",
-    cadencePlaceholder: "예: 주 3회, 매일, 격주",
-    cadenceHint: "지속 가능한 빈도로 설정하세요",
-    tipsTitle: "콘텐츠 전략 팁",
-    tip1: "주제",
-    tip1Desc: ": 타겟 고객의 관심사와 일치하는 주제 선택",
-    tip2: "형식",
-    tip2Desc: ": 본인이 잘 만들 수 있는 형식부터 시작",
-    tip3: "채널",
-    tip3Desc: ": 타겟이 많이 이용하는 플랫폼 우선",
-    tip4: "빈도",
-    tip4Desc: ": 꾸준함이 가장 중요합니다",
-    summaryTitle: "콘텐츠 전략 요약",
-    topicsSummary: (n: number) => `주제(${n}개):`,
-    formatsSummary: (n: number) => `형식(${n}개):`,
-    channelsSummary: (n: number) => `채널(${n}개):`,
-    cadenceSummary: "빈도:",
-    cadenceEmpty: "빈도를 설정하세요",
-    moreItems: (n: number) => ` 외 ${n}개`,
-    suggestedTopicList: ["실무 팁", "트렌드 분석", "케이스 스터디", "인사이트", "경험담", "튜토리얼", "리뷰", "인터뷰", "Q&A", "라이프스타일"],
-    suggestedFormatList: ["블로그 포스트", "숏폼 영상", "긴 영상", "인포그래픽", "팟캐스트", "뉴스레터", "라이브 방송", "웨비나", "이미지 카드", "캐러셀"],
-    suggestedChannelList: ["인스타그램", "유튜브", "블로그", "링크드인", "틱톡", "브런치", "네이버 블로그", "페이스북", "트위터", "개인 홈페이지"],
-  },
-  en: {
-    cardTitle: "Content Strategy",
-    cardDesc: "Set topics, formats, and channels for your brand content",
-    topicsLabel: "Content Topics",
-    topicPlaceholder: "Enter new topic",
-    suggestedTopics: "Suggested topics:",
-    formatsLabel: "Content Formats",
-    formatPlaceholder: "Enter new format",
-    suggestedFormats: "Suggested formats:",
-    channelsLabel: "Distribution Channels",
-    channelPlaceholder: "Enter new channel",
-    suggestedChannels: "Suggested channels:",
-    cadenceLabel: "Publishing Frequency",
-    cadencePlaceholder: "e.g. 3x/week, daily, bi-weekly",
-    cadenceHint: "Set a sustainable frequency",
-    tipsTitle: "Content Strategy Tips",
-    tip1: "Topics",
-    tip1Desc: ": Choose topics that align with your target audience's interests",
-    tip2: "Formats",
-    tip2Desc: ": Start with formats you can create well",
-    tip3: "Channels",
-    tip3Desc: ": Prioritize platforms your target uses most",
-    tip4: "Frequency",
-    tip4Desc: ": Consistency is the most important factor",
-    summaryTitle: "Content Strategy Summary",
-    topicsSummary: (n: number) => `Topics (${n}):`,
-    formatsSummary: (n: number) => `Formats (${n}):`,
-    channelsSummary: (n: number) => `Channels (${n}):`,
-    cadenceSummary: "Frequency:",
-    cadenceEmpty: "Set publishing frequency",
-    moreItems: (n: number) => ` +${n} more`,
-    suggestedTopicList: ["Practical Tips", "Trend Analysis", "Case Studies", "Insights", "Personal Stories", "Tutorials", "Reviews", "Interviews", "Q&A", "Lifestyle"],
-    suggestedFormatList: ["Blog Post", "Short-form Video", "Long Video", "Infographic", "Podcast", "Newsletter", "Live Stream", "Webinar", "Image Card", "Carousel"],
-    suggestedChannelList: ["Instagram", "YouTube", "Blog", "LinkedIn", "TikTok", "Medium", "Naver Blog", "Facebook", "Twitter", "Personal Website"],
-  },
-};
 
 interface ContentStrategy {
   topics: string[];
@@ -97,8 +25,8 @@ export const ContentStrategyStep = ({
   contentStrategy,
   onUpdate
 }: ContentStrategyStepProps) => {
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.brandDomain.contentStrategy;
 
   const [newTopic, setNewTopic] = useState("");
   const [newFormat, setNewFormat] = useState("");

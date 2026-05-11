@@ -102,6 +102,11 @@ export async function invokeHeldChat(
   );
 
   if (!res.ok) {
+    if (res.status === 402) {
+      const body = await res.json().catch(() => ({})) as { reason?: string };
+      const err = Object.assign(new Error('MONTHLY_LIMIT_REACHED'), { code: body.reason ?? 'MONTHLY_LIMIT_REACHED' });
+      throw err;
+    }
     const details = await res.text().catch(() => '');
     throw new Error(`held-chat 오류: ${res.status} ${details}`);
   }
@@ -155,6 +160,11 @@ export async function invokeHeldChatStream(
   );
 
   if (!res.ok || !res.body) {
+    if (res.status === 402) {
+      const body = await res.json().catch(() => ({})) as { reason?: string };
+      const err = Object.assign(new Error('MONTHLY_LIMIT_REACHED'), { code: body.reason ?? 'MONTHLY_LIMIT_REACHED' });
+      throw err;
+    }
     throw new Error(`held-chat 스트리밍 오류: ${res.status}`);
   }
 

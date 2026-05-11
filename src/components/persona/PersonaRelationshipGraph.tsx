@@ -10,58 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, InfoIcon, Zap, AlertTriangle, Heart, Sparkles } from "lucide-react";
 import { ARCHETYPE_CONFIGS } from "@/integrations/supabase/persona-types";
-import { useLanguageContext } from "@/context/LanguageContext";
+import { useT } from '@/i18n/useT';
 
-const S = {
-  ko: {
-    analyzing: 'AI가 페르소나 관계를 분석 중...',
-    loading: '로딩 중...',
-    needMore: '페르소나 관계 분석은 2개 이상의 페르소나가 있을 때 사용할 수 있습니다.',
-    analysisNeeded: '관계 분석이 필요합니다',
-    analysisDesc: 'AI가 페르소나 간의 시너지와 충돌을 분석합니다',
-    startAnalysis: '관계 분석 시작하기',
-    graphTitle: '페르소나 관계 분석',
-    graphDescFmt: (personas: number, relations: number) => `${personas}개 페르소나 간 ${relations}개 관계 발견`,
-    reanalyze: '재분석',
-    synergy: '시너지',
-    neutral: '중립',
-    conflict: '충돌',
-    synergyRelation: '시너지',
-    conflictRelation: '충돌',
-    neutralRelation: '중립적 관계',
-    strengthFmt: (n: number) => `강도 ${n}%`,
-    commonKeywords: '공통 키워드',
-    aiInsight: 'AI 인사이트',
-    actionSuggestion: '💡 실행 제안',
-    synergyAction: '이 두 페르소나를 결합한 콘텐츠나 서비스를 기획해보세요. 시너지를 극대화할 수 있습니다.',
-    neutralAction: '각 페르소나를 독립적으로 브랜딩하되, 필요시 연결고리를 만들어 보완 관계로 발전시키세요.',
-    conflictAction: '명확한 타겟 세그먼테이션이 필요합니다. 각 페르소나에 맞는 별도 채널이나 콘텐츠 라인을 고려하세요.',
-  },
-  en: {
-    analyzing: 'AI is analyzing persona relationships...',
-    loading: 'Loading...',
-    needMore: 'Persona relationship analysis is available when you have 2 or more personas.',
-    analysisNeeded: 'Relationship Analysis Needed',
-    analysisDesc: 'AI analyzes synergies and conflicts between personas',
-    startAnalysis: 'Start Relationship Analysis',
-    graphTitle: 'Persona Relationship Analysis',
-    graphDescFmt: (personas: number, relations: number) => `${relations} relationships found across ${personas} personas`,
-    reanalyze: 'Re-analyze',
-    synergy: 'Synergy',
-    neutral: 'Neutral',
-    conflict: 'Conflict',
-    synergyRelation: 'Synergy',
-    conflictRelation: 'Conflict',
-    neutralRelation: 'Neutral Relation',
-    strengthFmt: (n: number) => `Strength ${n}%`,
-    commonKeywords: 'Common Keywords',
-    aiInsight: 'AI Insight',
-    actionSuggestion: '💡 Action Suggestion',
-    synergyAction: 'Plan content or services that combine these two personas. You can maximize their synergy.',
-    neutralAction: 'Brand each persona independently, but create connections where needed to develop a complementary relationship.',
-    conflictAction: 'Clear target segmentation is needed. Consider separate channels or content lines for each persona.',
-  },
-};
 
 type RelationshipType = "synergy" | "conflict" | "neutral";
 
@@ -77,8 +27,8 @@ interface DBRelationship {
 }
 
 export function PersonaRelationshipGraph() {
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.personaDomain.relationshipGraph;
   const { data: personas, isLoading: personasLoading } = usePersonas();
   const { data: relationships, isLoading: relationshipsLoading } = usePersonaRelationships();
   const { mutate: analyzeRelationships, isPending: isAnalyzing } = useAnalyzePersonaRelationships();

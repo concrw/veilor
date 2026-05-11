@@ -13,36 +13,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Sparkles, Users, ArrowRight } from "lucide-react";
 import { PersonaPaywall } from "./PersonaPaywall";
-import { useLanguageContext } from "@/context/LanguageContext";
+import { useT } from '@/i18n/useT';
 
-const S = {
-  ko: {
-    analyzing: 'AI가 당신의 행복 패턴을 분석하고 있습니다',
-    analyzingTitle: '페르소나 분석 중...',
-    discoveredFmt: (n: number) => `${n}개의 페르소나가 발견되었습니다!`,
-    discoveredDesc: 'AI가 당신의 행복 직업군을 분석한 결과입니다',
-    mainBadge: '메인',
-    subBadge: '서브',
-    multiTitle: '멀티 페르소나 발견',
-    multiDesc: '무료 버전에서는 메인 페르소나 1개만 상세 분석할 수 있습니다. 전체 분석은 Pro 전용 기능입니다.',
-    ctaMain: '메인 페르소나 확인하기',
-    ctaPro: '모든 페르소나 보기 (Pro 전용)',
-    ctaLater: '나중에 하기',
-  },
-  en: {
-    analyzing: 'AI is analyzing your happiness patterns',
-    analyzingTitle: 'Analyzing personas...',
-    discoveredFmt: (n: number) => `${n} personas discovered!`,
-    discoveredDesc: 'This is the result of AI analyzing your happiness career groups',
-    mainBadge: 'Main',
-    subBadge: 'Sub',
-    multiTitle: 'Multiple Personas Found',
-    multiDesc: 'The free version only lets you see detailed analysis for 1 main persona. Full analysis is a Pro feature.',
-    ctaMain: 'View Main Persona',
-    ctaPro: 'See All Personas (Pro only)',
-    ctaLater: 'Maybe later',
-  },
-};
 
 interface PersonaDetectionTriggerProps {
   sessionCompleted: boolean;
@@ -54,8 +26,8 @@ export function PersonaDetectionTrigger({
   userId,
 }: PersonaDetectionTriggerProps) {
   const navigate = useNavigate();
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.personaDomain.detectionTrigger;
   const { data: existingPersonas } = usePersonas();
   const { mutate: detectPersonas, isPending, isSuccess, data } = useDetectPersonas();
   const [showResults, setShowResults] = useState(false);

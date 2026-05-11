@@ -5,6 +5,7 @@ import { MASK_PROFILES, classifyVProfile } from '@/lib/vfileAlgorithm';
 import type { AxisScores } from '@/context/AuthContext';
 import { C } from '@/lib/colors';
 import { useMeTranslations } from '@/hooks/useTranslation';
+import { useLanguageContext } from '@/context/LanguageContext';
 
 export default function ShareCard() {
   const { primaryMask, axisScores } = useAuth();
@@ -12,13 +13,18 @@ export default function ShareCard() {
   const cardRef = useRef<HTMLDivElement>(null);
   const me = useMeTranslations();
   const t = me.shareCard;
+  const { language } = useLanguageContext();
+  const isEn = language === 'en';
 
   if (!primaryMask || !axisScores) return null;
 
   const profile = MASK_PROFILES.find(m => m.nameKo === primaryMask || m.mskCode === primaryMask);
   const vProfile = classifyVProfile(axisScores as AxisScores);
+  const maskDisplayName = profile ? (isEn ? profile.nameEn : profile.nameKo) : primaryMask;
 
-  const shareText = `나의 관계 가면은 "${profile?.nameKo ?? primaryMask}" (${vProfile.code})\n${profile?.archetype ?? ''}\n\n#VEILOR #VFile #관계가면`;
+  const shareText = isEn
+    ? `My relational mask is "${maskDisplayName}" (${vProfile.code})\n${profile?.archetype ?? ''}\n\n#VEILOR #VFile`
+    : `나의 관계 가면은 "${maskDisplayName}" (${vProfile.code})\n${profile?.archetype ?? ''}\n\n#VEILOR #VFile #관계가면`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(shareText).then(() => {
@@ -45,11 +51,11 @@ export default function ShareCard() {
             🎭
           </div>
           <div>
-            <p style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 400, fontSize: 18, color: profile?.color }}>{profile?.nameKo ?? primaryMask}</p>
+            <p style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 400, fontSize: 18, color: profile?.color }}>{maskDisplayName}</p>
             <p style={{ fontSize: 10, color: C.text4, fontFamily: 'monospace' }}>{vProfile.code} · {profile?.mskCode ?? ''}</p>
           </div>
         </div>
-        <p style={{ fontSize: 11, fontWeight: 300, color: C.text4 }}>{profile?.archetype}</p>
+        <p style={{ fontSize: 11, fontWeight: 300, color: C.text4 }}>{isEn ? profile?.archetypeEn : profile?.archetype}</p>
         <div style={{ display: 'flex', gap: 10 }}>
           {(['A', 'B', 'C', 'D'] as const).map(k => (
             <div key={k} style={{ textAlign: 'center', flex: 1 }}>

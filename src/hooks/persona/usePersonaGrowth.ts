@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguageContext } from "@/context/LanguageContext";
+import { getT } from "@/i18n/useT";
 import { toast } from "@/hooks/use-toast";
 
 export const useGrowthSummary = () => {
@@ -46,7 +47,6 @@ export const useRecordGrowthMetric = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { language } = useLanguageContext();
-  const isEn = language === 'en';
 
   return useMutation({
     mutationFn: async ({
@@ -75,13 +75,15 @@ export const useRecordGrowthMetric = () => {
       return data;
     },
     onSuccess: (data) => {
+      const t = getT(language);
       queryClient.invalidateQueries({ queryKey: ["persona-growth-history", data.persona_id] });
       queryClient.invalidateQueries({ queryKey: ["growth-summary"] });
-      toast({ title: isEn ? 'Growth metric recorded' : '성장 지표가 기록되었습니다' });
+      toast({ title: t.personaDomain.toasts.growthMetricRecorded });
     },
     onError: (error) => {
+      const t = getT(language);
       console.error("Growth metric recording error:", error);
-      toast({ title: isEn ? 'Error recording growth metric' : '성장 지표 기록 중 오류가 발생했습니다', variant: "destructive" });
+      toast({ title: t.personaDomain.toasts.growthMetricRecordError, variant: "destructive" });
     },
   });
 };

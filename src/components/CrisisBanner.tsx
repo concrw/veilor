@@ -4,7 +4,8 @@
 // 3단계: 전문 상담사 연결
 import { useState, useEffect, useRef, memo } from 'react';
 import { C } from '@/lib/colors';
-import { useLanguageContext } from '@/context/LanguageContext';
+import { useT } from '@/i18n/useT';
+import type { LocaleResource } from '@/i18n/types';
 
 type CrisisStage = 'alert' | 'stabilize' | 'connect';
 
@@ -13,96 +14,9 @@ interface CrisisBannerProps {
   onDismiss?: () => void;
 }
 
-const S = {
-  ko: {
-    critical: '지금 많이 힘드시군요. 혼자 감당하지 않아도 돼요.',
-    high: '힘든 감정이 느껴지시나요? 도움을 요청할 수 있어요.',
-    disclaimer: '이 앱은 전문 상담을 대체하지 않습니다.',
-    close: '닫기',
-    closeBanner: '배너 닫기',
-    calmFirst: '먼저 마음을 가라앉히기',
-    callExpert: '전문가에게 연락하기',
-    stabilizeTitle: '잠깐 멈추고, 지금 여기에 집중해 볼게요',
-    breathingTitle: '호흡 가이드',
-    breathingMethod: '4-7-8 호흡법',
-    groundingTitle: '그라운딩',
-    groundingMethod: '5-4-3-2-1 기법',
-    otherTechnique: '다른 기법 선택',
-    toConnect: '전문가 연결로 이동',
-    connectTitle: '전문가에게 연락해 주세요',
-    backToStabilize: '마음 가라앉히기로 돌아가기',
-    fullDisclaimer: 'VEILOR은 자기탐색 도구이며, 전문 심리상담 또는 치료를 대체하지 않습니다.',
-    breathing: {
-      roundFmt: '4-7-8 호흡법 · {round}/3 라운드',
-      inhale: '들이쉬세요',
-      hold: '멈추세요',
-      exhale: '내쉬세요',
-    },
-    grounding: {
-      title: '5-4-3-2-1 그라운딩',
-      steps: [
-        { n: 5, sense: '보이는 것', icon: '👁️' },
-        { n: 4, sense: '만질 수 있는 것', icon: '✋' },
-        { n: 3, sense: '들리는 것', icon: '👂' },
-        { n: 2, sense: '냄새 맡을 수 있는 것', icon: '👃' },
-        { n: 1, sense: '맛볼 수 있는 것', icon: '👅' },
-      ],
-      stepFmt: (n: number, sense: string) => `${n}가지 ${sense}을 찾아보세요`,
-      next: '다음 단계',
-    },
-    hotlines: [
-      { tel: '1393', name: '자살예방상담전화 1393', note: '24시간 · 무료 · 즉시 연결', primary: true },
-      { tel: '1577-0199', name: '정신건강위기상담 1577-0199', note: '24시간 · 무료', primary: false },
-      { tel: '1588-9191', name: '생명의전화 1588-9191', note: '24시간', primary: false },
-      { tel: '1388', name: '청소년 전화 1388', note: '24시간', primary: false },
-    ],
-  },
-  en: {
-    critical: "It sounds like you're going through a lot right now. You don't have to handle this alone.",
-    high: 'Are you feeling overwhelmed? You can reach out for help.',
-    disclaimer: 'This app does not replace professional counseling.',
-    close: 'Close',
-    closeBanner: 'Close banner',
-    calmFirst: 'Calm down first',
-    callExpert: 'Contact a professional',
-    stabilizeTitle: 'Pause for a moment — let\'s focus on right now',
-    breathingTitle: 'Breathing Guide',
-    breathingMethod: '4-7-8 technique',
-    groundingTitle: 'Grounding',
-    groundingMethod: '5-4-3-2-1 method',
-    otherTechnique: 'Try a different technique',
-    toConnect: 'Go to professional help',
-    connectTitle: 'Please reach out to a professional',
-    backToStabilize: 'Back to calming techniques',
-    fullDisclaimer: 'VEILOR is a self-exploration tool and does not replace professional psychological counseling or therapy.',
-    breathing: {
-      roundFmt: '4-7-8 breathing · Round {round}/3',
-      inhale: 'Breathe in',
-      hold: 'Hold',
-      exhale: 'Breathe out',
-    },
-    grounding: {
-      title: '5-4-3-2-1 Grounding',
-      steps: [
-        { n: 5, sense: 'things you can see', icon: '👁️' },
-        { n: 4, sense: 'things you can touch', icon: '✋' },
-        { n: 3, sense: 'things you can hear', icon: '👂' },
-        { n: 2, sense: 'things you can smell', icon: '👃' },
-        { n: 1, sense: 'thing you can taste', icon: '👅' },
-      ],
-      stepFmt: (n: number, sense: string) => `Find ${n} ${sense}`,
-      next: 'Next step',
-    },
-    hotlines: [
-      { tel: '1393', name: 'Suicide Prevention 1393', note: '24hr · Free · Immediate', primary: true },
-      { tel: '1577-0199', name: 'Mental Health Crisis 1577-0199', note: '24hr · Free', primary: false },
-      { tel: '1588-9191', name: 'Life Line 1588-9191', note: '24hr', primary: false },
-      { tel: '1388', name: 'Youth Line 1388', note: '24hr', primary: false },
-    ],
-  },
-};
+type CrisisBanner = LocaleResource['crisis']['banner'];
 
-function BreathingGuide({ s }: { s: typeof S.ko }) {
+function BreathingGuide({ s }: { s: CrisisBanner }) {
   const [phase, setPhase] = useState<'inhale' | 'hold' | 'exhale'>('inhale');
   const [count, setCount] = useState(4);
   const [round, setRound] = useState(1);
@@ -151,7 +65,7 @@ function BreathingGuide({ s }: { s: typeof S.ko }) {
   );
 }
 
-function GroundingGuide({ s }: { s: typeof S.ko }) {
+function GroundingGuide({ s }: { s: CrisisBanner }) {
   const [step, setStep] = useState(0);
 
   return (
@@ -197,8 +111,8 @@ function GroundingGuide({ s }: { s: typeof S.ko }) {
 }
 
 export const CrisisBanner = memo(function CrisisBanner({ severity, onDismiss }: CrisisBannerProps) {
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.crisis.banner;
   const [stage, setStage] = useState<CrisisStage>('alert');
   const [stabilizeMode, setStabilizeMode] = useState<'breathing' | 'grounding' | null>(null);
 
@@ -333,7 +247,7 @@ export const CrisisBanner = memo(function CrisisBanner({ severity, onDismiss }: 
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {s.hotlines.map((h) => (
+            {s.hotlineList.map((h) => (
               <a key={h.tel} href={`tel:${h.tel}`} style={{
                 display: 'flex', alignItems: 'center', gap: 10,
                 padding: h.primary ? '12px 14px' : '10px 14px', borderRadius: 10,
@@ -355,7 +269,7 @@ export const CrisisBanner = memo(function CrisisBanner({ severity, onDismiss }: 
           </button>
 
           <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', marginTop: 10, textAlign: 'center' }}>
-            {s.fullDisclaimer}
+            {t.crisis.disclaimerFull}
           </p>
         </>
       )}

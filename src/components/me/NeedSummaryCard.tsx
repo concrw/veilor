@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { veilorDb } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
+import { useT } from '@/i18n/useT';
 import { useLanguageContext } from '@/context/LanguageContext';
 import { C, alpha } from '@/lib/colors';
 import {
@@ -15,28 +16,6 @@ import {
   type NeedResponses,
 } from '@/lib/needAlgorithm';
 
-const S = {
-  ko: {
-    title: '나의 욕구 지도',
-    top3Label: '지금 가장 채워지지 않는 욕구',
-    layerBarTitle: '레이어별 결핍',
-    emptyTitle: '아직 욕구 탐색을 하지 않았어요',
-    emptyBtn: '욕구 탐색 시작',
-    reExploreBtn: '다시 탐색하기',
-    assessedAt: (date: string) => `마지막 탐색: ${date}`,
-    gapUnit: 'Gap',
-  },
-  en: {
-    title: 'My Need Map',
-    top3Label: 'Needs least fulfilled right now',
-    layerBarTitle: 'Deficit by layer',
-    emptyTitle: "You haven't explored your needs yet",
-    emptyBtn: 'Start need exploration',
-    reExploreBtn: 'Explore again',
-    assessedAt: (date: string) => `Last explored: ${date}`,
-    gapUnit: 'Gap',
-  },
-} as const;
 
 const NEED_CODES: NeedCode[] = [
   'BIO-SLP', 'BIO-EAT', 'BIO-SEX',
@@ -57,8 +36,9 @@ const LAYER_COLORS: Record<NeedLayer, string> = {
 export default function NeedSummaryCard() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const t = useT();
+  const s = t.meExtra.needSummary;
   const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
   const lang = language === 'en' ? 'en' : 'ko';
 
   const { data, isLoading } = useQuery({
@@ -136,7 +116,7 @@ export default function NeedSummaryCard() {
         <p className="text-[12px] tracking-widest uppercase" style={{ color: C.text4, fontFamily: "'DM Sans', sans-serif" }}>
           V-NEED
         </p>
-        <p className="text-[10px]" style={{ color: C.text4 }}>{s.assessedAt(fmtDate)}</p>
+        <p className="text-[10px]" style={{ color: C.text4 }}>{s.assessedAt.replace('{date}', fmtDate)}</p>
       </div>
 
       {/* Top 3 결핍 욕구 */}

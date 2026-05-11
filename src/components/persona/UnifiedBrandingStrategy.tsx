@@ -19,55 +19,12 @@ import {
 } from "lucide-react";
 import { ARCHETYPE_CONFIGS } from "@/integrations/supabase/persona-types";
 import { toast } from "@/hooks/use-toast";
-import { useLanguageContext } from "@/context/LanguageContext";
+import { useT } from '@/i18n/useT';
+import { useLanguageContext } from '@/context/LanguageContext';
 
 // ---------------------------------------------------------------------------
 // i18n strings
 // ---------------------------------------------------------------------------
-const S = {
-  ko: {
-    pageTitle: "통합 브랜딩 전략",
-    pageSubtitleFmt: (count: number) => `${count}개의 페르소나를 어떻게 브랜딩할지 전략을 선택하세요`,
-    personaOverviewTitle: "발견된 페르소나",
-    personaOverviewDesc: "각 페르소나의 특성을 고려하여 최적의 브랜딩 전략을 선택하세요",
-    mainBadge: "메인",
-    subBadge: "서브",
-    strategySelectTitle: "브랜딩 전략 선택",
-    strategySelectDesc: "페르소나 간 관계와 목표를 고려하여 가장 적합한 전략을 선택하세요",
-    tabPros: "장점",
-    tabCons: "단점",
-    tabBestFor: "적합한 경우",
-    notesTitle: "전략 노트",
-    notesDesc: "선택한 전략에 대한 추가 아이디어나 메모를 작성하세요",
-    notesPlaceholder: "예: 메인 브랜드는 '창의적 문제 해결자'로 포지셔닝하고, 각 페르소나는 콘텐츠 카테고리로 구분...",
-    saveButton: "전략 저장하기",
-    savingButton: "저장 중...",
-    toastNoStrategyTitle: "전략을 선택해주세요",
-    toastNoStrategyDesc: "브랜딩 전략을 먼저 선택해야 합니다.",
-    needMorePersonas: "통합 브랜딩 전략은 2개 이상의 페르소나가 있을 때 사용할 수 있습니다.",
-  },
-  en: {
-    pageTitle: "Unified Branding Strategy",
-    pageSubtitleFmt: (count: number) => `Choose how to brand your ${count} personas`,
-    personaOverviewTitle: "Discovered Personas",
-    personaOverviewDesc: "Consider each persona's characteristics and choose the optimal branding strategy",
-    mainBadge: "Main",
-    subBadge: "Sub",
-    strategySelectTitle: "Select Branding Strategy",
-    strategySelectDesc: "Consider the relationships and goals between personas to find the best fit",
-    tabPros: "Pros",
-    tabCons: "Cons",
-    tabBestFor: "Best For",
-    notesTitle: "Strategy Notes",
-    notesDesc: "Write additional ideas or notes about your chosen strategy",
-    notesPlaceholder: "e.g. Position the main brand as a 'creative problem solver' and separate each persona by content category...",
-    saveButton: "Save Strategy",
-    savingButton: "Saving...",
-    toastNoStrategyTitle: "Please select a strategy",
-    toastNoStrategyDesc: "You must select a branding strategy first.",
-    needMorePersonas: "Unified branding strategy is available when you have 2 or more personas.",
-  },
-};
 
 // ---------------------------------------------------------------------------
 // Strategy data (language-keyed)
@@ -188,8 +145,9 @@ const STRATEGY_ICONS: Record<BrandingStrategy, React.ReactNode> = {
 const STRATEGY_KEYS: BrandingStrategy[] = ["unified", "hybrid", "separated"];
 
 export function UnifiedBrandingStrategy() {
+  const t = useT();
+  const s = t.personaDomain.unifiedBranding;
   const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
   const strategyData = language === "en" ? EN_STRATEGIES : KO_STRATEGIES;
 
   const { data: personas, isLoading: personasLoading } = usePersonas();

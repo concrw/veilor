@@ -2,55 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PUBLIC_POSTS, getInsightTease, getAmberResponse } from '@/components/landing/guestLandingData';
 import { useLanguageContext } from '@/context/LanguageContext';
-
-const S = {
-  ko: {
-    subtitle: '관계의 가면을 발견하는 여정',
-    amberGreet: '안녕하세요. 저는 엠버예요. 관계 패턴을 함께 탐색하는 AI입니다.',
-    amberQuestion: '요즘 관계에서 가장 마음에 걸리는 게 있다면, 한 줄로 말해줄 수 있어요?',
-    inputPlaceholder: '예: 가까워지면 왜 자꾸 밀어내게 되는지 모르겠어요',
-    sendBtn: '엠버에게 보내기',
-    skipBtn: '건너뛰기',
-    chat2Placeholder: '자유롭게 답해주세요',
-    chat2SendBtn: '보내기',
-    postsTitle: '지금 이런 이야기들이 오가고 있어요',
-    postUpvotesLabel: '공감',
-    joinBtn: '가입하고 참여하기',
-    insightLabel: '엠버의 초기 감지',
-    insightSub: '전체 패턴과 이름을 알려면 V-File 진단이 필요해요',
-    insightCta: '가입하고 내 패턴 전체 보기',
-    vfileSuffix: '\n\n전체 패턴을 보려면 V-File 진단이 필요해요. 4분이면 돼요.',
-    hasAccount: '이미 계정이 있어요',
-    gateTitle: '당신의 관계 패턴,\n이름이 있어요.',
-    gateDesc: 'V-File 진단으로 4분 만에\n나만의 관계 언어를 발견하세요.',
-    startFree: '시작하기 — 무료',
-    rightPanelTitle: '당신의 관계 패턴,\n이름이 있어요.',
-    rightPanelDesc: 'V-File 진단으로 4분 만에 나만의 관계 언어를 발견하세요.',
-  },
-  en: {
-    subtitle: 'Discover your relationship language with Veilor',
-    amberGreet: "Hi, I'm Amber. I'm an AI that explores relationship patterns with you.",
-    amberQuestion: "Is there anything on your mind about relationships lately? Share it in one line.",
-    inputPlaceholder: "e.g. I don't know why I push people away when I get close",
-    sendBtn: 'Send to Amber',
-    skipBtn: 'Skip',
-    chat2Placeholder: 'Feel free to answer',
-    chat2SendBtn: 'Send',
-    postsTitle: 'Here are some conversations happening right now',
-    postUpvotesLabel: 'Relate',
-    joinBtn: 'Sign up and join',
-    insightLabel: "Amber's initial detection",
-    insightSub: 'You need the V-File diagnosis to see your full pattern and its name',
-    insightCta: 'Sign up to see my full pattern',
-    vfileSuffix: "\n\nTo see the full pattern, you'll need the V-File diagnosis. It takes 4 minutes.",
-    hasAccount: 'I already have an account',
-    gateTitle: 'Your relationship pattern\nhas a name.',
-    gateDesc: 'Discover your own relationship language\nin just 4 minutes with V-File diagnosis.',
-    startFree: 'Get started — Free',
-    rightPanelTitle: 'Your relationship pattern\nhas a name.',
-    rightPanelDesc: 'Discover your own relationship language in just 4 minutes with V-File diagnosis.',
-  },
-};
+import { useT } from '@/i18n/useT';
 
 type Phase = 'landing' | 'chat1' | 'chat2' | 'insight' | 'gate';
 interface Message { role: 'amber' | 'user'; text: string }
@@ -92,7 +44,8 @@ function UserBubble({ text }: { text: string }) {
 export default function GuestLanding() {
   const navigate = useNavigate();
   const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.guestLanding;
   const lang = language === 'en' ? 'en' : 'ko';
 
   const [phase, setPhase] = useState<Phase>('landing');
@@ -107,9 +60,9 @@ export default function GuestLanding() {
 
   useEffect(() => {
     if (phase === 'landing') {
-      const t1 = setTimeout(() => setShowAmberGreet(true), 600);
-      const t2 = setTimeout(() => setShowAmberQ(true), 1800);
-      return () => { clearTimeout(t1); clearTimeout(t2); };
+      setShowAmberGreet(true);
+      const t2 = setTimeout(() => setShowAmberQ(true), 800);
+      return () => { clearTimeout(t2); };
     }
   }, [phase]);
 
@@ -191,9 +144,9 @@ export default function GuestLanding() {
     <div className="min-h-screen flex" style={{ background: '#1C1917', fontFamily: "'DM Sans', sans-serif" }}>
       {/* 좌측: 채팅 영역 */}
       <div className="flex-1 flex flex-col">
-      <div className="max-w-sm w-full mx-auto flex-1 flex flex-col px-6 py-10">
+      <div className="w-full flex-1 flex flex-col px-6 pt-5 pb-10">
 
-        <div className="text-center mb-10">
+        <div className="text-center mb-8">
           <img src="/icon-192x192.png" alt="VEILOR" className="w-14 h-14 rounded-2xl mx-auto mb-3" />
           <p className="text-xs mt-1" style={{ color: '#B8B3AF' }}>{s.subtitle}</p>
         </div>
@@ -201,10 +154,8 @@ export default function GuestLanding() {
         {phase === 'landing' && (
           <div className="flex-1 flex flex-col justify-between">
             <div className="space-y-5">
-              <div className="transition-all duration-700" style={{ opacity: showAmberGreet ? 1 : 0, transform: showAmberGreet ? 'translateY(0)' : 'translateY(8px)' }}>
-                <AmberBubble text={s.amberGreet} />
-              </div>
-              <div className="transition-all duration-700" style={{ opacity: showAmberQ ? 1 : 0, transform: showAmberQ ? 'translateY(0)' : 'translateY(8px)' }}>
+              <AmberBubble text={s.amberGreet} />
+              <div className="transition-all duration-500" style={{ opacity: showAmberQ ? 1 : 0, transform: showAmberQ ? 'translateY(0)' : 'translateY(6px)' }}>
                 <AmberBubble text={s.amberQuestion} />
               </div>
               {showAmberQ && (
@@ -214,8 +165,8 @@ export default function GuestLanding() {
                     onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendFirstAnswer(); } }}
                     placeholder={s.inputPlaceholder}
                     maxLength={200} rows={3}
-                    className="w-full rounded-xl p-3 text-sm resize-none outline-none"
-                    style={{ background: '#292524', border: '1px solid #44403C', color: '#F5F5F4', fontFamily: "'DM Sans', sans-serif" }}
+                    className="w-full rounded-xl p-3 resize-none outline-none"
+                    style={{ background: '#292524', border: '1px solid #44403C', color: '#F5F5F4', fontFamily: "'DM Sans', sans-serif", fontSize: 16 }}
                   />
                   <div className="flex gap-2 mt-2">
                     <button onClick={sendFirstAnswer} disabled={!input.trim()} className="flex-1 py-2.5 rounded-xl text-sm font-medium transition-opacity"
@@ -263,8 +214,8 @@ export default function GuestLanding() {
                   value={input} onChange={e => setInput(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendSecondAnswer(); } }}
                   placeholder={s.chat2Placeholder} maxLength={200} rows={2}
-                  className="w-full rounded-xl p-3 text-sm resize-none outline-none mb-2"
-                  style={{ background: '#292524', border: '1px solid #44403C', color: '#F5F5F4', fontFamily: "'DM Sans', sans-serif" }}
+                  className="w-full rounded-xl p-3 resize-none outline-none mb-2"
+                  style={{ background: '#292524', border: '1px solid #44403C', color: '#F5F5F4', fontFamily: "'DM Sans', sans-serif", fontSize: 16 }}
                 />
                 <div className="flex gap-2">
                   <button onClick={sendSecondAnswer} disabled={!input.trim()} className="flex-1 py-2.5 rounded-xl text-sm font-medium"

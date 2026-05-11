@@ -2,36 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useLanguageContext } from '@/context/LanguageContext';
-
-const S = {
-  ko: {
-    noJobs: '먼저 직업을 추가해주세요.',
-    title: '분류 2스텝',
-    happyInstruction: '먼저 행복을 주는 일을 모두 선택하세요.',
-    painInstruction: '이제 고통/소모를 주는 일을 선택하세요. 남은 것은 자동으로 중립 처리됩니다.',
-    select: '선택',
-    selectHappy: '행복 선택',
-    selectPain: '고통 선택',
-    selectedHappy: '행복',
-    selectedPain: '고통',
-    done: '완료',
-    prevStep: '이전 단계',
-  },
-  en: {
-    noJobs: 'Please add careers first.',
-    title: 'Classification 2-Step',
-    happyInstruction: 'First, select all careers that bring you happiness.',
-    painInstruction: 'Now select careers that cause pain/drain. The rest are automatically marked neutral.',
-    select: 'Select',
-    selectHappy: 'Select happy',
-    selectPain: 'Select pain',
-    selectedHappy: 'HAPPINESS',
-    selectedPain: 'SUFFERING',
-    done: 'Done',
-    prevStep: 'Prev step',
-  },
-};
+import { useT } from '@/i18n/useT';
 
 interface Job {
   id: string;
@@ -65,8 +36,8 @@ export const Step3ClassificationSection = ({
   onCommitClassification,
   onPrevStep
 }: Step3ClassificationSectionProps) => {
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.why.step3;
 
   if (jobs.length === 0) {
     return (

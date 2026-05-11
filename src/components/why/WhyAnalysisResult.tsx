@@ -26,66 +26,7 @@ import {
   getAnalysisQuality,
   getConsistencyPercentage,
 } from "@/hooks/useWhyAnalysis";
-import { useLanguageContext } from '@/context/LanguageContext';
-
-const S = {
-  ko: {
-    jobsAnalyzed: (n: number) => `${n}개 직업 분석`,
-    primePerspectiveTitle: '당신의 Prime Perspective',
-    primePerspectiveDesc: '당신을 나답게 만드는 가장 근원적인 관점',
-    happyCareers: '행복 직업',
-    painCareers: '고통 직업',
-    experienceRate: '경험 비율',
-    consistency: '일관성',
-    happyPatterns: '행복 패턴',
-    painPatterns: '고통 패턴',
-    happyElementsTitle: '행복을 느끼는 요소',
-    happyElementsDesc: '당신이 행복을 느끼는 직업에서 발견된 공통 패턴',
-    coreKeywords: '핵심 키워드',
-    topPatterns: '상위 패턴',
-    appearedTimes: (n: number) => `${n}회 등장`,
-    relatedCareers: '관련 직업: ',
-    moreCareers: (n: number) => ` 외 ${n}개`,
-    rootCause: '근본 원인',
-    painElementsTitle: '고통을 느끼는 요소',
-    painElementsDesc: '당신이 피하고 싶어하는 직업에서 발견된 공통 패턴',
-    nextStepsTitle: '다음 단계',
-    nextStep1Strong: 'Ikigai 설계:',
-    nextStep1Body: 'Prime Perspective를 바탕으로 나만의 Ikigai를 완성하세요',
-    nextStep2Strong: '브랜드 디자인:',
-    nextStep2Body: '발견된 패턴을 활용해 퍼스널 브랜드를 만들어보세요',
-    nextStep3Strong: '커뮤니티 매칭:',
-    nextStep3Body: '비슷한 Prime Perspective를 가진 사람들을 만나보세요',
-  },
-  en: {
-    jobsAnalyzed: (n: number) => `${n} careers analyzed`,
-    primePerspectiveTitle: 'Your Prime Perspective',
-    primePerspectiveDesc: 'The most fundamental perspective that makes you yourself',
-    happyCareers: 'Happy careers',
-    painCareers: 'Pain careers',
-    experienceRate: 'Experience rate',
-    consistency: 'Consistency',
-    happyPatterns: 'Happy patterns',
-    painPatterns: 'Pain patterns',
-    happyElementsTitle: 'Elements that bring happiness',
-    happyElementsDesc: 'Common patterns found in careers that bring you happiness',
-    coreKeywords: 'Core keywords',
-    topPatterns: 'Top patterns',
-    appearedTimes: (n: number) => `Appeared ${n} times`,
-    relatedCareers: 'Related careers: ',
-    moreCareers: (n: number) => ` +${n} more`,
-    rootCause: 'Root cause',
-    painElementsTitle: 'Elements that cause pain',
-    painElementsDesc: 'Common patterns found in careers you want to avoid',
-    nextStepsTitle: 'Next steps',
-    nextStep1Strong: 'Ikigai Design:',
-    nextStep1Body: 'Complete your Ikigai based on your Prime Perspective',
-    nextStep2Strong: 'Brand Design:',
-    nextStep2Body: 'Build your personal brand using discovered patterns',
-    nextStep3Strong: 'Community Matching:',
-    nextStep3Body: 'Meet people with similar Prime Perspectives',
-  },
-};
+import { useT } from '@/i18n/useT';
 
 interface WhyAnalysisResultProps {
   analysis: AnalysisResult;
@@ -96,8 +37,8 @@ export function WhyAnalysisResult({
   analysis,
   showDetailedPatterns = true,
 }: WhyAnalysisResultProps) {
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.why.analysisResult;
 
   const { analysis_data } = analysis;
   const quality = getAnalysisQuality(analysis_data);
@@ -124,7 +65,7 @@ export function WhyAnalysisResult({
           <div className="flex items-center justify-between">
             <span>{quality.message}</span>
             <Badge variant="outline" className="ml-2">
-              {s.jobsAnalyzed(analysis_data.total_jobs)}
+              {s.jobsAnalyzed.replace('{n}', String(analysis_data.total_jobs))}
             </Badge>
           </div>
         </AlertDescription>
@@ -249,7 +190,7 @@ export function WhyAnalysisResult({
                         <div className="flex items-center justify-between">
                           <span className="font-medium text-sm">{pattern.keyword}</span>
                           <span className="text-xs text-muted-foreground">
-                            {s.appearedTimes(pattern.frequency)}
+                            {s.appearedTimes.replace('{n}', String(pattern.frequency))}
                           </span>
                         </div>
                         <Progress
@@ -258,7 +199,7 @@ export function WhyAnalysisResult({
                         />
                         <p className="text-xs text-muted-foreground">
                           {s.relatedCareers}{pattern.jobs.slice(0, 3).join(", ")}
-                          {pattern.jobs.length > 3 && s.moreCareers(pattern.jobs.length - 3)}
+                          {pattern.jobs.length > 3 && s.moreCareers.replace('{n}', String(pattern.jobs.length - 3))}
                         </p>
                       </div>
                     ))}
@@ -315,7 +256,7 @@ export function WhyAnalysisResult({
                         <div className="flex items-center justify-between">
                           <span className="font-medium text-sm">{pattern.keyword}</span>
                           <span className="text-xs text-muted-foreground">
-                            {s.appearedTimes(pattern.frequency)}
+                            {s.appearedTimes.replace('{n}', String(pattern.frequency))}
                           </span>
                         </div>
                         <Progress
@@ -324,7 +265,7 @@ export function WhyAnalysisResult({
                         />
                         <p className="text-xs text-muted-foreground">
                           {s.relatedCareers}{pattern.jobs.slice(0, 3).join(", ")}
-                          {pattern.jobs.length > 3 && s.moreCareers(pattern.jobs.length - 3)}
+                          {pattern.jobs.length > 3 && s.moreCareers.replace('{n}', String(pattern.jobs.length - 3))}
                         </p>
                       </div>
                     ))}

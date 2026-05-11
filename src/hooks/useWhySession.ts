@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguageContext } from '@/context/LanguageContext';
+import { getT } from '@/i18n/useT';
 import { veilorDb } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useM43WhyIntegration } from '@/hooks/useM43WhyIntegration';
@@ -11,7 +12,6 @@ import { TIMER_SECONDS } from '@/types/why';
 export function useWhySession() {
   const { user } = useAuth();
   const { language } = useLanguageContext();
-  const isEn = language === 'en';
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState<WhySession | null>(null);
   const [jobs, setJobs] = useState<JobEntry[]>([]);
@@ -116,7 +116,8 @@ export function useWhySession() {
       .select()
       .single();
     if (error || !data) {
-      toast({ title: isEn ? 'Failed to create session' : '세션 생성 실패', variant: 'destructive' });
+      const t = getT(language);
+      toast({ title: t.why.toasts.sessionCreateFailed, variant: 'destructive' });
       return null;
     }
     setSession(data as WhySession);
@@ -134,7 +135,8 @@ export function useWhySession() {
 
   // ── 타이머 ──
   const handleTimerEnd = async () => {
-    toast({ title: isEn ? '10 minutes up!' : '10분 종료!', description: isEn ? 'Save the jobs you entered.' : '입력한 직업들을 저장하세요.' });
+    const t = getT(language);
+    toast({ title: t.why.toasts.timerEnd, description: t.why.toasts.timerEndDesc });
   };
 
   const startTimer = useCallback(() => {

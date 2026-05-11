@@ -5,100 +5,17 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useCreateOrg } from '@/hooks/useB2BOrg';
 import type { B2BOrgType, B2BOrgPlan } from '@/integrations/supabase/veilor-types';
-import { useLanguageContext } from '@/context/LanguageContext';
+import { useT } from '@/i18n/useT';
 
 // ─────────────────────────────────────────────
 // 이중언어 문자열
-// ─────────────────────────────────────────────
-const S = {
-  ko: {
-    registerDone: '고객사 등록 완료',
-    registerDoneDesc: (name: string) => `${name} 서비스를 시작합니다.`,
-    registerFail: '등록 실패',
-    retryMsg: '다시 시도해주세요.',
-    steps: ['고객사 정보', '플랜 선택', '확인 및 시작'] as const,
-    step0Title: '고객사 정보를 입력해주세요',
-    step0Subtitle: '베일러 B2B 서비스를 시작합니다.',
-    orgNameLabel: '고객사명',
-    orgNamePlaceholder: '예: OO스포츠단, OO엔터테인먼트',
-    orgTypeLabel: '고객사 유형',
-    step1Title: '플랜을 선택해주세요',
-    step1Subtitle: '멤버 수에 맞는 플랜을 선택하세요.',
-    planNote: '* 코칭 세션 2회/인/월 포함. 추가 세션 55,000원/회.',
-    step2Title: '등록 내용을 확인해주세요',
-    confirmOrgName: '고객사명',
-    confirmType: '유형',
-    confirmPlan: '플랜',
-    confirmPrice: '인당 요금',
-    confirmContractStart: '계약 시작일',
-    notice1: '• 개인 세션 내용은 소속사에 공개되지 않습니다.',
-    notice2: '• 집계 데이터(팀 평균)만 어드민 대시보드에 표시됩니다.',
-    notice3: '• 계약 해지 시 개인 데이터는 개인 소유로 유지됩니다.',
-    prev: '이전',
-    next: '다음',
-    starting: '등록 중...',
-    startService: '서비스 시작하기',
-    planInfo: {
-      starter:       { label: '스타터',        price: '89,000원/인/월', range: '5~20명' },
-      growth:        { label: '그로스',         price: '69,000원/인/월', range: '21~50명' },
-      enterprise:    { label: '엔터프라이즈',   price: '협의 (49,000원~)', range: '51명+' },
-      trainee_basic: { label: '트레이니 베이직', price: '59,000원/인/월', range: '5~30명' },
-      trainee_full:  { label: '트레이니 풀',    price: '45,000원/인/월', range: '31명+' },
-    } as Record<B2BOrgPlan, { label: string; price: string; range: string }>,
-    orgTypeLabels: {
-      sports:        '스포츠 (구단/아카데미)',
-      entertainment: '엔터테인먼트 (소속사)',
-      corporate:     '기업',
-    } as Record<B2BOrgType, string>,
-  },
-  en: {
-    registerDone: 'Organization Registered',
-    registerDoneDesc: (name: string) => `Starting ${name} service.`,
-    registerFail: 'Registration failed',
-    retryMsg: 'Please try again.',
-    steps: ['Organization Info', 'Select Plan', 'Review & Start'] as const,
-    step0Title: 'Enter your organization details',
-    step0Subtitle: 'Start VEILOR B2B service.',
-    orgNameLabel: 'Organization Name',
-    orgNamePlaceholder: 'e.g. OO Sports Club, OO Entertainment',
-    orgTypeLabel: 'Organization Type',
-    step1Title: 'Choose a plan',
-    step1Subtitle: 'Select the plan that fits your team size.',
-    planNote: '* Includes 2 coaching sessions/person/month. Additional session: ₩55,000/session.',
-    step2Title: 'Review your registration',
-    confirmOrgName: 'Organization',
-    confirmType: 'Type',
-    confirmPlan: 'Plan',
-    confirmPrice: 'Price per person',
-    confirmContractStart: 'Contract Start',
-    notice1: '• Individual session content is not shared with the organization.',
-    notice2: '• Only aggregated data (team averages) is shown in the admin dashboard.',
-    notice3: '• Personal data remains individually owned upon contract termination.',
-    prev: 'Previous',
-    next: 'Next',
-    starting: 'Registering...',
-    startService: 'Start Service',
-    planInfo: {
-      starter:       { label: 'Starter',        price: '₩89,000/person/month', range: '5–20 people' },
-      growth:        { label: 'Growth',          price: '₩69,000/person/month', range: '21–50 people' },
-      enterprise:    { label: 'Enterprise',      price: 'Custom (from ₩49,000)', range: '51+ people' },
-      trainee_basic: { label: 'Trainee Basic',   price: '₩59,000/person/month', range: '5–30 people' },
-      trainee_full:  { label: 'Trainee Full',    price: '₩45,000/person/month', range: '31+ people' },
-    } as Record<B2BOrgPlan, { label: string; price: string; range: string }>,
-    orgTypeLabels: {
-      sports:        'Sports (Club/Academy)',
-      entertainment: 'Entertainment (Agency)',
-      corporate:     'Corporate',
-    } as Record<B2BOrgType, string>,
-  },
-} as const;
 
 export default function OrgOnboarding() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { createOrg, loading, error } = useCreateOrg();
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.b2bDomain.orgOnboarding;
 
   const [step, setStep] = useState(0);
   const [form, setForm] = useState({

@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguageContext } from "@/context/LanguageContext";
+import { getT } from "@/i18n/useT";
 import { useWhyTimer } from "./useWhyTimer";
 import { useWhyDataOps } from "./useWhyDataOps";
 
@@ -27,7 +28,6 @@ export interface SessionInfo {
 export function useWhyPageFlow() {
   const { user } = useAuth();
   const { language } = useLanguageContext();
-  const isEn = language === 'en';
 
   // Global flow state
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
@@ -99,6 +99,7 @@ export function useWhyPageFlow() {
 
   // Wrapped action delegates
   const finalizeStep1Early = async () => {
+    const t = getT(language);
     try {
       let sessId = session?.id as string | undefined;
 
@@ -110,7 +111,7 @@ export function useWhyPageFlow() {
           .maybeSingle();
 
         if (createErr || !created) {
-          toast({ title: isEn ? 'Failed to create session' : '세션 생성 실패', description: isEn ? 'Please try again.' : '다시 시도해주세요.', variant: "destructive" });
+          toast({ title: t.why.toasts.sessionCreateFailed, description: t.why.toasts.sessionCreateFailedDesc, variant: "destructive" });
           return;
         }
 
@@ -127,18 +128,19 @@ export function useWhyPageFlow() {
         .eq("id", sessId);
 
       if (updErr) {
-        toast({ title: isEn ? 'Failed to complete session' : '세션 완료 실패', description: isEn ? 'Please try again shortly.' : '잠시 후 다시 시도해주세요.', variant: "destructive" });
+        toast({ title: t.why.toasts.sessionFailed, description: t.why.toasts.sessionFailedDesc, variant: "destructive" });
         return;
       }
 
       setSession(prev => prev ? { ...prev, ended_at: endedAt, status: "completed" } : { id: sessId!, status: "completed", ended_at: endedAt });
-      toast({ title: isEn ? 'Session complete' : '세션 완료', description: isEn ? 'Proceed to the definition stage.' : '정의 단계로 이동하세요.' });
+      toast({ title: t.why.toasts.sessionComplete, description: t.why.toasts.sessionCompleteDesc });
 
       timer.clearInterval();
       setStep(2);
     } catch (e) {
+      const t2 = getT(language);
       console.error("finalizeStep1Early exception", e);
-      toast({ title: isEn ? 'An error occurred' : '오류 발생', description: isEn ? 'A problem occurred while completing the session.' : '세션 완료 중 문제가 발생했습니다.', variant: "destructive" });
+      toast({ title: t2.why.toasts.errorOccurred, description: t2.why.toasts.errorOccurredDesc, variant: "destructive" });
     }
   };
 
@@ -163,7 +165,8 @@ export function useWhyPageFlow() {
           .limit(1);
 
         if (tableError) {
-          toast({ title: isEn ? 'Database connection issue' : '데이터베이스 연결 문제', description: `${isEn ? 'Table access failed: ' : '테이블 접근 실패: '}${tableError.message}`, variant: "destructive" });
+          const t = getT(language);
+          toast({ title: t.why.toasts.dbConnectionIssue, description: `${t.why.toasts.dbConnectionIssueDesc}${tableError.message}`, variant: "destructive" });
           return;
         }
 
@@ -240,12 +243,14 @@ export function useWhyPageFlow() {
         .eq("id", session.id);
 
       if (error) {
-        toast({ title: isEn ? 'Failed to end session' : '세션 종료 실패', description: isEn ? 'Please try again shortly.' : '잠시 후 다시 시도해주세요.', variant: "destructive" });
+        const t = getT(language);
+        toast({ title: t.why.toasts.sessionEndFailed, description: t.why.toasts.sessionEndFailedDesc, variant: "destructive" });
         return;
       }
 
       setSession(prev => prev ? { ...prev, ended_at: endedAt, status: "completed" } : prev);
-      toast({ title: isEn ? 'Brainstorming complete' : '브레인스토밍 종료', description: isEn ? 'You can now move to the definition stage.' : '정의 단계로 이동할 수 있어요.' });
+      const t = getT(language);
+      toast({ title: t.why.toasts.brainstormComplete, description: t.why.toasts.brainstormCompleteDesc });
 
       timer.clearInterval();
       setStep(2);

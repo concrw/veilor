@@ -21,84 +21,8 @@ import {
 import { toast } from "@/hooks/use-toast";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
-import { useLanguageContext } from "@/context/LanguageContext";
+import { useT } from '@/i18n/useT';
 
-const S = {
-  ko: {
-    exportBtn: "PDF 내보내기",
-    exportFailTitle: "내보내기 실패",
-    exportFailNotFound: "요약 내용을 찾을 수 없습니다.",
-    exportFailError: "PDF 생성 중 오류가 발생했습니다.",
-    exportSuccessTitle: "내보내기 완료",
-    exportSuccessDesc: (fileName: string) => `${fileName} 파일이 다운로드되었습니다.`,
-    pdfTitle: "브랜드 전략 요약",
-    pdfCreatedAt: (date: string) => `생성일: ${date}`,
-    fileNamePrefix: "브랜드전략",
-    coreMessage: "핵심 메시지",
-    brandDirection: "브랜드 방향",
-    field: "전문 분야",
-    targetAudience: "타겟 고객",
-    ageRange: "연령대",
-    interests: "관심사",
-    contentStrategy: "콘텐츠 전략",
-    mainTopics: "주요 주제",
-    channels: "채널",
-    publishCycle: "발행 주기",
-    revenueModel: "수익 모델",
-    primaryModel: "주요 모델",
-    pricePolicy: "가격 정책",
-    painAndSolution: "고객 페인포인트 & 솔루션",
-    customerPains: "고객의 고충",
-    solutionByContent: "콘텐츠로 해결",
-    brandNames: "브랜드명 후보",
-    actionRoadmap: "실행 로드맵",
-    step1Title: "브랜드 정체성 확립",
-    step1Desc: "브랜드명 확정, 프로필 설정, 소개 문구 작성",
-    step2Title: "콘텐츠 채널 개설",
-    step2Desc: (channels: string) => `${channels} 계정 생성 및 최적화`,
-    step3Title: "첫 콘텐츠 발행",
-    step3Desc: (topic: string) => `"${topic}" 주제로 첫 콘텐츠 제작`,
-    step4Title: "수익화 준비",
-    step4Desc: (channel: string, model: string) => `${channel}에서 ${model} 상품 기획`,
-  },
-  en: {
-    exportBtn: "Export PDF",
-    exportFailTitle: "Export Failed",
-    exportFailNotFound: "Could not find summary content.",
-    exportFailError: "An error occurred while generating the PDF.",
-    exportSuccessTitle: "Export Complete",
-    exportSuccessDesc: (fileName: string) => `${fileName} has been downloaded.`,
-    pdfTitle: "Brand Strategy Summary",
-    pdfCreatedAt: (date: string) => `Created: ${date}`,
-    fileNamePrefix: "BrandStrategy",
-    coreMessage: "Core Message",
-    brandDirection: "Brand Direction",
-    field: "Field",
-    targetAudience: "Target Audience",
-    ageRange: "Age Range",
-    interests: "Interests",
-    contentStrategy: "Content Strategy",
-    mainTopics: "Main Topics",
-    channels: "Channels",
-    publishCycle: "Publishing Cycle",
-    revenueModel: "Revenue Model",
-    primaryModel: "Primary Model",
-    pricePolicy: "Pricing",
-    painAndSolution: "Customer Pain Points & Solutions",
-    customerPains: "Customer Pains",
-    solutionByContent: "Solved Through Content",
-    brandNames: "Brand Name Candidates",
-    actionRoadmap: "Action Roadmap",
-    step1Title: "Establish Brand Identity",
-    step1Desc: "Finalize brand name, set up profile, write introduction",
-    step2Title: "Launch Content Channels",
-    step2Desc: (channels: string) => `Create and optimize ${channels} accounts`,
-    step3Title: "Publish First Content",
-    step3Desc: (topic: string) => `Create first content on "${topic}"`,
-    step4Title: "Prepare Monetization",
-    step4Desc: (channel: string, model: string) => `Plan ${model} product on ${channel}`,
-  },
-};
 
 interface BrandStrategy {
   brand_direction: {
@@ -138,8 +62,8 @@ export function BrandStrategySummary({
   userName = "User",
 }: BrandStrategySummaryProps) {
   const summaryRef = useRef<HTMLDivElement>(null);
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.brandDomain.strategy;
 
   const exportToPDF = async () => {
     if (!summaryRef.current) {

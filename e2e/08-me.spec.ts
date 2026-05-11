@@ -75,7 +75,7 @@ test.describe('MePage', () => {
   });
 
   test('Amber AI 버튼 → AISheet 열림', async ({ page }) => {
-    await page.getByRole('button', { name: 'Amber AI 상담 열기' }).click();
+    await page.getByRole('button', { name: 'Amber AI 채팅 열기' }).click();
     await page.waitForTimeout(400);
     // AISheet 내 입력 또는 AI 텍스트 확인
     await expect(

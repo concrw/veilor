@@ -4,6 +4,7 @@ import { veilorDb, supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { ToastAction } from '@/components/ui/toast';
 import { useLanguageContext } from '@/context/LanguageContext';
+import { getT } from '@/i18n/useT';
 import type { WhySession, JobEntry, AnalysisResult } from '@/types/why';
 import type { WhyM43Analysis } from '@/hooks/useM43WhyIntegration';
 
@@ -40,7 +41,6 @@ export function useWhyFlowAnalysis(props: UseWhyFlowAnalysisProps) {
 
   const navigate = useNavigate();
   const { language } = useLanguageContext();
-  const isEn = language === 'en';
 
   const buildLocalAnalysis = (): AnalysisResult => {
     const happyJobs = jobs.filter(j => j.category === 'happy');
@@ -145,8 +145,9 @@ export function useWhyFlowAnalysis(props: UseWhyFlowAnalysisProps) {
   };
 
   const savePrimePerspective = async () => {
+    const t = getT(language);
     if (!ppText.trim()) {
-      toast({ title: isEn ? 'Please write your Prime Perspective.' : 'Prime Perspective를 작성해 주세요.', variant: 'destructive' });
+      toast({ title: t.why.toasts.primePerspectiveRequired, variant: 'destructive' });
       return;
     }
     setPpSaving(true);
@@ -171,11 +172,11 @@ export function useWhyFlowAnalysis(props: UseWhyFlowAnalysisProps) {
 
       setSession(prev => prev ? { ...prev, prime_perspective: ppText.trim(), completed_at: new Date().toISOString(), status: 'completed' } : prev);
       toast({
-        title: isEn ? 'Prime Perspective complete!' : 'Prime Perspective 완성!',
-        description: isEn ? 'Your growth data has been updated in Me tab.' : '성장 데이터가 Me 탭에 반영됐어요.',
+        title: t.why.toasts.primePerspectiveComplete,
+        description: t.why.toasts.primePerspectiveCompleteDesc,
         action: (
-          <ToastAction altText={isEn ? 'Go to Me' : 'Me 탭 이동'} onClick={() => navigate('/home/me')}>
-            {isEn ? 'Me tab' : 'Me 탭'}
+          <ToastAction altText={t.why.toasts.primePerspectiveGoTo} onClick={() => navigate('/home/me')}>
+            {t.why.toasts.primePerspectiveGoTo}
           </ToastAction>
         ),
       });

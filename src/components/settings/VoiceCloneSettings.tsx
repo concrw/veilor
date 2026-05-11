@@ -4,61 +4,16 @@ import { useVoiceClone } from '@/hooks/useVoiceClone';
 import { useAuth } from '@/context/AuthContext';
 import { useVeilorSubscription } from '@/hooks/useVeilorSubscription';
 import { veilorDb } from '@/integrations/supabase/client';
-import { useLanguageContext } from '@/context/LanguageContext';
+import { useT } from '@/i18n/useT';
 
 const MIN_SECONDS = 30;
 const MAX_SECONDS = 300;
 
-const S = {
-  ko: {
-    proOnly: 'Pro 전용 기능',
-    proDesc: '내 목소리로 엠버와 대화하는 기능은\nPro 전용입니다.',
-    proCta: '확인',
-    intro: (min: number) => `자신의 목소리로 녹음하면 엠버가 그 목소리로 대화합니다.\n최소 ${min}초 이상 자연스럽게 말해주세요.`,
-    voiceRegistered: '내 목소리 등록됨',
-    voiceAmberUsing: '엠버가 이 목소리로 대화합니다',
-    reRegister: '다시 등록',
-    voiceNameLabel: '목소리 이름 (선택)',
-    voiceNamePlaceholder: '내 목소리',
-    defaultVoiceName: '내 목소리',
-    startRecording: '녹음 시작',
-    waitFmt: (n: number) => `${n}초 대기 중...`,
-    canStop: '충분해요! 중지해도 됩니다',
-    needMore: (n: number) => `${n}초 더 말해주세요`,
-    stopAndRegister: '녹음 중지 및 등록',
-    cancel: '취소',
-    uploading: '목소리 등록 중...',
-    reRecord: '다시 녹음하기',
-    retry: '다시 시도',
-  },
-  en: {
-    proOnly: 'Pro Feature',
-    proDesc: "Talking to Amber with your own voice\nis a Pro feature.",
-    proCta: 'OK',
-    intro: (min: number) => `Record with your voice and Amber will use it in conversation.\nPlease speak naturally for at least ${min} seconds.`,
-    voiceRegistered: 'My voice registered',
-    voiceAmberUsing: 'Amber will use this voice',
-    reRegister: 'Re-register',
-    voiceNameLabel: 'Voice name (optional)',
-    voiceNamePlaceholder: 'My voice',
-    defaultVoiceName: 'My voice',
-    startRecording: 'Start recording',
-    waitFmt: (n: number) => `Waiting ${n}s...`,
-    canStop: "That's enough! You can stop.",
-    needMore: (n: number) => `Speak for ${n} more seconds`,
-    stopAndRegister: 'Stop & register',
-    cancel: 'Cancel',
-    uploading: 'Registering voice...',
-    reRecord: 'Re-record',
-    retry: 'Try again',
-  },
-};
-
 export default function VoiceCloneSettings() {
   const { user } = useAuth();
   const { isPro } = useVeilorSubscription();
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.voiceCloneSettings;
   const { state, errorMsg, clonedVoiceId, startRecording, stopRecordingAndUpload, cancelRecording, reset } = useVoiceClone();
 
   if (!isPro) {

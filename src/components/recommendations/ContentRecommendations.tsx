@@ -13,38 +13,7 @@ import {
   Sparkles,
   RefreshCw,
 } from "lucide-react";
-import { useLanguageContext } from "@/context/LanguageContext";
-
-const S = {
-  ko: {
-    cardTitle: "맞춤 콘텐츠 추천",
-    loadFail: "추천 콘텐츠를 불러오지 못했습니다",
-    retry: "다시 시도",
-    emptyTitle: "아직 추천 콘텐츠가 없습니다",
-    emptyDesc: "Why 분석을 완료하면 맞춤 콘텐츠를 추천받을 수 있습니다",
-    relevance: (pct: number) => `관련도 ${pct}%`,
-    typeLabels: {
-      article: "아티클",
-      course: "강의",
-      book: "도서",
-      video: "영상",
-    },
-  },
-  en: {
-    cardTitle: "Recommended Content",
-    loadFail: "Failed to load recommendations",
-    retry: "Try again",
-    emptyTitle: "No recommendations yet",
-    emptyDesc: "Complete a Why analysis to receive personalized content recommendations",
-    relevance: (pct: number) => `${pct}% relevant`,
-    typeLabels: {
-      article: "Article",
-      course: "Course",
-      book: "Book",
-      video: "Video",
-    },
-  },
-};
+import { useT } from "@/i18n/useT";
 
 interface ContentRecommendation {
   id: string;
@@ -73,8 +42,8 @@ const getTypeIcon = (type: string) => {
 
 export const ContentRecommendations = () => {
   const { user } = useAuth();
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.contentRecommendations;
 
   const {
     data,
@@ -94,7 +63,7 @@ export const ContentRecommendations = () => {
   });
 
   const getTypeLabel = (type: string) => {
-    return s.typeLabels[type as keyof typeof s.typeLabels] ?? type;
+    return s.typeLabels[type] ?? type;
   };
 
   if (isLoading) {

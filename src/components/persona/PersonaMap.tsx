@@ -1,69 +1,9 @@
 import { useState, memo } from 'react';
 import { C } from '@/lib/colors';
 import { usePersonaMapData } from '@/hooks/usePersonaMapData';
-import { useLanguageContext } from '@/context/LanguageContext';
+import { useT } from '@/i18n/useT';
 import type { PersonaInstance, PatternProfile, PersonaContradiction } from '@/types/persona';
 
-const S = {
-  ko: {
-    mapTitle: '페르소나 맵',
-    loading: '불러오는 중...',
-    emptyTitle: '아직 발견된 페르소나가 없어요',
-    emptyDesc: 'Vent, Dig, Codetalk에서 대화를 나누면\n패턴이 감지되고 페르소나가 생겨나요.',
-    activeFmt: (active: number, suppressed: number, conflict: number) => {
-      let s = `활성 ${active}개`;
-      if (suppressed > 0) s += ` · 억압 후보 ${suppressed}개`;
-      if (conflict > 0) s += ` · 충돌 ${conflict}개`;
-      return s;
-    },
-    patternBasis: 'PatternProfile 기반',
-    meBadge: '나',
-    statusLabels: { active: '활성', dormant: '잠재', suppressed: '억압 후보' },
-    conflict: '충돌',
-    patternAxis: '패턴 축',
-    activeness: '활성도',
-    descLabel: '설명',
-    suppressedCandidate: '억압된 자아 후보',
-    suppressedDesc: '이 자아는 억눌려 있어요. 표현되지 못한 욕구나 감정이 숨어 있을 수 있어요.',
-    detectedSignals: '감지된 시그널',
-    signalSummary: '관련 시그널 요약',
-    noContent: '(내용 없음)',
-    conflictRelation: '충돌 관계',
-    unknownPersona: '(알 수 없음)',
-    contributingPatterns: '기여 패턴',
-    confidence: '신뢰도',
-    signalCount: '신호 수',
-  },
-  en: {
-    mapTitle: 'Persona Map',
-    loading: 'Loading...',
-    emptyTitle: 'No personas discovered yet',
-    emptyDesc: 'Chat in Vent, Dig, or Codetalk and\npatterns will be detected to form personas.',
-    activeFmt: (active: number, suppressed: number, conflict: number) => {
-      let s = `${active} active`;
-      if (suppressed > 0) s += ` · ${suppressed} suppressed`;
-      if (conflict > 0) s += ` · ${conflict} conflicts`;
-      return s;
-    },
-    patternBasis: 'PatternProfile-based',
-    meBadge: 'Me',
-    statusLabels: { active: 'Active', dormant: 'Dormant', suppressed: 'Suppressed' },
-    conflict: 'Conflict',
-    patternAxis: 'Pattern Axis',
-    activeness: 'Activeness',
-    descLabel: 'Description',
-    suppressedCandidate: 'Suppressed Self Candidate',
-    suppressedDesc: 'This self is suppressed. There may be hidden unmet needs or emotions.',
-    detectedSignals: 'Detected Signals',
-    signalSummary: 'Related Signal Summary',
-    noContent: '(no content)',
-    conflictRelation: 'Conflict Relation',
-    unknownPersona: '(unknown)',
-    contributingPatterns: 'Contributing Patterns',
-    confidence: 'Confidence',
-    signalCount: 'Signal Count',
-  },
-};
 
 const getStatusStyle = (status: string) => {
   switch (status) {
@@ -96,8 +36,8 @@ const getNodePosition = (index: number, total: number) => {
 const PersonaMap = memo(function PersonaMap({ userId }: { userId: string }) {
   const { personas, patterns, contradictions, loading, getSignalSummary } = usePersonaMapData(userId);
   const [selectedPersona, setSelectedPersona] = useState<string | null>(null);
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.personaDomain.map;
 
   if (loading) {
     return (

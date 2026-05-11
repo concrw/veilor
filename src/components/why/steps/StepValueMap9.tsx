@@ -1,30 +1,8 @@
 import { Button } from '@/components/ui/button';
-import { useLanguageContext } from '@/context/LanguageContext';
+import { useT } from '@/i18n/useT';
 import type { AnalysisResult } from '@/types/why';
 import type { WhyM43Analysis } from '@/hooks/useM43WhyIntegration';
 
-const S = {
-  ko: {
-    step: '9단계',
-    title: '가치관 매핑',
-    subtitle: '7개 프레임워크 렌즈를 통해 당신의 가치관 지도를 구성했습니다.',
-    empty: '프레임워크별 가치관 매핑 결과가 아직 생성되지 않았습니다.',
-    aiLabel: 'AI 제안 Prime Perspective',
-    useThis: '이것으로 사용하고 완성하기',
-    prev: '← 각인 연결',
-    next: 'Prime Perspective 작성 →',
-  },
-  en: {
-    step: 'Step 9',
-    title: 'Value Mapping',
-    subtitle: 'Your value map has been constructed through 7 framework lenses.',
-    empty: 'Framework-based value mapping results have not been generated yet.',
-    aiLabel: 'AI-suggested Prime Perspective',
-    useThis: 'Use this and finalize',
-    prev: '← Imprint connection',
-    next: 'Write Prime Perspective →',
-  },
-};
 
 interface StepValueMap9Props {
   m43Analysis: WhyM43Analysis | null;
@@ -35,8 +13,8 @@ interface StepValueMap9Props {
 }
 
 export function StepValueMap9({ m43Analysis, analysisResult, setPpText, onPrev, onNext }: StepValueMap9Props) {
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.why.valueMap9;
 
   return (
     <div className="space-y-4">

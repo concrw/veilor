@@ -3,50 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { veilorDb } from '@/integrations/supabase/client';
-import { useLanguageContext } from '@/context/LanguageContext';
+import { useT } from '@/i18n/useT';
+import type { LocaleResource } from '@/i18n/types';
 
-const S = {
-  ko: {
-    title: 'Dig',
-    subtitle: '내 감정 패턴을 데이터로 들여다보기',
-    tabs: {
-      trend: '감정 트렌드',
-      activity: '활동 분석',
-    },
-    loading: '불러오는 중...',
-    noCheckin: '아직 기록이 없어요. 체크인부터 시작해보세요.',
-    goToVent: 'Vent 탭으로 이동 →',
-    recentMood: '최근 30일 감정 흐름',
-    highLabel: '최고',
-    lowLabel: '최저',
-    scoreUnit: '점',
-    activityAvg: '활동별 평균 기분',
-    noActivityData: '아직 기록이 없어요.',
-    needMoreData: '활동별 분석을 위해 더 많은 기록이 필요해요.',
-    needMoreDataSub: '각 활동을 2번 이상 기록해보세요.',
-    activities: ['관계', '일', '운동', '혼자', '휴식', '공부'],
-  },
-  en: {
-    title: 'Dig',
-    subtitle: 'Visualize my emotional patterns as data',
-    tabs: {
-      trend: 'Mood Trend',
-      activity: 'Activity Analysis',
-    },
-    loading: 'Loading...',
-    noCheckin: 'No records yet. Start with a check-in.',
-    goToVent: 'Go to Vent tab →',
-    recentMood: 'Mood over the last 30 days',
-    highLabel: 'High',
-    lowLabel: 'Low',
-    scoreUnit: '',
-    activityAvg: 'Average mood by activity',
-    noActivityData: 'No records yet.',
-    needMoreData: 'More records are needed for activity analysis.',
-    needMoreDataSub: 'Record each activity at least twice.',
-    activities: ['Relationship', 'Work', 'Exercise', 'Alone', 'Rest', 'Study'],
-  },
-} as const;
 
 interface ClearCheckinRow {
   content: string;
@@ -62,7 +21,7 @@ interface ParsedCheckin {
 
 const ACTIVITY_OPTIONS_KO = ['관계', '일', '운동', '혼자', '휴식', '공부'] as const;
 
-function MoodTrendTab({ checkins, s }: { checkins: ParsedCheckin[]; s: typeof S.ko }) {
+function MoodTrendTab({ checkins, s }: { checkins: ParsedCheckin[]; s: LocaleResource['digExtra']['clearDig'] }) {
   const navigate = useNavigate();
 
   if (checkins.length === 0) {
@@ -148,7 +107,7 @@ function MoodTrendTab({ checkins, s }: { checkins: ParsedCheckin[]; s: typeof S.
   );
 }
 
-function ActivityAnalysisTab({ checkins, s }: { checkins: ParsedCheckin[]; s: typeof S.ko }) {
+function ActivityAnalysisTab({ checkins, s }: { checkins: ParsedCheckin[]; s: LocaleResource['digExtra']['clearDig'] }) {
   if (checkins.length === 0) {
     return (
       <div className="rounded-2xl border p-5 text-center" style={{ background: '#111318', borderColor: '#4AAEFF22' }}>
@@ -211,8 +170,8 @@ function ActivityAnalysisTab({ checkins, s }: { checkins: ParsedCheckin[]; s: ty
 
 export default function ClearDigView() {
   const { user } = useAuth();
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.digExtra.clearDig;
   const [activeTab, setActiveTab] = useState<'trend' | 'activity'>('trend');
 
   const { data: checkins = [], isLoading } = useQuery<ParsedCheckin[]>({
@@ -265,7 +224,7 @@ export default function ClearDigView() {
 
       <div className="flex rounded-2xl p-1 gap-1" style={{ background: '#111318', border: '1px solid #4AAEFF22' }}>
         {(['trend', 'activity'] as const).map(tab => {
-          const label = s.tabs[tab];
+          const label = tab === 'trend' ? s.tabTrend : s.tabActivity;
           const active = activeTab === tab;
           return (
             <button

@@ -369,6 +369,18 @@ serve(async (req: Request) => {
     const axisScores = body.axisScores;
     const history = body.history;
     const userId = body.userId;
+
+    // AI 접근 권한 체크 (구독 여부 + 월 $7 한도)
+    if (userId && SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
+      const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+      const { data: access } = await sb.rpc('fn_check_ai_access', { p_user_id: userId });
+      if (access && !access.allowed) {
+        return new Response(
+          JSON.stringify({ error: access.reason, monthly_used_usd: access.monthly_used_usd ?? null }),
+          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
     const aiSettings = body.aiSettings ?? {};
     const aiName = sanitizeUserInput(aiSettings.name ?? '엠버', 20);
     const aiTone = aiSettings.tone ?? 'warm';
@@ -814,9 +826,8 @@ serve(async (req: Request) => {
       }
     }
 
-    // 2단계: 모델 선택 — dig/get/set 탭이거나 6턴+ 이면 Sonnet, 나머지는 Haiku
-    const needsSonnet = tab !== 'vent' || messageCount >= 6 || !!sessionPattern || !!researchContext;
-    const selectedModel = needsSonnet ? MODELS.SONNET : MODELS.HAIKU;
+    // 전 탭 Sonnet 고정
+    const selectedModel = MODELS.SONNET;
 
     const aiResp = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -846,9 +857,94 @@ serve(async (req: Request) => {
       });
     }
 
+    // ── 토큰 사용량 비동기 로깅 (응답 지연 없음) ──
+    function logTokenUsage(
+      inputTokens: number,
+      outputTokens: number,
+      cacheReadTokens: number,
+      cacheWriteTokens: number,
+    ) {
+      if (!cachedSb || !userId) return;
+
+      // Sonnet 요금 기준 USD 원가 계산
+      // input: $3/1M, output: $15/1M, cache_read: $0.30/1M, cache_write: $3.75/1M
+      const costUsd =
+        (inputTokens * 3.00 +
+         outputTokens * 15.00 +
+         cacheReadTokens * 0.30 +
+         cacheWriteTokens * 3.75) / 1_000_000;
+
+      cachedSb.from('ai_token_usage').insert({
+        user_id: userId,
+        model: selectedModel,
+        tab: tab || null,
+        input_tokens: inputTokens,
+        output_tokens: outputTokens,
+        cache_read_tokens: cacheReadTokens,
+        cache_write_tokens: cacheWriteTokens,
+      }).then(() => {}).catch((e: unknown) => console.warn('token_usage log failed:', e));
+
+      // monthly_used_usd 누적
+      if (costUsd > 0) {
+        cachedSb.rpc('fn_increment_monthly_used_usd', {
+          p_user_id: userId,
+          p_cost_usd: costUsd,
+        }).then(() => {}).catch((e: unknown) => console.warn('monthly_used_usd update failed:', e));
+      }
+    }
+
     // SSE 스트리밍: 클라이언트가 Accept: text/event-stream 헤더 전송 시
     if (useStream) {
-      return new Response(aiResp.body, {
+      // stream을 직접 파싱해 usage를 추출하고 클라이언트에 그대로 포워딩
+      const { readable, writable } = new TransformStream();
+      const writer = writable.getWriter();
+      const reader = aiResp.body!.getReader();
+      const decoder = new TextDecoder();
+
+      (async () => {
+        let buffer = '';
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            // 클라이언트로 그대로 전달
+            await writer.write(value);
+            // usage 파싱 (message_delta 이벤트)
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() ?? '';
+            for (const line of lines) {
+              if (!line.startsWith('data: ')) continue;
+              const raw = line.slice(6).trim();
+              if (raw === '[DONE]') continue;
+              try {
+                const evt = JSON.parse(raw);
+                if (evt.type === 'message_delta' && evt.usage) {
+                  logTokenUsage(
+                    0,
+                    evt.usage.output_tokens ?? 0,
+                    0,
+                    0,
+                  );
+                }
+                if (evt.type === 'message_start' && evt.message?.usage) {
+                  const u = evt.message.usage;
+                  logTokenUsage(
+                    u.input_tokens ?? 0,
+                    0,
+                    u.cache_read_input_tokens ?? 0,
+                    u.cache_creation_input_tokens ?? 0,
+                  );
+                }
+              } catch { /* 파싱 실패 줄 무시 */ }
+            }
+          }
+        } finally {
+          await writer.close().catch(() => {});
+        }
+      })();
+
+      return new Response(readable, {
         headers: {
           ...corsHeaders,
           'Content-Type': 'text/event-stream',
@@ -860,6 +956,17 @@ serve(async (req: Request) => {
 
     const data = await aiResp.json();
     const response: string = data?.content?.[0]?.text?.trim() ?? '';
+
+    // non-stream usage 로깅
+    if (data?.usage) {
+      const u = data.usage;
+      logTokenUsage(
+        u.input_tokens ?? 0,
+        u.output_tokens ?? 0,
+        u.cache_read_input_tokens ?? 0,
+        u.cache_creation_input_tokens ?? 0,
+      );
+    }
 
     // ── 캐시 저장 (비동기 — 응답 지연 없음) ──
     if (cachedSb && response) {

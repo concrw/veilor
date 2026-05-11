@@ -1,26 +1,7 @@
 // src/components/chat/AnalysisReport.tsx
 import React from 'react';
 import { BarChart3, Brain, Target } from 'lucide-react';
-import { useLanguageContext } from '@/context/LanguageContext';
-
-const S = {
-  ko: {
-    headerTitle: 'T모드 분석 결과',
-    emotionDist: '감정 분포',
-    coreConflict: '핵심 갈등',
-    behaviorPattern: '행동 패턴',
-    suggestedSolutions: '제안 해결책',
-    disclaimer: '이 분석은 AI 기반 추정이며, 전문가 상담을 통해 더 정확한 분석을 받을 수 있습니다.',
-  },
-  en: {
-    headerTitle: 'T-mode Analysis Result',
-    emotionDist: 'Emotion Distribution',
-    coreConflict: 'Core Conflict',
-    behaviorPattern: 'Behavioral Pattern',
-    suggestedSolutions: 'Suggested Solutions',
-    disclaimer: 'This analysis is AI-based estimation. A professional consultation can provide more accurate insights.',
-  },
-};
+import { useT } from '@/i18n/useT';
 
 interface AnalysisResult {
   emotion: { [key: string]: number };
@@ -34,8 +15,7 @@ interface AnalysisReportProps {
 }
 
 const AnalysisReport: React.FC<AnalysisReportProps> = ({ result }) => {
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
 
   return (
     <div className="w-full border border-white border-opacity-10 p-6 backdrop-blur-sm space-y-6">
@@ -43,14 +23,14 @@ const AnalysisReport: React.FC<AnalysisReportProps> = ({ result }) => {
       {/* 헤더 */}
       <div className="flex items-center space-x-2 mb-4">
         <Brain size={16} className="text-blue-400" />
-        <h3 className="text-sm font-light text-white opacity-90">{s.headerTitle}</h3>
+        <h3 className="text-sm font-light text-white opacity-90">{t.diveAnalysis.headerTitle}</h3>
       </div>
 
       {/* 감정 분석 */}
       <div className="space-y-3">
         <div className="flex items-center space-x-2">
           <BarChart3 size={14} className="text-blue-300" />
-          <h4 className="text-xs font-medium text-gray-300">{s.emotionDist}</h4>
+          <h4 className="text-xs font-medium text-gray-300">{t.diveAnalysis.emotionDist}</h4>
         </div>
         <div className="space-y-2">
           {Object.entries(result.emotion).map(([emotion, percentage]) => (
@@ -72,7 +52,7 @@ const AnalysisReport: React.FC<AnalysisReportProps> = ({ result }) => {
 
       {/* 갈등 분석 */}
       <div className="space-y-2">
-        <h4 className="text-xs font-medium text-gray-300">{s.coreConflict}</h4>
+        <h4 className="text-xs font-medium text-gray-300">{t.diveAnalysis.coreConflict}</h4>
         <div className="bg-white bg-opacity-5 p-3 backdrop-blur-sm">
           <p className="text-xs text-gray-400 font-light">{result.conflict}</p>
         </div>
@@ -80,7 +60,7 @@ const AnalysisReport: React.FC<AnalysisReportProps> = ({ result }) => {
 
       {/* 패턴 분석 */}
       <div className="space-y-2">
-        <h4 className="text-xs font-medium text-gray-300">{s.behaviorPattern}</h4>
+        <h4 className="text-xs font-medium text-gray-300">{t.diveAnalysis.behaviorPattern}</h4>
         <div className="bg-white bg-opacity-5 p-3 backdrop-blur-sm">
           <p className="text-xs text-gray-400 font-light">{result.pattern}</p>
         </div>
@@ -90,7 +70,7 @@ const AnalysisReport: React.FC<AnalysisReportProps> = ({ result }) => {
       <div className="space-y-3">
         <div className="flex items-center space-x-2">
           <Target size={14} className="text-green-400" />
-          <h4 className="text-xs font-medium text-gray-300">{s.suggestedSolutions}</h4>
+          <h4 className="text-xs font-medium text-gray-300">{t.diveAnalysis.suggestedSolutions}</h4>
         </div>
         <div className="space-y-2">
           {result.solutions.map((solution, index) => (
@@ -105,7 +85,7 @@ const AnalysisReport: React.FC<AnalysisReportProps> = ({ result }) => {
       {/* 하단 안내 */}
       <div className="pt-4 border-t border-white border-opacity-5">
         <p className="text-xs text-gray-500 text-center opacity-70">
-          {s.disclaimer}
+          {t.diveAnalysis.disclaimer}
         </p>
       </div>
     </div>

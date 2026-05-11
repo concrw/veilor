@@ -160,38 +160,49 @@ test.describe('Personas', () => {
 // ── 4. PersonaRelationships (/personas/relationships) ─────────────────────────
 test.describe('PersonaRelationships', () => {
   test.beforeEach(async ({ page }) => {
+    test.setTimeout(90_000);
+    await page.addInitScript(() => {
+      localStorage.setItem('veilor_ux_mode', 'original');
+      localStorage.setItem('veilor_first_visit_dismissed', 'true');
+      localStorage.setItem('veilor_lang', 'ko');
+    });
     await login(page, TEST_USERS.done.email, TEST_USERS.done.password);
     await waitForHome(page);
-    await gotoSpa(page, '/personas/relationships');
+    // gotoSpa(pushState) 대신 page.goto — lazy chunk 로드 + networkidle 보장
+    await page.goto('/personas/relationships');
+    await page.waitForURL(/\/personas\/relationships/, { timeout: 15_000 });
+    await page.locator('.animate-spin').waitFor({ state: 'hidden', timeout: 20_000 }).catch(() => null);
+    await page.waitForLoadState('networkidle').catch(() => null);
   });
 
   test('페르소나 통합 분석 헤더 노출', async ({ page }) => {
     test.setTimeout(60_000);
 
+    // e2e.done 계정의 preferred_lang이 'en'이므로 영어 텍스트로 검증
     await expect(
-      page.getByText('페르소나 통합 분석'),
+      page.getByText(/Persona Integrated Analysis|페르소나 통합 분석/i),
     ).toBeVisible({ timeout: 10_000 });
   });
 
   test('관계 분석 / 브랜딩 전략 / 성장 추적 탭 3개 노출', async ({ page }) => {
     test.setTimeout(60_000);
 
-    // tab role로 한정 — getByText는 strict mode 위반 위험
-    await expect(page.getByRole('tab', { name: '관계 분석' })).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByRole('tab', { name: '브랜딩 전략' })).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByRole('tab', { name: '성장 추적' })).toBeVisible({ timeout: 10_000 });
+    // e2e.done 계정 preferred_lang=en → 영어 탭 레이블로 검증
+    await expect(page.getByRole('tab', { name: /Relationships|관계 분석/ })).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole('tab', { name: /Branding Strategy|브랜딩 전략/ })).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole('tab', { name: /Growth Tracking|성장 추적/ })).toBeVisible({ timeout: 10_000 });
   });
 
   test('탭 클릭 시 에러 없음', async ({ page }) => {
     test.setTimeout(60_000);
 
-    await page.getByRole('tab', { name: '브랜딩 전략' }).click();
+    await page.getByRole('tab', { name: /Branding Strategy|브랜딩 전략/ }).click();
     await expect(page.locator('[role="alertdialog"]')).toHaveCount(0);
 
-    await page.getByRole('tab', { name: '성장 추적' }).click();
+    await page.getByRole('tab', { name: /Growth Tracking|성장 추적/ }).click();
     await expect(page.locator('[role="alertdialog"]')).toHaveCount(0);
 
-    await page.getByRole('tab', { name: '관계 분석' }).click();
+    await page.getByRole('tab', { name: /Relationships|관계 분석/ }).click();
     await expect(page.locator('[role="alertdialog"]')).toHaveCount(0);
   });
 });

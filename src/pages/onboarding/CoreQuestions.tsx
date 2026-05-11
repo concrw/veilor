@@ -4,92 +4,15 @@ import { useAuth } from '@/context/AuthContext';
 import { veilorDb } from '@/integrations/supabase/client';
 import { safeGetItem, safeSetItem, safeRemoveItem } from '@/lib/storage';
 import { toast } from '@/hooks/use-toast';
-import { useLanguageContext } from '@/context/LanguageContext';
-
-const S = {
-  ko: {
-    subtitle: '관계의 가면을 발견하는 여정',
-    sidebarTitle: '핵심 질문이란?',
-    sidebarDesc1: '4가지 질문을 통해 당신의 관계 목표, 감정 처리 방식, 관계 스타일을 파악합니다.',
-    sidebarDesc2: '솔직하게 답할수록 V-File 진단이 더 정확해집니다.',
-    progressSuffix: '완료',
-    toastTitle: '저장 실패',
-    toastDesc: '잠시 후 다시 시도해 주세요.',
-    btnStart: '분석 시작하기',
-    btnNext: '다음',
-    questions: [
-      {
-        key: 'relationship_goal',
-        question: '지금 관계에서 가장 원하는 것은?',
-        type: 'choice' as const,
-        options: ['더 깊은 이해', '성장', '연결감', '치유'],
-      },
-      {
-        key: 'current_challenge',
-        question: '관계에서 반복되는 어려움이 있다면? (선택)',
-        type: 'text' as const,
-        placeholder: '자유롭게 적어주세요 (최대 200자)',
-      },
-      {
-        key: 'emotion_style',
-        question: '나는 주로 어떻게 감정을 처리하나요?',
-        type: 'choice' as const,
-        options: ['혼자 생각 정리', '대화로 해소', '행동으로 전환', '시간이 지나면서'],
-      },
-      {
-        key: 'relationship_style',
-        question: '관계를 대할 때 나의 스타일은?',
-        type: 'choice' as const,
-        options: ['분석적으로 파악', '감정으로 공감', '실용적으로 해결'],
-      },
-    ],
-  },
-  en: {
-    subtitle: 'A journey to discover your relational mask',
-    sidebarTitle: 'What are Core Questions?',
-    sidebarDesc1: 'Four questions to understand your relationship goals, emotional processing style, and relational approach.',
-    sidebarDesc2: 'The more honest your answers, the more accurate your V-File diagnosis.',
-    progressSuffix: 'done',
-    toastTitle: 'Save failed',
-    toastDesc: 'Please try again in a moment.',
-    btnStart: 'Start analysis',
-    btnNext: 'Next',
-    questions: [
-      {
-        key: 'relationship_goal',
-        question: 'What do you want most from a relationship right now?',
-        type: 'choice' as const,
-        options: ['Deeper understanding', 'Growth', 'Connection', 'Healing'],
-      },
-      {
-        key: 'current_challenge',
-        question: 'Any recurring difficulties in relationships? (optional)',
-        type: 'text' as const,
-        placeholder: 'Write freely (up to 200 characters)',
-      },
-      {
-        key: 'emotion_style',
-        question: 'How do you usually process emotions?',
-        type: 'choice' as const,
-        options: ['Think it through alone', 'Talk it out', 'Channel into action', 'Let time pass'],
-      },
-      {
-        key: 'relationship_style',
-        question: 'What is your style when approaching relationships?',
-        type: 'choice' as const,
-        options: ['Analytical understanding', 'Empathetic feeling', 'Practical problem-solving'],
-      },
-    ],
-  },
-};
+import { useT } from '@/i18n/useT';
 
 const CQ_STORAGE_KEY = 'veilor:cq-progress';
 
 export default function CoreQuestions() {
   const navigate = useNavigate();
   const { user, setOnboardingStep } = useAuth();
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.coreQuestions;
   const QUESTIONS = s.questions;
 
   const [current, setCurrent] = useState(() => {

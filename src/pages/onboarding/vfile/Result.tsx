@@ -6,61 +6,16 @@ import { runDiagnosis, VFILE_CONTEXT_LABELS } from '@/lib/vfileAlgorithm';
 import type { DiagnosisResult, VFileContext } from '@/lib/vfileAlgorithm';
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer } from 'recharts';
 import { veilorDb } from '@/integrations/supabase/client';
-import UpgradeModal from '@/components/premium/UpgradeModal';
-import { useVeilorSubscription } from '@/hooks/useVeilorSubscription';
-import { useLanguageContext } from '@/context/LanguageContext';
-
-const S = {
-  ko: {
-    subtitle: 'V-File 진단 결과',
-    sidebarHeading: '당신의 관계 가면이\n이름을 얻었습니다',
-    sidebarSubtext: '이 결과는 탐색의 시작입니다.\nVEILOR와 함께 더 깊이 들어가 보세요.',
-    yourVFile: '당신의 V-File',
-    complexSuffix: '복합형',
-    radarAxes: { A: '애착', B: '소통', C: '욕구표현', D: '역할' },
-    declaration: [
-      '지금 보이는 것은 윤곽입니다.',
-      '모든 사람에게는 보이는 얼굴과\n아직 이름 붙여지지 않은 얼굴들이 있습니다.',
-      '당신에 대해 안다고 말하기엔 아직 이릅니다.\n당신 자신도 마찬가지일 수 있어요.',
-      'VEILOR는 그 안으로 함께 들어갑니다.',
-      '준비가 되셨다면.',
-    ],
-    btnStart: '여정 시작 →',
-    btnDone: '결과 확인 완료',
-    btnPremium: 'Premium 분석 보기',
-    disclaimer: '이 결과는 자기탐색을 위한 참고 자료이며, 심리 진단이 아닙니다.\n정확한 평가를 원하시면 전문 심리상담사와 상담해 주세요.',
-  },
-  en: {
-    subtitle: 'V-File Diagnosis Result',
-    sidebarHeading: "Your relational mask\nhas been named",
-    sidebarSubtext: 'This result is the beginning of exploration.\nGo deeper with VEILOR.',
-    yourVFile: 'Your V-File',
-    complexSuffix: 'Complex',
-    radarAxes: { A: 'Attachment', B: 'Communication', C: 'Expression', D: 'Role' },
-    declaration: [
-      'What you see now is an outline.',
-      'Everyone has a visible face\nand faces not yet named.',
-      "It is too early to say we know you.\nYou yourself may feel the same.",
-      'VEILOR walks with you into that space.',
-      'If you are ready.',
-    ],
-    btnStart: 'Begin the journey →',
-    btnDone: 'Done',
-    btnPremium: 'View Premium analysis',
-    disclaimer: 'This result is a reference for self-exploration, not a clinical diagnosis.\nFor a thorough evaluation, please consult a licensed therapist.',
-  },
-};
+import { useT } from '@/i18n/useT';
 
 export default function PriperResult() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, completePriper } = useAuth();
-  const { isPro } = useVeilorSubscription();
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.vfileResult;
   const [result, setResult] = useState<DiagnosisResult | null>(null);
   const [revealed, setRevealed] = useState(false);
-  const [paywallOpen, setPaywallOpen] = useState(false);
 
   const stateData = location.state as { responses?: Record<string, string>; context?: VFileContext } | null;
   const context: VFileContext = stateData?.context ?? 'general';
@@ -164,12 +119,7 @@ export default function PriperResult() {
       })();
     }
 
-    // 가면 공개 → 온보딩 완료 시 페이월 모달 (무료 유저 + general 맥락만)
     setTimeout(() => setRevealed(true), 800);
-    const isOnboardingContext = (stateData?.context ?? 'general') === 'general' && !stateData?.fromGet;
-    if (!isPro && isOnboardingContext) {
-      setTimeout(() => setPaywallOpen(true), 3000);
-    }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const qc = useQueryClient();
@@ -313,26 +263,10 @@ export default function PriperResult() {
           {isOnboarding ? s.btnStart : s.btnDone}
         </button>
 
-        {!isPro && (
-          <button
-            onClick={() => setPaywallOpen(true)}
-            className="w-full text-xs underline underline-offset-2 py-1"
-            style={{ color: '#B8B3AF' }}
-          >
-            {s.btnPremium}
-          </button>
-        )}
-
         <p className="text-[10px] leading-relaxed text-center px-2" style={{ color: '#87817C' }}>
           {s.disclaimer.split('\n').map((line, i) => <span key={i}>{line}{i === 0 && ' '}</span>)}
         </p>
       </div>
-
-      <UpgradeModal
-        open={paywallOpen}
-        onClose={() => setPaywallOpen(false)}
-        trigger={isOnboarding ? 'onboarding_complete' : 'priper_result'}
-      />
       </div>
     </div>
   );

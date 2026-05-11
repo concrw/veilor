@@ -4,36 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { veilorDb } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { useLanguageContext } from '@/context/LanguageContext';
-
-const S = {
-  ko: {
-    anonUser: '익명 사용자',
-    continueChat: '대화 이어가기',
-    sendMessage: '메시지 보내기',
-    back: '← 뒤로',
-    startChatTitle: '대화를 시작할까요?',
-    startChatDesc: '상대방이 수락하면 메시지를 주고받을 수 있습니다. 안전하게 보호됩니다.',
-    cancel: '취소',
-    requesting: '요청 중...',
-    start: '시작',
-    errorTitle: '오류',
-    errorDesc: '대화방을 만들 수 없습니다.',
-  },
-  en: {
-    anonUser: 'Anonymous user',
-    continueChat: 'Continue chat',
-    sendMessage: 'Send message',
-    back: '← Back',
-    startChatTitle: 'Start a conversation?',
-    startChatDesc: 'Once the other person accepts, you can exchange messages. Your privacy is protected.',
-    cancel: 'Cancel',
-    requesting: 'Requesting...',
-    start: 'Start',
-    errorTitle: 'Error',
-    errorDesc: 'Could not create a chat room.',
-  },
-};
+import { useT } from '@/i18n/useT';
 
 interface DmRoom {
   id: string;
@@ -50,8 +21,8 @@ export default function UserProfilePage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.userProfile;
 
   // 상대방 프로필 조회
   const { data: profile, isLoading } = useQuery({

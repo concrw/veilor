@@ -1,52 +1,8 @@
 import { Button } from '@/components/ui/button';
-import { useLanguageContext } from '@/context/LanguageContext';
+import { useT } from '@/i18n/useT';
 import type { AnalysisResult } from '@/types/why';
 import type { WhyM43Analysis } from '@/hooks/useM43WhyIntegration';
 
-const S = {
-  ko: {
-    loadingTitle: 'M43 패턴 분석 중...',
-    loadingDesc: '행복/고통의 공통 분모 추출 →\n231개 도메인 매칭 →\n7 프레임워크 태깅',
-    step: '7단계',
-    title: 'Why 분석 3단',
-    subtitle: '당신의 선택 패턴을 3단계로 분석합니다',
-    statHappy: '행복 키워드',
-    statDomain: '도메인 매칭',
-    statFw: '프레임워크',
-    phase1Header: '1단: 키워드 패턴 추출',
-    phase1Title: '키워드 패턴 추출',
-    happyPatterns: '행복 패턴',
-    painPatterns: '고통 패턴',
-    phase2Header: '2단: M43 도메인 매칭',
-    phase2Title: 'M43 도메인 매칭',
-    phase2Sub: '231개 관계 심리 도메인 중 상위 매칭',
-    phase3Header: '3단: 프레임워크 태깅',
-    phase3Title: '7 프레임워크 태깅',
-    phase3Sub: '당신의 패턴이 어떤 관계 프레임워크와 연결되는지',
-    next: '각인 연결 분석 보기 →',
-  },
-  en: {
-    loadingTitle: 'Analyzing M43 patterns...',
-    loadingDesc: 'Extracting common denominators of happiness/pain →\nMatching 231 domains →\nTagging 7 frameworks',
-    step: 'Step 7',
-    title: 'Why Analysis — 3 Phases',
-    subtitle: 'Analyze your choice patterns in 3 phases',
-    statHappy: 'Happy keywords',
-    statDomain: 'Domain matching',
-    statFw: 'Framework',
-    phase1Header: 'Phase 1: Keyword Pattern Extraction',
-    phase1Title: 'Keyword Pattern Extraction',
-    happyPatterns: 'Happy patterns',
-    painPatterns: 'Pain patterns',
-    phase2Header: 'Phase 2: M43 Domain Matching',
-    phase2Title: 'M43 Domain Matching',
-    phase2Sub: 'Top matches among 231 relationship psychology domains',
-    phase3Header: 'Phase 3: Framework Tagging',
-    phase3Title: '7 Framework Tagging',
-    phase3Sub: 'Which relationship frameworks your patterns connect to',
-    next: 'View imprint connection analysis →',
-  },
-};
 
 interface StepAnalysis7Props {
   analyzing: boolean;
@@ -56,8 +12,8 @@ interface StepAnalysis7Props {
 }
 
 export function StepAnalysis7({ analyzing, analysisResult, m43Analysis, onNext }: StepAnalysis7Props) {
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.why.analysis7;
 
   if (analyzing) {
     return (

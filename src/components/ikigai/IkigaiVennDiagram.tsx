@@ -9,64 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { IkigaiIntersectionDialog } from "./IkigaiIntersectionDialog";
-import { useLanguageContext } from "@/context/LanguageContext";
-
-const S = {
-  ko: {
-    diagramTitle: "Ikigai 다이어그램",
-    completeness: (pct: string, complete: boolean) => `완성도: ${pct}%${complete ? " ✨ 완성!" : ""}`,
-    completeBadge: "완료",
-    notEntered: "아직 입력되지 않았습니다",
-    moreItems: (n: number) => `...외 ${n}개`,
-    centerLabel: "완성!",
-    circles: {
-      love: "좋아하는 것",
-      goodAt: "잘하는 것",
-      worldNeeds: "세상이 필요한 것",
-      paidFor: "돈 벌 수 있는 것",
-    },
-    intersections: {
-      loveGoodAt: "열정 (Passion)",
-      loveWorldNeeds: "사명 (Mission)",
-      goodAtPaidFor: "직업 (Profession)",
-      worldNeedsPaidFor: "천직 (Vocation)",
-      center: "IKIGAI",
-    },
-    legend: {
-      passion: "열정 (Passion): 좋아하면서 잘하는 것",
-      mission: "사명 (Mission): 좋아하면서 세상이 필요로 하는 것",
-      profession: "직업 (Profession): 잘하면서 돈을 벌 수 있는 것",
-      vocation: "천직 (Vocation): 세상이 필요로 하고 돈을 벌 수 있는 것",
-    },
-  },
-  en: {
-    diagramTitle: "Ikigai Diagram",
-    completeness: (pct: string, complete: boolean) => `Completeness: ${pct}%${complete ? " ✨ Complete!" : ""}`,
-    completeBadge: "Complete",
-    notEntered: "Not entered yet",
-    moreItems: (n: number) => `...${n} more`,
-    centerLabel: "Done!",
-    circles: {
-      love: "What you love",
-      goodAt: "What you're good at",
-      worldNeeds: "What the world needs",
-      paidFor: "What you can be paid for",
-    },
-    intersections: {
-      loveGoodAt: "Passion",
-      loveWorldNeeds: "Mission",
-      goodAtPaidFor: "Profession",
-      worldNeedsPaidFor: "Vocation",
-      center: "IKIGAI",
-    },
-    legend: {
-      passion: "Passion: What you love and are good at",
-      mission: "Mission: What you love and the world needs",
-      profession: "Profession: What you're good at and can be paid for",
-      vocation: "Vocation: What the world needs and you can be paid for",
-    },
-  },
-};
+import { useT } from "@/i18n/useT";
 
 type IntersectionType = "passion" | "mission" | "profession" | "vocation" | "ikigai";
 
@@ -107,8 +50,8 @@ export function IkigaiVennDiagram({
   size = "md",
   showLabels = true,
 }: IkigaiVennDiagramProps) {
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.ikigaiVenn;
 
   const [hoveredCircle, setHoveredCircle] = useState<keyof typeof CIRCLE_CONFIG | null>(null);
   const [hoveredIntersection, setHoveredIntersection] = useState<keyof typeof INTERSECTION_POS | null>(null);

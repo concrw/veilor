@@ -9,7 +9,7 @@ import { useFeature } from '@growthbook/growthbook-react';
 import { useWhySession } from '@/hooks/useWhySession';
 import { useWhyJobs } from '@/hooks/useWhyJobs';
 import { useWhyFlowAnalysis } from '@/hooks/useWhyFlowAnalysis';
-import { useLanguageContext } from '@/context/LanguageContext';
+import { useT } from '@/i18n/useT';
 import { FEATURES } from '@/lib/growthbook';
 import { StepReady } from './steps/StepReady';
 import { StepBrainstorm } from './steps/StepBrainstorm';
@@ -23,42 +23,9 @@ import { StepImprint8 } from './steps/StepImprint8';
 import { StepValueMap9 } from './steps/StepValueMap9';
 import { StepPrimePerspective } from './steps/StepPrimePerspective';
 
-const S = {
-  ko: {
-    stepLabels: [
-      '준비',
-      '직업 브레인스토밍',
-      '직업 정의',
-      '각인 순간',
-      '행복/고통 분류',
-      '이유 작성',
-      '경험 여부',
-      '1차 분석',
-      '각인 연결',
-      '가치관 매핑',
-      'Prime Perspective',
-    ] as string[],
-  },
-  en: {
-    stepLabels: [
-      'Ready',
-      'Career Brainstorming',
-      'Career Definition',
-      'Imprint Moment',
-      'Happy/Pain Classification',
-      'Write Reason',
-      'Experience Check',
-      'Phase 1 Analysis',
-      'Imprint Connection',
-      'Value Mapping',
-      'Prime Perspective',
-    ] as string[],
-  },
-};
-
 export default function WhyFlow() {
-  const { language } = useLanguageContext();
-  const loc = S[language] ?? S.ko;
+  const t = useT();
+  const loc = t.why.flow;
   const whyHint = useFeature(FEATURES.WHY_ONBOARDING_HINT).value ?? 'none';
   const [hintDismissed, setHintDismissed] = useState(false);
   const s = useWhySession();
@@ -123,9 +90,7 @@ export default function WhyFlow() {
       {/* WHY 온보딩 힌트 (feature flag: why_onboarding_hint) */}
       {s.step === 0 && whyHint === 'tooltip' && !hintDismissed && (
         <div className="relative bg-primary/10 border border-primary/20 rounded-lg px-4 py-3 text-sm text-muted-foreground">
-          {language === 'en'
-            ? 'Tip: WHY analysis helps you uncover the root values behind your career choices.'
-            : '팁: WHY 분석은 직업 선택 이면의 핵심 가치관을 발견하는 여정입니다.'}
+          {loc.hintTooltip}
           <button onClick={() => setHintDismissed(true)} className="absolute top-2 right-3 text-xs opacity-40 hover:opacity-80">✕</button>
         </div>
       )}
@@ -133,18 +98,16 @@ export default function WhyFlow() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
           <div className="bg-card border border-border rounded-2xl p-6 max-w-sm w-full mx-4 space-y-4">
             <h3 className="text-base font-semibold">
-              {language === 'en' ? 'Before you begin WHY' : 'WHY 시작 전 안내'}
+              {loc.hintModalTitle}
             </h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              {language === 'en'
-                ? 'This 10-step journey uncovers the values that shape your career decisions. Take your time — there are no right or wrong answers.'
-                : '10단계 플로우를 통해 직업 선택 이면의 가치관을 탐색합니다. 정답은 없으니 천천히 진행하세요.'}
+              {loc.hintModalBody}
             </p>
             <button
               onClick={() => setHintDismissed(true)}
               className="w-full py-2 rounded-lg text-sm font-medium bg-primary text-primary-foreground"
             >
-              {language === 'en' ? 'Got it' : '확인'}
+              {loc.hintModalConfirm}
             </button>
           </div>
         </div>

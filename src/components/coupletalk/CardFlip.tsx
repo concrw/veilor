@@ -1,49 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { ChevronLeft, ChevronRight, HelpCircle, RotateCcw } from 'lucide-react';
 import { C, alpha } from '@/lib/colors';
-import { useLanguageContext } from '@/context/LanguageContext';
+import { useT } from "@/i18n/useT";
 import type { CoupleTalkCard, CoupleTalkCategory } from '@/integrations/supabase/veilor-types';
 
-const S = {
-  ko: {
-    backButton: '덱 선택',
-    backAriaLabel: '덱 선택으로 돌아가기',
-    tapToSee: '탭해서 질문 보기',
-    tapToClose: '탭해서 카드 닫기',
-    flipAriaOpen: '카드 뒤집어 질문 보기',
-    flipAriaClose: '카드 앞으로 돌리기',
-    prev: '이전',
-    next: '다음 카드',
-    prevAriaLabel: '이전 카드',
-    nextAriaLabel: '다음 카드',
-    categoryLabels: {
-      story:  '우리의 이야기',
-      heart:  '마음속 이야기',
-      future: '미래 이야기',
-      desire: '욕망 이야기',
-      sex:    '섹스 이야기',
-    } as Record<CoupleTalkCategory, string>,
-  },
-  en: {
-    backButton: 'Decks',
-    backAriaLabel: 'Back to deck selection',
-    tapToSee: 'Tap to see the question',
-    tapToClose: 'Tap to close the card',
-    flipAriaOpen: 'Flip card to see question',
-    flipAriaClose: 'Flip card back',
-    prev: 'Prev',
-    next: 'Next Card',
-    prevAriaLabel: 'Previous card',
-    nextAriaLabel: 'Next card',
-    categoryLabels: {
-      story:  'Our Story',
-      heart:  'Heart Talk',
-      future: 'Future Talk',
-      desire: 'Desire Talk',
-      sex:    'Sex Talk',
-    } as Record<CoupleTalkCategory, string>,
-  },
-};
 
 const CATEGORY_COLOR: Record<CoupleTalkCategory, string> = {
   story:  C.amber,
@@ -61,8 +21,8 @@ interface Props {
 }
 
 export function CardFlip({ cards, currentIndex, onIndexChange, onBack }: Props) {
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.coupleTalkCardFlip;
 
   const [flipped, setFlipped] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);

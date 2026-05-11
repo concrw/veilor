@@ -3,40 +3,13 @@ import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { veilorDb } from '@/integrations/supabase/client';
-import { useLanguageContext } from '@/context/LanguageContext';
-
-const S = {
-  ko: {
-    title: '파트너 코드토크',
-    desc: '같은 키워드에 대한 서로의 정의를 비교해보세요',
-    me: '나:',
-    partner: '파트너:',
-    emailPlaceholder: '파트너 이메일',
-    inviteButton: '파트너 초대하기',
-    inviteSent: '초대 전송됨!',
-    partnerNotFound: '파트너를 찾을 수 없습니다',
-    inviteKeyword: '파트너 초대',
-    inviteDefinition: '함께 코드토크를 시작해요',
-  },
-  en: {
-    title: 'Partner Codetalk',
-    desc: 'Compare your definitions of the same keyword with your partner',
-    me: 'Me:',
-    partner: 'Partner:',
-    emailPlaceholder: 'Partner email',
-    inviteButton: 'Invite Partner',
-    inviteSent: 'Invitation sent!',
-    partnerNotFound: 'Partner not found',
-    inviteKeyword: 'Partner Invitation',
-    inviteDefinition: "Let's start codetalk together",
-  },
-} as const;
+import { useT } from '@/i18n/useT';
 
 export default function PartnerCodetalk() {
   const { user } = useAuth();
   const qc = useQueryClient();
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.communityDomain.partnerCodetalk;
   const [partnerEmail, setPartnerEmail] = useState('');
   const [inviteSent, setInviteSent] = useState(false);
 

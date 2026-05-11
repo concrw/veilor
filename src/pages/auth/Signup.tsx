@@ -1,106 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { useLanguageContext } from "@/context/LanguageContext";
-
-const S = {
-  ko: {
-    loading: '로딩 중...',
-    subtitle: '관계의 가면을 발견하는 여정',
-    feature1Title: 'V-File 진단',
-    feature1Desc: '4분 만에 나의 관계 패턴과 가면 유형을 발견해요.',
-    feature2Title: 'AI 엠버',
-    feature2Desc: '판단 없이 들어주는 AI와 함께 속마음을 꺼내보세요.',
-    feature3Title: 'Dig 패턴 분석',
-    feature3Desc: '반복되는 상황의 뿌리를 함께 파고들어요.',
-    pageTitle: '회원가입',
-    pageSubtitle: '당신의 관계 언어를 발견하세요',
-    emailPlaceholder: '이메일',
-    passwordPlaceholder: '비밀번호 (8자 이상)',
-    confirmPasswordPlaceholder: '비밀번호 확인',
-    strengthLabel: '강도: ',
-    strengthWeak: '약함',
-    strengthFair: '보통',
-    strengthStrong: '강함',
-    passwordMatch: '✓ 비밀번호가 일치합니다',
-    passwordMismatch: '✗ 비밀번호가 일치하지 않습니다',
-    termsPrefix: '서비스 이용약관 및',
-    termsLink: '개인정보 처리방침',
-    termsSuffix: '에 동의합니다',
-    submitting: '회원가입 중...',
-    submit: '회원가입',
-    divider: '또는',
-    googleSignup: 'Google로 계속하기',
-    hasAccount: '이미 계정이 있으신가요?',
-    login: '로그인',
-    successMessage: '회원가입이 완료되었습니다! 이메일을 확인해주세요.',
-    errEmailRequired: '이메일을 입력해주세요.',
-    errEmailInvalid: '올바른 이메일 형식을 입력해주세요.',
-    errPasswordRequired: '비밀번호를 입력해주세요.',
-    errPasswordTooShort: '비밀번호는 8자 이상이어야 합니다.',
-    errPasswordMismatch: '비밀번호가 일치하지 않습니다.',
-    errTermsRequired: '서비스 이용약관에 동의해주세요.',
-    errGeneric: '회원가입 중 오류가 발생했습니다.',
-    errAlreadyRegistered: '이미 가입된 이메일입니다. 로그인을 시도해 주세요.',
-    errPasswordLength: '비밀번호는 6자 이상이어야 합니다.',
-    errInvalidEmail: '올바른 이메일 형식을 입력해주세요.',
-    errRateLimit: '잠시 후 다시 시도해 주세요.',
-    errSignupFailed: '회원가입에 실패했습니다. 다시 시도해 주세요.',
-    errGoogleFailed: 'Google 로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.',
-    errGoogleGeneric: 'Google 로그인 중 오류가 발생했습니다.',
-  },
-  en: {
-    loading: 'Loading...',
-    subtitle: 'Discover your relationship language',
-    feature1Title: 'V-File Diagnosis',
-    feature1Desc: "Discover your relationship pattern and mask type in just 4 minutes.",
-    feature2Title: 'AI Amber',
-    feature2Desc: "Open up your inner thoughts with an AI that listens without judgment.",
-    feature3Title: 'Dig Pattern Analysis',
-    feature3Desc: "Dig into the roots of recurring situations together.",
-    pageTitle: 'Sign Up',
-    pageSubtitle: 'Discover your relationship language',
-    emailPlaceholder: 'Email',
-    passwordPlaceholder: 'Password (8+ characters)',
-    confirmPasswordPlaceholder: 'Confirm Password',
-    strengthLabel: 'Strength: ',
-    strengthWeak: 'Weak',
-    strengthFair: 'Fair',
-    strengthStrong: 'Strong',
-    passwordMatch: '✓ Passwords match',
-    passwordMismatch: '✗ Passwords do not match',
-    termsPrefix: 'I agree to the Terms of Service and',
-    termsLink: 'Privacy Policy',
-    termsSuffix: '',
-    submitting: 'Signing up...',
-    submit: 'Sign Up',
-    divider: 'or',
-    googleSignup: 'Continue with Google',
-    hasAccount: 'Already have an account?',
-    login: 'Sign In',
-    successMessage: 'Sign up complete! Please check your email.',
-    errEmailRequired: 'Please enter your email.',
-    errEmailInvalid: 'Please enter a valid email address.',
-    errPasswordRequired: 'Please enter a password.',
-    errPasswordTooShort: 'Password must be at least 8 characters.',
-    errPasswordMismatch: 'Passwords do not match.',
-    errTermsRequired: 'Please agree to the Terms of Service.',
-    errGeneric: 'An error occurred during sign up.',
-    errAlreadyRegistered: 'This email is already registered. Please sign in.',
-    errPasswordLength: 'Password must be at least 6 characters.',
-    errInvalidEmail: 'Please enter a valid email address.',
-    errRateLimit: 'Please try again later.',
-    errSignupFailed: 'Sign up failed. Please try again.',
-    errGoogleFailed: 'Google sign-in failed. Please try again later.',
-    errGoogleGeneric: 'An error occurred during Google sign-in.',
-  },
-};
+import { useT } from "@/i18n/useT";
 
 const Signup = () => {
   const { user, loading, signUp, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.signupPage;
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -186,6 +93,7 @@ const Signup = () => {
     border: '1px solid #44403C',
     color: '#F5F5F4',
     fontFamily: "'DM Sans', sans-serif",
+    fontSize: 16,
   };
 
   const FEATURES = [
@@ -206,7 +114,7 @@ const Signup = () => {
   }
 
   return (
-    <main className="min-h-screen flex" style={{ background: '#1C1917', fontFamily: "'DM Sans', sans-serif" }}>
+    <main className="h-dvh flex" style={{ background: '#1C1917', fontFamily: "'DM Sans', sans-serif" }}>
 
       {/* 좌측 브랜드 패널 — PC 전용 */}
       <div className="hidden lg:flex flex-col justify-center flex-1 px-16 py-14 gap-12" style={{ borderRight: '1px solid #2A2624' }}>
@@ -231,14 +139,11 @@ const Signup = () => {
       </div>
 
       {/* 우측 폼 영역 */}
-      <div className="flex flex-col flex-1 lg:flex-none lg:w-[480px] items-center justify-center px-8 py-10">
-        {/* 모바일 헤더 */}
-        <div className="lg:hidden text-center mb-8">
-          <img src="/icon-192x192.png" alt="VEILOR" className="w-16 h-16 rounded-2xl mx-auto" />
-        </div>
+      <div className="flex flex-col flex-1 h-full lg:flex-none lg:w-[480px] items-center justify-center px-8 py-10">
 
       <div className="w-full max-w-sm rounded-2xl px-6 py-6" style={{ background: '#292524', border: '1px solid #44403C' }}>
         <div className="text-center pb-4">
+          <img src="/icon-192x192.png" alt="VEILOR" className="lg:hidden w-12 h-12 rounded-xl mx-auto mb-3" />
           <h2 className="text-lg font-medium" style={{ color: '#F5F5F4' }}>{s.pageTitle}</h2>
           <p className="text-xs mt-1" style={{ color: '#B8B3AF' }}>
             {s.pageSubtitle}

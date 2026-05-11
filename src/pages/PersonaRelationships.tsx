@@ -4,32 +4,12 @@ import { UnifiedBrandingStrategy } from "@/components/persona/UnifiedBrandingStr
 import { PersonaRelationshipGraph } from "@/components/persona/PersonaRelationshipGraph";
 import { PersonaGrowthDashboard } from "@/components/persona/PersonaGrowthDashboard";
 import { Network, Palette, TrendingUp } from "lucide-react";
-import { useLanguageContext } from "@/context/LanguageContext";
+import { useT } from '@/i18n/useT';
 
-const S = {
-  ko: {
-    pageTitle: '페르소나 관계 분석 | V-File',
-    metaDesc: '여러 페르소나 간의 시너지를 분석하고 통합 브랜딩 전략을 수립하세요',
-    heading: '페르소나 통합 분석',
-    subheading: '여러 페르소나의 관계를 분석하고 성장을 추적하세요',
-    tabRelationships: '관계 분석',
-    tabBranding: '브랜딩 전략',
-    tabGrowth: '성장 추적',
-  },
-  en: {
-    pageTitle: 'Persona Relationship Analysis | V-File',
-    metaDesc: 'Analyze synergies between multiple personas and build an integrated branding strategy',
-    heading: 'Persona Integrated Analysis',
-    subheading: 'Analyze relationships between personas and track growth',
-    tabRelationships: 'Relationships',
-    tabBranding: 'Branding Strategy',
-    tabGrowth: 'Growth Tracking',
-  },
-};
 
 export default function PersonaRelationships() {
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.personaPages.personaRelationships;
 
   return (
     <>

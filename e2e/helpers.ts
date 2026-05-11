@@ -16,7 +16,13 @@ export const TEST_USERS = {
 
 export async function login(page: Page, email: string, password: string) {
   await page.goto('/auth/login');
-  await page.waitForSelector('input[type="email"]', { timeout: 10_000 });
+  // 이미 인증된 세션이 있으면 Login.tsx가 '/'로 즉시 리다이렉트 — input 없이 통과
+  const result = await Promise.race([
+    page.waitForSelector('input[type="email"]', { timeout: 8_000 }).then(() => 'form'),
+    page.waitForURL((url) => !url.pathname.startsWith('/auth'), { timeout: 8_000 }).then(() => 'redirected'),
+  ]).catch(() => 'form');
+  if (result === 'redirected') return;
+
   await page.locator('input[type="email"]').fill(email);
   await page.locator('input[type="password"]').fill(password);
   // Login.tsx: button은 type 속성 없음, text로 찾음

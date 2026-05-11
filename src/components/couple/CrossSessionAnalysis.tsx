@@ -1,28 +1,8 @@
 import { useAuth } from '@/context/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { veilorDb } from '@/integrations/supabase/client';
-import { useLanguageContext } from '@/context/LanguageContext';
+import { useT } from '@/i18n/useT';
 
-const S = {
-  ko: {
-    sectionTitle: '4축 교차 분석',
-    me: (n: number) => `나 ${n}`,
-    partner: (n: number) => `파트너 ${n}`,
-    strengthAxis: '강점 축',
-    growthAxis: '함께 성장할 영역',
-    avg: (n: number) => `평균 ${n}점`,
-    axisLabels: { A: '애착', B: '소통', C: '욕구표현', D: '역할' } as Record<string, string>,
-  },
-  en: {
-    sectionTitle: '4-Axis Cross Analysis',
-    me: (n: number) => `Me ${n}`,
-    partner: (n: number) => `Partner ${n}`,
-    strengthAxis: 'Strength Axis',
-    growthAxis: 'Area to Grow Together',
-    avg: (n: number) => `Avg ${n}`,
-    axisLabels: { A: 'Attachment', B: 'Communication', C: 'Desire', D: 'Role' } as Record<string, string>,
-  },
-};
 
 interface Props {
   myUserId: string | undefined;
@@ -31,8 +11,8 @@ interface Props {
 
 export default function CrossSessionAnalysis({ myUserId, partnerUserId }: Props) {
   const { user } = useAuth();
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.coupleDomain.crossSessionAnalysis;
   const uid = myUserId ?? user?.id;
 
   const { data } = useQuery({

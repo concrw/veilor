@@ -5,83 +5,18 @@ import { useToast } from '@/hooks/use-toast';
 import { veilorDb } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import type { B2BCoach } from '@/integrations/supabase/veilor-types';
-import { useLanguageContext } from '@/context/LanguageContext';
+import { useT } from '@/i18n/useT';
 
 // ─────────────────────────────────────────────
 // 이중언어 문자열
-// ─────────────────────────────────────────────
-const S = {
-  ko: {
-    bookError: '예약 실패',
-    retryMsg: '다시 시도해주세요.',
-    doneTitle: '코칭 세션 예약 완료',
-    donePrivacy: '세션 내용은 소속사에 공개되지 않습니다.',
-    toDashboard: '대시보드로',
-    backToList: '← 코치 목록으로',
-    bookTitle: '세션 예약',
-    sessionTypeLabel: '세션 유형',
-    scheduledAtLabel: '희망 일시',
-    privacyNote: '세션 내용은 소속사에 공개되지 않습니다. 코치와의 대화는 비밀이 보장됩니다.',
-    cancel: '취소',
-    booking: '예약 중...',
-    confirm: '예약 확정',
-    toDashboardBack: '← 대시보드',
-    selectTitle: '코치 선택',
-    selectSubtitle: '나에게 맞는 코치를 선택하고 세션을 예약하세요.',
-    noCoach: '현재 배정 가능한 코치가 없습니다. 잠시 후 다시 시도해주세요.',
-    sessionCount: (n: number) => `${n}회 진행`,
-    memberCount: (cur: number, max: number) => `${cur}/${max}명`,
-    bookWith: (name: string) => `${name} 코치와 세션 예약하기`,
-    domainLabels: { sports: '스포츠', entertainment: '엔터테인먼트', corporate: '기업' } as Record<string, string>,
-    sessionTypeOptions: [
-      { value: 'performance_routine',  label: '퍼포먼스 루틴 세팅' },
-      { value: 'pressure_training',    label: '압박 대응 트레이닝' },
-      { value: 'slump_recovery',       label: '슬럼프 리커버리' },
-      { value: 'career_anchoring',     label: '커리어 앵커링' },
-      { value: 'team_dynamics',        label: '팀 다이나믹스' },
-      { value: 'energy_management',    label: '에너지 관리' },
-    ],
-  },
-  en: {
-    bookError: 'Booking failed',
-    retryMsg: 'Please try again.',
-    doneTitle: 'Coaching Session Booked',
-    donePrivacy: 'Session content will not be shared with your organization.',
-    toDashboard: 'Go to Dashboard',
-    backToList: '← Back to Coach List',
-    bookTitle: 'Book a Session',
-    sessionTypeLabel: 'Session Type',
-    scheduledAtLabel: 'Preferred Date & Time',
-    privacyNote: 'Session content will not be shared with your organization. Conversations with your coach are confidential.',
-    cancel: 'Cancel',
-    booking: 'Booking...',
-    confirm: 'Confirm Booking',
-    toDashboardBack: '← Dashboard',
-    selectTitle: 'Select a Coach',
-    selectSubtitle: 'Choose the right coach and book a session.',
-    noCoach: 'No available coaches at the moment. Please try again later.',
-    sessionCount: (n: number) => `${n} sessions`,
-    memberCount: (cur: number, max: number) => `${cur}/${max}`,
-    bookWith: (name: string) => `Book a session with ${name}`,
-    domainLabels: { sports: 'Sports', entertainment: 'Entertainment', corporate: 'Corporate' } as Record<string, string>,
-    sessionTypeOptions: [
-      { value: 'performance_routine',  label: 'Performance Routine Setup' },
-      { value: 'pressure_training',    label: 'Pressure Response Training' },
-      { value: 'slump_recovery',       label: 'Slump Recovery' },
-      { value: 'career_anchoring',     label: 'Career Anchoring' },
-      { value: 'team_dynamics',        label: 'Team Dynamics' },
-      { value: 'energy_management',    label: 'Energy Management' },
-    ],
-  },
-} as const;
 
 export default function CoachMatch() {
   const { orgId } = useParams<{ orgId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.b2bDomain.coachMatch;
 
   const [coaches, setCoaches] = useState<B2BCoach[]>([]);
   const [selected, setSelected] = useState<B2BCoach | null>(null);

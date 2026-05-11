@@ -2,50 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AlertCircle, CheckCircle2, ArrowRight } from "lucide-react";
-import { useLanguageContext } from "@/context/LanguageContext";
-
-const S = {
-  ko: {
-    dataStatus: "데이터 준비 상태",
-    ikigaiData: "Ikigai 데이터",
-    whyData: "Why 분석 데이터",
-    totalItems: (n: number) => `총 ${n}개 항목 완료`,
-    totalJobs: (n: number) => `총 ${n}개 직업 분석 완료`,
-    more: (n: number) => `+${n}개 더`,
-    ikigaiRequired: "Ikigai 설계가 필요합니다",
-    ikigaiCta: "Ikigai 설계하기",
-    whyRequired: "Why 분석이 필요합니다",
-    whyCta: "Why 분석하기",
-    happy: "행복",
-    pain: "고통",
-    ikigaiElements: "Ikigai 구성 요소",
-    whyPattern: "Why 분석 패턴",
-    happyPattern: "행복 패턴",
-    painPattern: "고통 패턴",
-    dataMissing: "데이터 준비 필요",
-    dataMissingDesc: "브랜드 전략을 생성하려면 Ikigai 설계와 Why 분석을 먼저 완료해야 합니다.",
-  },
-  en: {
-    dataStatus: "Data Readiness",
-    ikigaiData: "Ikigai Data",
-    whyData: "Why Analysis Data",
-    totalItems: (n: number) => `${n} items completed`,
-    totalJobs: (n: number) => `${n} jobs analyzed`,
-    more: (n: number) => `+${n} more`,
-    ikigaiRequired: "Ikigai design is required",
-    ikigaiCta: "Design Ikigai",
-    whyRequired: "Why analysis is required",
-    whyCta: "Analyze Why",
-    happy: "Happy",
-    pain: "Pain",
-    ikigaiElements: "Ikigai Elements",
-    whyPattern: "Why Analysis Pattern",
-    happyPattern: "Happy Pattern",
-    painPattern: "Pain Pattern",
-    dataMissing: "Data Required",
-    dataMissingDesc: "You must complete Ikigai design and Why analysis before generating a brand strategy.",
-  },
-};
+import { useT } from '@/i18n/useT';
 
 interface IkigaiData {
   love_elements: string[];
@@ -76,8 +33,8 @@ export const BrandAnalysisPanel = ({
   onNavigateToIkigai,
   onNavigateToWhy
 }: BrandAnalysisPanelProps) => {
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.brandDomain.analysis;
 
   // Calculate completeness scores
   const ikigaiCompleteness = ikigaiData ? {

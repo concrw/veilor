@@ -4,58 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Search, Loader2, AlertCircle } from "lucide-react";
-import { useLanguageContext } from "@/context/LanguageContext";
-
-const S = {
-  ko: {
-    cardTitle: '개인 매칭 분석',
-    cardDesc: '특정인과의 매칭률과 상호보완률을 확인해보세요',
-    emailLabel: '분석하고 싶은 상대방 이메일',
-    emailPlaceholder: '상대방의 이메일을 입력하세요',
-    requesting: '요청중',
-    request: '요청',
-    errRequired: '이메일을 입력해주세요',
-    errInvalid: '올바른 이메일 형식을 입력해주세요',
-    condTitle: '📋 분석 조건',
-    conditions: [
-      '상대방이 V-File 회원이어야 합니다',
-      '상대방이 Why 분석을 완료했어야 합니다',
-      '상대방이 분석 요청을 수락해야 합니다',
-      '양쪽 모두 데이터가 충분해야 신뢰할 수 있습니다',
-    ],
-    resultTitle: '💡 분석 결과로 알 수 있는 것',
-    results: [
-      { label: '매칭률', desc: '가치관, 관심사, 성향의 유사도' },
-      { label: '상호보완률', desc: '서로의 부족한 부분을 채워줄 수 있는 정도' },
-      { label: 'Prime Perspective 일치도', desc: '근본적 관점의 조화' },
-      { label: '성장 시너지', desc: '함께 발전할 수 있는 영역' },
-    ],
-  },
-  en: {
-    cardTitle: 'Personal Match Analysis',
-    cardDesc: 'Check your match rate and complementarity with a specific person',
-    emailLabel: "Other person's email to analyze",
-    emailPlaceholder: "Enter the other person's email",
-    requesting: 'Requesting...',
-    request: 'Request',
-    errRequired: 'Please enter an email address',
-    errInvalid: 'Please enter a valid email format',
-    condTitle: '📋 Analysis Conditions',
-    conditions: [
-      'The other person must be a V-File member',
-      'The other person must have completed Why analysis',
-      'The other person must accept the analysis request',
-      'Both sides need sufficient data for reliability',
-    ],
-    resultTitle: '💡 What Analysis Reveals',
-    results: [
-      { label: 'Match Rate', desc: 'Similarity in values, interests, and tendencies' },
-      { label: 'Complementarity', desc: 'How well you fill each other\'s gaps' },
-      { label: 'Prime Perspective Alignment', desc: 'Harmony of fundamental perspectives' },
-      { label: 'Growth Synergy', desc: 'Areas where you can grow together' },
-    ],
-  },
-} as const;
+import { useT } from '@/i18n/useT';
 
 interface PersonalMatchRequestProps {
   onSubmit: (email: string) => void;
@@ -63,8 +12,8 @@ interface PersonalMatchRequestProps {
 }
 
 export const PersonalMatchRequest = ({ onSubmit, isLoading }: PersonalMatchRequestProps) => {
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.communityDomain.personalMatchRequest;
   const [targetEmail, setTargetEmail] = useState("");
   const [errors, setErrors] = useState<string[]>([]);
 

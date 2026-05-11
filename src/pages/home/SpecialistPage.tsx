@@ -7,13 +7,15 @@ import type { SpecialistEntry, SpecialistHandoff } from '@/integrations/supabase
 import { C } from '@/lib/colors';
 import { UserCheck, ExternalLink, Send, Clock, ChevronRight } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { useT } from '@/i18n/useT';
 
 function HandoffBadge({ status }: { status: SpecialistHandoff['status'] }) {
+  const hs = useT().specialistPage.handoffStatus;
   const map = {
-    pending:   { label: '대기 중', color: '#9C9590' },
-    accepted:  { label: '수락됨', color: '#7FB89A' },
-    declined:  { label: '거절됨', color: '#C97A6A' },
-    completed: { label: '완료', color: '#6B9EC9' },
+    pending:   { label: hs.pending,   color: '#9C9590' },
+    accepted:  { label: hs.accepted,  color: '#7FB89A' },
+    declined:  { label: hs.declined,  color: '#C97A6A' },
+    completed: { label: hs.completed, color: '#6B9EC9' },
   };
   const { label, color } = map[status];
   return (
@@ -24,6 +26,7 @@ function HandoffBadge({ status }: { status: SpecialistHandoff['status'] }) {
 function SpecialistCard({ specialist }: { specialist: SpecialistEntry }) {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const s = useT().specialistPage;
   const [reason, setReason] = useState('');
   const [showForm, setShowForm] = useState(false);
 
@@ -40,7 +43,7 @@ function SpecialistCard({ specialist }: { specialist: SpecialistEntry }) {
 
   const { mutate: request, isPending } = useMutation({
     mutationFn: async () => {
-      if (!user) throw new Error('로그인 필요');
+      if (!user) throw new Error('Login required');
       const { error } = await veilorDb.from('specialist_handoffs').insert({
         requester_id: user.id, specialist_id: specialist.id, reason: reason || null, status: 'pending',
       });
@@ -49,7 +52,7 @@ function SpecialistCard({ specialist }: { specialist: SpecialistEntry }) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['handoff', specialist.id, user?.id] });
       setReason(''); setShowForm(false);
-      toast({ title: '연결 요청이 전송됐습니다' });
+      toast({ title: s.requestSent });
     },
   });
 
@@ -76,7 +79,7 @@ function SpecialistCard({ specialist }: { specialist: SpecialistEntry }) {
         {specialist.contact_url && (
           <a href={specialist.contact_url} target="_blank" rel="noreferrer"
             style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: C.text4, textDecoration: 'none' }}>
-            <ExternalLink size={11} />프로필
+            <ExternalLink size={11} />{s.profile}
           </a>
         )}
         <div style={{ flex: 1 }} />
@@ -88,18 +91,18 @@ function SpecialistCard({ specialist }: { specialist: SpecialistEntry }) {
         ) : (
           <button onClick={() => setShowForm(p => !p)}
             style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, padding: '6px 14px', borderRadius: 8, background: showForm ? '#2A2724' : dc, color: showForm ? C.text4 : '#1C1917', border: 'none', cursor: 'pointer' }}>
-            <Send size={11} />{showForm ? '취소' : '연결 요청'}
+            <Send size={11} />{showForm ? s.cancel : s.connectionRequest}
           </button>
         )}
       </div>
 
       {showForm && !myHandoff && (
         <div style={{ marginTop: 12 }}>
-          <textarea value={reason} onChange={e => setReason(e.target.value)} placeholder="연결 이유 (선택)" rows={2}
+          <textarea value={reason} onChange={e => setReason(e.target.value)} placeholder={s.reasonPlaceholder} rows={2}
             style={{ width: '100%', background: '#2A2724', border: `1px solid ${C.border2}`, borderRadius: 10, padding: '8px 12px', color: C.text, fontSize: 13, outline: 'none', resize: 'none', boxSizing: 'border-box', marginBottom: 8 }} />
           <button onClick={() => request()} disabled={isPending}
             style={{ width: '100%', padding: '9px', borderRadius: 10, background: dc, color: '#1C1917', border: 'none', fontSize: 13, cursor: 'pointer' }}>
-            {isPending ? '전송 중...' : '요청 보내기'}
+            {isPending ? s.sending : s.send}
           </button>
         </div>
       )}
@@ -109,6 +112,7 @@ function SpecialistCard({ specialist }: { specialist: SpecialistEntry }) {
 
 export default function SpecialistPage() {
   const navigate = useNavigate();
+  const s = useT().specialistPage;
   const [filterDomain, setFilterDomain] = useState<string | null>(null);
 
   const { data: specialists = [], isLoading } = useQuery({
@@ -128,15 +132,14 @@ export default function SpecialistPage() {
     <div style={{ background: C.bg, minHeight: '100%', display: 'flex', flexDirection: 'column' }}>
       <div style={{ padding: '16px 20px 12px', borderBottom: `1px solid ${C.border2}` }}>
         <span style={{ fontSize: 22, color: C.text, fontFamily: "'Cormorant Garamond', serif" }}>Specialists</span>
-        <p style={{ fontSize: 10, color: C.text4, margin: '2px 0 0', letterSpacing: '.02em' }}>전문가 연결 · 핸드오프</p>
+        <p style={{ fontSize: 10, color: C.text4, margin: '2px 0 0', letterSpacing: '.02em' }}>{s.subtitle}</p>
       </div>
 
-      {/* 베일러 먼저 만나보기 핸드오프 배너 */}
       <button onClick={() => navigate('/home/veilor')}
         style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '10px 20px', background: 'color-mix(in srgb, #5EEAD4 8%, #1C1917)', border: 'none', borderBottom: `1px solid ${C.border2}`, cursor: 'pointer', textAlign: 'left' }}>
         <div>
-          <span style={{ fontSize: 12, color: '#5EEAD4' }}>베일러 먼저 만나보기 →</span>
-          <p style={{ fontSize: 10, color: C.text4, marginTop: 2 }}>전문의 전에 동료 경청인과 이야기해 보세요</p>
+          <span style={{ fontSize: 12, color: '#5EEAD4' }}>{s.veilorFirst}</span>
+          <p style={{ fontSize: 10, color: C.text4, marginTop: 2 }}>{s.veilorFirstDesc}</p>
         </div>
         <ChevronRight size={14} color="#5EEAD4" />
       </button>
@@ -145,7 +148,7 @@ export default function SpecialistPage() {
         <button onClick={() => setFilterDomain(null)}
           style={{ fontSize: 11, padding: '5px 12px', borderRadius: 20, cursor: 'pointer', border: 'none',
             background: !filterDomain ? C.amber : '#2A2724', color: !filterDomain ? '#1C1917' : C.text4 }}>
-          전체
+          {s.all}
         </button>
         {domains.map(d => (
           <button key={d} onClick={() => setFilterDomain(filterDomain === d ? null : d)}
@@ -159,11 +162,11 @@ export default function SpecialistPage() {
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px' }}>
         {isLoading ? (
-          <div style={{ textAlign: 'center', color: C.text4, fontSize: 13, marginTop: 40 }}>불러오는 중...</div>
+          <div style={{ textAlign: 'center', color: C.text4, fontSize: 13, marginTop: 40 }}>{s.loading}</div>
         ) : specialists.length === 0 ? (
           <div style={{ textAlign: 'center', color: C.text4, fontSize: 13, marginTop: 60 }}>
             <UserCheck size={32} style={{ opacity: 0.3, marginBottom: 12 }} />
-            <p>등록된 전문가가 없습니다</p>
+            <p>{s.empty}</p>
           </div>
         ) : (
           specialists.map(s => <SpecialistCard key={s.id} specialist={s} />)

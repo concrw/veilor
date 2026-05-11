@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { veilorDb } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguageContext } from '@/context/LanguageContext';
+import { useT } from '@/i18n/useT';
 import { toast } from '@/hooks/use-toast';
 import { C } from '@/lib/colors';
 
@@ -103,6 +104,8 @@ const STATUS_LABELS_EN: Record<InterestStatus, string> = {
 export default function SocialInterestExplorer() {
   const { user } = useAuth();
   const { language } = useLanguageContext();
+  const t = useT();
+  const ti = t.me.impact;
   const qc = useQueryClient();
   const isKo = language === 'ko';
 
@@ -169,7 +172,7 @@ export default function SocialInterestExplorer() {
     const key = `${code}_${subIdx}`;
     const note = pendingNote[key] ?? '';
     upsertInterest.mutate({ code: `${code}__${subIdx}`, level: 2, note });
-    toast({ title: isKo ? '저장했어요' : 'Saved' });
+    toast({ title: ti.saveDone });
   };
 
   // Level 3 페인포인트 저장
@@ -179,7 +182,7 @@ export default function SocialInterestExplorer() {
     const note = level3Text[key] ?? '';
     upsertInterest.mutate({ code: subCode, level: 3, note });
     setLevel3Open(prev => ({ ...prev, [key]: false }));
-    toast({ title: isKo ? '저장했어요' : 'Saved' });
+    toast({ title: ti.saveDone });
   };
 
   const getInterest = (code: string, level: Level) =>
@@ -209,10 +212,10 @@ export default function SocialInterestExplorer() {
             margin: 0,
           }}
         >
-          {isKo ? '관심 영역 탐색' : 'Explore Interests'}
+          {ti.exploreTitle}
         </h2>
         <p style={{ fontSize: 13, color: C.text3, marginTop: 4, lineHeight: 1.5 }}>
-          {isKo ? '관심은 자라기도, 잠들기도 합니다' : 'Interests grow, and sometimes rest.'}
+          {ti.exploreSub}
         </p>
       </div>
 
@@ -225,12 +228,10 @@ export default function SocialInterestExplorer() {
         marginBottom: 4,
       }}>
         <div style={{ fontSize: 10, color: '#7FB89A', fontFamily: 'monospace', letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: 6 }}>
-          {isKo ? '오늘의 만트라' : "Today's Mantra"}
+          {ti.todayMantra}
         </div>
         <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 15, color: C.text, fontStyle: 'italic', lineHeight: 1.5 }}>
-          {isKo
-            ? '관심은 바뀌어도 괜찮아요.\n지금 이 순간의 기록일 뿐.'
-            : 'It\'s okay for interests to change.\nThis is just a record of now.'}
+          {ti.mantraText}
         </div>
       </div>
 
@@ -321,7 +322,7 @@ export default function SocialInterestExplorer() {
             {isOpen && (
               <div style={{ borderTop: `1px solid ${C.border2}`, padding: '12px 16px 16px' }}>
                 <p style={{ fontSize: 11, color: C.text3, marginBottom: 10 }}>
-                  {isKo ? '어떤 부분이 특히 신경 쓰이나요?' : 'Which aspect concerns you most?'}
+                  {ti.subIssueQuestion}
                 </p>
 
                 {/* 상태 변경 버튼 */}
@@ -388,7 +389,7 @@ export default function SocialInterestExplorer() {
                         {subInterest && (
                           <div style={{ paddingLeft: 24 }}>
                             <textarea
-                              placeholder={isKo ? '이 이슈가 나에게 중요한 이유는… (선택)' : 'Why this issue matters to me… (optional)'}
+                              placeholder={ti.whyMattersPlaceholder}
                               value={pendingNote[noteKey] ?? subInterest.note ?? ''}
                               onChange={e => setPendingNote(prev => ({ ...prev, [noteKey]: e.target.value }))}
                               rows={2}
@@ -417,7 +418,7 @@ export default function SocialInterestExplorer() {
                                   padding: '2px 0',
                                 }}
                               >
-                                {isKo ? '저장' : 'Save'}
+                                {t.common.save}
                               </button>
                               <button
                                 onClick={() => {
@@ -514,9 +515,7 @@ export default function SocialInterestExplorer() {
 
       {/* 하단 안내 */}
       <p style={{ fontSize: 11, color: C.text4, textAlign: 'center', marginTop: 8, lineHeight: 1.6 }}>
-        {isKo
-          ? '완료 개념 없어요. 언제든 새 영역을 추가하거나 기존 기록을 바꿀 수 있어요.'
-          : 'No completion needed. Add or change any area anytime.'}
+        {ti.noCompletion}
       </p>
     </div>
   );

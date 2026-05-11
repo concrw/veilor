@@ -1,31 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { useLanguageContext } from '@/context/LanguageContext';
+import { useT } from '@/i18n/useT';
 
-const S = {
-  ko: {
-    step: '1단계',
-    title: '직업 브레인스토밍',
-    timerStart: '타이머 시작',
-    desc1: '알고 있는 ',
-    descBold: '모든 직업명',
-    desc2: '을 쉼표나 줄바꿈으로 구분해 입력하세요.\n많이 적을수록 분석이 풍부해집니다 (평균 50~100개).',
-    countSuffix: '개 입력됨',
-    placeholder: '의사, 선생님, 프로그래머, 작가, 유튜버, 요리사, 변호사, 디자이너...',
-    next: '직업 저장 후 다음 단계 →',
-  },
-  en: {
-    step: 'Step 1',
-    title: 'Career Brainstorming',
-    timerStart: 'Start Timer',
-    desc1: 'Enter ',
-    descBold: 'all career names',
-    desc2: ' you know, separated by commas or line breaks.\nThe more you list, the richer the analysis (average 50–100).',
-    countSuffix: ' entered',
-    placeholder: 'Doctor, Teacher, Programmer, Writer, YouTuber, Chef, Lawyer, Designer...',
-    next: 'Save careers & next step →',
-  },
-};
 
 interface StepBrainstormProps {
   memoText: string;
@@ -40,8 +16,8 @@ interface StepBrainstormProps {
 export function StepBrainstorm({
   memoText, setMemoText, timerRunning, secondsLeft, formatTime, startTimer, onDone,
 }: StepBrainstormProps) {
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.why.brainstorm;
   const count = memoText.split(/[,\n]/).filter(s => s.trim().length > 0).length;
 
   return (

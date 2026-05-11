@@ -1,11 +1,7 @@
 import { useState } from "react";
 import { useAccessiblePersonas, useSetActivePersona } from "@/hooks/usePersonas";
-import { useLanguageContext } from "@/context/LanguageContext";
+import { useT } from '@/i18n/useT';
 
-const S = {
-  ko: { upgradeLabel: 'Pro 전용 기능', manageLabel: '페르소나 관리', manageBtn: '관리' },
-  en: { upgradeLabel: 'Pro feature', manageLabel: 'Manage Personas', manageBtn: 'Manage' },
-};
 import {
   Select,
   SelectContent,
@@ -24,8 +20,8 @@ interface PersonaSwitcherProps {
 
 export function PersonaSwitcher({ activePersonaId }: PersonaSwitcherProps) {
   const navigate = useNavigate();
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.personaDomain.switcher;
   const { data: personas, isLoading } = useAccessiblePersonas();
   const { mutate: setActive } = useSetActivePersona();
   const [paywallOpen, setPaywallOpen] = useState(false);

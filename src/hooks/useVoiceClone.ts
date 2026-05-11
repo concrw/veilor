@@ -1,5 +1,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useLanguageContext } from '@/context/LanguageContext';
+import { getT } from '@/i18n/useT';
 
 const SUPABASE_URL     = import.meta.env.VITE_SUPABASE_URL as string;
 const CLONE_ENDPOINT   = `${SUPABASE_URL}/functions/v1/elevenlabs-voice-clone`;
@@ -10,6 +12,7 @@ const MAX_SECONDS = 300;
 export type CloneState = 'idle' | 'recording' | 'uploading' | 'done' | 'error';
 
 export function useVoiceClone() {
+  const { language } = useLanguageContext();
   const [state,         setState]         = useState<CloneState>('idle');
   const [errorMsg,      setErrorMsg]      = useState<string | null>(null);
   const [clonedVoiceId, setClonedVoiceId] = useState<string | null>(null);
@@ -30,10 +33,10 @@ export function useVoiceClone() {
       mediaRecorderRef.current = recorder;
       setState('recording');
     } catch {
-      setErrorMsg('마이크 접근이 거부되었어요.');
+      setErrorMsg(getT(language).voiceCloneSettings.errMicDenied);
       setState('error');
     }
-  }, []);
+  }, [language]);
 
   const stopRecordingAndUpload = useCallback(async (voiceName?: string) => {
     const recorder = mediaRecorderRef.current;
@@ -50,7 +53,8 @@ export function useVoiceClone() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
-      if (!token) throw new Error('로그인이 필요합니다.');
+      const s = getT(language).voiceCloneSettings;
+      if (!token) throw new Error(s.errLoginRequired);
 
       const audioBlob = new Blob(chunksRef.current, { type: 'audio/webm' });
       const form = new FormData();
@@ -65,17 +69,17 @@ export function useVoiceClone() {
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({})) as { error?: string };
-        throw new Error(err.error ?? `Voice Clone 오류 (${res.status})`);
+        throw new Error(err.error ?? s.errVoiceClone(res.status));
       }
 
       const data = await res.json() as { voice_id: string };
       setClonedVoiceId(data.voice_id);
       setState('done');
     } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : '업로드 중 오류가 발생했어요.');
+      setErrorMsg(err instanceof Error ? err.message : getT(language).voiceCloneSettings.errUpload);
       setState('error');
     }
-  }, []);
+  }, [language]);
 
   const cancelRecording = useCallback(() => {
     mediaRecorderRef.current?.stop();

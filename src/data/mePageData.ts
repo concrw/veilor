@@ -91,8 +91,8 @@ export const FRIENDS = [
 export const LANG_LABELS: Record<string, string> = { ko: '한국어', en: 'English', ja: '日本語' };
 
 export const SEED_STAGES = [
-  { icon: '🌱', label: '씨앗\n심기',   threshold: 0  },
-  { icon: '🌿', label: '패턴\n발견',   threshold: 40 },
-  { icon: '🌳', label: '뿌리\n내리기', threshold: 65 },
-  { icon: '🌸', label: '꽃\n피우기',   threshold: 85 },
+  { icon: '🌱', label: '씨앗\n심기',   labelEn: 'Seed',   threshold: 0  },
+  { icon: '🌿', label: '패턴\n발견',   labelEn: 'Sprout', threshold: 40 },
+  { icon: '🌳', label: '뿌리\n내리기', labelEn: 'Root',   threshold: 65 },
+  { icon: '🌸', label: '꽃\n피우기',   labelEn: 'Flower', threshold: 85 },
 ];

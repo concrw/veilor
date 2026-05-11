@@ -2,26 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import type { AuthError, Session, User } from "@supabase/supabase-js";
 import { supabase, veilorDb } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { useLanguageContext } from "@/context/LanguageContext";
-
-const S = {
-  ko: {
-    sessionExpiredTitle: '세션 만료',
-    sessionExpiredDesc: '다시 로그인해 주세요.',
-    googleLoginFailTitle: 'Google 로그인 실패',
-    signOutTitle: '로그아웃',
-    signOutDesc: '다음에 또 만나요!',
-    profileSyncFail: '프로필 동기화 실패',
-  },
-  en: {
-    sessionExpiredTitle: 'Session Expired',
-    sessionExpiredDesc: 'Please log in again.',
-    googleLoginFailTitle: 'Google Sign-In Failed',
-    signOutTitle: 'Signed Out',
-    signOutDesc: 'See you next time!',
-    profileSyncFail: 'Profile sync failed',
-  },
-} as const;
+import { useT } from "@/i18n/useT";
 
 export type OnboardingStep = 'welcome' | 'cq' | 'priper' | 'completed';
 
@@ -56,8 +37,7 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
 
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -71,17 +51,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [personaContextsCompleted, setPersonaContextsCompleted] = useState<string[]>([]);
 
   const syncOnboarding = async (userId: string) => {
-    const { data, error } = await veilorDb
+    const timeout = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('syncOnboarding timeout')), 8000)
+    );
+    const query = veilorDb
       .from('user_profiles')
       .select('onboarding_step, priper_completed, primary_mask, secondary_mask, axis_scores, persona_contexts_completed')
       .eq('user_id', userId)
       .single();
+    const { data, error } = await Promise.race([query, timeout]).catch(err => {
+      console.warn('[AuthContext] syncOnboarding timed out:', err.message);
+      return { data: null, error: err };
+    });
 
     if (error) {
       // PGRST116 = "no rows returned" — 신규 유저, 정상 케이스
       if (error.code !== 'PGRST116') {
         console.error('[AuthContext] syncOnboarding failed:', error.message);
-        setAuthError(`${s.profileSyncFail}: ${error.message}`);
+        setAuthError(`${t.auth.profileSyncFail}: ${error.message}`);
       }
       return;
     }
@@ -102,7 +89,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (event === 'TOKEN_REFRESHED' && !sess) {
         console.warn('Token refresh returned no session — signing out');
         await supabase.auth.signOut();
-        toast({ title: s.sessionExpiredTitle, description: s.sessionExpiredDesc, variant: 'destructive' });
+        toast({ title: t.auth.sessionExpiredTitle, description: t.auth.sessionExpiredDesc, variant: 'destructive' });
         setSession(null);
         setUser(null);
         setLoading(false);
@@ -218,7 +205,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       provider: 'google',
       options: { redirectTo: `${window.location.origin}/` },
     });
-    if (error) toast({ title: s.googleLoginFailTitle, description: error.message, variant: 'destructive' });
+    if (error) toast({ title: t.auth.googleLoginFailTitle, description: error.message, variant: 'destructive' });
     return { error };
   };
 
@@ -230,7 +217,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setSecondaryMask(null);
     setAxisScores(null);
     setPersonaContextsCompleted([]);
-    toast({ title: s.signOutTitle, description: s.signOutDesc });
+    toast({ title: t.auth.signOutTitle, description: t.auth.signOutDesc });
   };
 
   const value = useMemo<AuthContextValue>(() => ({

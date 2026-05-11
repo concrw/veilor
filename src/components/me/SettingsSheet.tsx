@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { C } from '@/lib/colors';
 import { supabase, veilorDb } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
+import { useT } from '@/i18n/useT';
 import { useLanguageContext } from '@/context/LanguageContext';
 import type { SupportedLanguage } from '@/i18n/types';
 import ZoneToggle from './ZoneToggle';
@@ -44,112 +45,6 @@ const LANG_OPTIONS: { value: SupportedLanguage; label: string; code: string }[] 
 ];
 
 // 언어별 설정 시트 텍스트
-const S = {
-  ko: {
-    title: '설정',
-    close: '닫기',
-    sectionLang: '언어',
-    langLabel: '언어 설정',
-    langSub: '앱 전체 언어를 변경해요',
-    sectionAi: 'AI 캐릭터',
-    renameLabel: '이름 변경',
-    aiPersonalityLabel: 'AI 성격 설정',
-    toneLabel: '어투',
-    personalityLabel: '성격',
-    freqLabel: '말 거는 빈도',
-    sectionNotif: '알림',
-    amberNotif: 'Amber 알림',
-    amberNotifSub: '패시브 모드 푸시 알림',
-    reportNotif: '주간 리포트 알림',
-    reportNotifSub: '매주 월요일 오전',
-    sectionDomain: '도메인',
-    domainSelf: '나', domainSelfSub: '나의 퍼포먼스',
-    domainWork: '업무', domainWorkSub: '업무 퍼포먼스',
-    domainRelation: '관계', domainRelationSub: '관계 퍼포먼스',
-    domainSocial: '사회', domainSocialSub: '사회관리 퍼포먼스',
-    domainActive: '✓ 선택됨',
-    sectionMode: 'UX 모드',
-    modeOriginal: '오리지널', modeOriginalSub: '감성적 · 대화 중심',
-    modeClear: '클리어', modeClearSub: '구조적 · 멘탈 대시보드',
-    modeRoutine: '루틴', modeRoutineSub: '습관 · 스트릭 · 30초 체크인',
-    modeFocus: '포커스', modeFocusSub: '딥워크 · 타이머 · 워크리스트',
-    modeSprint: '스프린트', modeSprintSub: 'TBQC · 주간 성과 · 메타인지',
-    modeConnect: '커넥트', modeConnectSub: '관계 온도 · 연결',
-    modeMirror: '미러', modeMirrorSub: '패턴 인식 · 인사이트',
-    modeSocial: '소셜', modeSocialSub: '관심 영역 · 임팩트 · 기여',
-    modeActive: '✓ 사용 중',
-    sectionApp: '앱 설정',
-    sectionSubscription: '구독',
-    subscriptionLabel: '구독 관리',
-    subscriptionRenewal: '갱신일 2026년 4월 20일',
-    sectionPrivacy: '개인정보 & 계정',
-    dataPrivacy: '데이터 및 개인정보',
-    accountSettings: '계정 설정',
-    logout: '로그아웃',
-    sectionDanger: '위험 구역',
-    deleteAccount: '계정 삭제',
-    deleteAccountSub: '모든 데이터가 영구적으로 삭제됩니다',
-    deleteConfirmTitle: '정말 계정을 삭제하시겠어요?',
-    deleteConfirmDesc: '모든 대화, 분석 결과, 시그널이 영구 삭제되며 복구할 수 없습니다.',
-    deleteCancel: '취소',
-    deleteConfirmBtn: '영구 삭제',
-    deleting: '삭제 중...',
-    amberSub: '비서 · F모드',
-    frostSub: '닥터 · T모드',
-  },
-  en: {
-    title: 'Settings',
-    close: 'Close',
-    sectionLang: 'Language',
-    langLabel: 'Language',
-    langSub: 'Change the app language',
-    sectionAi: 'AI Characters',
-    renameLabel: 'Rename',
-    aiPersonalityLabel: 'AI Personality',
-    toneLabel: 'Tone',
-    personalityLabel: 'Personality',
-    freqLabel: 'Conversation frequency',
-    sectionNotif: 'Notifications',
-    amberNotif: 'Amber alerts',
-    amberNotifSub: 'Push notifications in passive mode',
-    reportNotif: 'Weekly report',
-    reportNotifSub: 'Every Monday morning',
-    sectionDomain: 'Domain',
-    domainSelf: 'Self', domainSelfSub: 'My Performance',
-    domainWork: 'Work', domainWorkSub: 'Work Performance',
-    domainRelation: 'Relation', domainRelationSub: 'Relationship Performance',
-    domainSocial: 'Social', domainSocialSub: 'Social Performance',
-    domainActive: '✓ Selected',
-    sectionMode: 'UX Mode',
-    modeOriginal: 'Original', modeOriginalSub: 'Emotional · Conversation-first',
-    modeClear: 'Clear', modeClearSub: 'Structured · Mental dashboard',
-    modeRoutine: 'Routine', modeRoutineSub: 'Habits · Streaks · 30-sec check-in',
-    modeFocus: 'Focus', modeFocusSub: 'Deep work · Timer · Worklist',
-    modeSprint: 'Sprint', modeSprintSub: 'TBQC · Weekly performance · Metacognition',
-    modeConnect: 'Connect', modeConnectSub: 'Relationship temperature · Connection',
-    modeMirror: 'Mirror', modeMirrorSub: 'Pattern recognition · Insights',
-    modeSocial: 'Social', modeSocialSub: 'Interest areas · Impact · Contribution',
-    modeActive: '✓ Active',
-    sectionApp: 'App Settings',
-    sectionSubscription: 'Subscription',
-    subscriptionLabel: 'Manage subscription',
-    subscriptionRenewal: 'Renews April 20, 2026',
-    sectionPrivacy: 'Privacy & Account',
-    dataPrivacy: 'Data & Privacy',
-    accountSettings: 'Account settings',
-    logout: 'Log out',
-    sectionDanger: 'Danger zone',
-    deleteAccount: 'Delete account',
-    deleteAccountSub: 'All data will be permanently deleted',
-    deleteConfirmTitle: 'Are you sure you want to delete your account?',
-    deleteConfirmDesc: 'All conversations, analysis results, and signals will be permanently deleted and cannot be recovered.',
-    deleteCancel: 'Cancel',
-    deleteConfirmBtn: 'Delete permanently',
-    deleting: 'Deleting...',
-    amberSub: 'Assistant · F mode',
-    frostSub: 'Doctor · T mode',
-  },
-};
 
 function SettingsSheet({
   open, onClose, amberName, frostName,
@@ -166,7 +61,8 @@ function SettingsSheet({
   const { domain, setDomain } = useDomain();
   const { language, setLanguage } = useLanguageContext();
 
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.meExtra.settingsSheet;
 
   const [notifAmber, setNotifAmber] = useState(true);
   const [notifReport, setNotifReport] = useState(true);

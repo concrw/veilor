@@ -5,18 +5,7 @@
 import { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 import { C } from '@/lib/colors';
-import { useLanguageContext } from '@/context/LanguageContext';
-
-const S = {
-  ko: {
-    ariaLabel: '감정 휠 — 현재 감정 분포',
-    emotions: ['기쁨', '신뢰', '두려움', '놀람', '슬픔', '혐오', '분노', '기대'],
-  },
-  en: {
-    ariaLabel: 'Emotion Wheel — current emotion distribution',
-    emotions: ['Joy', 'Trust', 'Fear', 'Surprise', 'Sadness', 'Disgust', 'Anger', 'Anticipation'],
-  },
-} as const;
+import { useT } from '@/i18n/useT';
 
 // 플루칙 8개 기본 감정 + 색상 (ko 레이블 기준 유지, 렌더링 시 언어 교체)
 const PLUTCHIK_EMOTIONS = [
@@ -47,8 +36,7 @@ export default function EmotionWheel({
   showLabels = true,
 }: EmotionWheelProps) {
   const svgRef = useRef<SVGSVGElement>(null);
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
 
   useEffect(() => {
     if (!svgRef.current) return;
@@ -120,7 +108,7 @@ export default function EmotionWheel({
         const x = Math.cos(angle) * labelR;
         const y = Math.sin(angle) * labelR;
         const score = scoreMap.get(emo.label) ?? 0;
-        const displayLabel = s.emotions[i] ?? emo.label;
+        const displayLabel = t.emotionWheel.emotions[i] ?? emo.label;
 
         g.append('text')
           .attr('x', x)
@@ -161,14 +149,14 @@ export default function EmotionWheel({
         .text(`${Math.round(topEmotion.score * 100)}%`);
     }
 
-  }, [scores, size, showLabels, s]);
+  }, [scores, size, showLabels, t]);
 
   return (
     <svg
       ref={svgRef}
       width={size}
       height={size}
-      aria-label={s.ariaLabel}
+      aria-label={t.emotionWheel.ariaLabel}
       role="img"
       style={{ overflow: 'visible' }}
     />

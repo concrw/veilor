@@ -149,10 +149,12 @@ test.describe('Get/Why 탭 → 데이터 입력 → 저장 플로우', () => {
     if (!hasWhyTab) return; // social 도메인이면 GetPage 탭 없음 — skip
 
     await whyTab.click();
+    // WhyFlow 내부 스피너 포함 전체 대기
+    await page.locator('.animate-spin').waitFor({ state: 'hidden', timeout: 15_000 }).catch(() => null);
     // StepReady 첫 화면 텍스트 대기
     await page.getByText(/나의 Why를 찾는 여정|나의 Why|직업 브레인스토밍/i).first()
       .waitFor({ timeout: 10_000 }).catch(() => null);
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(500);
 
     // 에러 없음 확인
     const hasError = await page.getByText(/Something went wrong|연결 오류/i).isVisible().catch(() => false);

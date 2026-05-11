@@ -2,27 +2,15 @@ import { useAuth } from '@/context/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { veilorDb } from '@/integrations/supabase/client';
 import { MASK_PROFILES } from '@/lib/vfileAlgorithm';
+import { useT } from '@/i18n/useT';
 import { useLanguageContext } from '@/context/LanguageContext';
 
-const S = {
-  ko: {
-    title: '추천 매칭',
-    subtitle: 'V-File 기반 보완적/유사 유형',
-    anonymous: '익명',
-    compat: '호환',
-  },
-  en: {
-    title: 'Recommended Matches',
-    subtitle: 'Complementary/similar types based on V-File',
-    anonymous: 'Anonymous',
-    compat: 'Compat',
-  },
-};
 
 export default function MatchSuggestion() {
   const { user, primaryMask, axisScores } = useAuth();
+  const t = useT();
+  const s = t.coupleDomain.matchSuggestion;
   const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
 
   const { data: suggestions } = useQuery({
     queryKey: ['match-suggestions', user?.id],
@@ -72,7 +60,7 @@ export default function MatchSuggestion() {
             </div>
             <div className="flex-1">
               <p className="text-xs font-medium">{item.nickname ?? s.anonymous}</p>
-              <p className="text-[10px] text-muted-foreground">{item.profile?.nameKo} · {item.msk_code}</p>
+              <p className="text-[10px] text-muted-foreground">{item.profile ? (language === 'en' ? item.profile.nameEn : item.profile.nameKo) : ''} · {item.msk_code}</p>
             </div>
             <div className="text-right">
               <p className="text-xs font-bold text-primary">{item.compatibility}%</p>

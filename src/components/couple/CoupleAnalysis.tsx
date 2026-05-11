@@ -1,46 +1,9 @@
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { MASK_PROFILES, ATTRACTION_PAIRS } from '@/lib/vfileAlgorithm';
+import { useT } from '@/i18n/useT';
 import { useLanguageContext } from '@/context/LanguageContext';
 
-const S = {
-  ko: {
-    ourPattern: '우리의 패턴',
-    disconnect: '연결 해제',
-    me: '나',
-    partnerFallback: '파트너',
-    compat: '호환',
-    relationDynamics: '관계 역학',
-    bothPredatory: (cat: string) => `두 사람 모두 ${cat === 'predatory' ? '포식형' : '피식형'}이에요. 공감은 쉽지만 역할 충돌에 주의하세요.`,
-    mixedCategory: (cat: string) => `${cat === 'predatory' ? '포식형-피식형' : '피식형-포식형'} 조합이에요. 자연스러운 역할 분배가 가능합니다.`,
-    attractionPairLabel: '끌림 대칭 쌍',
-    longTerm: (v: string) => `장기 역학: ${v}`,
-    myCoreNeed: '나의 핵심 필요',
-    partnerCoreNeed: '파트너의 핵심 필요',
-    patternSimilarity: '패턴 유사도',
-    tabMulti: '멀티페르소나',
-    tabCouple: '커플 분석',
-    tabMatch: '매칭',
-  },
-  en: {
-    ourPattern: 'Our Pattern',
-    disconnect: 'Disconnect',
-    me: 'Me',
-    partnerFallback: 'Partner',
-    compat: 'Compat',
-    relationDynamics: 'Relationship Dynamics',
-    bothPredatory: (cat: string) => `Both are ${cat === 'predatory' ? 'predatory' : 'receptive'} types. Empathy comes easily, but watch for role conflicts.`,
-    mixedCategory: (cat: string) => `${cat === 'predatory' ? 'Predatory–Receptive' : 'Receptive–Predatory'} pairing — natural role distribution is possible.`,
-    attractionPairLabel: 'Attraction Symmetry Pair',
-    longTerm: (v: string) => `Long-term dynamic: ${v}`,
-    myCoreNeed: 'My Core Need',
-    partnerCoreNeed: "Partner's Core Need",
-    patternSimilarity: 'Pattern Similarity',
-    tabMulti: 'Multi-Persona',
-    tabCouple: 'Couple Analysis',
-    tabMatch: 'Matching',
-  },
-};
 import {
   usePartnerConnection,
   usePartnerProfile,
@@ -53,8 +16,9 @@ import MatchSuggestion from './MatchSuggestion';
 
 function ConnectedCoupleProfile() {
   const { primaryMask, axisScores } = useAuth();
+  const t = useT();
+  const s = t.coupleDomain.coupleAnalysis;
   const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
   const { data: connection } = usePartnerConnection();
   const { data: partnerProfile } = usePartnerProfile(connection?.partnerId);
   const disconnectPartner = useDisconnectPartner();
@@ -103,7 +67,7 @@ function ConnectedCoupleProfile() {
               {myProfile?.mskCode ?? '?'}
             </span>
           </div>
-          <p className="text-[10px] mt-1">{myProfile?.nameKo ?? s.me}</p>
+          <p className="text-[10px] mt-1">{myProfile ? (language === 'en' ? myProfile.nameEn : myProfile.nameKo) : s.me}</p>
           <p className="text-[9px] text-muted-foreground">{s.me}</p>
         </div>
         <div className="flex flex-col items-center gap-1">
@@ -120,7 +84,7 @@ function ConnectedCoupleProfile() {
               {partnerProfile.mskCode ?? '?'}
             </span>
           </div>
-          <p className="text-[10px] mt-1">{partnerMskProfile?.nameKo ?? s.partnerFallback}</p>
+          <p className="text-[10px] mt-1">{partnerMskProfile ? (language === 'en' ? partnerMskProfile.nameEn : partnerMskProfile.nameKo) : s.partnerFallback}</p>
           <p className="text-[9px] text-muted-foreground">{partnerProfile.nickname ?? s.partnerFallback}</p>
         </div>
       </div>
@@ -190,8 +154,8 @@ function CoupleProfile() {
 
 export default function CoupleAnalysis() {
   const [section, setSection] = useState<'multi' | 'couple' | 'match'>('multi');
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.coupleDomain.coupleAnalysis;
 
   return (
     <div className="space-y-4">

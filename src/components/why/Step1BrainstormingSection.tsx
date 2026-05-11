@@ -1,7 +1,7 @@
 import { useRef, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { useLanguageContext } from '@/context/LanguageContext';
+import { useT } from '@/i18n/useT';
 
 // Utilities
 const DURATION_SECONDS = 600; // 10 minutes
@@ -9,21 +9,6 @@ const formatTime = (totalSeconds: number) => {
   const m = Math.floor(totalSeconds / 60).toString().padStart(2, "0");
   const s = Math.floor(totalSeconds % 60).toString().padStart(2, "0");
   return `${m}:${s}`;
-};
-
-const S = {
-  ko: {
-    currentCount: '현재 {count}개',
-    edit: '수정',
-    done: '완료',
-    placeholder: '이곳에 알고 있는 모든 직업명을 써주세요.\n쉼표(,) 또는 줄바꿈으로 구분해서 입력하세요.\n10분이 경과 되면 자동으로 다음 단계로 넘어갑니다.',
-  },
-  en: {
-    currentCount: 'Current: {count}',
-    edit: 'Edit',
-    done: 'Done',
-    placeholder: 'Write all career names you know here.\nSeparate them with commas (,) or line breaks.\nYou will automatically move to the next step after 10 minutes.',
-  },
 };
 
 interface Step1BrainstormingSectionProps {
@@ -43,8 +28,8 @@ export const Step1BrainstormingSection = ({
   onFinalize,
   sessionEnded
 }: Step1BrainstormingSectionProps) => {
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.why.step1;
 
   const memoRef = useRef<HTMLTextAreaElement | null>(null);
   const [memoHeight, setMemoHeight] = useState<number | null>(null);

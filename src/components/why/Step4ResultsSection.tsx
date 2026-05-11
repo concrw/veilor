@@ -6,71 +6,21 @@ import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { CheckCircle, Loader2, AlertCircle } from "lucide-react";
-import { useLanguageContext } from '@/context/LanguageContext';
+import { useT } from '@/i18n/useT';
 
-const S = {
-  ko: {
-    ruminationComment: '반추 루프 위험 감지: pain 비율 + 세션 반복 횟수 기반',
-    ruminationRiskMessage: '같은 고통을 반복해서 들여다보고 있어요. 이건 처리가 아니라 반추일 수 있습니다.',
-    ruminationRiskAction: '지금은 분석보다 "다음 한 걸음"이 더 필요할 수 있어요.',
-    ruminationWatchMessage: '고통스러운 부분에 오래 머물고 있어요.',
-    ruminationWatchAction: '탐색은 충분히 했습니다. 이제 작은 행동으로 옮겨볼 때가 됐을 수 있어요.',
-    diveButton: 'DIVE로 감정 처리하기',
-    stopButton: '오늘은 여기까지',
-    cardTitle: '분석 결과',
-    viewResults: '자세한 결과 페이지에서 키워드·테마·AI 분석을 확인하세요',
-    unlockFeatures: '분석을 완료하면 Ikigai 설계와 커뮤니티 매칭을 사용할 수 있습니다',
-    processing: '처리중',
-    markComplete: '분석 완료 처리',
-    analysisComplete: '분석이 완료되었습니다',
-    ikigaiDesign: 'Ikigai 설계',
-    communityMatching: '커뮤니티 매칭',
-    prevStep: '이전 단계',
-    edit: '수정하기',
-    noPrevSteps: '먼저 이전 단계를 완료해주세요.',
-    toastCompleteTitle: '분석 완료',
-    toastCompleteDesc: '이제 모든 기능을 사용할 수 있습니다.',
-    toastFailTitle: '업데이트 실패',
-    toastFailDesc: '잠시 후 다시 시도해주세요.',
-    labelHappiness: '행복',
-    labelSuffering: '고통',
-    labelNeutral: '중립',
-  },
-  en: {
-    ruminationComment: 'Rumination loop risk detected: pain ratio + session repetition count',
-    ruminationRiskMessage: "You've been repeatedly looking at the same pain. This may be rumination rather than processing.",
-    ruminationRiskAction: "Right now, a 'next small step' may be more useful than more analysis.",
-    ruminationWatchMessage: "You've been dwelling on the painful parts for a while.",
-    ruminationWatchAction: "You've explored enough. It may be time to take small action.",
-    diveButton: 'Process emotions with DIVE',
-    stopButton: "That's enough for today",
-    cardTitle: 'Analysis Results',
-    viewResults: 'View keywords, themes, and AI analysis on the detailed results page',
-    unlockFeatures: 'Complete analysis to unlock Ikigai design and community matching',
-    processing: 'Processing',
-    markComplete: 'Mark analysis complete',
-    analysisComplete: 'Analysis complete',
-    ikigaiDesign: 'Ikigai Design',
-    communityMatching: 'Community Matching',
-    prevStep: 'Prev step',
-    edit: 'Edit',
-    noPrevSteps: 'Please complete the previous steps first.',
-    toastCompleteTitle: 'Analysis complete',
-    toastCompleteDesc: 'All features are now available.',
-    toastFailTitle: 'Update failed',
-    toastFailDesc: 'Please try again later.',
-    labelHappiness: 'HAPPINESS',
-    labelSuffering: 'SUFFERING',
-    labelNeutral: 'NEUTRAL',
-  },
-};
+interface Step4Strings {
+  ruminationRiskMessage: string;
+  ruminationRiskAction: string;
+  ruminationWatchMessage: string;
+  ruminationWatchAction: string;
+}
 
 // Rumination loop risk detection: pain ratio + session repetition count
 function detectRuminationRisk(
   painCount: number,
   totalCount: number,
   whySessionCount: number,
-  s: typeof S.ko
+  s: Step4Strings
 ): { level: 'safe' | 'watch' | 'risk'; message: string; action: string } | null {
   if (totalCount === 0) return null;
   const painRatio = painCount / totalCount;
@@ -117,8 +67,8 @@ export const Step4ResultsSection = ({
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.why.step4;
 
   const [analysisCompleted, setAnalysisCompleted] = useState<boolean | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);

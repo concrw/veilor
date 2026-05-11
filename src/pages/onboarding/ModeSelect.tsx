@@ -4,6 +4,7 @@ import { useMode, type UXMode, DOMAIN_MODES } from '@/context/ModeContext';
 import { useDomain, type Domain } from '@/context/DomainContext';
 import { useLanguageContext } from '@/context/LanguageContext';
 import { C, alpha } from '@/lib/colors';
+import { useT } from '@/i18n/useT';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // 이키가이 SVG 다이어그램
@@ -108,82 +109,6 @@ function IkigaiDiagram({ selected, onSelect, size = 280, language }: IkigaiDiagr
 // i18n
 // ──────────────────────────────────────────────────────────────────────────────
 
-const S = {
-  ko: {
-    brandSubtitle: '관계의 가면을 발견하는 여정',
-    sidebarHint: '나에게 맞는 방식을 선택하세요.\n언제든 설정에서 바꿀 수 있습니다.',
-    step1Header: '어떤 퍼포먼스를\n관리하고 싶으신가요?',
-    step1Sub: '도메인을 선택하면 맞춤 기능이 열립니다',
-    step2Header: '어떤 방식으로\n베일러를 쓰고 싶으신가요?',
-    step2Sub: '언제든 설정에서 바꿀 수 있습니다',
-    selected: '선택됨',
-    back: '이전',
-    skipBtn: '지금은 기본 모드로 시작할게요',
-    confirm: {
-      original: '털어놓으러 가기',
-      clear: '대시보드 보러 가기',
-      routine: '루틴 시작하기',
-      focus: '집중 시작하기',
-      sprint: '스프린트 시작하기',
-      connect: '연결 시작하기',
-      mirror: '패턴 보러 가기',
-      social: '관심 영역 탐색하기',
-    },
-    domains: {
-      self:     { name: '나',    sub: '나의 퍼포먼스',    desc: '감정·에너지·루틴 중심 자기 관리' },
-      work:     { name: '업무',  sub: '업무 퍼포먼스',    desc: '집중·태스크·시간 예측으로 실행력 관리' },
-      relation: { name: '관계',  sub: '관계 퍼포먼스',    desc: '관계 온도·패턴 인식으로 연결 관리' },
-      social:   { name: '사회',  sub: '사회관리 퍼포먼스', desc: '관심 영역·기여·임팩트 중심 사회적 실천 관리' },
-    },
-    modes: {
-      original: { name: '오리지널',  tagline: '말하지 않아도 알 것 같은 공간',     keywords: ['감성적', '비구조적', '대화 중심'] },
-      clear:    { name: '클리어',    tagline: '지금 어디쯤 와 있는지 한눈에',      keywords: ['구조적', '진척 중심', '대시보드'] },
-      routine:  { name: '루틴',      tagline: '매일 30초로 쌓이는 나의 숫자',      keywords: ['습관', '데이터', '스트릭'] },
-      focus:    { name: '포커스',    tagline: '딥워크 — 오늘 집중할 것에만',       keywords: ['딥워크', '타이머', '워크리스트'] },
-      sprint:   { name: '스프린트',  tagline: '주간 실행력을 숫자로',              keywords: ['TBQC', '주간 성과', '메타인지'] },
-      connect:  { name: '커넥트',    tagline: '관계 온도를 느껴보세요',            keywords: ['관계', '온도', '연결'] },
-      mirror:   { name: '미러',      tagline: '관계 패턴을 발견하세요',            keywords: ['패턴', '인식', '인사이트'] },
-      social:   { name: '소셜',      tagline: '세상 어디에 기여하고 싶은지 발견',  keywords: ['관심 영역', '임팩트', '기여'] },
-    },
-  },
-  en: {
-    brandSubtitle: 'Discover your relationship language',
-    sidebarHint: 'Choose the style that suits you.\nYou can change it anytime in settings.',
-    step1Header: 'Which performance area\ndo you want to manage?',
-    step1Sub: 'Selecting a domain unlocks tailored features',
-    step2Header: 'How would you like\nto use Veilor?',
-    step2Sub: 'You can change this anytime in settings',
-    selected: 'Selected',
-    back: 'Back',
-    skipBtn: 'Start with default mode for now',
-    confirm: {
-      original: 'Go vent',
-      clear: 'See dashboard',
-      routine: 'Start routine',
-      focus: 'Start focus',
-      sprint: 'Start sprint',
-      connect: 'Start connecting',
-      mirror: 'See patterns',
-      social: 'Explore interests',
-    },
-    domains: {
-      self:     { name: 'Self',         sub: 'My Performance',           desc: 'Emotion, energy, and routine-centered self-management' },
-      work:     { name: 'Work',         sub: 'Work Performance',         desc: 'Manage execution with focus, tasks, and time prediction' },
-      relation: { name: 'Relationship', sub: 'Relationship Performance', desc: 'Manage connection with relationship temperature and pattern recognition' },
-      social:   { name: 'Social',       sub: 'Social Performance',       desc: 'Track interest areas, contributions, and social impact over time' },
-    },
-    modes: {
-      original: { name: 'Original',  tagline: 'A space that just gets it',            keywords: ['Emotional', 'Unstructured', 'Conversation-first'] },
-      clear:    { name: 'Clear',     tagline: 'See exactly where you stand',          keywords: ['Structured', 'Progress-focused', 'Dashboard'] },
-      routine:  { name: 'Routine',   tagline: '30 seconds a day builds your numbers', keywords: ['Habits', 'Data', 'Streaks'] },
-      focus:    { name: 'Focus',     tagline: 'Deep work — only what matters today',  keywords: ['Deep work', 'Timer', 'Worklist'] },
-      sprint:   { name: 'Sprint',    tagline: 'Weekly execution in numbers',          keywords: ['TBQC', 'Weekly', 'Metacognition'] },
-      connect:  { name: 'Connect',   tagline: 'Feel the temperature of your bonds',  keywords: ['Relation', 'Temperature', 'Connection'] },
-      mirror:   { name: 'Mirror',    tagline: 'Discover your relationship patterns',  keywords: ['Pattern', 'Recognition', 'Insight'] },
-      social:   { name: 'Social',    tagline: 'Discover where you want to contribute', keywords: ['Interests', 'Impact', 'Contribution'] },
-    },
-  },
-} as const;
 
 // ──────────────────────────────────────────────────────────────────────────────
 // 스타일 메타
@@ -216,7 +141,8 @@ export default function ModeSelect() {
   const { setDomain } = useDomain();
   const navigate = useNavigate();
   const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.modeSelect;
 
   const [step, setStep] = useState<1 | 2>(1);
   const [selectedDomain, setSelectedDomain] = useState<Domain>('self');

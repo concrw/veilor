@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, RadarChart, Radar, PolarGrid,
@@ -9,121 +9,132 @@ import VirtualInjectTab from "./VirtualInjectTab";
 import { StatCard, Section } from "./AdminComponents";
 import { useAdminDashboardData } from "@/hooks/useAdminDashboardData";
 import type { FunnelRow, DashboardRow as Row, GroupMembership } from "@/hooks/useAdminDashboardData";
-import { useLanguageContext } from "@/context/LanguageContext";
+import { useT } from '@/i18n/useT';
+import { useLanguageContext } from '@/context/LanguageContext';
+import { veilorDb } from "@/integrations/supabase/client";
+
+interface AiInterestUser {
+  user_id: string;
+  display_name: string | null;
+  email: string;
+  joined_at: string;
+  in_free_period: boolean;
+  click_count: number;
+  last_clicked_at: string;
+  is_subscribed: boolean;
+}
+
+function AiInterestTab() {
+  const [users, setUsers] = useState<AiInterestUser[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState<Record<string, boolean>>({});
+  const [sent, setSent] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    veilorDb
+      .from('v_ai_interest_users' as never)
+      .select('*')
+      .then(({ data }) => {
+        setUsers((data as AiInterestUser[]) ?? []);
+        setLoading(false);
+      });
+  }, []);
+
+  const sendNudge = useCallback(async (user: AiInterestUser) => {
+    setSending(p => ({ ...p, [user.user_id]: true }));
+    try {
+      await veilorDb.functions.invoke('send-email', {
+        body: {
+          to: user.email,
+          template: 'ai_subscription_nudge',
+          data: { name: user.display_name ?? '' },
+        },
+      });
+      setSent(p => ({ ...p, [user.user_id]: true }));
+    } finally {
+      setSending(p => ({ ...p, [user.user_id]: false }));
+    }
+  }, []);
+
+  if (loading) return <div className="text-white/40 text-sm p-8">로딩 중...</div>;
+
+  const unsub = users.filter(u => !u.is_subscribed);
+  const subbed = users.filter(u => u.is_subscribed);
+
+  return (
+    <div className="space-y-6">
+      <div className="flex gap-4">
+        <div className="bg-white/5 rounded-xl p-4 flex-1 text-center">
+          <p className="text-2xl font-semibold text-amber-400">{unsub.length}</p>
+          <p className="text-xs text-white/40 mt-1">미구독 관심 유저</p>
+        </div>
+        <div className="bg-white/5 rounded-xl p-4 flex-1 text-center">
+          <p className="text-2xl font-semibold text-emerald-400">{subbed.length}</p>
+          <p className="text-xs text-white/40 mt-1">이미 구독 중</p>
+        </div>
+        <div className="bg-white/5 rounded-xl p-4 flex-1 text-center">
+          <p className="text-2xl font-semibold text-white">{users.length}</p>
+          <p className="text-xs text-white/40 mt-1">전체 클릭 유저</p>
+        </div>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-white/40 text-left border-b border-white/10">
+              <th className="pb-2 pr-4">유저</th>
+              <th className="pb-2 pr-4">이메일</th>
+              <th className="pb-2 pr-4 text-right">클릭 수</th>
+              <th className="pb-2 pr-4">마지막 클릭</th>
+              <th className="pb-2 pr-4">상태</th>
+              <th className="pb-2">이메일 발송</th>
+            </tr>
+          </thead>
+          <tbody>
+            {users.map(u => (
+              <tr key={u.user_id} className="border-b border-white/5">
+                <td className="py-2 pr-4 text-white/80">{u.display_name ?? '—'}</td>
+                <td className="py-2 pr-4 text-white/50 font-mono text-xs">{u.email}</td>
+                <td className="py-2 pr-4 text-right font-mono text-amber-400">{u.click_count}</td>
+                <td className="py-2 pr-4 text-white/40 text-xs">
+                  {new Date(u.last_clicked_at).toLocaleDateString('ko-KR')}
+                </td>
+                <td className="py-2 pr-4">
+                  {u.is_subscribed
+                    ? <span className="text-xs text-emerald-400">구독 중</span>
+                    : u.in_free_period
+                    ? <span className="text-xs text-amber-400">무료 기간</span>
+                    : <span className="text-xs text-red-400">미구독</span>}
+                </td>
+                <td className="py-2">
+                  {u.is_subscribed ? (
+                    <span className="text-xs text-white/20">불필요</span>
+                  ) : sent[u.user_id] ? (
+                    <span className="text-xs text-emerald-400">발송 완료</span>
+                  ) : (
+                    <button
+                      onClick={() => sendNudge(u)}
+                      disabled={sending[u.user_id]}
+                      style={{ background: '#E0B48A', color: '#1C1917', borderRadius: 20, padding: '4px 12px', fontSize: 12, border: 'none', cursor: 'pointer', opacity: sending[u.user_id] ? 0.5 : 1 }}
+                    >
+                      {sending[u.user_id] ? '발송 중...' : '이메일 발송'}
+                    </button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {users.length === 0 && (
+          <p className="text-white/30 text-sm text-center py-8">AI 기능 클릭 기록이 없습니다.</p>
+        )}
+      </div>
+    </div>
+  );
+}
 
 // ─────────────────────────────────────────────
 // 이중언어 문자열
-// ─────────────────────────────────────────────
-const S = {
-  ko: {
-    title: '관리자 대시보드',
-    subtitle: 'Veilor 전체 현황',
-    totalSuffix: (n: string) => `총 ${n}명 기준`,
-    tabs: [
-      { key: 'b2c' as const,     label: 'B2C 유저 분석' },
-      { key: 'b2b' as const,     label: 'B2B 조직·코치' },
-      { key: 'virtual' as const, label: '가상유저 활동' },
-    ],
-    maskLabels: {
-      APV: "어프루벌", DEP: "디펜던트", GVR: "기버",
-      AVD: "어보이던트", EMP: "엠패스", PWR: "파워",
-      SAV: "세이버", NRC: "나르시시스트", MKV: "마키아벨리",
-      SCP: "소시오패스", PSP: "사이코패스", MNY: "머니",
-    } as Record<string, string>,
-    concernLabels: {
-      attachment_anxiety: "애착불안", power_dynamics: "권력구조",
-      sexual_communication: "성적소통", pattern_repetition: "패턴반복",
-      post_breakup: "이별후유증",
-    } as Record<string, string>,
-    relationLabels: {
-      single: "싱글", dating: "연애중", married: "기혼", divorced: "이혼",
-      separated: "별거", bereaved: "사별", non_romantic: "비연애", complicated: "복잡한관계",
-    } as Record<string, string>,
-    attachLabels: {
-      anxious: "불안형", avoidant: "회피형", secure: "안정형", disorganized: "혼란형",
-    } as Record<string, string>,
-    statCards: {
-      totalVirtual: '전체 가상유저',
-      withSession: '세션 보유',
-      multiGroup: '멀티그룹 소속',
-      multiGroupSub: '2개 이상 그룹 소속',
-      avgGroup: '평균 그룹 소속',
-      avgGroupSuffix: (n: string) => `총 ${n}건`,
-    },
-    sections: {
-      fragDist: { title: '페르소나 조각 보유 수 분포', sub: '전체 회원 중 몇 개의 조각을 보유하는지' },
-      groupDist: { title: '그룹 소속 분포 (멀티페르소나 반영)', sub: 'primary: mask_type 기준 / fragment: 페르소나 조각 기반 추가 소속' },
-      groupCountDist: { title: '유저당 그룹 소속 수 분포', sub: '멀티페르소나로 인해 복수 그룹 소속 가능' },
-      groupCountSuffix: (n: string) => `${n} 소속`,
-      maskDist: { title: '가면 유형 분포 (12종)', sub: 'M43 MSK 프레임워크 기준' },
-      attachDist: { title: '애착 유형 분포', sub: '불안/회피/안정/혼란' },
-      concernDist: { title: '핵심 고민 분포', sub: '유저가 앱에 들어오는 주된 이유' },
-      relationDist: { title: '관계 상태 분포', sub: '현재 어떤 관계에 있는지' },
-      fragNameDist: { title: '페르소나 조각 분포 (5종)', sub: 'detect_persona_fragments 결과' },
-      axisAvg: { title: '4축 점수 평균', sub: '전체 유저 axis 평균값' },
-      axisDist: { title: '4축 점수 분포', sub: '0~100 점수대별 유저 분포' },
-      funnel: { title: '유저 파이프라인 퍼널', sub: '단계별 진행 유저 수 및 전환율', convRate: '전환율' },
-    },
-    axisLabels: ["애착", "소통", "욕구표현", "역할"],
-    fragCountLabels: ["0개", "1개", "2개", "3개", "4개+"],
-    groupCountSuffix2: (n: string) => `${n}개 소속`,
-    userCountSuffix: '명',
-  },
-  en: {
-    title: 'Admin Dashboard',
-    subtitle: 'Veilor Overview',
-    totalSuffix: (n: string) => `Based on ${n} users`,
-    tabs: [
-      { key: 'b2c' as const,     label: 'B2C User Analysis' },
-      { key: 'b2b' as const,     label: 'B2B Orgs & Coaches' },
-      { key: 'virtual' as const, label: 'Virtual User Activity' },
-    ],
-    maskLabels: {
-      APV: "Approval", DEP: "Dependent", GVR: "Giver",
-      AVD: "Avoidant", EMP: "Empath", PWR: "Power",
-      SAV: "Saver", NRC: "Narcissist", MKV: "Machiavellian",
-      SCP: "Sociopath", PSP: "Psychopath", MNY: "Money",
-    } as Record<string, string>,
-    concernLabels: {
-      attachment_anxiety: "Attachment Anxiety", power_dynamics: "Power Dynamics",
-      sexual_communication: "Sexual Communication", pattern_repetition: "Pattern Repetition",
-      post_breakup: "Post-Breakup",
-    } as Record<string, string>,
-    relationLabels: {
-      single: "Single", dating: "Dating", married: "Married", divorced: "Divorced",
-      separated: "Separated", bereaved: "Bereaved", non_romantic: "Non-Romantic", complicated: "Complicated",
-    } as Record<string, string>,
-    attachLabels: {
-      anxious: "Anxious", avoidant: "Avoidant", secure: "Secure", disorganized: "Disorganized",
-    } as Record<string, string>,
-    statCards: {
-      totalVirtual: 'Total Virtual Users',
-      withSession: 'Has Sessions',
-      multiGroup: 'Multi-group',
-      multiGroupSub: '2+ groups',
-      avgGroup: 'Avg Groups',
-      avgGroupSuffix: (n: string) => `${n} total`,
-    },
-    sections: {
-      fragDist: { title: 'Persona Fragment Distribution', sub: 'How many fragments each member holds' },
-      groupDist: { title: 'Group Membership Distribution (Multi-persona)', sub: 'primary: mask_type / fragment: additional membership via fragments' },
-      groupCountDist: { title: 'Groups per User Distribution', sub: 'Multiple groups possible due to multi-persona' },
-      groupCountSuffix: (n: string) => `${n} groups`,
-      maskDist: { title: 'Mask Type Distribution (12 types)', sub: 'M43 MSK Framework' },
-      attachDist: { title: 'Attachment Type Distribution', sub: 'Anxious/Avoidant/Secure/Disorganized' },
-      concernDist: { title: 'Primary Concern Distribution', sub: 'Why users come to the app' },
-      relationDist: { title: 'Relationship Status Distribution', sub: 'Current relationship situation' },
-      fragNameDist: { title: 'Persona Fragment Distribution (5 types)', sub: 'detect_persona_fragments results' },
-      axisAvg: { title: '4-Axis Score Average', sub: 'Average axis values for all users' },
-      axisDist: { title: '4-Axis Score Distribution', sub: 'User distribution by score range (0–100)' },
-      funnel: { title: 'User Pipeline Funnel', sub: 'Users per stage and conversion rate', convRate: 'Conv. Rate' },
-    },
-    axisLabels: ["Attachment", "Communication", "Expression", "Role"],
-    fragCountLabels: ["0", "1", "2", "3", "4+"],
-    groupCountSuffix2: (n: string) => `${n} groups`,
-    userCountSuffix: ' users',
-  },
-} as const;
 
 const COLORS = ["#6366f1","#8b5cf6","#a78bfa","#c4b5fd","#ddd6fe","#ede9fe","#f5f3ff","#4f46e5","#7c3aed","#9333ea","#c026d3","#e879f9"];
 
@@ -140,9 +151,10 @@ function avg(arr: number[]) {
 
 export default function AdminDashboard() {
   const { rows, fragments, memberships, funnel, loading } = useAdminDashboardData();
-  const [activeTab, setActiveTab] = useState<'b2c' | 'b2b' | 'virtual'>('b2c');
+  const [activeTab, setActiveTab] = useState<'b2c' | 'b2b' | 'virtual' | 'ai_interest'>('b2c');
   const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.adminDomain.dashboard;
 
   if (loading) return (
     <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">
@@ -163,7 +175,7 @@ export default function AdminDashboard() {
   const maskDist = countBy(rows, r => s.maskLabels[r.mask_type] || r.mask_type);
   const concernDist = countBy(rows, r => s.concernLabels[r.primary_concern] || r.primary_concern);
   const relationDist = countBy(rows, r => s.relationLabels[r.relationship_status] || r.relationship_status);
-  const attachDist = countBy(rows, r => s.attachLabels[r.attachment_type] || r.attachment_type || (language === 'en' ? 'Unknown' : '미입력'));
+  const attachDist = countBy(rows, r => s.attachLabels[r.attachment_type] || r.attachment_type || s.attachUnknown);
   const fragNameDist = countBy(fragments, f => f.name_ko);
 
   const GROUP_CODES = ['APV','DEP','GVR','AVD','EMP','PWR','SAV','SCP'];
@@ -216,6 +228,11 @@ export default function AdminDashboard() {
 
       {activeTab === 'b2b' && <B2BTab />}
       {activeTab === 'virtual' && <VirtualInjectTab />}
+      {activeTab === 'ai_interest' && (
+        <Section title="AI 관심 유저 목록" sub="AI 기능 진입 시도 후 미구독 유저 — 이메일로 구독 안내 발송">
+          <AiInterestTab />
+        </Section>
+      )}
       {activeTab === 'b2c' && (
         <div className="space-y-8">
           <Section title={s.sections.funnel.title} sub={s.sections.funnel.sub}>

@@ -1,45 +1,15 @@
 import { useState } from 'react';
 import { useCreateInvite, useInviteCodeInput } from '@/hooks/usePartner';
-import { useLanguageContext } from '@/context/LanguageContext';
+import { useT } from '@/i18n/useT';
 
-const S = {
-  ko: {
-    inviteTitle: '파트너 초대하기',
-    inviteDesc: '초대코드를 파트너에게 보내세요. 파트너가 코드를 입력하면 두 사람의 V-프로필이 연결됩니다.',
-    copied: '복사됨',
-    copy: '복사',
-    expiry: '7일 후 만료 · 1회 사용 가능',
-    issuing: '발급 중...',
-    issueCode: '초대코드 발급',
-    enterCodeTitle: '초대코드 입력하기',
-    enterCodeDesc: '파트너에게 받은 코드를 입력하세요',
-    connectSuccess: '연결 완료! 파트너 분석을 확인해보세요.',
-    connecting: '연결 중...',
-    connect: '연결하기',
-  },
-  en: {
-    inviteTitle: 'Invite Partner',
-    inviteDesc: 'Send the invite code to your partner. Once they enter it, your V-Profiles will be linked.',
-    copied: 'Copied',
-    copy: 'Copy',
-    expiry: 'Expires in 7 days · One-time use',
-    issuing: 'Generating...',
-    issueCode: 'Generate Invite Code',
-    enterCodeTitle: 'Enter Invite Code',
-    enterCodeDesc: 'Enter the code you received from your partner',
-    connectSuccess: 'Connected! Check your partner analysis.',
-    connecting: 'Connecting...',
-    connect: 'Connect',
-  },
-};
 
 export default function InviteSection() {
   const createInvite = useCreateInvite();
   const [copied, setCopied] = useState(false);
   const inviteInput = useInviteCodeInput();
   const [showInput, setShowInput] = useState(false);
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.coupleDomain.inviteSection;
 
   const handleCopy = (code: string) => {
     navigator.clipboard.writeText(code).then(() => {

@@ -8,7 +8,13 @@ const config: CapacitorConfig = {
     androidScheme: 'https',
   },
   ios: {
-    contentInset: 'automatic',
+    backgroundColor: '#1C1917',
+  },
+  plugins: {
+    StatusBar: {
+      style: 'DARK',
+      overlaysWebView: true,
+    },
   },
   android: {
     allowMixedContent: false,

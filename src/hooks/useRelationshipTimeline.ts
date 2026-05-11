@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { veilorDb } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
+import { useLanguageContext } from '@/context/LanguageContext';
+import { getT } from '@/i18n/useT';
 
 export type EventType = 'turning_point' | 'conflict' | 'growth' | 'distance' | 'connection';
 
@@ -35,6 +37,7 @@ export const EVENT_TYPE_META: Record<EventType, { label: string; emoji: string; 
 
 export function useRelationshipTimeline() {
   const { user } = useAuth();
+  const { language } = useLanguageContext();
   const qc = useQueryClient();
 
   const { data: events = [], isLoading } = useQuery({
@@ -52,7 +55,7 @@ export function useRelationshipTimeline() {
 
   const addEvent = useMutation({
     mutationFn: async (payload: NewTimelineEvent) => {
-      if (!user) throw new Error('로그인 필요');
+      if (!user) throw new Error(getT(language).common.loginRequired);
       const { error } = await veilorDb
         .from('relationship_timeline')
         .insert({ ...payload, user_id: user.id });

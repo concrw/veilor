@@ -1,34 +1,8 @@
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { useLanguageContext } from '@/context/LanguageContext';
+import { useT } from '@/i18n/useT';
 import type { JobEntry } from '@/types/why';
 
-const S = {
-  ko: {
-    stepLabel: '6단계',
-    title: '직접 경험 여부',
-    question: '이 직업을 직접 해 본 적이 있나요?',
-    yes: '있어요',
-    no: '없어요',
-    noteLabel: '당시 어떠셨나요?',
-    notePlaceholder: '실제로 해봤을 때 느낀 점을 자유롭게 적어 주세요...',
-    prev: '← 이전',
-    next: '다음 →',
-    toAnalysis: 'AI 분석 시작 →',
-  },
-  en: {
-    stepLabel: 'Step 6',
-    title: 'Direct Experience',
-    question: 'Have you directly experienced this career?',
-    yes: 'Yes',
-    no: 'No',
-    noteLabel: 'How was it for you?',
-    notePlaceholder: 'Write freely about what you felt when you tried it...',
-    prev: '← Prev',
-    next: 'Next →',
-    toAnalysis: 'Start AI analysis →',
-  },
-};
 
 interface StepExperienceProps {
   job: JobEntry;
@@ -43,8 +17,8 @@ interface StepExperienceProps {
 }
 
 export function StepExperience({ job, expIdx, totalJobs, hasExp, setHasExp, expNote, setExpNote, onPrev, onNext }: StepExperienceProps) {
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.why.experience;
 
   return (
     <div className="space-y-4">

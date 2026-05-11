@@ -3,46 +3,17 @@ import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { veilorDb } from '@/integrations/supabase/client';
+import { useT } from '@/i18n/useT';
 import { useLanguageContext } from '@/context/LanguageContext';
 import { useUserLanguages } from '@/hooks/useUserLanguages';
-
-const S = {
-  ko: {
-    topics: [
-      { id: 'attachment', label: '애착 유형', icon: '🔗' },
-      { id: 'communication', label: '소통 패턴', icon: '💬' },
-      { id: 'conflict', label: '갈등 해결', icon: '⚡' },
-      { id: 'growth', label: '성장 이야기', icon: '🌱' },
-      { id: 'free', label: '자유 토론', icon: '💭' },
-    ],
-    placeholder: '생각을 나눠보세요...',
-    cancel: '취소',
-    post: '게시',
-    writeButton: '+ 글쓰기',
-    noPosts: '아직 글이 없어요. 첫 번째 글을 써보세요!',
-  },
-  en: {
-    topics: [
-      { id: 'attachment', label: 'Attachment Style', icon: '🔗' },
-      { id: 'communication', label: 'Communication', icon: '💬' },
-      { id: 'conflict', label: 'Conflict Resolution', icon: '⚡' },
-      { id: 'growth', label: 'Growth Stories', icon: '🌱' },
-      { id: 'free', label: 'Open Discussion', icon: '💭' },
-    ],
-    placeholder: 'Share your thoughts...',
-    cancel: 'Cancel',
-    post: 'Post',
-    writeButton: '+ Write',
-    noPosts: 'No posts yet. Be the first to write!',
-  },
-} as const;
 
 export default function DiscussionBoard() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const { language } = useLanguageContext();
+  const t = useT();
+  const s = t.communityDomain.discussionBoard;
   const userLanguages = useUserLanguages();
-  const s = S[language] ?? S.ko;
   const [topic, setTopic] = useState('free');
   const [text, setText] = useState('');
   const [composing, setComposing] = useState(false);

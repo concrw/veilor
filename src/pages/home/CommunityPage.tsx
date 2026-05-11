@@ -1,17 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCommunityTranslations } from '@/hooks/useTranslation';
-import { useLanguageContext } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
-
-const S = {
-  ko: {
-    anonymousStory: '익명의 이야기',
-  },
-  en: {
-    anonymousStory: 'Anonymous Story',
-  },
-} as const;
+import { useT } from '@/i18n/useT';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { veilorDb } from '@/integrations/supabase/client';
 import { Textarea } from '@/components/ui/textarea';
@@ -31,8 +22,8 @@ export default function CommunityPage() {
   const { user, primaryMask } = useAuth();
   const navigate = useNavigate();
   const comm = useCommunityTranslations();
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.communityPage;
   const qc = useQueryClient();
   const [view, setView] = useState<View>('groups');
   const [selectedGroup, setSelectedGroup] = useState<Record<string, unknown> | null>(null);
@@ -310,12 +301,12 @@ export default function CommunityPage() {
           { key: 'discuss' as const, label: comm.tabs.discuss },
           { key: 'connect' as const, label: comm.tabs.connect },
           { key: 'content' as const, label: comm.tabs.content },
-        ]).map(t => (
-          <button key={t.key} onClick={() => setCommunityTab(t.key)}
+        ]).map(tab => (
+          <button key={tab.key} onClick={() => setCommunityTab(tab.key)}
             className={`flex-1 text-xs py-2 rounded-md transition-colors ${
-              communityTab === t.key ? 'bg-background text-foreground shadow-sm font-medium' : 'text-muted-foreground'
+              communityTab === tab.key ? 'bg-background text-foreground shadow-sm font-medium' : 'text-muted-foreground'
             }`}>
-            {t.label}
+            {tab.label}
           </button>
         ))}
       </div>

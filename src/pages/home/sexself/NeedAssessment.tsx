@@ -9,55 +9,7 @@ import { veilorDb } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { C, alpha } from '@/lib/colors';
 import { useLanguageContext } from '@/context/LanguageContext';
-
-const S = {
-  ko: {
-    inputTitle: '나의 욕구 지도',
-    inputSub: '각 욕구가 얼마나 원해지는지, 얼마나 채워지는지 슬라이더로 표시해 주세요.',
-    layerPrefix: 'Layer — ',
-    sliderDesired: '원하는 정도',
-    sliderSatisfied: '채워진 정도',
-    btnAnalyze: '욕구 지도 보기',
-    resultLabel: '결과',
-    resultTitle: '나의 욕구 지도',
-    gapChartTitle: '12욕구 결핍 현황',
-    top3Title: '지금 가장 채워지지 않는 욕구',
-    anxietyFrozenTitle: '성욕구 결핍 조정 적용됨',
-    anxietyFrozenBody: 'SexSelf 진단 결과를 바탕으로 BIO-SEX 충족도가 자동 조정되었습니다.\n지금 느끼는 욕구의 동결 상태는 자연스러운 보호 반응일 수 있습니다.',
-    moderateCTATitle: '성적 자아 탐색 권유',
-    moderateCTABody: '성욕구 충족도에 개선 여지가 있습니다. SexSelf 진단으로 더 자세히 살펴볼 수 있어요.',
-    moderateCTABtn: '탐색해보기 →',
-    severeCTATitle: '성적 자아 탐색 강권 안내',
-    severeCTABody: '성욕구 결핍이 크게 감지됩니다. 지금의 상태를 더 잘 이해하려면 SexSelf 진단이\n중요한 첫걸음이 될 수 있습니다. 결과는 오직 나만 볼 수 있습니다.',
-    severeCTABtn: '성적 자아 진단 시작하기 →',
-    btnReset: '다시 입력',
-    btnSaving: '저장 중…',
-    btnSave: '저장하기',
-  },
-  en: {
-    inputTitle: 'My Need Map',
-    inputSub: 'Use the sliders to indicate how much each need is desired and how much it is being met.',
-    layerPrefix: 'Layer — ',
-    sliderDesired: 'Desired',
-    sliderSatisfied: 'Satisfied',
-    btnAnalyze: 'View my need map',
-    resultLabel: 'Results',
-    resultTitle: 'My Need Map',
-    gapChartTitle: '12-need deficit overview',
-    top3Title: 'Needs least fulfilled right now',
-    anxietyFrozenTitle: 'Sexual need deficit adjustment applied',
-    anxietyFrozenBody: 'BIO-SEX satisfaction has been automatically adjusted based on your SexSelf diagnosis results.\nThe frozen state of desire you are experiencing may be a natural protective response.',
-    moderateCTATitle: 'Sexual self-exploration suggested',
-    moderateCTABody: 'There is room for improvement in sexual need fulfillment. You can explore this further with the SexSelf diagnosis.',
-    moderateCTABtn: 'Explore →',
-    severeCTATitle: 'Sexual self-exploration strongly recommended',
-    severeCTABody: 'A significant sexual need deficit has been detected. The SexSelf diagnosis can be\nan important first step to better understanding your current state. Only you can see the results.',
-    severeCTABtn: 'Start Sexual Self diagnosis →',
-    btnReset: 'Re-enter',
-    btnSaving: 'Saving…',
-    btnSave: 'Save',
-  },
-};
+import { useT } from '@/i18n/useT';
 import {
   analyzeNeedProfile,
   createEmptyNeedResponses,
@@ -225,9 +177,9 @@ export default function NeedAssessment() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.needAssessment;
   const lang = language === 'en' ? 'en' : 'ko';
-  const isEn = language === 'en';
 
   const [responses, setResponses] = useState<NeedResponses>(createEmptyNeedResponses);
   const [profile, setProfile] = useState<NeedProfile | null>(null);
@@ -375,7 +327,7 @@ export default function NeedAssessment() {
                   {NEED_LABELS[code][lang]}
                 </span>
                 <span className="text-xs" style={{ color }}>
-                  {GAP_LEVEL_LABELS[gap.level][lang]} ({gap.gap}{isEn ? 'pts' : '점'})
+                  {GAP_LEVEL_LABELS[gap.level][lang]} ({gap.gap}{s.pointsUnit})
                 </span>
               </div>
             );

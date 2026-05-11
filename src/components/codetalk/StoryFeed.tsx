@@ -1,48 +1,7 @@
 import { useState, useMemo } from 'react';
 import { C, alpha } from '@/lib/colors';
 import { KEYWORD_MAP, getParticipantCount, getVirtualFeedUpToDay, getVirtualResonances } from '@/lib/virtualCodetalk';
-import { useLanguageContext } from '@/context/LanguageContext';
-
-const S = {
-  ko: {
-    todayTab: '오늘의 이야기',
-    pastTab: '지난 이야기',
-    storyAbout: (kw: string) => `"${kw}" 에 대한 이야기`,
-    participantCount: (n: number) => `${n}명 참여`,
-    anon: '익명',
-    defLabel: '정의',
-    imprintLabel: '각인',
-    rootLabel: '뿌리',
-    noTodayStory: '아직 오늘의 이야기가 없어요',
-    noTodayStoryDesc: '먼저 기록하고, 다른 사람들의 정의를 확인해보세요',
-    pastDayRange: (end: number) => `DAY 1~${end}의 이야기 (최근 7일)`,
-    noPastStory: 'DAY 2부터 이전 이야기를 볼 수 있어요',
-    feedLocked: '오전 6시에 오늘의 이야기가 공개됩니다',
-    feedLockedDesc: '다른 사람들의 정의가 여기에 나타나요',
-    yesterdayKeyword: (kw: string) => `어제의 키워드: ${kw}`,
-    participantsLeft: (n: number, nextDay: number, isLast: boolean) =>
-      `총 ${n}명이 자신만의 정의를 남겼어요.${isLast ? ' 100일의 여정이 마무리에 가까워지고 있어요.' : ` 내일은 DAY ${nextDay}의 키워드가 기다리고 있습니다.`}`,
-  },
-  en: {
-    todayTab: "Today's Stories",
-    pastTab: 'Past Stories',
-    storyAbout: (kw: string) => `Stories about "${kw}"`,
-    participantCount: (n: number) => `${n} participants`,
-    anon: 'Anonymous',
-    defLabel: 'Definition',
-    imprintLabel: 'Imprint',
-    rootLabel: 'Root',
-    noTodayStory: "No stories yet today",
-    noTodayStoryDesc: 'Be the first to write, then check others\' definitions',
-    pastDayRange: (end: number) => `DAY 1–${end} stories (last 7 days)`,
-    noPastStory: 'Past stories are available from DAY 2',
-    feedLocked: "Today's stories open at 6 AM",
-    feedLockedDesc: "Other people's definitions will appear here",
-    yesterdayKeyword: (kw: string) => `Yesterday's keyword: ${kw}`,
-    participantsLeft: (n: number, nextDay: number, isLast: boolean) =>
-      `${n} people left their own definitions.${isLast ? ' The 100-day journey is nearing its end.' : ` Tomorrow, DAY ${nextDay}'s keyword awaits.`}`,
-  },
-} as const;
+import { useT } from '@/i18n/useT';
 
 interface FeedEntry {
   anon_alias?: string;
@@ -64,8 +23,8 @@ interface StoryFeedProps {
 
 export function StoryFeed({ keyword, currentDay, feedOpen, publicFeed, todayEntry, userId }: StoryFeedProps) {
   const [feedTab, setFeedTab] = useState<'today' | 'past'>('today');
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.codetalkStoryFeed;
 
   const pastDayFeed = useMemo(() => {
     if (!feedOpen || currentDay <= 1) return [];

@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguageContext } from "@/context/LanguageContext";
+import { getT } from "@/i18n/useT";
 import {
   PersonaProfile,
   PersonaDetectionResult,
@@ -12,7 +13,6 @@ export const useDetectPersonas = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { language } = useLanguageContext();
-  const isEn = language === 'en';
 
   return useMutation({
     mutationFn: async () => {
@@ -27,15 +27,17 @@ export const useDetectPersonas = () => {
       return data as PersonaDetectionResult;
     },
     onSuccess: (data) => {
+      const t = getT(language);
       queryClient.invalidateQueries({ queryKey: ["personas", user?.id] });
       queryClient.invalidateQueries({ queryKey: ["accessible-personas", user?.id] });
       queryClient.invalidateQueries({ queryKey: ["has-multiple-personas", user?.id] });
 
-      toast({ title: isEn ? `${data.count} persona(s) detected!` : `${data.count}개의 페르소나가 발견되었습니다!`, description: isEn ? 'Review and validate each persona.' : '각 페르소나를 확인하고 검증해주세요.' });
+      toast({ title: t.personaDomain.toasts.personasDetectedFmt(data.count), description: t.personaDomain.toasts.personasDetectedDesc });
     },
     onError: (error) => {
+      const t = getT(language);
       console.error("Persona detection error:", error);
-      toast({ title: isEn ? 'Error detecting personas' : '페르소나 감지 중 오류가 발생했습니다', description: error.message, variant: "destructive" });
+      toast({ title: t.personaDomain.toasts.personaDetectError, description: error.message, variant: "destructive" });
     },
   });
 };
@@ -43,7 +45,6 @@ export const useDetectPersonas = () => {
 export const useUpdatePersona = () => {
   const queryClient = useQueryClient();
   const { language } = useLanguageContext();
-  const isEn = language === 'en';
 
   return useMutation({
     mutationFn: async ({
@@ -64,13 +65,15 @@ export const useUpdatePersona = () => {
       return data;
     },
     onSuccess: (_, variables) => {
+      const t = getT(language);
       queryClient.invalidateQueries({ queryKey: ["persona", variables.personaId] });
       queryClient.invalidateQueries({ queryKey: ["personas"] });
-      toast({ title: isEn ? 'Persona updated' : '페르소나가 업데이트되었습니다' });
+      toast({ title: t.personaDomain.toasts.personaUpdated });
     },
     onError: (error) => {
+      const t = getT(language);
       console.error("Persona update error:", error);
-      toast({ title: isEn ? 'Error updating persona' : '페르소나 업데이트 중 오류가 발생했습니다', variant: "destructive" });
+      toast({ title: t.personaDomain.toasts.personaUpdateError, variant: "destructive" });
     },
   });
 };
@@ -78,7 +81,6 @@ export const useUpdatePersona = () => {
 export const useVerifyPersona = () => {
   const queryClient = useQueryClient();
   const { language } = useLanguageContext();
-  const isEn = language === 'en';
 
   return useMutation({
     mutationFn: async (personaId: string) => {
@@ -93,12 +95,14 @@ export const useVerifyPersona = () => {
       return data;
     },
     onSuccess: () => {
+      const t = getT(language);
       queryClient.invalidateQueries({ queryKey: ["personas"] });
-      toast({ title: isEn ? 'Persona confirmed' : '페르소나를 확인했습니다' });
+      toast({ title: t.personaDomain.toasts.personaConfirmed });
     },
     onError: (error) => {
+      const t = getT(language);
       console.error("Persona verification error:", error);
-      toast({ title: isEn ? 'Error confirming persona' : '페르소나 확인 중 오류가 발생했습니다', variant: "destructive" });
+      toast({ title: t.personaDomain.toasts.personaConfirmError, variant: "destructive" });
     },
   });
 };
@@ -106,7 +110,6 @@ export const useVerifyPersona = () => {
 export const useDeactivatePersona = () => {
   const queryClient = useQueryClient();
   const { language } = useLanguageContext();
-  const isEn = language === 'en';
 
   return useMutation({
     mutationFn: async (personaId: string) => {
@@ -121,12 +124,14 @@ export const useDeactivatePersona = () => {
       return data;
     },
     onSuccess: () => {
+      const t = getT(language);
       queryClient.invalidateQueries({ queryKey: ["personas"] });
-      toast({ title: isEn ? 'Persona deactivated' : '페르소나를 비활성화했습니다' });
+      toast({ title: t.personaDomain.toasts.personaDeactivated });
     },
     onError: (error) => {
+      const t = getT(language);
       console.error("Persona deactivation error:", error);
-      toast({ title: isEn ? 'Error deactivating persona' : '페르소나 비활성화 중 오류가 발생했습니다', variant: "destructive" });
+      toast({ title: t.personaDomain.toasts.personaDeactivateError, variant: "destructive" });
     },
   });
 };
@@ -135,7 +140,6 @@ export const useSetActivePersona = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { language } = useLanguageContext();
-  const isEn = language === 'en';
 
   return useMutation({
     mutationFn: async (personaId: string) => {
@@ -152,12 +156,14 @@ export const useSetActivePersona = () => {
       return data;
     },
     onSuccess: () => {
+      const t = getT(language);
       queryClient.invalidateQueries({ queryKey: ["profile"] });
-      toast({ title: isEn ? 'Active persona changed' : '활성 페르소나가 변경되었습니다' });
+      toast({ title: t.personaDomain.toasts.activePersonaChanged });
     },
     onError: (error) => {
+      const t = getT(language);
       console.error("Set active persona error:", error);
-      toast({ title: isEn ? 'Error changing active persona' : '활성 페르소나 변경 중 오류가 발생했습니다', variant: "destructive" });
+      toast({ title: t.personaDomain.toasts.activePersonaChangeError, variant: "destructive" });
     },
   });
 };

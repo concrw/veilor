@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { veilorDb } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
+import { useLanguageContext } from '@/context/LanguageContext';
+import { getT } from '@/i18n/useT';
 import type {
   CoupleTalkCard,
   CoupleTalkSession,
@@ -82,10 +84,12 @@ export function useCoupleTalkSession() {
 // ── 새 세션 생성 (초대코드 발급) ─────────────────────────────────────
 export function useCreateCoupleTalkSession() {
   const { user } = useAuth();
+  const { language } = useLanguageContext();
   const qc = useQueryClient();
 
   return useMutation({
     mutationFn: async (): Promise<CoupleTalkSession> => {
+      const e = getT(language).coupleTalkPartnerInvite;
       const token = Math.random().toString(36).slice(2, 10).toUpperCase();
       const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
       const { data, error } = await veilorDb
@@ -93,7 +97,7 @@ export function useCreateCoupleTalkSession() {
         .insert({ user_a_id: user!.id, invite_token: token, invite_token_expires_at: expires })
         .select('*')
         .single();
-      if (error || !data) throw new Error('세션 생성에 실패했습니다');
+      if (error || !data) throw new Error(e.errSessionCreate);
       return data as CoupleTalkSession;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['couple-talk-session', user?.id] }),
@@ -103,29 +107,31 @@ export function useCreateCoupleTalkSession() {
 // ── 초대코드로 세션 참여 ──────────────────────────────────────────────
 export function useJoinCoupleTalkSession() {
   const { user } = useAuth();
+  const { language } = useLanguageContext();
   const qc = useQueryClient();
 
   return useMutation({
     mutationFn: async (token: string): Promise<void> => {
+      const e = getT(language).coupleTalkPartnerInvite;
       const { data: session, error } = await veilorDb
         .from('couple_talk_sessions')
         .select('id, user_a_id, user_b_id, invite_token_expires_at')
         .eq('invite_token', token.trim().toUpperCase())
         .maybeSingle();
 
-      if (error || !session) throw new Error('유효하지 않은 초대코드입니다');
+      if (error || !session) throw new Error(e.errInvalidCode);
       const s = session as CoupleTalkSession & { invite_token_expires_at?: string | null };
-      if (s.user_b_id) throw new Error('이미 사용된 초대코드입니다');
-      if (s.user_a_id === user!.id) throw new Error('본인의 초대코드는 사용할 수 없습니다');
+      if (s.user_b_id) throw new Error(e.errCodeUsed);
+      if (s.user_a_id === user!.id) throw new Error(e.errOwnCode);
       if (s.invite_token_expires_at && new Date(s.invite_token_expires_at) < new Date()) {
-        throw new Error('만료된 초대코드입니다');
+        throw new Error(e.errExpiredCode);
       }
 
       const { error: updateErr } = await veilorDb
         .from('couple_talk_sessions')
         .update({ user_b_id: user!.id, invite_token: null })
         .eq('id', s.id);
-      if (updateErr) throw new Error('연결 중 오류가 발생했습니다');
+      if (updateErr) throw new Error(e.errConnecting);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['couple-talk-session', user?.id] }),
   });
@@ -172,6 +178,7 @@ export function useCoupleTalkAnswers(
 // ── 답변 저장 (upsert) ────────────────────────────────────────────────
 export function useSaveCoupleTalkAnswer() {
   const { user } = useAuth();
+  const { language } = useLanguageContext();
   const qc = useQueryClient();
 
   return useMutation({
@@ -190,7 +197,7 @@ export function useSaveCoupleTalkAnswer() {
           { session_id: sessionId, card_id: cardId, user_id: user!.id, answer_text: answerText },
           { onConflict: 'session_id,card_id,user_id' },
         );
-      if (error) throw new Error('답변 저장에 실패했습니다');
+      if (error) throw new Error(getT(language).coupleTalkPartnerInvite.errAnswerSave);
     },
     onSuccess: (_, { sessionId, cardId }) =>
       qc.invalidateQueries({ queryKey: ['couple-talk-answers', sessionId, cardId] }),
@@ -200,6 +207,7 @@ export function useSaveCoupleTalkAnswer() {
 // ── 섹스 덱 동의 ──────────────────────────────────────────────────────
 export function useConsentSexDeck() {
   const { user } = useAuth();
+  const { language } = useLanguageContext();
   const qc = useQueryClient();
 
   return useMutation({
@@ -215,7 +223,7 @@ export function useConsentSexDeck() {
         .from('couple_talk_sessions')
         .update({ [field]: true })
         .eq('id', sessionId);
-      if (error) throw new Error('동의 저장에 실패했습니다');
+      if (error) throw new Error(getT(language).coupleTalkPartnerInvite.errConsentSave);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['couple-talk-session', user?.id] }),
   });

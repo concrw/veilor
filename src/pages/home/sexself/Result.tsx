@@ -15,43 +15,7 @@ import { Button } from '@/components/ui/button';
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer } from 'recharts';
 import { C, alpha } from '@/lib/colors';
 import { useLanguageContext } from '@/context/LanguageContext';
-
-const S = {
-  ko: {
-    profileLabel: '나의 성적 자아 프로파일',
-    scoreLabels: ['욕망', '수치심↓', '권력역학', '신체연결'],
-    insightLabels: ['프로파일', '욕구 패턴 분석', '표현 능력', '원인 탐색', '성장 과제'],
-    brakeTitle: '주요 억제 요인',
-    anxietyFrozenSafeTitle: '지금 당신에게 필요한 것',
-    anxietyFrozenSafeBody: '지금은 어떤 취향을 찾거나 탐색하기보다, 먼저 안전함을 느끼는 것이 중요할 수 있어요.\n욕구가 잠들어 있는 것은 의지의 문제가 아닙니다 — 몸과 마음이 스스로를 보호하고 있는 신호예요.',
-    anxietyFrozenCounselTitle: '전문 상담과 함께하기',
-    anxietyFrozenCounselBody: '전문 상담사와 함께 이 상태를 탐색하는 것이 가장 안전하고 효과적인 방법이에요.\n혼자 해결하려 하지 않아도 됩니다. 도움을 요청하는 것은 용기 있는 일이에요.',
-    crisisHotline: '정신건강 위기상담 전화 ☎ 1577-0199 (24시간)',
-    needAssessmentTitle: '내 욕구 충족도 살펴보기 →',
-    needAssessmentSub: '성적 자아 결과를 바탕으로 지금의 욕구 상태를 함께 진단합니다',
-    ventTitle: '지금 느껴지는 게 있다면 엠버에게 털어놓아도 돼요 →',
-    ventSub: '결과를 보고 올라온 감정, 그대로 가져와도 괜찮아요',
-    btnDone: '확인 완료 →',
-    disclaimer: '이 결과는 자기 탐색을 위한 참고 자료이며, 임상 진단이 아닙니다.\n불편한 감정이 올라온다면 전문 상담사와 이야기해 보세요.',
-  },
-  en: {
-    profileLabel: 'My Sexual Self Profile',
-    scoreLabels: ['Desire', 'Shame↓', 'Power dynamics', 'Body connection'],
-    insightLabels: ['Profile', 'Desire pattern analysis', 'Expressiveness', 'Root exploration', 'Growth challenge'],
-    brakeTitle: 'Key inhibition factors',
-    anxietyFrozenSafeTitle: 'What you need right now',
-    anxietyFrozenSafeBody: "Rather than finding or exploring preferences right now, it may be more important to first feel safe.\nDesire being dormant is not a matter of willpower — it is a signal that your body and mind are protecting themselves.",
-    anxietyFrozenCounselTitle: 'Getting professional support',
-    anxietyFrozenCounselBody: "Exploring this state with a professional counselor is the safest and most effective approach.\nYou don't have to resolve this alone. Asking for help is an act of courage.",
-    crisisHotline: 'Mental health crisis line ☎ 1577-0199 (24 hrs)',
-    needAssessmentTitle: 'Check my need fulfillment →',
-    needAssessmentSub: 'Diagnose your current desire state based on your Sexual Self results',
-    ventTitle: "If something is coming up, you can share it with Amber →",
-    ventSub: 'Emotions that arose from the results — you can bring them just as they are',
-    btnDone: 'Done →',
-    disclaimer: 'This result is a reference for self-exploration, not a clinical diagnosis.\nIf uncomfortable emotions arise, please talk to a professional counselor.',
-  },
-};
+import { useT } from '@/i18n/useT';
 
 export default function SexSelfResult() {
   const navigate = useNavigate();
@@ -59,7 +23,8 @@ export default function SexSelfResult() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.sexSelfResult;
 
   const [result, setResult] = useState<SexSelfResult | null>(null);
   const [kinkResult, setKinkResult] = useState<KinkLanguageResult | null>(null);

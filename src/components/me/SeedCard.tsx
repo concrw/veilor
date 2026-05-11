@@ -2,6 +2,7 @@
 import { C } from '@/lib/colors';
 import { SEED_STAGES } from '@/data/mePageData';
 import { useMeTranslations } from '@/hooks/useTranslation';
+import { useLanguageContext } from '@/context/LanguageContext';
 
 const SEED_STAGE_ICON_STYLE = { fontSize: 13, marginBottom: 3 } as const;
 
@@ -15,6 +16,7 @@ interface SeedCardProps {
 export default function SeedCard({ pct, seedTitle, stats, stageStatus }: SeedCardProps) {
   const me = useMeTranslations();
   const s = me.seed;
+  const { language } = useLanguageContext();
 
   const statsLine = s.statsLine
     .replace('{sessions}', String(stats?.sessionCount ?? 0))
@@ -59,7 +61,7 @@ export default function SeedCard({ pct, seedTitle, stats, stageStatus }: SeedCar
           return (
             <div key={i} style={{ flex: 1, background: bgColor, border: `1px solid ${borderColor}`, borderRadius: 8, padding: '8px 6px', textAlign: 'center', transition: 'all .3s' }}>
               <div style={SEED_STAGE_ICON_STYLE}>{st.icon}</div>
-              <div style={{ fontSize: 9, fontWeight: 300, color: textColor, lineHeight: 1.3, whiteSpace: 'pre-line' }}>{st.label}</div>
+              <div style={{ fontSize: 9, fontWeight: 300, color: textColor, lineHeight: 1.3, whiteSpace: 'pre-line' }}>{language === 'en' ? st.labelEn : st.label}</div>
             </div>
           );
         })}

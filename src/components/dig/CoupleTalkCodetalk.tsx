@@ -8,146 +8,28 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 import type { VeilorCodetalkKeyword, CoupleCodetalkSession } from '@/integrations/supabase/veilor-types';
+import { useT } from '@/i18n/useT';
 import { useLanguageContext } from '@/context/LanguageContext';
 
-const S = {
-  ko: {
-    noPartnerTitle: '파트너가 연결되지 않았어요',
-    noPartnerDesc: '함께 하는 코드토크는 파트너 연결 후 이용 가능해요.',
-    goConnectPartner: 'Us 탭에서 파트너 연결하기 →',
-    pendingListTitle: '진행 중인 함께 코드토크',
-    statusBothDone: '비교 준비 완료',
-    statusMyDone: '파트너 대기 중',
-    statusNeedMine: '내 기록 필요',
-    newKeywordStart: '+ 새 키워드로 시작하기',
-    newKeywordDesc: '카테고리 선택 → 키워드 선택',
-    modeSelectTitle: '탐색 방식 선택',
-    backToList: '← 목록',
-    byRelation: '관계 유형으로',
-    byRelationDesc: '연인·가족·친구·나',
-    byPsych: '심리 주제로',
-    byPsychDesc: '애착·감정·경계·욕구',
-    categoryRelTitle: '관계 유형 선택',
-    categoryPsychTitle: '심리 주제 선택',
-    backBtn: '← 뒤로',
-    keywordSearch: '키워드 검색…',
-    noResults: '검색 결과가 없어요.',
-    backToCategory: '← 카테고리',
-    formDesc: '파트너와 각자 기록한 뒤, 둘 다 완료되면 비교 화면이 열려요.',
-    backToListBtn: '← 목록',
-    freePlaceholder: '자유롭게 적어주세요 (최대 500자)',
-    prev: '이전',
-    saving: '저장 중…',
-    save: '저장',
-    next: '다음',
-    waitingPartner: '파트너가 기록 중이에요.',
-    waitingDesc: '둘 다 완료되면 비교 화면이 열려요.',
-    checkReveal: '완료 확인하기',
-    backToListShort: '목록으로',
-    revealSuffix: '— 비교',
-    listBtn: '목록 →',
-    me: '나',
-    partner: '파트너',
-    exploreMore: '다른 키워드 함께 탐색하기',
-    toastBothDone: '둘 다 기록 완료! 비교 화면을 열어요.',
-    toastMyDone: '내 기록 저장 완료 ✓ 파트너를 기다리는 중이에요.',
-    toastPartnerWaiting: '파트너가 아직 기록 중이에요.',
-    errNoPartner: '파트너가 연결되지 않았습니다',
-    errSessionFail: '세션 생성에 실패했습니다',
-    errEntrySave: '답변 저장에 실패했습니다',
-    errSessionUpdate: '세션 업데이트에 실패했습니다',
-    steps: {
-      definition:        { label: '정의', prompt: '이 키워드를 당신만의 언어로 정의한다면?' },
-      imprinting_moment: { label: '각인', prompt: '이 키워드가 처음 각인된 기억이나 순간은?' },
-      root_cause:        { label: '원인', prompt: '왜 이것이 지금의 관계에서 반복되는 것 같나요?' },
-    },
-    relCategories: [
-      { code: 'rel_lover',   label: '연인·파트너', emoji: '💑' },
-      { code: 'rel_family',  label: '가족',         emoji: '🏡' },
-      { code: 'rel_friend',  label: '친구·동료',    emoji: '🤝' },
-      { code: 'rel_self',    label: '나 자신',      emoji: '🪞' },
-      { code: 'rel_society', label: '사회·세상',    emoji: '🌐' },
-    ],
-    psychCategories: [
-      { code: 'psych_attachment', label: '애착·거리감',    emoji: '🔗' },
-      { code: 'psych_emotion',    label: '감정·수용',       emoji: '🌊' },
-      { code: 'psych_boundary',   label: '경계·소통',       emoji: '🚪' },
-      { code: 'psych_desire',     label: '욕구·친밀감',     emoji: '🔥' },
-      { code: 'psych_identity',   label: '정체성·자존감',   emoji: '🧭' },
-      { code: 'psych_trauma',     label: '각인·반복',       emoji: '🌀' },
-      { code: 'psych_growth',     label: '성장·변화',       emoji: '🌱' },
-      { code: 'psych_sexuality',  label: '몸·섹슈얼리티',   emoji: '✨' },
-    ],
-  },
-  en: {
-    noPartnerTitle: 'No partner connected',
-    noPartnerDesc: 'Codetalk together is available after connecting a partner.',
-    goConnectPartner: 'Connect a partner in the Us tab →',
-    pendingListTitle: 'Ongoing Codetalk sessions',
-    statusBothDone: 'Ready to compare',
-    statusMyDone: 'Waiting for partner',
-    statusNeedMine: 'My entry needed',
-    newKeywordStart: '+ Start with a new keyword',
-    newKeywordDesc: 'Select category → select keyword',
-    modeSelectTitle: 'Choose exploration mode',
-    backToList: '← List',
-    byRelation: 'By relationship type',
-    byRelationDesc: 'Partner · Family · Friends · Self',
-    byPsych: 'By psychological topic',
-    byPsychDesc: 'Attachment · Emotion · Boundary · Desire',
-    categoryRelTitle: 'Select relationship type',
-    categoryPsychTitle: 'Select psychological topic',
-    backBtn: '← Back',
-    keywordSearch: 'Search keywords…',
-    noResults: 'No results found.',
-    backToCategory: '← Categories',
-    formDesc: 'Each of you records separately — when both are done, the comparison screen opens.',
-    backToListBtn: '← List',
-    freePlaceholder: 'Write freely (max 500 characters)',
-    prev: 'Previous',
-    saving: 'Saving…',
-    save: 'Save',
-    next: 'Next',
-    waitingPartner: 'Your partner is recording.',
-    waitingDesc: 'The comparison screen opens when both are done.',
-    checkReveal: 'Check if done',
-    backToListShort: 'Back to list',
-    revealSuffix: '— Compare',
-    listBtn: 'List →',
-    me: 'Me',
-    partner: 'Partner',
-    exploreMore: 'Explore another keyword together',
-    toastBothDone: 'Both entries done! Opening the comparison screen.',
-    toastMyDone: 'My entry saved ✓ Waiting for your partner.',
-    toastPartnerWaiting: 'Your partner is still recording.',
-    errNoPartner: 'No partner connected',
-    errSessionFail: 'Failed to create session',
-    errEntrySave: 'Failed to save entry',
-    errSessionUpdate: 'Failed to update session',
-    steps: {
-      definition:        { label: 'Define',   prompt: 'How would you define this keyword in your own words?' },
-      imprinting_moment: { label: 'Imprint',  prompt: 'What memory or moment first imprinted this keyword?' },
-      root_cause:        { label: 'Root',     prompt: 'Why do you think this keeps repeating in your relationships now?' },
-    },
-    relCategories: [
-      { code: 'rel_lover',   label: 'Partner · Lover',       emoji: '💑' },
-      { code: 'rel_family',  label: 'Family',                 emoji: '🏡' },
-      { code: 'rel_friend',  label: 'Friends · Colleagues',   emoji: '🤝' },
-      { code: 'rel_self',    label: 'Myself',                 emoji: '🪞' },
-      { code: 'rel_society', label: 'Society · World',        emoji: '🌐' },
-    ],
-    psychCategories: [
-      { code: 'psych_attachment', label: 'Attachment · Distance',    emoji: '🔗' },
-      { code: 'psych_emotion',    label: 'Emotion · Acceptance',      emoji: '🌊' },
-      { code: 'psych_boundary',   label: 'Boundary · Communication',  emoji: '🚪' },
-      { code: 'psych_desire',     label: 'Desire · Intimacy',         emoji: '🔥' },
-      { code: 'psych_identity',   label: 'Identity · Self-worth',     emoji: '🧭' },
-      { code: 'psych_trauma',     label: 'Imprint · Repetition',      emoji: '🌀' },
-      { code: 'psych_growth',     label: 'Growth · Change',           emoji: '🌱' },
-      { code: 'psych_sexuality',  label: 'Body · Sexuality',          emoji: '✨' },
-    ],
-  },
-} as const;
+
+const REL_CATEGORIES = [
+  { code: 'rel_lover',   label: { ko: '연인·파트너', en: 'Partner · Lover' },       emoji: '💑' },
+  { code: 'rel_family',  label: { ko: '가족',         en: 'Family' },                emoji: '🏡' },
+  { code: 'rel_friend',  label: { ko: '친구·동료',    en: 'Friends · Colleagues' },  emoji: '🤝' },
+  { code: 'rel_self',    label: { ko: '나 자신',      en: 'Myself' },                emoji: '🪞' },
+  { code: 'rel_society', label: { ko: '사회·세상',    en: 'Society · World' },       emoji: '🌐' },
+] as const;
+
+const PSYCH_CATEGORIES = [
+  { code: 'psych_attachment', label: { ko: '애착·거리감',    en: 'Attachment · Distance' },       emoji: '🔗' },
+  { code: 'psych_emotion',    label: { ko: '감정·수용',       en: 'Emotion · Acceptance' },        emoji: '🌊' },
+  { code: 'psych_boundary',   label: { ko: '경계·소통',       en: 'Boundary · Communication' },    emoji: '🚪' },
+  { code: 'psych_desire',     label: { ko: '욕구·친밀감',     en: 'Desire · Intimacy' },           emoji: '🔥' },
+  { code: 'psych_identity',   label: { ko: '정체성·자존감',   en: 'Identity · Self-worth' },       emoji: '🧭' },
+  { code: 'psych_trauma',     label: { ko: '각인·반복',       en: 'Imprint · Repetition' },        emoji: '🌀' },
+  { code: 'psych_growth',     label: { ko: '성장·변화',       en: 'Growth · Change' },             emoji: '🌱' },
+  { code: 'psych_sexuality',  label: { ko: '몸·섹슈얼리티',   en: 'Body · Sexuality' },            emoji: '✨' },
+] as const;
 
 type StepKey = 'definition' | 'imprinting_moment' | 'root_cause';
 const STEP_KEYS: StepKey[] = ['definition', 'imprinting_moment', 'root_cause'];
@@ -187,8 +69,14 @@ export default function CoupleTalkCodetalk() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const t = useT();
+  const s = t.digExtra.coupleTalk;
   const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const stepInfo: Record<string, { label: string; prompt: string }> = {
+    definition:        { label: s.stepDefinitionLabel, prompt: s.stepDefinitionPrompt },
+    imprinting_moment: { label: s.stepImprintingLabel, prompt: s.stepImprintingPrompt },
+    root_cause:        { label: s.stepRootLabel,       prompt: s.stepRootPrompt },
+  };
 
   const { data: coupleSession, isLoading: sessionLoading } = useCoupleTalkSession();
   const isConnected = !!(coupleSession?.user_b_id);
@@ -425,10 +313,10 @@ export default function CoupleTalkCodetalk() {
 
   const currentCategoryLabel = (() => {
     if (!selectedCategory) return '';
-    const relCat = s.relCategories.find(c => c.code === selectedCategory);
-    if (relCat) return relCat.label;
-    const psychCat = s.psychCategories.find(c => c.code === selectedCategory);
-    return psychCat?.label ?? '';
+    const relCat = REL_CATEGORIES.find(c => c.code === selectedCategory);
+    if (relCat) return relCat.label[language] ?? relCat.label.ko;
+    const psychCat = PSYCH_CATEGORIES.find(c => c.code === selectedCategory);
+    return psychCat ? (psychCat.label[language] ?? psychCat.label.ko) : '';
   })();
 
   const myEntry  = activeSession?.user_a_id === user?.id ? entryA : entryB;
@@ -530,14 +418,14 @@ export default function CoupleTalkCodetalk() {
               {s.backBtn}
             </button>
           </div>
-          {(exploreMode === 'rel' ? s.relCategories : s.psychCategories).map(cat => (
+          {(exploreMode === 'rel' ? REL_CATEGORIES : PSYCH_CATEGORIES).map(cat => (
             <button
               key={cat.code}
               onClick={() => { setSelectedCategory(cat.code as SelectedCategory); setSearch(''); setView('list'); }}
               className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border border-transparent hover:border-primary/40 hover:bg-muted/40 text-left transition-colors"
             >
               <span className="text-lg">{cat.emoji}</span>
-              <span className="text-sm">{cat.label}</span>
+              <span className="text-sm">{(cat.label as Record<string, string>)[language] ?? (cat.label as Record<string, string>).ko}</span>
             </button>
           ))}
         </div>
@@ -603,14 +491,14 @@ export default function CoupleTalkCodetalk() {
                   {i < step ? '✓' : i + 1}
                 </div>
                 <span className={`text-xs ${i === step ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
-                  {s.steps[key].label}
+                  {stepInfo[key].label}
                 </span>
                 {i < STEP_KEYS.length - 1 && <div className="w-4 h-px bg-muted" />}
               </div>
             ))}
           </div>
 
-          <p className="text-sm font-medium">{s.steps[currentStepKey].prompt}</p>
+          <p className="text-sm font-medium">{stepInfo[currentStepKey].prompt}</p>
           <Textarea
             key={currentStepKey}
             placeholder={s.freePlaceholder}
@@ -680,7 +568,7 @@ export default function CoupleTalkCodetalk() {
               {STEP_KEYS.map(key => (
                 <div key={key} className="border rounded-xl overflow-hidden">
                   <div className="bg-muted/40 px-3 py-1.5">
-                    <span className="text-xs font-medium">{s.steps[key].label}</span>
+                    <span className="text-xs font-medium">{stepInfo[key].label}</span>
                   </div>
                   <div className="grid grid-cols-2 divide-x">
                     <div className="p-3 space-y-1">

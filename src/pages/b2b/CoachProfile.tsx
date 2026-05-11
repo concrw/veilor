@@ -6,45 +6,13 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useCoachProfile, useCoachPosts } from '@/hooks/useB2BCoach';
 import type { B2BCoachPost } from '@/integrations/supabase/veilor-types';
+import { useT } from '@/i18n/useT';
 import { useLanguageContext } from '@/context/LanguageContext';
-
-// ─────────────────────────────────────────────
-// 이중언어 문자열
-// ─────────────────────────────────────────────
-const S = {
-  ko: {
-    back: '← 뒤로',
-    notFound: '코치를 찾을 수 없습니다',
-    sessionCount: (n: number) => `세션 ${n}회`,
-    memberCount: (cur: number, max: number) => `담당 ${cur}/${max}명`,
-    certifications: (certs: string) => `자격증: ${certs}`,
-    pinBadge: '📌 고정 게시글',
-    expand: '더 보기',
-    collapse: '접기',
-    postFeedLabel: (count: number | null) => count ? `코치 포스트 · ${count}개` : '코치 포스트',
-    noPosts: '아직 작성된 포스트가 없습니다',
-    bookSession: '세션 예약하기',
-    fullSession: '현재 상담 마감',
-  },
-  en: {
-    back: '← Back',
-    notFound: 'Coach not found',
-    sessionCount: (n: number) => `${n} sessions`,
-    memberCount: (cur: number, max: number) => `${cur}/${max} assigned`,
-    certifications: (certs: string) => `Certifications: ${certs}`,
-    pinBadge: '📌 Pinned',
-    expand: 'Show more',
-    collapse: 'Show less',
-    postFeedLabel: (count: number | null) => count ? `Coach Posts · ${count}` : 'Coach Posts',
-    noPosts: 'No posts yet',
-    bookSession: 'Book a Session',
-    fullSession: 'Currently Full',
-  },
-} as const;
+import type { LocaleResource } from '@/i18n/types';
 
 // ── 포스트 카드 ────────────────────────────────────────────────────────
 
-function PostCard({ post, s, locale }: { post: B2BCoachPost; s: typeof S['ko']; locale: string }) {
+function PostCard({ post, s, locale }: { post: B2BCoachPost; s: LocaleResource['b2bDomain']['coachProfile']; locale: string }) {
   const [expanded, setExpanded] = useState(false);
   const isLong = post.body.length > 200;
 
@@ -107,7 +75,8 @@ export default function CoachProfile() {
   const { coachId } = useParams<{ coachId: string }>();
   const navigate = useNavigate();
   const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.b2bDomain.coachProfile;
 
   const { data: coach, isLoading: loadingCoach } = useCoachProfile(coachId ?? '');
   const { data: posts, isLoading: loadingPosts } = useCoachPosts(coachId ?? '');

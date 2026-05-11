@@ -2,93 +2,10 @@ import { useEffect, useState } from "react";
 import { veilorDb } from "@/integrations/supabase/client";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { StatCard, Section } from "./AdminComponents";
-import { useLanguageContext } from "@/context/LanguageContext";
+import { useT } from '@/i18n/useT';
 
 // ─────────────────────────────────────────────
 // 이중언어 문자열
-// ─────────────────────────────────────────────
-const S = {
-  ko: {
-    statCards: {
-      totalOrgs: '전체 조직',
-      activeOrgs: '활성 조직',
-      registeredCoaches: '등록 코치',
-      activeCoachesSub: (n: number) => `활성 ${n}명`,
-      recentCheckins: '최근 4주 체크인',
-    },
-    trendSection: { title: '최근 4주 체크인 트렌드', sub: '주간 평균 4C 점수 및 위험 신호 건수' },
-    avgC: '평균 4C',
-    highRisk: 'HIGH 위험',
-    mediumRisk: 'MEDIUM 위험',
-    orgSection: { title: 'B2B 조직 목록', sub: '최근 가입 순' },
-    noOrgs: '등록된 조직이 없습니다.',
-    orgTableHeaders: { name: '조직명', domain: '분야', plan: '플랜', status: '상태', createdAt: '가입일' },
-    coachSection: { title: '코치 관리', sub: '코치 등록 및 활성화/비활성화' },
-    newCoachTitle: '새 코치 등록',
-    namePlaceholder: '이름 (표시명)',
-    bioPlaceholder: '한 줄 소개 (선택)',
-    maxMembersLabel: '최대 담당 인원',
-    saving: '등록 중...',
-    register: '등록',
-    noCoaches: '등록된 코치가 없습니다.',
-    coachSessionCount: (n: number) => `${n}회 진행`,
-    coachMemberCount: (cur: number, max: number) => `${cur}/${max}명`,
-    statusActive: '활성',
-    statusInactive: '비활성',
-    unitSuffix: '개',
-    personSuffix: '명',
-    timeSuffix: '회',
-    orgTypeLabels: { sports: '스포츠', entertainment: '엔터테인먼트', corporate: '기업' } as Record<string, string>,
-    planLabels: { starter: '스타터', growth: '그로스', enterprise: '엔터프라이즈', trainee_basic: '트레이니 기본', trainee_full: '트레이니 풀' } as Record<string, string>,
-    domainOptions: [
-      { value: 'sports',        label: '스포츠' },
-      { value: 'entertainment', label: '엔터테인먼트' },
-      { value: 'corporate',     label: '기업' },
-    ],
-    errorPrefix: '오류: ',
-    coachRegistered: '코치 등록 완료',
-  },
-  en: {
-    statCards: {
-      totalOrgs: 'Total Organizations',
-      activeOrgs: 'Active Organizations',
-      registeredCoaches: 'Registered Coaches',
-      activeCoachesSub: (n: number) => `${n} active`,
-      recentCheckins: 'Check-ins (Last 4 Weeks)',
-    },
-    trendSection: { title: 'Check-in Trend (Last 4 Weeks)', sub: 'Weekly avg 4C score and risk signal count' },
-    avgC: 'Avg 4C',
-    highRisk: 'HIGH Risk',
-    mediumRisk: 'MEDIUM Risk',
-    orgSection: { title: 'B2B Organization List', sub: 'Most recently joined' },
-    noOrgs: 'No organizations registered.',
-    orgTableHeaders: { name: 'Name', domain: 'Domain', plan: 'Plan', status: 'Status', createdAt: 'Joined' },
-    coachSection: { title: 'Coach Management', sub: 'Register and activate/deactivate coaches' },
-    newCoachTitle: 'Register New Coach',
-    namePlaceholder: 'Display name',
-    bioPlaceholder: 'One-line bio (optional)',
-    maxMembersLabel: 'Max assigned members',
-    saving: 'Registering...',
-    register: 'Register',
-    noCoaches: 'No coaches registered.',
-    coachSessionCount: (n: number) => `${n} sessions`,
-    coachMemberCount: (cur: number, max: number) => `${cur}/${max}`,
-    statusActive: 'Active',
-    statusInactive: 'Inactive',
-    unitSuffix: '',
-    personSuffix: '',
-    timeSuffix: '',
-    orgTypeLabels: { sports: 'Sports', entertainment: 'Entertainment', corporate: 'Corporate' } as Record<string, string>,
-    planLabels: { starter: 'Starter', growth: 'Growth', enterprise: 'Enterprise', trainee_basic: 'Trainee Basic', trainee_full: 'Trainee Full' } as Record<string, string>,
-    domainOptions: [
-      { value: 'sports',        label: 'Sports' },
-      { value: 'entertainment', label: 'Entertainment' },
-      { value: 'corporate',     label: 'Corporate' },
-    ],
-    errorPrefix: 'Error: ',
-    coachRegistered: 'Coach registered',
-  },
-} as const;
 
 type B2BOrg = {
   id: string; org_name: string; org_type: string; plan: string;
@@ -111,8 +28,8 @@ export default function B2BTab() {
   const [coachForm, setCoachForm] = useState({ display_name: '', bio: '', domains: 'sports', max_members: 10 });
   const [saving, setSaving] = useState(false);
   const [coachMsg, setCoachMsg] = useState('');
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.adminDomain.b2bTab;
 
   useEffect(() => { loadB2B(); }, []);
 

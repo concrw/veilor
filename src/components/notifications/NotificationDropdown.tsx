@@ -31,11 +31,7 @@ import {
 import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
 import { useLanguageContext } from "@/context/LanguageContext";
-
-const S = {
-  ko: { title: '알림', markAllRead: '모두 읽음', loading: '로딩 중...', empty: '알림이 없습니다', viewAll: '모든 알림 보기' },
-  en: { title: 'Notifications', markAllRead: 'Mark all read', loading: 'Loading...', empty: 'No notifications', viewAll: 'View all notifications' },
-};
+import { useT } from "@/i18n/useT";
 
 const getNotificationIcon = (type: string) => {
   switch (type) {
@@ -75,7 +71,7 @@ const getNotificationRoute = (notification: Notification): string | null => {
 export const NotificationDropdown = () => {
   const navigate = useNavigate();
   const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
   const { data: notifications, isLoading } = useNotifications();
   const { data: unreadCount } = useUnreadNotificationsCount();
   const markAsRead = useMarkNotificationAsRead();
@@ -112,7 +108,7 @@ export const NotificationDropdown = () => {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-80">
         <div className="flex items-center justify-between px-3 py-2">
-          <h4 className="text-sm font-medium">{s.title}</h4>
+          <h4 className="text-sm font-medium">{t.notificationDropdown.title}</h4>
           {unreadCount && unreadCount > 0 && (
             <Button
               variant="ghost"
@@ -122,7 +118,7 @@ export const NotificationDropdown = () => {
               disabled={markAllAsRead.isPending}
             >
               <CheckCheck className="w-3 h-3 mr-1" />
-              {s.markAllRead}
+              {t.notificationDropdown.markAllRead}
             </Button>
           )}
         </div>
@@ -130,12 +126,12 @@ export const NotificationDropdown = () => {
 
         {isLoading ? (
           <div className="py-8 text-center">
-            <p className="text-xs text-muted-foreground">{s.loading}</p>
+            <p className="text-xs text-muted-foreground">{t.notificationDropdown.loading}</p>
           </div>
         ) : !notifications || notifications.length === 0 ? (
           <div className="py-8 text-center">
             <Bell className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-            <p className="text-xs text-muted-foreground">{s.empty}</p>
+            <p className="text-xs text-muted-foreground">{t.notificationDropdown.empty}</p>
           </div>
         ) : (
           <ScrollArea className="h-80">
@@ -204,7 +200,7 @@ export const NotificationDropdown = () => {
                 className="w-full text-xs"
                 onClick={() => navigate("/notifications")}
               >
-                {s.viewAll}
+                {t.notificationDropdown.viewAll}
               </Button>
             </div>
           </>

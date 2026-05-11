@@ -3,123 +3,11 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { veilorDb } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import type { B2BTraineeProfile, B2BOrgEvent } from '@/integrations/supabase/veilor-types';
+import { useT } from '@/i18n/useT';
 import { useLanguageContext } from '@/context/LanguageContext';
 
 // ─────────────────────────────────────────────
 // 이중언어 문자열
-// ─────────────────────────────────────────────
-const S = {
-  ko: {
-    headerTitle: '보호자 모니터링',
-    childLabel: '자녀',
-    noTrainee: '보호자로 등록된 트레이니를 찾을 수 없습니다.',
-    goBack: '돌아가기',
-    highBannerTitle: '⚠ 최근 3일 내 위기 신호가 감지되었습니다.',
-    highBannerDesc: '담당 코치에게 알림이 발송되었습니다. 자녀와 직접 대화해 보세요.',
-    highBannerHotline: '청소년 위기상담 전화: 1388 · 자살예방상담전화: 1393',
-    tabs: {
-      overview: '개요',
-      alerts: (count: number) => count > 0 ? `알림 (${count})` : '알림',
-      schedule: '일정',
-    },
-    checkin7dTitle: '최근 7일 체크인',
-    completionMsg: (n: number) =>
-      n >= 5 ? '꾸준히 체크인하고 있어요.' :
-      n >= 3 ? '보통 수준으로 참여 중이에요.' :
-      '체크인 참여가 낮아요. 자녀와 이야기해보세요.',
-    checkinHistoryTitle: '체크인 기록',
-    noScoreNote: '점수는 표시되지 않습니다',
-    noHistory: '최근 30일 기록이 없습니다.',
-    upcomingEventsTitle: '다가오는 일정',
-    privacyTitle: '개인정보 보호 안내',
-    privacyDesc1: '체크인 점수·자유 텍스트는 보호자에게 공개되지 않습니다.',
-    privacyDesc2: '알림 탭에서는 코치가 확인한 주의·위기 신호만 표시됩니다.',
-    noAlerts: '최근 30일 내 주의·위기 알림이 없습니다.',
-    alertSignal: (label: string) => `${label} 신호`,
-    highAlertDesc: '담당 코치에게 즉시 알림이 발송되었습니다. 자녀와 직접 대화해 보세요.',
-    mediumAlertDesc: '담당 코치가 24시간 내에 자녀에게 연락드릴 예정입니다.',
-    coachingRec: '코칭 세션이 권장되었습니다.',
-    crisisGuideTitle: '위기 상황 대응 가이드',
-    crisisStep1: '1. 대화 시도',
-    crisisStep1Desc: '— 판단하거나 해결하려 하지 말고, 먼저 들어주세요.',
-    crisisStep2: '2. 전문 연결',
-    crisisStep2Desc: '— 담당 코치 또는 소속 기관 담당자에게 연락하세요.',
-    crisisStep3: '3. 응급 상황',
-    crisisStep3Desc: '— 자살예방상담전화 1393, 청소년 위기상담 1388',
-    coachSessionTitle: '코칭 세션 일정',
-    noCoachSession: '예약된 코칭 세션이 없습니다.',
-    eventScheduleTitle: '대회 · 경기 일정',
-    sessionPrivacyNote: '코칭 세션 세부 내용은 보호자에게 공개되지 않습니다. 코치와의 대화는 비밀이 보장됩니다.',
-    statusScheduled: '예약됨',
-    statusCompleted: '완료',
-    riskLabels: {
-      normal: '안정', low: '관찰', medium: '주의', high: '위기',
-    } as Record<string, string>,
-    sessionTypeLabels: {
-      performance_routine: '퍼포먼스 루틴',
-      pressure_training: '압박 대응 트레이닝',
-      slump_recovery: '슬럼프 리커버리',
-      career_anchoring: '커리어 앵커링',
-      team_dynamics: '팀 다이나믹스',
-      energy_management: '에너지 관리',
-    } as Record<string, string>,
-  },
-  en: {
-    headerTitle: 'Guardian Monitoring',
-    childLabel: 'Child',
-    noTrainee: 'No trainee registered for this guardian.',
-    goBack: 'Go Back',
-    highBannerTitle: '⚠ A crisis signal has been detected in the past 3 days.',
-    highBannerDesc: 'Your coach has been notified. Please talk directly with your child.',
-    highBannerHotline: 'Youth Crisis: 1388 · Suicide Prevention: 1393',
-    tabs: {
-      overview: 'Overview',
-      alerts: (count: number) => count > 0 ? `Alerts (${count})` : 'Alerts',
-      schedule: 'Schedule',
-    },
-    checkin7dTitle: 'Last 7-Day Check-ins',
-    completionMsg: (n: number) =>
-      n >= 5 ? 'Checking in consistently.' :
-      n >= 3 ? 'Participating at an average level.' :
-      'Low check-in participation. Consider talking to your child.',
-    checkinHistoryTitle: 'Check-in History',
-    noScoreNote: 'Scores are not displayed',
-    noHistory: 'No records in the last 30 days.',
-    upcomingEventsTitle: 'Upcoming Events',
-    privacyTitle: 'Privacy Notice',
-    privacyDesc1: 'Check-in scores and free text are not visible to guardians.',
-    privacyDesc2: 'Only coach-confirmed caution/crisis signals are shown in the Alerts tab.',
-    noAlerts: 'No caution or crisis alerts in the last 30 days.',
-    alertSignal: (label: string) => `${label} Signal`,
-    highAlertDesc: 'Your coach has been notified immediately. Please talk directly with your child.',
-    mediumAlertDesc: 'Your coach will contact your child within 24 hours.',
-    coachingRec: 'A coaching session is recommended.',
-    crisisGuideTitle: 'Crisis Response Guide',
-    crisisStep1: '1. Start a Conversation',
-    crisisStep1Desc: '— Listen first without judgment or trying to fix things.',
-    crisisStep2: '2. Seek Professional Help',
-    crisisStep2Desc: '— Contact the assigned coach or organization staff.',
-    crisisStep3: '3. Emergency',
-    crisisStep3Desc: '— Suicide Prevention: 1393 · Youth Crisis: 1388',
-    coachSessionTitle: 'Coaching Session Schedule',
-    noCoachSession: 'No coaching sessions booked.',
-    eventScheduleTitle: 'Competition / Event Schedule',
-    sessionPrivacyNote: 'Session details are not disclosed to guardians. Conversations with coaches are confidential.',
-    statusScheduled: 'Scheduled',
-    statusCompleted: 'Completed',
-    riskLabels: {
-      normal: 'Stable', low: 'Watch', medium: 'Caution', high: 'Crisis',
-    } as Record<string, string>,
-    sessionTypeLabels: {
-      performance_routine: 'Performance Routine',
-      pressure_training: 'Pressure Training',
-      slump_recovery: 'Slump Recovery',
-      career_anchoring: 'Career Anchoring',
-      team_dynamics: 'Team Dynamics',
-      energy_management: 'Energy Management',
-    } as Record<string, string>,
-  },
-} as const;
 
 // ──────────────────────────────────────────────────────────────
 // 보호자 앱: 자녀의 체크인 완료 여부·위기 알림·코칭 일정만 표시
@@ -162,7 +50,8 @@ export default function GuardianApp() {
   const navigate  = useNavigate();
   const { user }  = useAuth();
   const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.b2bDomain.guardianApp;
 
   const [trainee,   setTrainee]   = useState<B2BTraineeProfile | null>(null);
   const [checkins,  setCheckins]  = useState<CheckinSummary[]>([]);

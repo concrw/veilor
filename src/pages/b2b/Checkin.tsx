@@ -6,99 +6,10 @@ import { veilorDb } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { useSubmitCheckin } from '@/hooks/useB2BOrg';
 import type { B2BOrgEvent } from '@/integrations/supabase/veilor-types';
-import { useLanguageContext } from '@/context/LanguageContext';
+import { useT } from '@/i18n/useT';
 
 // ─────────────────────────────────────────────
 // 이중언어 문자열
-// ─────────────────────────────────────────────
-const S = {
-  ko: {
-    saveError: '저장 실패',
-    saveErrorDesc: '다시 시도해주세요.',
-    completedTitle: '오늘 체크인 완료',
-    avgLabel: (avg: string) => `평균 4C: ${avg} / 10`,
-    highAlert: '⚠ 담당 코치에게 알림이 발송되었습니다.',
-    highAlertDesc: '힘드신 경우 즉시 상담 연결을 요청하거나 자살예방상담전화 1393으로 연락하세요.',
-    mediumAlert: '담당 코치가 24시간 내에 연락드릴 예정입니다.',
-    coachingRec: '코칭 세션을 예약하는 것을 추천합니다.',
-    bookSession: '코치 세션 예약',
-    toDashboard: '대시보드로',
-    optionalInput: '선택 입력',
-    freeTextTitle: '지금 하고 싶은 말이 있나요?',
-    freeTextDesc: '입력하지 않아도 됩니다. 소속사에는 공개되지 않습니다.',
-    freeTextPlaceholder: '자유롭게 적어보세요...',
-    prev: '이전',
-    saving: '저장 중...',
-    done: '완료',
-    next: '다음',
-    last: '마지막으로',
-    questions: {
-      c_control: {
-        question: '지금 이 순간, 내 감정과 상황을 내가 조절하고 있다',
-        low: '전혀 그렇지 않다',
-        high: '완전히 그렇다',
-      },
-      c_commitment: {
-        question: '지금 내 목표를 향한 의지가 흔들리지 않는다',
-        low: '흔들리고 있다',
-        high: '확고하다',
-      },
-      c_challenge: {
-        question: '지금 내가 마주한 어려움이 성장의 기회로 느껴진다',
-        low: '위협으로 느껴진다',
-        high: '기회로 느껴진다',
-      },
-      c_confidence: {
-        question: '지금 내 능력과 판단을 스스로 신뢰하고 있다',
-        low: '자신이 없다',
-        high: '자신 있다',
-      },
-    },
-  },
-  en: {
-    saveError: 'Save failed',
-    saveErrorDesc: 'Please try again.',
-    completedTitle: "Today's Check-in Complete",
-    avgLabel: (avg: string) => `Avg 4C: ${avg} / 10`,
-    highAlert: '⚠ Your coach has been notified.',
-    highAlertDesc: 'If you are in distress, please request immediate counseling or call the Suicide Prevention Hotline at 1393.',
-    mediumAlert: 'Your coach will contact you within 24 hours.',
-    coachingRec: 'We recommend scheduling a coaching session.',
-    bookSession: 'Book a Coaching Session',
-    toDashboard: 'Go to Dashboard',
-    optionalInput: 'Optional',
-    freeTextTitle: 'Anything you want to share?',
-    freeTextDesc: "You don't have to write anything. This will not be shared with your organization.",
-    freeTextPlaceholder: 'Write freely...',
-    prev: 'Previous',
-    saving: 'Saving...',
-    done: 'Done',
-    next: 'Next',
-    last: 'Last one',
-    questions: {
-      c_control: {
-        question: 'Right now, I am in control of my emotions and situation.',
-        low: 'Not at all',
-        high: 'Completely',
-      },
-      c_commitment: {
-        question: 'My commitment to my goals is unwavering right now.',
-        low: 'Wavering',
-        high: 'Firm',
-      },
-      c_challenge: {
-        question: 'The challenges I face right now feel like opportunities for growth.',
-        low: 'Feels like a threat',
-        high: 'Feels like an opportunity',
-      },
-      c_confidence: {
-        question: 'I trust my own abilities and judgment right now.',
-        low: 'Not confident',
-        high: 'Confident',
-      },
-    },
-  },
-} as const;
 
 // ─────────────────────────────────────────────
 // 4C 축 정의 (성인 기본 언어)
@@ -119,8 +30,8 @@ export default function Checkin() {
   const { user } = useAuth();
   const { toast } = useToast();
   const { submitCheckin, loading } = useSubmitCheckin();
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.b2bDomain.checkin;
 
   const [step, setStep] = useState<number>(0);         // 0~3: 4C 입력, 4: 텍스트, 5: 완료
   const [scores, setScores] = useState<Record<CKey, number>>({

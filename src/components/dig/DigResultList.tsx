@@ -32,7 +32,7 @@ export function DigResultList({
   const dig = useDigTranslations();
 
   return (
-    <div className="px-4 py-6 max-w-sm mx-auto space-y-5">
+    <div className="px-4 py-6 space-y-5">
       <button onClick={onBack} className="text-xs text-muted-foreground">{dig.goBack}</button>
 
       {/* 반복 패턴 배너 */}

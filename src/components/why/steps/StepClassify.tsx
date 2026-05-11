@@ -1,31 +1,7 @@
 import { Button } from '@/components/ui/button';
-import { useLanguageContext } from '@/context/LanguageContext';
+import { useT } from '@/i18n/useT';
 import type { JobEntry } from '@/types/why';
 
-const S = {
-  ko: {
-    step: '4단계',
-    title: '10년 행복/고통 분류',
-    question: '"이 직업만 10년 동안 한다면 어떨까요?"',
-    happy: '행복',
-    pain: '고통',
-    neutral: '중립',
-    btnHappy: '행복',
-    btnPain: '고통',
-    next: '이유 작성 단계로 →',
-  },
-  en: {
-    step: 'Step 4',
-    title: '10-Year Happiness / Pain Classification',
-    question: '"What if you did only this career for 10 years?"',
-    happy: 'Happy',
-    pain: 'Pain',
-    neutral: 'Neutral',
-    btnHappy: 'Happy',
-    btnPain: 'Pain',
-    next: 'To reason writing →',
-  },
-};
 
 interface StepClassifyProps {
   jobs: JobEntry[];
@@ -37,8 +13,8 @@ interface StepClassifyProps {
 }
 
 export function StepClassify({ jobs, happySet, painSet, toggleHappy, togglePain, onDone }: StepClassifyProps) {
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.why.classify;
 
   return (
     <div className="space-y-4">

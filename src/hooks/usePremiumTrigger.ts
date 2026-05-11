@@ -51,6 +51,15 @@ export function usePremiumTrigger() {
     setModalOpen(false);
   }, []);
 
+  const handleAiError = useCallback((err: unknown): boolean => {
+    if (err instanceof Error && err.message === 'MONTHLY_LIMIT_REACHED') {
+      setActiveTrigger('codetalk_ai_limit');
+      setModalOpen(true);
+      return true;
+    }
+    return false;
+  }, []);
+
   return {
     isPro,
     isLoading,
@@ -58,6 +67,7 @@ export function usePremiumTrigger() {
     activeTrigger,
     tryAccess,
     checkAiLimit,
+    handleAiError,
     closeModal,
   };
 }

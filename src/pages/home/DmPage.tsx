@@ -1,55 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import { useLanguageContext } from '@/context/LanguageContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { veilorDb } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
-
-const S = {
-  ko: {
-    header: '1:1 메시지',
-    subtitle: '커뮤니티에서 연결된 대화',
-    sidebarHeader: '1:1 메시지',
-    sidebarSubtitle: '커뮤니티에서 연결된 대화',
-    anonymousUser: '익명 사용자',
-    anonymousChat: '익명 대화',
-    firstMessage: '첫 메시지를 보내보세요',
-    messagePlaceholder: '메시지 입력...',
-    send: '전송',
-    pendingRequests: '대화 요청',
-    newRequest: '새 대화 요청',
-    newRequestDesc: '익명 사용자가 1:1 대화를 요청했습니다. 수락하면 메시지를 주고받을 수 있습니다.',
-    accept: '수락',
-    reject: '거절',
-    noRooms: '아직 대화가 없습니다',
-    noRoomsDesc: '커뮤니티에서 다른 사용자와 연결되면 여기에 나타납니다',
-    sendFail: '전송 실패',
-    policyViolation: '이 메시지는 커뮤니티 가이드라인에 맞지 않아 전송되지 않았습니다.',
-  },
-  en: {
-    header: '1:1 Messages',
-    subtitle: 'Conversations connected through community',
-    sidebarHeader: '1:1 Messages',
-    sidebarSubtitle: 'Conversations connected through community',
-    anonymousUser: 'Anonymous User',
-    anonymousChat: 'Anonymous Chat',
-    firstMessage: 'Send your first message',
-    messagePlaceholder: 'Type a message...',
-    send: 'Send',
-    pendingRequests: 'Chat Requests',
-    newRequest: 'New Chat Request',
-    newRequestDesc: 'An anonymous user has requested a 1:1 chat. Accept to start exchanging messages.',
-    accept: 'Accept',
-    reject: 'Decline',
-    noRooms: 'No conversations yet',
-    noRoomsDesc: 'Connect with other users in the community to start chatting here.',
-    sendFail: 'Send Failed',
-    policyViolation: 'This message was not sent because it does not comply with community guidelines.',
-  },
-} as const;
+import { useT } from '@/i18n/useT';
 
 interface DmRoom {
   id: string;
@@ -100,8 +57,8 @@ interface LocationState {
 
 export default function DmPage() {
   const { user, primaryMask } = useAuth();
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.dmPage;
   const location = useLocation();
   const locationState = (location.state ?? {}) as LocationState;
   const qc = useQueryClient();

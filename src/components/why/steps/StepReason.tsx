@@ -1,36 +1,8 @@
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { useLanguageContext } from '@/context/LanguageContext';
+import { useT } from '@/i18n/useT';
 import type { JobEntry } from '@/types/why';
 
-const S = {
-  ko: {
-    stepLabel: '5단계',
-    title: '이유 작성',
-    labelHappy: '✅ 행복',
-    labelPain: '❌ 고통',
-    promptHappy: '왜 행복할 것 같은가요?\n구체적인 감정과 이유를 적어 주세요.',
-    promptPain: '왜 고통스러울 것 같은가요?\n구체적인 감정과 이유를 적어 주세요.',
-    placeholderHappy: '사람들에게 직접적인 도움을 줄 수 있어서...',
-    placeholderPain: '혼자 반복적인 일만 하는 게 답답할 것 같아서...',
-    prev: '← 이전',
-    next: '다음 →',
-    toExperience: '경험 여부 단계로 →',
-  },
-  en: {
-    stepLabel: 'Step 5',
-    title: 'Write Reason',
-    labelHappy: '✅ Happy',
-    labelPain: '❌ Pain',
-    promptHappy: 'Why do you think you\'d be happy?\nWrite specific emotions and reasons.',
-    promptPain: 'Why do you think you\'d be in pain?\nWrite specific emotions and reasons.',
-    placeholderHappy: 'Because I can directly help people...',
-    placeholderPain: 'Because doing repetitive work alone would feel suffocating...',
-    prev: '← Prev',
-    next: 'Next →',
-    toExperience: 'To experience step →',
-  },
-};
 
 interface StepReasonProps {
   job: JobEntry;
@@ -43,8 +15,8 @@ interface StepReasonProps {
 }
 
 export function StepReason({ job, reasonIdx, totalClassified, reasonText, setReasonText, onPrev, onNext }: StepReasonProps) {
-  const { language } = useLanguageContext();
-  const s = S[language] ?? S.ko;
+  const t = useT();
+  const s = t.why.reason;
 
   const isHappy = job.category === 'happy';
 

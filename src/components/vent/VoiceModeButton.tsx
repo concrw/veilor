@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Mic, MicOff } from 'lucide-react';
 import { safeGetItem, safeSetItem } from '@/lib/storage';
+import { useT } from '@/i18n/useT';
 
 const STORAGE_KEY = 'veilor_voice_mode_enabled';
 
@@ -17,6 +18,7 @@ declare global {
 }
 
 export default function VoiceModeButton({ onTranscript, accentColor = '#C97A6A' }: Props) {
+  const vr = useT().voiceRecorder;
   const [enabled, setEnabled] = useState(() => safeGetItem(STORAGE_KEY) === 'true');
   const [listening, setListening] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
@@ -82,7 +84,7 @@ export default function VoiceModeButton({ onTranscript, accentColor = '#C97A6A' 
     <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
       <button
         onClick={toggle}
-        aria-label={listening ? '음성 입력 중지' : '음성 입력 시작'}
+        aria-label={listening ? vr.ariaStopInput : vr.ariaStartInput}
         style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           width: 34, height: 34, borderRadius: '50%', border: 'none', cursor: 'pointer',

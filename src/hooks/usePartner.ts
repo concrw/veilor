@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { veilorDb } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
+import { useLanguageContext } from '@/context/LanguageContext';
+import { getT } from '@/i18n/useT';
 
 export interface PartnerConnection {
   connectionId: string;
@@ -87,11 +89,13 @@ export function usePartnerProfile(partnerId: string | null | undefined) {
 // ─────────────────────────────────────────────
 export function useCreateInvite() {
   const { user } = useAuth();
+  const { language } = useLanguageContext();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (): Promise<{ inviteCode: string; expiresAt: string }> => {
-      if (!user) throw new Error('로그인이 필요합니다.');
+      const e = getT(language).coupleDomain.inviteSection;
+      if (!user) throw new Error(e.errLoginRequired);
 
       // 기존 pending 초대가 있으면 재사용
       const { data: existing } = await veilorDb
@@ -115,7 +119,7 @@ export function useCreateInvite() {
         .select('invite_code, expires_at')
         .single();
 
-      if (error || !data) throw new Error('초대코드 발급에 실패했습니다.');
+      if (error || !data) throw new Error(e.errCodeIssue);
       return { inviteCode: data.invite_code, expiresAt: data.expires_at };
     },
     onSuccess: () => {
@@ -129,11 +133,13 @@ export function useCreateInvite() {
 // ─────────────────────────────────────────────
 export function useAcceptInvite() {
   const { user } = useAuth();
+  const { language } = useLanguageContext();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (inviteCode: string): Promise<void> => {
-      if (!user) throw new Error('로그인이 필요합니다.');
+      const e = getT(language).coupleDomain.inviteSection;
+      if (!user) throw new Error(e.errLoginRequired);
 
       // 초대 조회
       const { data: invite, error: fetchErr } = await veilorDb
@@ -142,10 +148,10 @@ export function useAcceptInvite() {
         .eq('invite_code', inviteCode.trim().toUpperCase())
         .maybeSingle();
 
-      if (fetchErr || !invite) throw new Error('유효하지 않은 초대코드입니다.');
-      if (invite.status !== 'pending') throw new Error('이미 사용된 초대코드입니다.');
-      if (new Date(invite.expires_at) < new Date()) throw new Error('만료된 초대코드입니다.');
-      if (invite.inviter_id === user.id) throw new Error('본인의 초대코드는 사용할 수 없습니다.');
+      if (fetchErr || !invite) throw new Error(e.errInvalidCode);
+      if (invite.status !== 'pending') throw new Error(e.errCodeUsed);
+      if (new Date(invite.expires_at) < new Date()) throw new Error(e.errCodeExpired);
+      if (invite.inviter_id === user.id) throw new Error(e.errOwnCode);
 
       // 초대 수락 업데이트
       const { error: updateErr } = await veilorDb
@@ -153,7 +159,7 @@ export function useAcceptInvite() {
         .update({ status: 'accepted', invitee_id: user.id, accepted_at: new Date().toISOString() })
         .eq('id', invite.id);
 
-      if (updateErr) throw new Error('초대 수락 중 오류가 발생했습니다.');
+      if (updateErr) throw new Error(e.errAccept);
 
       // 연결 생성
       const { error: connErr } = await veilorDb
@@ -167,7 +173,7 @@ export function useAcceptInvite() {
           status: 'active',
         });
 
-      if (connErr) throw new Error('파트너 연결 중 오류가 발생했습니다.');
+      if (connErr) throw new Error(e.errConnect);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['partner-connection', user?.id] });
@@ -180,16 +186,18 @@ export function useAcceptInvite() {
 // ─────────────────────────────────────────────
 export function useDisconnectPartner() {
   const { user } = useAuth();
+  const { language } = useLanguageContext();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (connectionId: string): Promise<void> => {
+      const e = getT(language).coupleDomain.inviteSection;
       const { error } = await veilorDb
         .from('partner_connections')
         .update({ status: 'disconnected', disconnected_at: new Date().toISOString() })
         .eq('id', connectionId);
 
-      if (error) throw new Error('연결 해제 중 오류가 발생했습니다.');
+      if (error) throw new Error(e.errDisconnect);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['partner-connection', user?.id] });
@@ -201,20 +209,22 @@ export function useDisconnectPartner() {
 // 초대코드 입력 UI 상태 관리
 // ─────────────────────────────────────────────
 export function useInviteCodeInput() {
+  const { language } = useLanguageContext();
   const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const acceptInvite = useAcceptInvite();
 
   const handleSubmit = async () => {
+    const e = getT(language).coupleDomain.inviteSection;
     setError(null);
     if (code.trim().length < 6) {
-      setError('초대코드를 입력해주세요.');
+      setError(e.errInvalidCode);
       return;
     }
     try {
       await acceptInvite.mutateAsync(code);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : '오류가 발생했습니다.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : e.errDefault);
     }
   };
 
