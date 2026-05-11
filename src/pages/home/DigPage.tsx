@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { useFeature } from '@growthbook/growthbook-react';
 import { FEATURES } from '@/lib/growthbook';
 import { useMode } from '@/context/ModeContext';
-import { useDigTranslations } from '@/hooks/useTranslation';
-import { useLanguageContext } from '@/context/LanguageContext';
+import { useDigTranslations, useVentTranslations } from '@/hooks/useTranslation';
+import { AmberBtn } from '@/layouts/HomeLayout';
+import { useAmberAttention } from '@/hooks/useAmberAttention';
+import AmberSheet from '@/components/vent/AmberSheet';
 import { ErrorState } from '@/components/ErrorState';
 import { DigSearchForm } from '@/components/dig/DigSearchForm';
 import { DigResultList } from '@/components/dig/DigResultList';
@@ -16,14 +18,17 @@ import { useDigPageData } from '@/hooks/useDigPageData';
 import { usePremiumTrigger } from '@/hooks/usePremiumTrigger';
 import UpgradeModal from '@/components/premium/UpgradeModal';
 import CommunityInlineEmbed from '@/components/community/CommunityInlineEmbed';
+import { C } from '@/lib/colors';
 
 const DIG_ACCENT = '#A78BFA';
 
 function DigPageInner() {
   const dig = useDigTranslations();
+  const vent = useVentTranslations();
   const navigate = useNavigate();
+  const amberFlash = useAmberAttention();
+  const [amberOpen, setAmberOpen] = useState(false);
   const digToWhyNudge = useFeature(FEATURES.DIG_TO_WHY_NUDGE).value as string ?? 'on_back';
-  const { language } = useLanguageContext();
   const [showWhyNudge, setShowWhyNudge] = useState(digToWhyNudge === 'always');
   const { isPro, modalOpen: premiumModalOpen, activeTrigger, closeModal } = usePremiumTrigger();
   const {
@@ -64,7 +69,7 @@ function DigPageInner() {
           onBack={() => { setSelected(null); if (digToWhyNudge === 'on_back') setShowWhyNudge(true); }}
           onSelectResult={setSelected}
         />
-        <div className="px-4 pb-6 max-w-sm mx-auto">
+        <div className="px-4 pb-6">
           <CommunityInlineEmbed tab="dig" accent={DIG_ACCENT} />
         </div>
       </div>
@@ -76,13 +81,20 @@ function DigPageInner() {
   }
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-full">
+    <div className="flex flex-col min-h-full">
+      {/* 고정 헤더 */}
+      <div className="flex-shrink-0 flex items-center gap-[10px] px-4 py-2" style={{ borderBottom: `1px solid ${C.border2}` }}>
+        <div className="flex flex-col gap-[2px] flex-shrink-0">
+          <span className="text-[22px] leading-none tracking-[.01em]" style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 400, color: C.text }}>{dig.header}</span>
+          <span className="text-[10px] font-light tracking-[.02em]" style={{ color: C.text4 }}>{dig.subtitle}</span>
+        </div>
+        <div className="flex-1" />
+        <AmberBtn onClick={() => setAmberOpen(true)} flash={amberFlash} />
+      </div>
+
+      <div className="flex flex-col flex-1 lg:flex-row overflow-hidden">
       {/* 좌측: 입력 폼 영역 */}
       <div className="flex-1 px-4 pt-6 pb-20 space-y-5 overflow-y-auto max-w-2xl">
-        <div>
-          <h2 className="text-lg font-semibold">{dig.header}</h2>
-          <p className="text-sm text-muted-foreground mt-1">{dig.subtitle}</p>
-        </div>
 
         {recentVent && !ventDismissed && (
           <div className="bg-violet-500/5 border border-violet-500/20 rounded-2xl p-4 space-y-2">
@@ -120,16 +132,16 @@ function DigPageInner() {
           <div className="bg-indigo-500/5 border border-indigo-500/20 rounded-2xl p-4 flex items-start justify-between gap-3">
             <div className="space-y-1">
               <p className="text-xs font-medium text-indigo-400">
-                {language === 'en' ? 'Wondering why this pattern repeats?' : '이 패턴이 반복되는 이유가 궁금하다면?'}
+                {dig.whyNudge.title}
               </p>
               <p className="text-xs text-muted-foreground">
-                {language === 'en' ? 'WHY analysis helps uncover the root values behind the pattern.' : 'WHY 분석으로 패턴 이면의 핵심 가치관을 발견할 수 있어요.'}
+                {dig.whyNudge.desc}
               </p>
               <button
                 onClick={() => navigate('/home/get')}
                 className="text-xs text-indigo-400 font-medium hover:underline mt-1"
               >
-                {language === 'en' ? 'Start WHY analysis →' : 'WHY 분석 시작하기 →'}
+                {dig.whyNudge.btn}
               </button>
             </div>
             <button onClick={() => setShowWhyNudge(false)} className="text-xs text-muted-foreground shrink-0">✕</button>
@@ -186,6 +198,8 @@ function DigPageInner() {
       </aside>
 
       <UpgradeModal open={premiumModalOpen} trigger={activeTrigger} onClose={closeModal} />
+      </div>
+      <AmberSheet open={amberOpen} onClose={() => setAmberOpen(false)} aiName={vent.amberName} />
     </div>
   );
 }

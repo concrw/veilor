@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Settings } from 'lucide-react';
 import { useMeTranslations } from '@/hooks/useTranslation';
 import { AmberBtn, FrostBtn } from '@/layouts/HomeLayout';
 import { useAmberAttention } from '@/hooks/useAmberAttention';
@@ -56,17 +57,14 @@ export default function MePage() {
 
   return (
     <div style={{ fontFamily: "'DM Sans', sans-serif", background: C.bg, minHeight: '100%', display: 'flex', flexDirection: 'column', maxWidth: 860, width: '100%', margin: '0 auto' }}>
-      <div style={{ padding: '10px 20px 9px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: `1px solid ${C.border2}`, flexShrink: 0 }}>
+      <div style={{ padding: '8px 16px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: `1px solid ${C.border2}`, flexShrink: 0 }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1 }}>
           <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 400, fontSize: 22, color: C.text, lineHeight: 1 }}>ME</span>
           <span style={{ fontSize: 10, fontWeight: 300, color: C.text4, letterSpacing: '.02em' }}>{me.subtitle}</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button onClick={() => setSettingsOpen(true)} aria-label={me.settings} style={{ width: 28, height: 28, borderRadius: '50%', background: C.border2, border: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-              <path d="M8 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4z" stroke={C.text3} strokeWidth="1.2"/>
-              <path d="M13.3 6.7l-.9-.5a5.1 5.1 0 0 0 0-1.4l.9-.5a.5.5 0 0 0 .2-.7l-1-1.7a.5.5 0 0 0-.7-.2l-.9.5a5 5 0 0 0-1.2-.7V1a.5.5 0 0 0-.5-.5H6.8A.5.5 0 0 0 6.3 1v1a5 5 0 0 0-1.2.7l-.9-.5a.5.5 0 0 0-.7.2l-1 1.7a.5.5 0 0 0 .2.7l.9.5a5.1 5.1 0 0 0 0 1.4l-.9.5a.5.5 0 0 0-.2.7l1 1.7a.5.5 0 0 0 .7.2l.9-.5a5 5 0 0 0 1.2.7V15a.5.5 0 0 0 .5.5h2.4a.5.5 0 0 0 .5-.5v-1a5 5 0 0 0 1.2-.7l.9.5a.5.5 0 0 0 .7-.2l1-1.7a.5.5 0 0 0-.2-.7z" stroke={C.text3} strokeWidth="1.2"/>
-            </svg>
+            <Settings size={14} color={C.text3} strokeWidth={1.5} />
           </button>
           <AmberBtn onClick={() => setAiSheet('amber')} flash={amberFlash} />
           <FrostBtn onClick={() => setAiSheet('frost')} />

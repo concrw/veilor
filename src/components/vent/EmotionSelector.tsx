@@ -43,7 +43,7 @@ export default function EmotionSelector({
   const vent = useVentTranslations();
 
   return (
-    <div className="flex flex-col overflow-y-auto flex-1" style={{ padding: '18px 22px 12px', scrollbarWidth: 'none' }}>
+    <div className="flex flex-col overflow-y-auto flex-1" style={{ padding: '18px 16px 12px', scrollbarWidth: 'none' }}>
       <h2 className="text-[26px] font-light leading-[1.2] mb-1 flex-shrink-0" style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, color: C.text }}>{greeting.title}</h2>
       <p className="text-[11px] font-light mb-3 flex-shrink-0" style={{ color: C.text4 }}>{vent.selector.prompt}</p>
 

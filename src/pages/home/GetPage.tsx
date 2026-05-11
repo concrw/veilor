@@ -19,6 +19,11 @@ import IkigaiTab from '@/components/get/IkigaiTab';
 import BrandTab from '@/components/get/BrandTab';
 import CoupleAnalysis from '@/components/couple/CoupleAnalysis';
 import CommunityInlineEmbed from '@/components/community/CommunityInlineEmbed';
+import { C } from '@/lib/colors';
+import { AmberBtn } from '@/layouts/HomeLayout';
+import { useAmberAttention } from '@/hooks/useAmberAttention';
+import AmberSheet from '@/components/vent/AmberSheet';
+import { useVentTranslations } from '@/hooks/useTranslation';
 
 const GET_ACCENT = '#68D391';
 
@@ -29,6 +34,9 @@ export default function GetPage() {
   const { domain } = useDomain();
   const qc = useQueryClient();
   const get = useGetTranslations();
+  const vent = useVentTranslations();
+  const amberFlash = useAmberAttention();
+  const [amberOpen, setAmberOpen] = useState(false);
 
   if (domain === 'social') {
     return (
@@ -167,7 +175,18 @@ export default function GetPage() {
   if (ppError) return <ErrorState title={get.errors.loadFailed} onRetry={() => refetchPp()} />;
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-full">
+    <div className="flex flex-col min-h-full">
+      {/* 고정 헤더 */}
+      <div className="flex-shrink-0 flex items-center gap-[10px] px-4 py-2" style={{ borderBottom: `1px solid ${C.border2}` }}>
+        <div className="flex flex-col gap-[2px] flex-shrink-0">
+          <span className="text-[22px] leading-none tracking-[.01em]" style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 400, color: C.text }}>{get.header}</span>
+          <span className="text-[10px] font-light tracking-[.02em]" style={{ color: C.text4 }}>{get.subtitle}</span>
+        </div>
+        <div className="flex-1" />
+        <AmberBtn onClick={() => setAmberOpen(true)} flash={amberFlash} />
+      </div>
+
+      <div className="flex flex-col flex-1 lg:flex-row overflow-hidden">
       {/* PC 전용 좌측 탭 내비 */}
       <nav className="hidden lg:flex flex-col flex-shrink-0 py-6 px-3 border-r border-border" style={{ width: 140 }}>
         <p className="text-xs text-muted-foreground mb-4 px-2 tracking-wide">{get.header}</p>
@@ -183,11 +202,6 @@ export default function GetPage() {
       {/* 콘텐츠 */}
       <div className="flex-1 overflow-y-auto">
         <div className="px-4 py-6 space-y-5 max-w-3xl">
-          <div>
-            <h2 className="text-lg font-semibold">{get.header}</h2>
-            <p className="text-sm text-muted-foreground mt-1">{get.subtitle}</p>
-          </div>
-
           {/* 모바일 탭 바 */}
           <div className="lg:hidden bg-card border rounded-2xl p-1 flex">
             {tabs.map(([t, label]) => (
@@ -240,6 +254,8 @@ export default function GetPage() {
       </div>
 
       <UpgradeModal open={modalOpen} onClose={closeModal} trigger={activeTrigger} />
+      </div>
+      <AmberSheet open={amberOpen} onClose={() => setAmberOpen(false)} aiName={vent.amberName} />
     </div>
   );
 }

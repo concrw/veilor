@@ -64,7 +64,6 @@ export default function VentPage() {
   const abortControllerRef = useRef<AbortController | null>(null);
   const { saveLocal, loadLocal: _loadLocal, clearLocal } = useLocalChatHistory(user?.id);
   const { language } = useLanguageContext();
-  const isEn = language === 'en';
   const isKo = language === 'ko';
   const { domain } = useDomain();
   const { shouldNudge, pivotType, recordPivot } = useSocialPivotDetection(user?.id);
@@ -79,9 +78,7 @@ export default function VentPage() {
   const vent = useVentTranslations();
   const { EMOTIONS, EMO_DATA, QUICK_CARDS, SOCIAL_EMOTIONS, SOCIAL_QUICK_CARDS, LAYER_GROUPS, COMM_GROUPS, getTimeGreeting } = useVentData();
   const greeting = getTimeGreeting();
-  const socialGreeting = isKo
-    ? '지금 사회에 대해 어떤 감정이 드나요?'
-    : 'How are you feeling about the world right now?';
+  const socialGreeting = vent.socialGreeting;
   const displayGreeting = domain === 'social'
     ? { title: socialGreeting, placeholder: greeting.placeholder }
     : greeting;
@@ -246,8 +243,8 @@ export default function VentPage() {
       recordSignal(curEmo, txt).then(({ shouldAlert, suggestedMask }) => {
         if (shouldAlert && suggestedMask) {
           toast({
-            title: isEn ? `Pattern detected: ${suggestedMask}` : `패턴 감지: ${suggestedMask}`,
-            description: isEn ? 'Check Me tab for details.' : 'Me 탭에서 확인해보세요.',
+            title: vent.chat.patternDetectedTitle.replace('{mask}', suggestedMask),
+            description: vent.chat.patternDetectedDesc,
           });
         }
       });
@@ -280,6 +277,11 @@ export default function VentPage() {
       if (aiData?.crisis === 'critical') setCrisisLevel('critical');
     } catch (err: unknown) {
       if (err instanceof Error && err.name === 'AbortError') return;
+      if (err instanceof Error && err.message === 'MONTHLY_LIMIT_REACHED') {
+        window.dispatchEvent(new Event('veilor:ai-limit-reached'));
+        setAiThinking(false);
+        return;
+      }
       toast({ title: vent.chat.aiErrorTitle, description: vent.chat.aiErrorDesc, variant: 'destructive' });
     }
 
@@ -300,8 +302,7 @@ export default function VentPage() {
     <div className="flex flex-col" style={{ background: C.bg, minHeight: '100%', position: 'relative', overflow: 'hidden' }}>
       {crisisLevel && <CrisisBanner severity={crisisLevel} onDismiss={() => setCrisisLevel(null)} />}
 
-      {/* 헤더 */}
-      <div className="flex-shrink-0 flex items-center gap-[10px] px-5 py-2" style={{ borderBottom: `1px solid ${C.border2}` }}>
+      <div className="flex-shrink-0 flex items-center gap-[10px] px-4 py-2" style={{ borderBottom: `1px solid ${C.border2}` }}>
         <div className="flex flex-col gap-[2px] flex-shrink-0">
           <span className="text-[22px] leading-none tracking-[.01em]" style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 400, color: C.text }}>{vent.header}</span>
           <span className="text-[10px] font-light tracking-[.02em]" style={{ color: C.text4 }}>{vent.subtitle}</span>
@@ -315,7 +316,7 @@ export default function VentPage() {
       </div>
 
       {/* 섹션 탭 */}
-      <div className="flex-shrink-0 flex px-[22px]" style={{ borderBottom: `1px solid ${C.border2}` }}>
+      <div className="flex-shrink-0 flex px-4" style={{ borderBottom: `1px solid ${C.border2}` }}>
         {(['vent', 'layer', 'community'] as const).map((s, i) => {
           const labels = [vent.sections.mood, vent.sections.layer, vent.sections.community];
           const active = section === s;
@@ -340,14 +341,13 @@ export default function VentPage() {
                   {domain === 'social' && showSocialPivotNudge && (
                     <SocialPivotNudge
                       pivotType={(pivotType ?? 'transition') as 'growth' | 'fatigue' | 'transition'}
-                      isKo={isKo}
                       onTalkToAmber={() => { setShowSocialPivotNudge(false); setAmberOpen(true); }}
                       onDismiss={() => setShowSocialPivotNudge(false)}
                     />
                   )}
                   {domain === 'social' && (
                     <p style={{ fontSize: 11, color: C.text3, margin: '4px 22px 0', lineHeight: 1.5 }}>
-                      {isKo ? '사회적 감정은 개인의 감정만큼 중요해요' : 'Social emotions matter as much as personal ones'}
+                      {vent.socialEmotionHint}
                     </p>
                   )}
                   <EmotionSelector

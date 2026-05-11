@@ -1,10 +1,9 @@
 // Set — 이제 바꾸고 싶다
 // 기능: CODETALK 100일 키워드 기록 + 경계 설정 / Ax Mercer 3조건 합의 체크리스트
-// Stage 2-2: Ax Mercer 3조건 (경계, 합의, 소통) 아코디언 체크리스트 추가
 
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useSetTranslations } from '@/hooks/useTranslation';
+import { useLanguageContext } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { veilorDb, supabase } from '@/integrations/supabase/client';
@@ -13,10 +12,7 @@ import { toast } from '@/hooks/use-toast';
 import { saveSetSignal } from '@/hooks/useSignalPipeline';
 import { usePremiumTrigger } from '@/hooks/usePremiumTrigger';
 import UpgradeModal from '@/components/premium/UpgradeModal';
-import CodetalkTab from '@/components/set/CodetalkTab';
-import CodetalkHub from '@/components/set/CodetalkHub';
-import CoupleTalkTab from '@/components/set/CoupleTalkTab';
-import BoundaryTab, { ALL_AX_MERCER_KEYS, BOUNDARY_CATEGORY_KEYS, type BoundaryCategory } from '@/components/set/BoundaryTab';
+import { ALL_AX_MERCER_KEYS, BOUNDARY_CATEGORY_KEYS, type BoundaryCategory } from '@/components/set/BoundaryTab';
 import StoryFeedTab from '@/components/set/StoryFeedTab';
 import MiniToolsCard from '@/components/set/MiniToolsCard';
 import ConcernRouter from '@/components/set/ConcernRouter';
@@ -25,30 +21,40 @@ import RelationshipSimulation from '@/components/set/RelationshipSimulation';
 import RelationshipCoaching from '@/components/set/RelationshipCoaching';
 import ExperientialContent from '@/components/content/ExperientialContent';
 import MantraCorner from '@/components/set/MantraCorner';
+import CoupleTalkTab from '@/components/set/CoupleTalkTab';
 import CommunityInlineEmbed from '@/components/community/CommunityInlineEmbed';
 import { useDomain } from '@/context/DomainContext';
+import { SetPageCodetalkSection } from '@/components/set/SetPageCodetalkSection';
+import { SetPageBoundarySection } from '@/components/set/SetPageBoundarySection';
+import { C } from '@/lib/colors';
+import { AmberBtn } from '@/layouts/HomeLayout';
+import { useAmberAttention } from '@/hooks/useAmberAttention';
+import AmberSheet from '@/components/vent/AmberSheet';
+import { useVentTranslations } from '@/hooks/useTranslation';
 
 const SET_ACCENT = '#F59E0B';
 
 type Tab = 'codetalk' | 'boundary' | 'feed' | 'tools' | 'practice' | 'us' | 'mantra';
-
+type CodetalkMode = 'hub' | 'daily' | 'category' | 'relation';
 type ConditionKey = 'no_cross_boundary' | 'safe_to_speak' | 'can_withdraw';
 
 export default function SetPage() {
   const { user } = useAuth();
-  const navigate = useNavigate();
   const qc = useQueryClient();
+  const { language } = useLanguageContext();
   const set = useSetTranslations();
+  const vent = useVentTranslations();
   const { domain } = useDomain();
   const { isPro, tryAccess, modalOpen: premiumModalOpen, activeTrigger, closeModal } = usePremiumTrigger();
+  const amberFlash = useAmberAttention();
+  const [amberOpen, setAmberOpen] = useState(false);
   const [tab, setTab] = useState<Tab>('codetalk');
-  const [codetalkMode, setCodetalkMode] = useState<'hub' | 'daily' | 'category' | 'relation'>('hub');
+  const [codetalkMode, setCodetalkMode] = useState<CodetalkMode>('hub');
   const [entry, setEntry] = useState('');
   const [isPublic, setIsPublic] = useState(false);
   const [aiInsight, setAiInsight] = useState<string | null>(null);
   const [aiInsightLoading, setAiInsightLoading] = useState(false);
 
-  // --- 경계 설정 로컬 상태 ---
   const [boundaryTexts, setBoundaryTexts] = useState<Record<string, string>>(() => {
     const init: Record<string, string> = {};
     BOUNDARY_CATEGORY_KEYS.forEach(k => { init[k] = ''; });
@@ -57,8 +63,6 @@ export default function SetPage() {
   const [checkedConditions, setCheckedConditions] = useState<Record<string, boolean>>({
     no_cross_boundary: false, safe_to_speak: false, can_withdraw: false,
   });
-
-  // --- Ax Mercer 3조건 체크리스트 상태 ---
   const [axMercerChecks, setAxMercerChecks] = useState<Record<string, boolean>>(() => {
     const init: Record<string, boolean> = {};
     ALL_AX_MERCER_KEYS.forEach(k => { init[k] = false; });
@@ -68,19 +72,17 @@ export default function SetPage() {
     boundary: true, consent: false, communication: false,
   });
 
-  // ========== CODETALK 쿼리 ==========
+  // ── Codetalk 쿼리 ────────────────────────────────────────────────────────
   const { data: keyword, isLoading } = useQuery({
-    queryKey: ['codetalk-today', user?.id],
+    queryKey: ['codetalk-today', user?.id, language],
     queryFn: async () => {
       if (!user) throw new Error('Not authenticated');
-      const { data: profile } = await veilorDb
-        .from('user_profiles')
-        .select('codetalk_day').eq('user_id', user.id).single();
+      const { data: profile } = await veilorDb.from('user_profiles').select('codetalk_day').eq('user_id', user.id).single();
       const day = profile?.codetalk_day ?? 1;
-      const { data } = await veilorDb
-        .from('codetalk_keywords')
-        .select('*').eq('day_number', day).single();
-      return data;
+      const { data } = await veilorDb.from('codetalk_keywords').select('*').eq('day_number', day).eq('lang', language).maybeSingle();
+      if (data) return data;
+      const { data: fallback } = await veilorDb.from('codetalk_keywords').select('*').eq('day_number', day).eq('lang', 'ko').maybeSingle();
+      return fallback;
     },
     enabled: !!user,
   });
@@ -90,44 +92,17 @@ export default function SetPage() {
     queryFn: async () => {
       if (!user) throw new Error('Not authenticated');
       const today = new Date().toLocaleDateString('sv-SE');
-      const { data } = await veilorDb
-        .from('codetalk_entries')
-        .select('*').eq('user_id', user.id).eq('keyword_id', keyword.id)
-        .eq('entry_date', today).single();
+      const { data } = await veilorDb.from('codetalk_entries').select('*').eq('user_id', user.id).eq('keyword_id', keyword.id).eq('entry_date', today).single();
       return data;
     },
     enabled: !!user && !!keyword,
   });
 
-  const requestCodetalkInsight = async () => {
-    if (!isPro && !tryAccess('codetalk_ai_limit')) return;
-    if (!user || !todayEntry) return;
-    setAiInsightLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('codetalk-ai-insights', {
-        body: { entry_id: todayEntry.id, user_id: user.id },
-      });
-      if (!error && data?.insights) {
-        const { insight, pattern, growth, affirmation } = data.insights;
-        setAiInsight([insight, pattern, growth, affirmation].filter(Boolean).join('\n\n'));
-      }
-    } catch {
-      toast({ title: set.insightError, variant: 'destructive' });
-    } finally {
-      setAiInsightLoading(false);
-    }
-  };
-
   const { data: pastEntries } = useQuery({
     queryKey: ['codetalk-history', user?.id],
     queryFn: async () => {
       if (!user) throw new Error('Not authenticated');
-      const { data } = await veilorDb
-        .from('codetalk_entries')
-        .select('*, codetalk_keywords(keyword, day_number)')
-        .eq('user_id', user.id)
-        .order('entry_date', { ascending: false })
-        .limit(10);
+      const { data } = await veilorDb.from('codetalk_entries').select('*, codetalk_keywords(keyword, day_number)').eq('user_id', user.id).order('entry_date', { ascending: false }).limit(10);
       return data ?? [];
     },
     enabled: !!user,
@@ -137,27 +112,18 @@ export default function SetPage() {
     queryKey: ['codetalk-public', keyword?.id],
     queryFn: async () => {
       const today = new Date().toLocaleDateString('sv-SE');
-      const { data } = await veilorDb
-        .from('codetalk_entries')
-        .select('id, content, created_at, user_id')
-        .eq('keyword_id', keyword.id)
-        .eq('is_public', true)
-        .eq('entry_date', today)
-        .order('created_at', { ascending: false })
-        .limit(30);
+      const { data } = await veilorDb.from('codetalk_entries').select('id, content, created_at, user_id').eq('keyword_id', keyword.id).eq('is_public', true).eq('entry_date', today).order('created_at', { ascending: false }).limit(30);
       return data ?? [];
     },
     enabled: !!keyword && tab === 'feed',
   });
 
-  // ========== 경계 설정 쿼리 ==========
+  // ── 경계 설정 쿼리 ────────────────────────────────────────────────────────
   const { data: savedBoundaries } = useQuery({
     queryKey: ['user-boundaries', user?.id],
     queryFn: async () => {
       if (!user) throw new Error('Not authenticated');
-      const { data } = await veilorDb
-        .from('user_boundaries')
-        .select('*').eq('user_id', user.id);
+      const { data } = await veilorDb.from('user_boundaries').select('*').eq('user_id', user.id);
       return data ?? [];
     },
     enabled: !!user,
@@ -167,15 +133,12 @@ export default function SetPage() {
     queryKey: ['consent-checklist', user?.id],
     queryFn: async () => {
       if (!user) throw new Error('Not authenticated');
-      const { data } = await veilorDb
-        .from('consent_checklist')
-        .select('*').eq('user_id', user.id);
+      const { data } = await veilorDb.from('consent_checklist').select('*').eq('user_id', user.id);
       return data ?? [];
     },
     enabled: !!user,
   });
 
-  // DB 데이터 → 로컬 상태 동기화
   useEffect(() => {
     if (savedBoundaries) {
       const texts: Record<string, string> = { emotional: '', physical: '', time: '', digital: '' };
@@ -189,53 +152,35 @@ export default function SetPage() {
       const checks: Record<string, boolean> = { no_cross_boundary: false, safe_to_speak: false, can_withdraw: false };
       const axChecks: Record<string, boolean> = {};
       ALL_AX_MERCER_KEYS.forEach(k => { axChecks[k] = false; });
-
       savedChecklist.forEach((c: VeilorConsentChecklist) => {
         const key = c.condition_key;
-        if (key in checks) {
-          checks[key] = c.is_checked ?? false;
-        }
-        if (key in axChecks) {
-          axChecks[key] = c.is_checked ?? false;
-        }
+        if (key in checks) checks[key] = c.is_checked ?? false;
+        if (key in axChecks) axChecks[key] = c.is_checked ?? false;
       });
       setCheckedConditions(checks);
       setAxMercerChecks(axChecks);
     }
   }, [savedChecklist]);
 
-  // ========== 뮤테이션 ==========
+  // ── 뮤테이션 ──────────────────────────────────────────────────────────────
   const saveMutation = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error('Not authenticated');
       if (!keyword) throw new Error(set.insightError);
       const today = new Date().toLocaleDateString('sv-SE');
       await veilorDb.from('codetalk_entries').upsert({
-        user_id: user.id,
-        keyword_id: keyword.id,
-        keyword: keyword.keyword ?? '',
-        definition: entry,
-        content: entry,
-        entry_date: today,
-        is_public: isPublic,
+        user_id: user.id, keyword_id: keyword.id, keyword: keyword.keyword ?? '',
+        definition: entry, content: entry, entry_date: today, is_public: isPublic,
       }, { onConflict: 'user_id,keyword_id,entry_date' });
-      const { data: profile } = await veilorDb
-        .from('user_profiles')
-        .select('codetalk_day').eq('user_id', user.id).single();
+      const { data: profile } = await veilorDb.from('user_profiles').select('codetalk_day').eq('user_id', user.id).single();
       const nextDay = Math.min((profile?.codetalk_day ?? 1) + 1, 100);
-      await veilorDb.from('user_profiles')
-        .update({ codetalk_day: nextDay }).eq('user_id', user.id);
+      await veilorDb.from('user_profiles').update({ codetalk_day: nextDay }).eq('user_id', user.id);
     },
     onSuccess: () => {
-      // user_signals 테이블에 Set 시그널 저장
       if (user && keyword) {
-        saveSetSignal(user.id, {
-          keyword: keyword.keyword ?? '',
-          dayNumber: keyword.day_number ?? 1,
-          definition: entry,
-        }).catch(err => console.error('[SetPage] saveSetSignal failed:', err));
+        saveSetSignal(user.id, { keyword: keyword.keyword ?? '', dayNumber: keyword.day_number ?? 1, definition: entry })
+          .catch(err => console.error('[SetPage] saveSetSignal failed:', err));
       }
-
       toast({ title: set.codetalk.savedToast });
       setEntry('');
       qc.invalidateQueries({ queryKey: ['codetalk-today'] });
@@ -248,12 +193,7 @@ export default function SetPage() {
     mutationFn: async (category: BoundaryCategory) => {
       if (!user) throw new Error('Not authenticated');
       await veilorDb.from('user_boundaries').upsert(
-        {
-          user_id: user.id,
-          category,
-          boundary_text: boundaryTexts[category],
-          updated_at: new Date().toISOString(),
-        },
+        { user_id: user.id, category, boundary_text: boundaryTexts[category], updated_at: new Date().toISOString() },
         { onConflict: 'user_id,category' }
       );
     },
@@ -263,18 +203,12 @@ export default function SetPage() {
     },
   });
 
-  // Used by BoundaryTab component
   const toggleConsentMutation = useMutation({ // eslint-disable-line @typescript-eslint/no-unused-vars
     mutationFn: async (conditionKey: ConditionKey) => {
       if (!user) throw new Error('Not authenticated');
       const newChecked = !checkedConditions[conditionKey];
       await veilorDb.from('consent_checklist').upsert(
-        {
-          user_id: user.id,
-          condition_key: conditionKey,
-          is_checked: newChecked,
-          checked_at: newChecked ? new Date().toISOString() : null,
-        },
+        { user_id: user.id, condition_key: conditionKey, is_checked: newChecked, checked_at: newChecked ? new Date().toISOString() : null },
         { onConflict: 'user_id,condition_key' }
       );
       return { conditionKey, newChecked };
@@ -286,18 +220,12 @@ export default function SetPage() {
     },
   });
 
-  // Ax Mercer 체크리스트 토글 (consent_checklist 테이블 재활용)
   const toggleAxMercerMutation = useMutation({
     mutationFn: async (itemKey: string) => {
       if (!user) throw new Error('Not authenticated');
       const newChecked = !axMercerChecks[itemKey];
       await veilorDb.from('consent_checklist').upsert(
-        {
-          user_id: user.id,
-          condition_key: itemKey,
-          is_checked: newChecked,
-          checked_at: newChecked ? new Date().toISOString() : null,
-        },
+        { user_id: user.id, condition_key: itemKey, is_checked: newChecked, checked_at: newChecked ? new Date().toISOString() : null },
         { onConflict: 'user_id,condition_key' }
       );
       return { itemKey, newChecked };
@@ -308,12 +236,27 @@ export default function SetPage() {
     },
   });
 
-  // 섹션 토글
+  const requestCodetalkInsight = async () => {
+    if (!isPro && !tryAccess('codetalk_ai_limit')) return;
+    if (!user || !todayEntry) return;
+    setAiInsightLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('codetalk-ai-insights', { body: { entry_id: todayEntry.id, user_id: user.id } });
+      if (!error && data?.insights) {
+        const { insight, pattern, growth, affirmation } = data.insights;
+        setAiInsight([insight, pattern, growth, affirmation].filter(Boolean).join('\n\n'));
+      }
+    } catch {
+      toast({ title: set.insightError, variant: 'destructive' });
+    } finally {
+      setAiInsightLoading(false);
+    }
+  };
+
   const toggleSection = (sectionId: string) => {
     setOpenSections(prev => ({ ...prev, [sectionId]: !prev[sectionId] }));
   };
 
-  // Ax Mercer 완료율 계산
   const getAxMercerProgress = (sectionId: string) => {
     const prefixMap: Record<string, string> = { boundary: 'bnd_', consent: 'cns_', communication: 'com_' };
     const prefix = prefixMap[sectionId];
@@ -346,14 +289,21 @@ export default function SetPage() {
   ];
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-full">
+    <div className="flex flex-col min-h-full">
+      {/* 고정 헤더 */}
+      <div className="flex-shrink-0 flex items-center gap-[10px] px-4 py-2" style={{ borderBottom: `1px solid ${C.border2}` }}>
+        <div className="flex flex-col gap-[2px] flex-shrink-0">
+          <span className="text-[22px] leading-none tracking-[.01em]" style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 400, color: C.text }}>{set.header}</span>
+          <span className="text-[10px] font-light tracking-[.02em]" style={{ color: C.text4 }}>{set.subtitle}</span>
+        </div>
+        <div className="flex-1" />
+        <AmberBtn onClick={() => setAmberOpen(true)} flash={amberFlash} />
+      </div>
+
+      <div className="flex flex-col flex-1 lg:flex-row overflow-hidden">
       {/* PC: 세로 탭 사이드바 */}
       <nav className="hidden lg:flex flex-col flex-shrink-0 border-r border-border"
         style={{ width: 140, padding: '24px 12px', gap: 4 }}>
-        <div className="mb-4 px-2">
-          <h2 className="text-base font-semibold">{set.header}</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">{set.sidebarSubtitle}</p>
-        </div>
         {SET_TABS.map(([t, label]) => (
           <button key={t} onClick={() => handleTabChange(t)}
             className={`text-left px-3 py-2.5 rounded-xl text-sm transition-colors
@@ -365,11 +315,7 @@ export default function SetPage() {
 
       {/* 모바일: 가로 탭바 */}
       <div className="lg:hidden px-4 pt-5 pb-0">
-        <div>
-          <h2 className="text-lg font-semibold">{set.header}</h2>
-          <p className="text-sm text-muted-foreground mt-1">{set.subtitle}</p>
-        </div>
-        <div className="bg-card border rounded-2xl p-1 flex mt-4">
+        <div className="bg-card border rounded-2xl p-1 flex mt-0">
           {SET_TABS.map(([t, label]) => (
             <button key={t} onClick={() => handleTabChange(t)}
               className={`flex-1 py-2 px-0.5 rounded-xl text-xs font-medium transition-colors truncate
@@ -380,70 +326,16 @@ export default function SetPage() {
         </div>
       </div>
 
-      {/* 콘텐츠 영역 */}
+      {/* 콘텐츠 */}
       <div className="flex-1 px-4 py-5 lg:py-6 space-y-5 overflow-y-auto max-w-3xl">
-      {tab === 'codetalk' ? (
-        isLoading ? (
-          <div className="flex items-center justify-center h-64">
-            <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-          </div>
-        ) : codetalkMode === 'hub' ? (
-          <CodetalkHub
-            onModeSelect={setCodetalkMode}
+        {tab === 'codetalk' ? (
+          <SetPageCodetalkSection
+            isLoading={isLoading}
+            codetalkMode={codetalkMode}
+            setCodetalkMode={setCodetalkMode}
             keyword={keyword}
             todayEntry={todayEntry}
-          />
-        ) : codetalkMode === 'daily' ? (
-          <>
-            <button
-              onClick={() => setCodetalkMode('hub')}
-              className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 mb-1"
-              style={{ fontFamily: 'monospace', letterSpacing: '0.04em' }}
-            >
-              ← MODES
-            </button>
-            <CodetalkTab
-              keyword={keyword}
-              todayEntry={todayEntry}
-              pastEntries={pastEntries}
-              entry={entry}
-              setEntry={setEntry}
-              isPublic={isPublic}
-              setIsPublic={setIsPublic}
-              saveMutation={saveMutation}
-              aiInsight={aiInsight}
-              aiInsightLoading={aiInsightLoading}
-              onRequestInsight={requestCodetalkInsight}
-            />
-          </>
-        ) : codetalkMode === 'category' ? (
-          <>
-            <button
-              onClick={() => setCodetalkMode('hub')}
-              className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 mb-1"
-              style={{ fontFamily: 'monospace', letterSpacing: '0.04em' }}
-            >
-              ← MODES
-            </button>
-            <CodetalkTab
-              keyword={keyword}
-              todayEntry={todayEntry}
-              pastEntries={pastEntries}
-              entry={entry}
-              setEntry={setEntry}
-              isPublic={isPublic}
-              setIsPublic={setIsPublic}
-              saveMutation={saveMutation}
-              aiInsight={aiInsight}
-              aiInsightLoading={aiInsightLoading}
-              onRequestInsight={requestCodetalkInsight}
-            />
-          </>
-        ) : (
-          <CodetalkTab
-            keyword={keyword}
-            todayEntry={todayEntry}
-            pastEntries={pastEntries}
+            pastEntries={pastEntries ?? []}
             entry={entry}
             setEntry={setEntry}
             isPublic={isPublic}
@@ -452,78 +344,49 @@ export default function SetPage() {
             aiInsight={aiInsight}
             aiInsightLoading={aiInsightLoading}
             onRequestInsight={requestCodetalkInsight}
+            backLabel="← MODES"
           />
-        )
-      ) : tab === 'boundary' ? (
-        <>
-          {/* SexSelf 진입 배너 — 경계 탭 상단에 위치 */}
-          <button
-            onClick={() => navigate('/home/sexself/questions')}
-            className="w-full rounded-2xl p-4 text-left transition-all mb-1"
-            style={{
-              background: 'rgba(236,72,153,0.05)',
-              border: '1px solid rgba(236,72,153,0.2)',
-            }}
-          >
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-base">🌸</span>
-                  <span className="text-sm font-medium" style={{ color: '#ec4899' }}>
-                    {set.sexSelfBanner.title}
-                  </span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full"
-                    style={{ background: 'rgba(236,72,153,0.1)', color: '#ec4899', border: '1px solid rgba(236,72,153,0.2)' }}>
-                    SexSelf
-                  </span>
-                </div>
-                <p className="text-xs font-light" style={{ color: 'rgba(236,72,153,0.7)' }}>
-                  {set.sexSelfBanner.desc}
-                </p>
-              </div>
-              <span style={{ color: 'rgba(236,72,153,0.5)', fontSize: 18 }}>›</span>
-            </div>
-          </button>
-          <BoundaryTab
-          boundaryTexts={boundaryTexts}
-          setBoundaryTexts={setBoundaryTexts}
-          saveBoundaryMutation={saveBoundaryMutation}
-          axMercerChecks={axMercerChecks}
-          toggleAxMercerMutation={toggleAxMercerMutation}
-          openSections={openSections}
-          toggleSection={toggleSection}
-          totalAxProgress={totalAxProgress}
-          getAxMercerProgress={getAxMercerProgress}
-        />
-        </>
-      ) : tab === 'mantra' ? (
-        <MantraCorner domain={domain} />
-      ) : tab === 'us' ? (
-        <CoupleTalkTab />
-      ) : tab === 'tools' ? (
-        <div className="space-y-4">
-          <MiniToolsCard />
-          <ConcernRouter />
-          <PersonaBranding />
-        </div>
-      ) : tab === 'practice' ? (
-        <div className="space-y-4">
-          <RelationshipSimulation />
-          <RelationshipCoaching />
-          <ExperientialContent />
-        </div>
-      ) : (
-        <>
-          <CommunityInlineEmbed tab="set" accent={SET_ACCENT} />
-          <StoryFeedTab
-            keyword={keyword}
-            publicFeed={publicFeed}
+        ) : tab === 'boundary' ? (
+          <SetPageBoundarySection
+            boundaryTexts={boundaryTexts}
+            setBoundaryTexts={setBoundaryTexts}
+            saveBoundaryMutation={saveBoundaryMutation}
+            axMercerChecks={axMercerChecks}
+            toggleAxMercerMutation={toggleAxMercerMutation}
+            openSections={openSections}
+            toggleSection={toggleSection}
+            totalAxProgress={totalAxProgress}
+            getAxMercerProgress={getAxMercerProgress}
+            sexSelfTitle={set.sexSelfBanner.title}
+            sexSelfDesc={set.sexSelfBanner.desc}
           />
-        </>
-      )}
+        ) : tab === 'mantra' ? (
+          <MantraCorner domain={domain} />
+        ) : tab === 'us' ? (
+          <CoupleTalkTab />
+        ) : tab === 'tools' ? (
+          <div className="space-y-4">
+            <MiniToolsCard />
+            <ConcernRouter />
+            <PersonaBranding />
+          </div>
+        ) : tab === 'practice' ? (
+          <div className="space-y-4">
+            <RelationshipSimulation />
+            <RelationshipCoaching />
+            <ExperientialContent />
+          </div>
+        ) : (
+          <>
+            <CommunityInlineEmbed tab="set" accent={SET_ACCENT} />
+            <StoryFeedTab keyword={keyword} publicFeed={publicFeed} />
+          </>
+        )}
       </div>
 
       <UpgradeModal open={premiumModalOpen} trigger={activeTrigger} onClose={closeModal} />
+      </div>
+      <AmberSheet open={amberOpen} onClose={() => setAmberOpen(false)} aiName={vent.amberName} />
     </div>
   );
 }
