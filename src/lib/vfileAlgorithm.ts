@@ -22,6 +22,7 @@ export interface MaskProfile {
   archetype: string;
   archetypeEn: string;
   description: string;
+  descriptionEn: string;
   scores: AxisScores;
   coreWound: string;
   coreWoundEn: string;
@@ -41,6 +42,7 @@ export const MASK_PROFILES: MaskProfile[] = [
     category: 'predatory',
     archetype: '불안 억제, 환경 장악', archetypeEn: 'Suppress anxiety, dominate environment',
     description: '당신은 관계에서 주도권을 잡으려 합니다. 환경을 통제해야 안전하다고 느끼고, 불확실함을 견디기 어렵습니다. 권력과 지위가 안전감의 원천입니다.',
+    descriptionEn: 'You seek control in relationships. You feel safe only when you can manage your environment, and uncertainty is hard to bear. Power and status are your sources of security.',
     scores: { A: 20, B: 20, C: 25, D: 90 },
     coreWound: '무력했던 순간의 트라우마', coreWoundEn: 'Trauma from moments of helplessness',
     coreFear: '통제를 잃으면 다시 무력해진다', coreFearEn: 'Losing control means becoming helpless again',
@@ -54,6 +56,7 @@ export const MASK_PROFILES: MaskProfile[] = [
     category: 'predatory',
     archetype: '접근 차단, 고립 유지', archetypeEn: 'Block access, maintain isolation',
     description: '당신은 관계에서 접근을 차단합니다. 반복된 배신이 타인을 거울로 사용하게 만들었고, 고립이 유일한 안전지대가 되었습니다.',
+    descriptionEn: 'You block others from getting close. Repeated betrayals have taught you to use people as mirrors, and isolation has become your only safe ground.',
     scores: { A: 15, B: 15, C: 15, D: 30 },
     coreWound: '반복된 배신이 신뢰를 파괴했다', coreWoundEn: 'Repeated betrayals destroyed trust',
     coreFear: '다시 믿으면 다시 배신당한다', coreFearEn: 'Trusting again means being betrayed again',
@@ -67,6 +70,7 @@ export const MASK_PROFILES: MaskProfile[] = [
     category: 'predatory',
     archetype: '경계 표시, 자율성 확보', archetypeEn: 'Assert boundaries, secure autonomy',
     description: '당신은 사회적 규칙을 인지하지만 내면화하지 않습니다. 자율성이 최우선이고, 누구도 당신을 가두지 못합니다.',
+    descriptionEn: 'You are aware of social rules but refuse to internalize them. Autonomy is your top priority — no one gets to confine you.',
     scores: { A: 20, B: 70, C: 75, D: 70 },
     coreWound: '억압적 환경에서 자아가 짓밟혔다', coreWoundEn: 'The self was crushed in an oppressive environment',
     coreFear: '규칙을 따르면 나를 잃는다', coreFearEn: 'Following rules means losing myself',
@@ -80,6 +84,7 @@ export const MASK_PROFILES: MaskProfile[] = [
     category: 'predatory',
     archetype: '욕망 유발, 권력 확보', archetypeEn: 'Trigger desire, secure power',
     description: '당신은 관계를 전략적으로 설계합니다. 매력과 감각적 자원을 자연스럽게 활용하지만, 진짜 자신이 드러나는 것은 두렵습니다.',
+    descriptionEn: 'You design relationships strategically. Charm and allure come naturally to you, but showing your real self feels dangerous.',
     scores: { A: 55, B: 75, C: 85, D: 80 },
     coreWound: '있는 그대로의 나는 매력적이지 않다', coreWoundEn: 'My authentic self is not attractive enough',
     coreFear: '매력이 없으면 관계가 사라진다', coreFearEn: 'Without charm, relationships disappear',
@@ -93,6 +98,7 @@ export const MASK_PROFILES: MaskProfile[] = [
     category: 'predatory',
     archetype: '긴장 해소, 접근 허용', archetypeEn: 'Dissolve tension, allow closeness',
     description: '당신은 유머와 자원으로 관계의 구조를 만듭니다. 긴장을 해소하고 접근을 허용하지만, 그 이면에는 회피 전략이 숨어 있습니다.',
+    descriptionEn: 'You build the structure of relationships through humor and resources. You dissolve tension and let people in, but underneath lies a strategy of avoidance.',
     scores: { A: 25, B: 30, C: 75, D: 90 },
     coreWound: '진지하면 다칠 수 있다는 것을 배웠다', coreWoundEn: 'Learned that being serious leads to getting hurt',
     coreFear: '감정을 가지면 통제력을 잃는다', coreFearEn: 'Having emotions means losing control',
@@ -106,6 +112,7 @@ export const MASK_PROFILES: MaskProfile[] = [
     category: 'predatory',
     archetype: '자극 추구, 경계 실험', archetypeEn: 'Seek stimulation, test boundaries',
     description: '당신은 새로운 경험과 경계의 실험을 추구합니다. 정서적 연결보다 자극이 관계의 동력이 됩니다.',
+    descriptionEn: 'You seek new experiences and push at the edges. Stimulation drives your relationships more than emotional connection.',
     scores: { A: 85, B: 80, C: 85, D: 80 },
     coreWound: '안전기지가 없었다', coreWoundEn: 'There was no safe base',
     coreFear: '멈추면 공허함과 마주해야 한다', coreFearEn: 'Stopping means facing the emptiness',
@@ -121,6 +128,7 @@ export const MASK_PROFILES: MaskProfile[] = [
     category: 'prey',
     archetype: '융합, 자기 소거', archetypeEn: 'Merge with other, erase self',
     description: '당신은 타인의 감정을 자신의 것처럼 느낍니다. 경계가 사라지고, 상대와 융합하면서 자기를 소거합니다.',
+    descriptionEn: "You feel others' emotions as your own. Boundaries dissolve as you merge with the other person, erasing yourself in the process.",
     scores: { A: 75, B: 25, C: 20, D: 15 },
     coreWound: '나 자신으로 있으면 사랑받지 못한다', coreWoundEn: 'Being myself means not being loved',
     coreFear: '존재 자체로 충분하지 않을지 모른다', coreFearEn: 'My existence alone may not be enough',
@@ -134,6 +142,7 @@ export const MASK_PROFILES: MaskProfile[] = [
     category: 'prey',
     archetype: '관계 유지, 거절 회피', archetypeEn: 'Sustain bonds, avoid rejection',
     description: '당신은 끊임없이 주는 것이 사랑이라고 믿습니다. 경계를 설정하지 못하고, 내 필요를 말하면 짐이 된다고 느낍니다.',
+    descriptionEn: 'You believe love means giving constantly. You struggle to set limits, and expressing your own needs feels like being a burden.',
     scores: { A: 75, B: 75, C: 30, D: 25 },
     coreWound: '내 필요를 말하면 짐이 된다', coreWoundEn: 'Expressing my needs makes me a burden',
     coreFear: '내가 주지 않으면 상대는 떠난다', coreFearEn: 'If I stop giving, they will leave',
@@ -147,6 +156,7 @@ export const MASK_PROFILES: MaskProfile[] = [
     category: 'prey',
     archetype: '가치 증명, 인정 획득', archetypeEn: 'Prove worth, earn approval',
     description: '당신은 인정받을 때만 자신이 존재한다고 느낍니다. 완벽해야 사랑받을 수 있다는 믿음이 관계 패턴을 형성합니다.',
+    descriptionEn: 'You feel you only exist when you are recognized. The belief that you must be perfect to be loved shapes every relationship you enter.',
     scores: { A: 70, B: 75, C: 30, D: 75 },
     coreWound: '잘해야만 사랑받을 수 있었다', coreWoundEn: 'Love was only available when I performed well',
     coreFear: '평범한 내가 드러나면 가치를 잃는다', coreFearEn: 'If my ordinary self is exposed, I lose my value',
@@ -160,6 +170,7 @@ export const MASK_PROFILES: MaskProfile[] = [
     category: 'prey',
     archetype: '보호 유발, 책임 회피', archetypeEn: 'Elicit protection, avoid responsibility',
     description: '당신은 홀로 존재하는 것이 불가능합니다. 상대가 있어야 완성되고, 무력감이 보호를 유발하는 전략이 되었습니다.',
+    descriptionEn: 'Existing alone feels impossible. You feel complete only with someone beside you, and helplessness has become a strategy that draws protection.',
     scores: { A: 80, B: 80, C: 70, D: 20 },
     coreWound: '혼자서는 아무것도 할 수 없었다', coreWoundEn: 'I could do nothing on my own',
     coreFear: '혼자 남겨지면 무너진다', coreFearEn: 'Being left alone means falling apart',
@@ -173,6 +184,7 @@ export const MASK_PROFILES: MaskProfile[] = [
     category: 'prey',
     archetype: '우월성 확보, 친밀감 회피', archetypeEn: 'Establish superiority, avoid intimacy',
     description: '당신은 지적 우월로 관계를 유지하면서 동시에 친밀감을 회피합니다. 감정을 드러내는 것을 약함으로 여깁니다.',
+    descriptionEn: 'You maintain relationships through intellectual superiority while avoiding genuine intimacy. Showing emotion feels like weakness.',
     scores: { A: 60, B: 25, C: 25, D: 25 },
     coreWound: '감정을 드러냈을 때 무시당했다', coreWoundEn: 'Showing emotions led to being dismissed',
     coreFear: '명확히 말하면 관계가 깨진다', coreFearEn: 'Speaking directly will break the relationship',
@@ -186,6 +198,7 @@ export const MASK_PROFILES: MaskProfile[] = [
     category: 'prey',
     archetype: '도덕적 우위, 죄책감 유발', archetypeEn: 'Moral high ground, induce guilt',
     description: '당신은 누군가를 구해야 자신의 가치를 증명할 수 있습니다. 희생이 미덕이라고 학습했고, 그것이 관계의 유일한 방식이 되었습니다.',
+    descriptionEn: 'You can only prove your worth by rescuing someone. Sacrifice was taught as virtue, and it has become the only way you know how to connect.',
     scores: { A: 65, B: 75, C: 75, D: 30 },
     coreWound: '나의 가치는 남을 구할 때만 증명된다', coreWoundEn: 'My worth is only proven when I rescue others',
     coreFear: '도움이 필요 없는 상대는 나를 필요로 하지 않는다', coreFearEn: 'Someone who does not need saving has no use for me',
