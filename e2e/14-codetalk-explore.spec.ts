@@ -108,7 +108,9 @@ test.describe('CodetalkExplore — 혼자 하는 코드토크', () => {
     await page.getByRole('button', { name: '혼자 하는 코드토크' }).click();
     await page.getByRole('button', { name: '관계 유형으로' }).click();
     // 나 자신: 텍스트로 찾아 부모 button 클릭
-    const myselfBtn2 = page.locator('button:has-text("나 자신")');
+    // '나 자신' 버튼이 여러 개일 수 있음 (관계 유형 선택 카드 내)
+    // CodetalkExplore 내 버튼만 정확히 선택
+    const myselfBtn2 = page.locator('.bg-card button:has-text("나 자신")').first();
     await myselfBtn2.waitFor({ timeout: 5_000 });
     await myselfBtn2.scrollIntoViewIfNeeded();
     await page.waitForTimeout(400);
