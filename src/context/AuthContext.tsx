@@ -52,7 +52,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const syncOnboarding = async (userId: string) => {
     const timeout = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('syncOnboarding timeout')), 8000)
+      setTimeout(() => reject(new Error('syncOnboarding timeout')), 15000)
     );
     const query = veilorDb
       .from('user_profiles')

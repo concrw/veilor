@@ -1,6 +1,6 @@
 /**
  * E2E: 온보딩 Critical Path
- * - 회원가입 → Welcome → CoreQuestions → V-File → /home 진입
+ * - 회원가입 → V-File → /home 진입
  *
  * NOTE: 매 실행마다 새 이메일이 필요하므로 타임스탬프 기반 동적 생성.
  *       실제 이메일 발송은 없고 Supabase auto-confirm 활성화 필요.
@@ -26,7 +26,7 @@ test.describe('온보딩 플로우', () => {
     expect(hasError).toBe(false);
   });
 
-  test('온보딩 미완료 유저 → /onboarding/welcome 리다이렉트', async ({ page }) => {
+  test('온보딩 미완료 유저 → /onboarding/vfile/start 리다이렉트', async ({ page }) => {
     // fresh 유저로 로그인하면 온보딩으로 튕겨야 함
     await page.goto('/auth/login');
     await page.getByRole('textbox', { name: /이메일/i }).fill(
@@ -39,7 +39,7 @@ test.describe('온보딩 플로우', () => {
     await expect(page).toHaveURL(/\/onboarding/, { timeout: 8_000 });
   });
 
-  test('Welcome → CoreQuestions 진입', async ({ page }) => {
+  test('로그인 후 V-File Start 진입', async ({ page }) => {
     await page.goto('/auth/login');
     await page.getByRole('textbox', { name: /이메일/i }).fill(
       process.env.E2E_USER_FRESH_EMAIL ?? 'e2e.fresh@veilor.test'
@@ -49,14 +49,8 @@ test.describe('온보딩 플로우', () => {
     );
     await page.getByRole('button', { name: '로그인', exact: true }).click();
     await page.waitForURL(/\/onboarding/, { timeout: 60_000 });
-    // URL 도달 후 PageLoader 스피너 소멸 대기 (syncOnboarding + lazy chunk 완료)
     await page.locator('.animate-spin').waitFor({ state: 'hidden', timeout: 30_000 }).catch(() => null);
 
-    // Welcome 화면 — phase 전환 2초 후 버튼 등장 + 프로덕션 cold start 여유 (최대 20초 대기)
-    const startBtn = page.getByRole('button', { name: /시작|진단|다음/i }).first();
-    await expect(startBtn).toBeVisible({ timeout: 20_000 });
-    await startBtn.click();
-
-    await expect(page).toHaveURL(/\/onboarding\/cq/, { timeout: 8_000 });
+    await expect(page).toHaveURL(/\/onboarding\/vfile/, { timeout: 8_000 });
   });
 });
