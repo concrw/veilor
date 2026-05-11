@@ -117,7 +117,7 @@ export default function PriperQuestions() {
       </div>
 
       {/* 우측 질문 영역 */}
-      <div className="flex flex-col flex-1 lg:flex-none lg:w-[520px] px-6 py-8 justify-center">
+      <div className="flex flex-col flex-1 lg:flex-none lg:w-[520px] px-6 py-8">
       <div className="max-w-sm w-full mx-auto flex-1 flex flex-col">
         {/* 맥락 배지 */}
         {context !== 'general' && (
@@ -156,7 +156,7 @@ export default function PriperQuestions() {
         </div>
 
         {/* 질문 */}
-        <h2 className="text-lg font-semibold leading-snug mb-8 flex-1" style={{ color: '#F5F5F4' }}>
+        <h2 className="text-lg font-semibold leading-snug mb-6" style={{ color: '#F5F5F4' }}>
           {language === 'en' ? (q.questionEn ?? q.question) : q.question}
         </h2>
 

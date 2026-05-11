@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { VenetianMask } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
 import { runDiagnosis, VFILE_CONTEXT_LABELS } from '@/lib/vfileAlgorithm';
@@ -188,9 +189,9 @@ export default function PriperResult() {
       <div className="max-w-sm w-full mx-auto space-y-8">
         {/* 가면 공개 */}
         <div className={`text-center space-y-2 transition-all duration-700 ${revealed ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-          <div className="w-20 h-20 mx-auto rounded-full flex items-center justify-center text-4xl"
+          <div className="w-20 h-20 mx-auto rounded-full flex items-center justify-center"
             style={{ backgroundColor: result.primary.color + '20', border: `1px solid ${result.primary.color}40` }}>
-            🎭
+            <VenetianMask size={36} color={result.primary.color} strokeWidth={1.25} />
           </div>
           <p className="text-xs uppercase tracking-widest" style={{ color: '#B8B3AF' }}>
             {context !== 'general' ? `${contextLabel.icon} ${isEn ? contextLabel.en : contextLabel.ko}` : s.yourVFile}

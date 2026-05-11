@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useT } from '@/i18n/useT';
+import { VenetianMask } from 'lucide-react';
 
 export default function PriperStart() {
   const navigate = useNavigate();
@@ -39,7 +40,7 @@ export default function PriperStart() {
           className="w-24 h-24 mx-auto rounded-full flex items-center justify-center"
           style={{ background: '#E0B48A15', border: '1px solid #E0B48A40' }}
         >
-          <span className="text-4xl">🎭</span>
+          <VenetianMask size={40} color="#E0B48A" strokeWidth={1.25} />
         </div>
 
         <div className="space-y-3">
