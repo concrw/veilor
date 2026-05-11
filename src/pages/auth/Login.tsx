@@ -154,7 +154,7 @@ const Login = () => {
                 border: '1px solid #44403C',
                 color: '#F5F5F4',
                 fontFamily: "'DM Sans', sans-serif",
-                fontSize: 16,
+                fontSize: 14,
               }}
             />
 
@@ -171,7 +171,7 @@ const Login = () => {
                 border: '1px solid #44403C',
                 color: '#F5F5F4',
                 fontFamily: "'DM Sans', sans-serif",
-                fontSize: 16,
+                fontSize: 14,
               }}
             />
 
