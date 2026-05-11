@@ -382,3 +382,13 @@ html {
   .ct-card-inner { transition-duration: 0.01ms !important; }
   .ct-card-enter, .ct-unlock-glow, .ct-consent-pop { animation: none !important; }
 }
+
+/* 모바일에서 헤더 위 safe-area + 최소 여백, 데스크톱(lg)에서는 제거 */
+#main-content {
+  padding-top: max(env(safe-area-inset-top, 0px), 12px);
+}
+@media (min-width: 1024px) {
+  #main-content {
+    padding-top: 0;
+  }
+}

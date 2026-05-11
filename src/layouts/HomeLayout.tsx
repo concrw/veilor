@@ -257,7 +257,7 @@ export default function HomeLayout() {
         <main
           id="main-content"
           className="flex-1 overflow-y-auto"
-          style={{ paddingBottom: 'var(--bottom-nav-height, 64px)', paddingTop: 'max(env(safe-area-inset-top, 0px), 12px)' }}
+          style={{ paddingBottom: 'var(--bottom-nav-height, 64px)' }}
         >
           <div className="w-full lg:max-w-none mx-auto">
             {showModeHome ? (
