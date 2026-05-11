@@ -2854,6 +2854,7 @@ export interface LocaleResource {
     btnStart: string;
     btnDone: string;
     btnSignup: string;
+    guestNudge: string;
     disclaimer: string;
   };
 

@@ -264,6 +264,15 @@ export default function PriperResult() {
           </div>
         </div>
 
+        {!user && (
+          <div
+            className="rounded-xl px-4 py-4 text-sm leading-relaxed"
+            style={{ background: '#292524', border: '1px solid #44403C', color: '#B8B3AF' }}
+          >
+            {s.guestNudge}
+          </div>
+        )}
+
         <button
           onClick={handleEnter}
           className="w-full h-12 text-base rounded-xl font-medium transition-opacity"

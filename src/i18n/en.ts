@@ -3803,6 +3803,7 @@ export const en: LocaleResource = {
     btnStart: 'Begin the journey →',
     btnDone: 'Done',
     btnSignup: 'Sign up to save results →',
+    guestNudge: 'You have seen your Social Persona. Sign up to explore your General Persona and Secret Persona too, and manage all your Personas in your profile.',
     disclaimer: 'This result is a reference for self-exploration, not a clinical diagnosis.\nFor a thorough evaluation, please consult a licensed therapist.',
   },
 

@@ -33,9 +33,9 @@ function getInitialLanguage(): SupportedLanguage {
   // 브라우저 언어 감지 (localStorage 미설정 시)
   if (typeof navigator !== 'undefined') {
     const browserLang = navigator.language?.slice(0, 2);
-    if (browserLang === 'en') return 'en';
+    if (browserLang === 'ko') return 'ko';
   }
-  return 'ko';
+  return 'en';
 }
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
