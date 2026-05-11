@@ -38,13 +38,6 @@ export default function GetPage() {
   const amberFlash = useAmberAttention();
   const [amberOpen, setAmberOpen] = useState(false);
 
-  if (domain === 'social') {
-    return (
-      <div className="px-4 py-6 max-w-2xl mx-auto">
-        <SocialInterestExplorer />
-      </div>
-    );
-  }
   const { isPro, modalOpen, activeTrigger, tryAccess, closeModal } = usePremiumTrigger();
   const [tab, setTab] = useState<Tab>('identity');
 
@@ -174,8 +167,16 @@ export default function GetPage() {
 
   if (ppError) return <ErrorState title={get.errors.loadFailed} onRetry={() => refetchPp()} />;
 
+  if (domain === 'social') {
+    return (
+      <div className="px-4 py-6 max-w-2xl mx-auto">
+        <SocialInterestExplorer />
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col min-h-full">
+    <div className="flex flex-col min-h-full" style={{ position: 'relative', overflow: 'hidden' }}>
       {/* 고정 헤더 */}
       <div className="flex-shrink-0 flex items-center gap-[10px] px-4 py-2" style={{ borderBottom: `1px solid ${C.border2}` }}>
         <div className="flex flex-col gap-[2px] flex-shrink-0">
@@ -257,5 +258,6 @@ export default function GetPage() {
       </div>
       <AmberSheet open={amberOpen} onClose={() => setAmberOpen(false)} aiName={vent.amberName} />
     </div>
+
   );
 }
