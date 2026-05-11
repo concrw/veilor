@@ -2664,6 +2664,7 @@ export interface LocaleResource {
       relationLabels: Record<string, string>;
       attachLabels: Record<string, string>;
       attachUnknown: string;
+      tabs: { key: 'b2c' | 'b2b' | 'virtual' | 'ai_interest'; label: string }[];
       statCards: {
         totalVirtual: string;
         withSession: string;
@@ -2721,6 +2722,7 @@ export interface LocaleResource {
       unitSuffix: string;
       personSuffix: string;
       timeSuffix: string;
+      domainOptions: { value: string; label: string }[];
       orgTypeLabels: Record<string, string>;
       planLabels: Record<string, string>;
       errorPrefix: string;

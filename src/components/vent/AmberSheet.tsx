@@ -63,7 +63,7 @@ export default function AmberSheet({ open, onClose, aiName }: Props) {
       <div onClick={onClose} className="absolute inset-0 z-30 rounded-[40px] transition-opacity duration-300"
         style={{ background: 'rgba(0,0,0,.5)', opacity: open ? 1 : 0, pointerEvents: open ? 'all' : 'none' }} />
       <div className="absolute bottom-0 left-0 right-0 flex flex-col"
-        style={{ background: C.bg, borderRadius: '20px 20px 40px 40px', border: `1px solid ${C.border}`, borderBottom: 'none', maxHeight: '78%', transform: open ? 'translateY(0)' : 'translateY(100%)', transition: 'transform .35s cubic-bezier(.4,0,.2,1)', zIndex: 31 }}>
+        style={{ background: C.bg, borderRadius: '20px 20px 40px 40px', border: `1px solid ${C.border}`, borderBottom: 'none', maxHeight: '78%', transform: open ? 'translateY(0)' : 'translateY(100%)', transition: 'transform .35s cubic-bezier(.4,0,.2,1)', zIndex: 31, pointerEvents: open ? 'all' : 'none' }}>
         <div className="w-8 h-[3px] rounded-full mx-auto mt-2.5" style={{ background: C.border }} />
         <div className="flex items-center gap-[9px] px-5 py-2.5 flex-shrink-0" style={{ borderBottom: `1px solid ${C.border2}` }}>
           <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: alpha(C.amber, 0.08), border: `1px solid ${alpha(C.amber, 0.2)}` }}>
