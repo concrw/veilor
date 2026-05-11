@@ -263,7 +263,7 @@ export default function GuestLanding() {
               ))}
             </div>
             <div className="space-y-3">
-              <button onClick={() => navigate('/auth/signup')} className="w-full py-3.5 rounded-xl text-sm font-medium" style={{ background: '#E0B48A', color: '#1C1917' }}>
+              <button onClick={() => navigate('/onboarding/vfile/start')} className="w-full py-3.5 rounded-xl text-sm font-medium" style={{ background: '#E0B48A', color: '#1C1917' }}>
                 {s.startFree}
               </button>
               <button onClick={() => navigate('/auth/login')} className="w-full py-2.5 rounded-xl text-sm" style={{ color: '#B8B3AF', border: '1px solid #44403C' }}>
