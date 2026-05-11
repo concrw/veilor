@@ -24,8 +24,11 @@ export interface MaskProfile {
   description: string;
   scores: AxisScores;
   coreWound: string;
+  coreWoundEn: string;
   coreFear: string;
+  coreFearEn: string;
   coreNeed: string;
+  coreNeedEn: string;
   color: string;
   pairCode: string;       // 끌림 대칭 상대 MSK 코드
   genPath: string;        // 주요 생성 경로 (GEN)
@@ -39,9 +42,9 @@ export const MASK_PROFILES: MaskProfile[] = [
     archetype: '불안 억제, 환경 장악', archetypeEn: 'Suppress anxiety, dominate environment',
     description: '당신은 관계에서 주도권을 잡으려 합니다. 환경을 통제해야 안전하다고 느끼고, 불확실함을 견디기 어렵습니다. 권력과 지위가 안전감의 원천입니다.',
     scores: { A: 20, B: 20, C: 25, D: 90 },
-    coreWound: '무력했던 순간의 트라우마',
-    coreFear: '통제를 잃으면 다시 무력해진다',
-    coreNeed: '안전하게 주도권을 내려놓는 경험',
+    coreWound: '무력했던 순간의 트라우마', coreWoundEn: 'Trauma from moments of helplessness',
+    coreFear: '통제를 잃으면 다시 무력해진다', coreFearEn: 'Losing control means becoming helpless again',
+    coreNeed: '안전하게 주도권을 내려놓는 경험', coreNeedEn: 'The experience of safely letting go of control',
     color: '#9CA3AF',
     pairCode: 'SAV',
     genPath: '초기 불안정 애착',
@@ -52,9 +55,9 @@ export const MASK_PROFILES: MaskProfile[] = [
     archetype: '접근 차단, 고립 유지', archetypeEn: 'Block access, maintain isolation',
     description: '당신은 관계에서 접근을 차단합니다. 반복된 배신이 타인을 거울로 사용하게 만들었고, 고립이 유일한 안전지대가 되었습니다.',
     scores: { A: 15, B: 15, C: 15, D: 30 },
-    coreWound: '반복된 배신이 신뢰를 파괴했다',
-    coreFear: '다시 믿으면 다시 배신당한다',
-    coreNeed: '배신 없이 존재할 수 있는 관계',
+    coreWound: '반복된 배신이 신뢰를 파괴했다', coreWoundEn: 'Repeated betrayals destroyed trust',
+    coreFear: '다시 믿으면 다시 배신당한다', coreFearEn: 'Trusting again means being betrayed again',
+    coreNeed: '배신 없이 존재할 수 있는 관계', coreNeedEn: 'A relationship where you can exist without betrayal',
     color: '#6B7280',
     pairCode: 'EMP',
     genPath: '반복 배신 학습',
@@ -65,9 +68,9 @@ export const MASK_PROFILES: MaskProfile[] = [
     archetype: '경계 표시, 자율성 확보', archetypeEn: 'Assert boundaries, secure autonomy',
     description: '당신은 사회적 규칙을 인지하지만 내면화하지 않습니다. 자율성이 최우선이고, 누구도 당신을 가두지 못합니다.',
     scores: { A: 20, B: 70, C: 75, D: 70 },
-    coreWound: '억압적 환경에서 자아가 짓밟혔다',
-    coreFear: '규칙을 따르면 나를 잃는다',
-    coreNeed: '자유와 연결이 공존하는 관계',
+    coreWound: '억압적 환경에서 자아가 짓밟혔다', coreWoundEn: 'The self was crushed in an oppressive environment',
+    coreFear: '규칙을 따르면 나를 잃는다', coreFearEn: 'Following rules means losing myself',
+    coreNeed: '자유와 연결이 공존하는 관계', coreNeedEn: 'A relationship where freedom and connection coexist',
     color: '#EF4444',
     pairCode: 'DEP',
     genPath: '억압적 환경 저항',
@@ -78,9 +81,9 @@ export const MASK_PROFILES: MaskProfile[] = [
     archetype: '욕망 유발, 권력 확보', archetypeEn: 'Trigger desire, secure power',
     description: '당신은 관계를 전략적으로 설계합니다. 매력과 감각적 자원을 자연스럽게 활용하지만, 진짜 자신이 드러나는 것은 두렵습니다.',
     scores: { A: 55, B: 75, C: 85, D: 80 },
-    coreWound: '있는 그대로의 나는 매력적이지 않다',
-    coreFear: '매력이 없으면 관계가 사라진다',
-    coreNeed: '가면 없이도 원하는 존재',
+    coreWound: '있는 그대로의 나는 매력적이지 않다', coreWoundEn: 'My authentic self is not attractive enough',
+    coreFear: '매력이 없으면 관계가 사라진다', coreFearEn: 'Without charm, relationships disappear',
+    coreNeed: '가면 없이도 원하는 존재', coreNeedEn: 'Being wanted without wearing a mask',
     color: '#C084FC',
     pairCode: 'APV',
     genPath: '성적 자본 각성',
@@ -91,9 +94,9 @@ export const MASK_PROFILES: MaskProfile[] = [
     archetype: '긴장 해소, 접근 허용', archetypeEn: 'Dissolve tension, allow closeness',
     description: '당신은 유머와 자원으로 관계의 구조를 만듭니다. 긴장을 해소하고 접근을 허용하지만, 그 이면에는 회피 전략이 숨어 있습니다.',
     scores: { A: 25, B: 30, C: 75, D: 90 },
-    coreWound: '진지하면 다칠 수 있다는 것을 배웠다',
-    coreFear: '감정을 가지면 통제력을 잃는다',
-    coreNeed: '안전하게 감정을 가질 수 있는 관계',
+    coreWound: '진지하면 다칠 수 있다는 것을 배웠다', coreWoundEn: 'Learned that being serious leads to getting hurt',
+    coreFear: '감정을 가지면 통제력을 잃는다', coreFearEn: 'Having emotions means losing control',
+    coreNeed: '안전하게 감정을 가질 수 있는 관계', coreNeedEn: 'A relationship where it is safe to have feelings',
     color: '#F59E0B',
     pairCode: 'GVR',
     genPath: '회피 전략 유머화',
@@ -104,9 +107,9 @@ export const MASK_PROFILES: MaskProfile[] = [
     archetype: '자극 추구, 경계 실험', archetypeEn: 'Seek stimulation, test boundaries',
     description: '당신은 새로운 경험과 경계의 실험을 추구합니다. 정서적 연결보다 자극이 관계의 동력이 됩니다.',
     scores: { A: 85, B: 80, C: 85, D: 80 },
-    coreWound: '안전기지가 없었다',
-    coreFear: '멈추면 공허함과 마주해야 한다',
-    coreNeed: '떠나지 않는다는 확신',
+    coreWound: '안전기지가 없었다', coreWoundEn: 'There was no safe base',
+    coreFear: '멈추면 공허함과 마주해야 한다', coreFearEn: 'Stopping means facing the emptiness',
+    coreNeed: '떠나지 않는다는 확신', coreNeedEn: 'The certainty that someone will not leave',
     color: '#A78BFA',
     pairCode: 'AVD',
     genPath: '안전기지 부재',
@@ -119,9 +122,9 @@ export const MASK_PROFILES: MaskProfile[] = [
     archetype: '융합, 자기 소거', archetypeEn: 'Merge with other, erase self',
     description: '당신은 타인의 감정을 자신의 것처럼 느낍니다. 경계가 사라지고, 상대와 융합하면서 자기를 소거합니다.',
     scores: { A: 75, B: 25, C: 20, D: 15 },
-    coreWound: '나 자신으로 있으면 사랑받지 못한다',
-    coreFear: '존재 자체로 충분하지 않을지 모른다',
-    coreNeed: '있는 그대로 받아들여지는 경험',
+    coreWound: '나 자신으로 있으면 사랑받지 못한다', coreWoundEn: 'Being myself means not being loved',
+    coreFear: '존재 자체로 충분하지 않을지 모른다', coreFearEn: 'My existence alone may not be enough',
+    coreNeed: '있는 그대로 받아들여지는 경험', coreNeedEn: 'The experience of being accepted as I am',
     color: '#8B9EFF',
     pairCode: 'NRC',
     genPath: '정체성 취약',
@@ -132,9 +135,9 @@ export const MASK_PROFILES: MaskProfile[] = [
     archetype: '관계 유지, 거절 회피', archetypeEn: 'Sustain bonds, avoid rejection',
     description: '당신은 끊임없이 주는 것이 사랑이라고 믿습니다. 경계를 설정하지 못하고, 내 필요를 말하면 짐이 된다고 느낍니다.',
     scores: { A: 75, B: 75, C: 30, D: 25 },
-    coreWound: '내 필요를 말하면 짐이 된다',
-    coreFear: '내가 주지 않으면 상대는 떠난다',
-    coreNeed: '받는 것도 괜찮다는 허락',
+    coreWound: '내 필요를 말하면 짐이 된다', coreWoundEn: 'Expressing my needs makes me a burden',
+    coreFear: '내가 주지 않으면 상대는 떠난다', coreFearEn: 'If I stop giving, they will leave',
+    coreNeed: '받는 것도 괜찮다는 허락', coreNeedEn: 'Permission to receive as well as give',
     color: '#F9A8D4',
     pairCode: 'MNY',
     genPath: '역할 역전 아동기',
@@ -145,9 +148,9 @@ export const MASK_PROFILES: MaskProfile[] = [
     archetype: '가치 증명, 인정 획득', archetypeEn: 'Prove worth, earn approval',
     description: '당신은 인정받을 때만 자신이 존재한다고 느낍니다. 완벽해야 사랑받을 수 있다는 믿음이 관계 패턴을 형성합니다.',
     scores: { A: 70, B: 75, C: 30, D: 75 },
-    coreWound: '잘해야만 사랑받을 수 있었다',
-    coreFear: '평범한 내가 드러나면 가치를 잃는다',
-    coreNeed: '성취 없이도 사랑받는 경험',
+    coreWound: '잘해야만 사랑받을 수 있었다', coreWoundEn: 'Love was only available when I performed well',
+    coreFear: '평범한 내가 드러나면 가치를 잃는다', coreFearEn: 'If my ordinary self is exposed, I lose my value',
+    coreNeed: '성취 없이도 사랑받는 경험', coreNeedEn: 'The experience of being loved without achievement',
     color: '#F5C842',
     pairCode: 'MKV',
     genPath: '조건부 사랑 경험',
@@ -158,9 +161,9 @@ export const MASK_PROFILES: MaskProfile[] = [
     archetype: '보호 유발, 책임 회피', archetypeEn: 'Elicit protection, avoid responsibility',
     description: '당신은 홀로 존재하는 것이 불가능합니다. 상대가 있어야 완성되고, 무력감이 보호를 유발하는 전략이 되었습니다.',
     scores: { A: 80, B: 80, C: 70, D: 20 },
-    coreWound: '혼자서는 아무것도 할 수 없었다',
-    coreFear: '혼자 남겨지면 무너진다',
-    coreNeed: '혼자서도 괜찮다는 경험',
+    coreWound: '혼자서는 아무것도 할 수 없었다', coreWoundEn: 'I could do nothing on my own',
+    coreFear: '혼자 남겨지면 무너진다', coreFearEn: 'Being left alone means falling apart',
+    coreNeed: '혼자서도 괜찮다는 경험', coreNeedEn: 'The experience of being okay on my own',
     color: '#7DD3F0',
     pairCode: 'SCP',
     genPath: '무력감 학습',
@@ -171,9 +174,9 @@ export const MASK_PROFILES: MaskProfile[] = [
     archetype: '우월성 확보, 친밀감 회피', archetypeEn: 'Establish superiority, avoid intimacy',
     description: '당신은 지적 우월로 관계를 유지하면서 동시에 친밀감을 회피합니다. 감정을 드러내는 것을 약함으로 여깁니다.',
     scores: { A: 60, B: 25, C: 25, D: 25 },
-    coreWound: '감정을 드러냈을 때 무시당했다',
-    coreFear: '명확히 말하면 관계가 깨진다',
-    coreNeed: '명확함이 안전하다는 경험',
+    coreWound: '감정을 드러냈을 때 무시당했다', coreWoundEn: 'Showing emotions led to being dismissed',
+    coreFear: '명확히 말하면 관계가 깨진다', coreFearEn: 'Speaking directly will break the relationship',
+    coreNeed: '명확함이 안전하다는 경험', coreNeedEn: 'The experience that being direct is safe',
     color: '#B5C4D3',
     pairCode: 'PSP',
     genPath: '지적 철수 패턴',
@@ -184,9 +187,9 @@ export const MASK_PROFILES: MaskProfile[] = [
     archetype: '도덕적 우위, 죄책감 유발', archetypeEn: 'Moral high ground, induce guilt',
     description: '당신은 누군가를 구해야 자신의 가치를 증명할 수 있습니다. 희생이 미덕이라고 학습했고, 그것이 관계의 유일한 방식이 되었습니다.',
     scores: { A: 65, B: 75, C: 75, D: 30 },
-    coreWound: '나의 가치는 남을 구할 때만 증명된다',
-    coreFear: '도움이 필요 없는 상대는 나를 필요로 하지 않는다',
-    coreNeed: '구원자가 아니어도 사랑받는 경험',
+    coreWound: '나의 가치는 남을 구할 때만 증명된다', coreWoundEn: 'My worth is only proven when I rescue others',
+    coreFear: '도움이 필요 없는 상대는 나를 필요로 하지 않는다', coreFearEn: 'Someone who does not need saving has no use for me',
+    coreNeed: '구원자가 아니어도 사랑받는 경험', coreNeedEn: 'The experience of being loved without being a rescuer',
     color: '#93C5FD',
     pairCode: 'PWR',
     genPath: '종교/문화적 규범',
@@ -308,6 +311,52 @@ export function generateInsights(
   return [insight1, insight2, insight3];
 }
 
+export function generateInsightsEn(
+  scores: AxisScores,
+  primary: MaskProfile,
+  secondary: MaskProfile,
+  isComplex: boolean
+): string[] {
+  const axisPattern = {
+    A: scores.A >= 70
+      ? 'a pattern of constantly checking the other person\'s reactions is active'
+      : scores.A <= 30
+        ? 'a pattern of maintaining distance to stay safe is active'
+        : 'a pattern of moving closer and farther depending on the situation is repeating',
+    B: scores.B >= 65
+      ? 'you tend to express emotions relatively openly'
+      : scores.B <= 35
+        ? 'there is a pattern of checking twice before opening up'
+        : 'there is a pattern of opening differently to trusted vs. less trusted people',
+    C: scores.C >= 65
+      ? 'you tend to express what you want directly'
+      : scores.C <= 35
+        ? 'a pattern of setting aside or delaying your needs often activates'
+        : 'there is a pattern of deciding whether to express wants based on the situation',
+    D: scores.D >= 65
+      ? 'a pattern of trying to lead the flow of relationships often appears'
+      : scores.D <= 35
+        ? 'there is a pattern of adjusting yourself to match the other person\'s rhythm'
+        : 'there is flexibility to sometimes lead and sometimes follow',
+  };
+  const extreme = (['A', 'B', 'C', 'D'] as (keyof AxisScores)[]).reduce((p, c) =>
+    Math.abs(scores[c] - 50) > Math.abs(scores[p] - 50) ? c : p
+  );
+  const flexible = (['A', 'B', 'C', 'D'] as (keyof AxisScores)[]).reduce((p, c) =>
+    Math.abs(scores[c] - 50) < Math.abs(scores[p] - 50) ? c : p
+  );
+  const axisName = { A: 'attachment', B: 'communication', C: 'expression', D: 'role' };
+  const pairMask = MASK_PROFILES.find(m => m.mskCode === primary.pairCode);
+
+  const insight1 = `In the ${axisName[extreme]} dimension, ${axisPattern[extreme]}. The ${primary.nameEn} pattern is most active right now.`;
+  const insight2 = `This pattern may have formed through experiences like "${primary.coreWoundEn}." When the sense of "${primary.coreFearEn}" activates automatically, this pattern appears as a shield.`;
+  const insight3 = isComplex
+    ? `The ${primary.nameEn} and ${secondary.nameEn} patterns are operating together. Where the two overlap is often where change happens first. As experiences of "${primary.coreNeedEn}" accumulate, the pattern can shift.`
+    : `The ${axisName[flexible]} dimension is most flexibly open.${pairMask ? ` This flexibility is most easily disrupted when meeting the ${pairMask.nameEn} type.` : ''} As "${primary.coreNeedEn}" is repeated, this pattern gradually changes.`;
+
+  return [insight1, insight2, insight3];
+}
+
 // ── V프로필 16유형 (4축 이분법) ──────────────────────────────────────
 export interface VProfileType {
   code: string;       // 예: "AOEP" (불안-개방-표현-주도)
@@ -369,6 +418,7 @@ export interface DiagnosisResult {
   isComplex: boolean;
   primaryMaskDistance: number;
   insights: string[];
+  insightsEn: string[];
   dataSource: 'priper';
   context: VFileContext;
   vProfile: VProfileType;
@@ -381,6 +431,7 @@ export function runDiagnosis(
   const scores = calculateAxisScores(responses);
   const { primary, secondary, isComplex, primaryDist } = findMasks(scores);
   const insights = generateInsights(scores, primary, secondary, isComplex);
+  const insightsEn = generateInsightsEn(scores, primary, secondary, isComplex);
   const vProfile = classifyVProfile(scores);
-  return { scores, primary, secondary, isComplex, primaryMaskDistance: primaryDist, insights, dataSource: 'priper', context, vProfile };
+  return { scores, primary, secondary, isComplex, primaryMaskDistance: primaryDist, insights, insightsEn, dataSource: 'priper', context, vProfile };
 }

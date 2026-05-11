@@ -7,6 +7,7 @@ import type { DiagnosisResult, VFileContext } from '@/lib/vfileAlgorithm';
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer } from 'recharts';
 import { veilorDb } from '@/integrations/supabase/client';
 import { useT } from '@/i18n/useT';
+import { useLanguageContext } from '@/context/LanguageContext';
 
 export default function PriperResult() {
   const navigate = useNavigate();
@@ -14,6 +15,8 @@ export default function PriperResult() {
   const { user, completePriper } = useAuth();
   const t = useT();
   const s = t.vfileResult;
+  const { language } = useLanguageContext();
+  const isEn = language === 'en';
   const [result, setResult] = useState<DiagnosisResult | null>(null);
   const [revealed, setRevealed] = useState(false);
 
@@ -190,15 +193,15 @@ export default function PriperResult() {
             🎭
           </div>
           <p className="text-xs uppercase tracking-widest" style={{ color: '#B8B3AF' }}>
-            {context !== 'general' ? `${contextLabel.icon} ${contextLabel.ko}` : s.yourVFile}
+            {context !== 'general' ? `${contextLabel.icon} ${isEn ? contextLabel.en : contextLabel.ko}` : s.yourVFile}
           </p>
           <h1 className="text-3xl font-bold" style={{ color: result.primary.color }}>
-            {result.primary.nameKo}
+            {isEn ? result.primary.nameEn : result.primary.nameKo}
           </h1>
-          <p className="text-sm" style={{ color: '#B8B3AF' }}>{result.primary.archetype}</p>
+          <p className="text-sm" style={{ color: '#B8B3AF' }}>{isEn ? result.primary.archetypeEn : result.primary.archetype}</p>
           {result.isComplex && (
             <p className="text-xs" style={{ color: '#B8B3AF' }}>
-              + <span style={{ color: result.secondary.color }}>{result.secondary.nameKo}</span> {s.complexSuffix}
+              + <span style={{ color: result.secondary.color }}>{isEn ? result.secondary.nameEn : result.secondary.nameKo}</span> {s.complexSuffix}
             </p>
           )}
         </div>
@@ -217,11 +220,11 @@ export default function PriperResult() {
 
         {/* 설명 */}
         <div className={`space-y-4 transition-all duration-700 delay-500 ${revealed ? 'opacity-100' : 'opacity-0'}`}>
-          <p className="text-sm leading-relaxed" style={{ color: '#B8B3AF' }}>{result.primary.description}</p>
+          <p className="text-sm leading-relaxed" style={{ color: '#B8B3AF' }}>{isEn ? result.primary.descriptionEn ?? result.primary.description : result.primary.description}</p>
 
           {/* 인사이트 */}
           <div className="space-y-2">
-            {result.insights.map((insight, i) => (
+            {(isEn ? result.insightsEn : result.insights).map((insight, i) => (
               <div
                 key={i}
                 className="rounded-xl p-3 text-xs leading-relaxed"
