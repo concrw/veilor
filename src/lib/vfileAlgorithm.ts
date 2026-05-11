@@ -1,4 +1,5 @@
-import { VFILE_QUESTIONS } from '@/data/vfileQuestions';
+import { VFILE_QUESTIONS_SOCIAL, VFILE_QUESTIONS_GENERAL, VFILE_QUESTIONS_SECRET } from '@/data/vfileQuestions';
+import type { VFileQuestion } from '@/data/vfileQuestions';
 import type { AxisScores } from '@/context/AuthContext';
 
 // ── 멀티페르소나 컨텍스트 ─────────────────────────────────────────
@@ -229,11 +230,17 @@ function euclidean(a: AxisScores, b: AxisScores): number {
   );
 }
 
+function getQuestionsByContext(context: VFileContext): VFileQuestion[] {
+  if (context === 'general') return VFILE_QUESTIONS_GENERAL;
+  if (context === 'secret')  return VFILE_QUESTIONS_SECRET;
+  return VFILE_QUESTIONS_SOCIAL;
+}
+
 // ── 4축 점수 계산 ────────────────────────────────────────────────────
-export function calculateAxisScores(responses: Record<string, number>): AxisScores {
+export function calculateAxisScores(responses: Record<string, number>, context: VFileContext = 'social'): AxisScores {
   const sums: Record<string, number[]> = { A: [], B: [], C: [], D: [] };
 
-  for (const q of VFILE_QUESTIONS) {
+  for (const q of getQuestionsByContext(context)) {
     const raw = responses[q.id];
     if (raw === undefined || raw === null) continue;
     const clamped = Math.max(0, Math.min(100, raw));
@@ -439,9 +446,9 @@ export interface DiagnosisResult {
 
 export function runDiagnosis(
   responses: Record<string, number>,
-  context: VFileContext = 'general',
+  context: VFileContext = 'social',
 ): DiagnosisResult {
-  const scores = calculateAxisScores(responses);
+  const scores = calculateAxisScores(responses, context);
   const { primary, secondary, isComplex, primaryDist } = findMasks(scores);
   const insights = generateInsights(scores, primary, secondary, isComplex);
   const insightsEn = generateInsightsEn(scores, primary, secondary, isComplex);

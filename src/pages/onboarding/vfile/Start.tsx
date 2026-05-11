@@ -83,7 +83,7 @@ export default function PriperStart() {
         </div>
 
         <button
-          onClick={() => navigate('/onboarding/vfile/questions')}
+          onClick={() => navigate('/onboarding/vfile/questions', { state: { context: 'social' } })}
           className="w-full h-12 text-base rounded-xl font-medium transition-opacity"
           style={{
             background: '#E0B48A',

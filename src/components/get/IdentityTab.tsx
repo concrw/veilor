@@ -53,7 +53,7 @@ function ReanalysisHistory({ userId, currentScores, currentMask, id }: {
         .select('axis_scores, primary_mask, msk_code, completed_at, context')
         .eq('user_id', userId!)
         .eq('is_completed', true)
-        .eq('context', 'general')
+        .eq('context', 'social')
         .order('completed_at', { ascending: false })
         .limit(5);
       return data ?? [];
@@ -142,7 +142,7 @@ export default function IdentityTab({
     enabled: !!user,
   });
 
-  const contexts: VFileContext[] = ['general', 'social', 'secret'];
+  const contexts: VFileContext[] = ['social', 'general', 'secret'];
 
   const startDiagnosis = (ctx: VFileContext) => {
     navigate('/onboarding/vfile/questions', { state: { context: ctx, fromGet: true } });
@@ -169,7 +169,7 @@ export default function IdentityTab({
                     </p>
                   </div>
                   <button
-                    onClick={() => navigate('/onboarding/vfile/questions', { state: { context: 'general', fromGet: true } })}
+                    onClick={() => navigate('/onboarding/vfile/questions', { state: { context: 'social', fromGet: true } })}
                     className="flex-shrink-0 text-[10px] text-primary border border-primary/30 px-2.5 py-1 rounded-lg hover:bg-primary/5 transition-colors mt-1"
                   >
                     {id.reanalyze}
@@ -327,7 +327,7 @@ export default function IdentityTab({
                       onClick={() => startDiagnosis(ctx)}
                       className="text-xs text-primary font-medium hover:underline"
                     >
-                      {ctx === 'general' ? id.reanalyze : id.startAnalysis}
+                      {ctx === 'social' ? id.reanalyze : id.startAnalysis}
                     </button>
                   )}
                 </div>
@@ -427,7 +427,7 @@ export default function IdentityTab({
       {/* #8 재진단 시간 비교 */}
       <ReanalysisHistory userId={user?.id} currentScores={axisScores} currentMask={primaryMask} id={id} />
 
-      <Button variant="outline" className="w-full" onClick={() => startDiagnosis('general')}>
+      <Button variant="outline" className="w-full" onClick={() => startDiagnosis('social')}>
         {id.priperReanalysis}
       </Button>
     </>

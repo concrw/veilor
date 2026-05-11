@@ -22,7 +22,7 @@ export default function PriperResult() {
   const [revealed, setRevealed] = useState(false);
 
   const stateData = location.state as { responses?: Record<string, string>; context?: VFileContext } | null;
-  const context: VFileContext = stateData?.context ?? 'general';
+  const context: VFileContext = stateData?.context ?? 'social';
   const contextLabel = VFILE_CONTEXT_LABELS[context];
 
   useEffect(() => {
@@ -65,7 +65,7 @@ export default function PriperResult() {
           if (e2) console.error('[cq_responses upsert]', e2);
 
           // 3. persona_profiles
-          const rankMap: Record<VFileContext, number> = { general: 1, social: 2, secret: 3 };
+          const rankMap: Record<VFileContext, number> = { social: 1, general: 2, secret: 3 };
           const insightsJson = {
             summary: r.insights[0] ?? '',
             growth_edge: r.insights[1] ?? '',
@@ -89,8 +89,8 @@ export default function PriperResult() {
           }, { onConflict: 'user_id,rank_order' });
           if (e3) console.error('[persona_profiles upsert]', e3);
 
-          // 4. prime_perspectives (general 맥락만)
-          if (context === 'general') {
+          // 4. prime_perspectives (social 온보딩 맥락만)
+          if (context === 'social') {
             const { error: e4 } = await veilorDb.from('prime_perspectives').upsert({
               user_id: user.id,
               version: 1,
@@ -127,7 +127,7 @@ export default function PriperResult() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const qc = useQueryClient();
-  const isOnboarding = context === 'general' && !location.state?.fromGet;
+  const isOnboarding = context === 'social' && !location.state?.fromGet;
 
   const handleEnter = async () => {
     if (!result) return;
@@ -194,7 +194,7 @@ export default function PriperResult() {
             <VenetianMask size={36} color={result.primary.color} strokeWidth={1.25} />
           </div>
           <p className="text-xs uppercase tracking-widest" style={{ color: '#B8B3AF' }}>
-            {context !== 'general' ? `${contextLabel.icon} ${isEn ? contextLabel.en : contextLabel.ko}` : s.yourVFile}
+            {isEn ? contextLabel.en : contextLabel.ko}
           </p>
           <h1 className="text-3xl font-bold" style={{ color: result.primary.color }}>
             {isEn ? result.primary.nameEn : result.primary.nameKo}

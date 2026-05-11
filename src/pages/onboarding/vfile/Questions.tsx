@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { VFILE_QUESTIONS } from '@/data/vfileQuestions';
+import { VFILE_QUESTIONS_SOCIAL, VFILE_QUESTIONS_GENERAL, VFILE_QUESTIONS_SECRET } from '@/data/vfileQuestions';
+import type { VFileQuestion } from '@/data/vfileQuestions';
 import { VFILE_CONTEXT_LABELS } from '@/lib/vfileAlgorithm';
 import type { VFileContext } from '@/lib/vfileAlgorithm';
 import { Slider } from '@/components/ui/slider';
@@ -15,8 +16,12 @@ export default function PriperQuestions() {
   const { language } = useLanguageContext();
   const t = useT();
   const s = t.vfileQuestions;
-  const context = ((location.state as Record<string, unknown>)?.context as VFileContext) ?? 'general';
-  const storageKey = context === 'general' ? STORAGE_KEY : `${STORAGE_KEY}-${context}`;
+  const context = ((location.state as Record<string, unknown>)?.context as VFileContext) ?? 'social';
+  const QUESTIONS: VFileQuestion[] =
+    context === 'general' ? VFILE_QUESTIONS_GENERAL :
+    context === 'secret'  ? VFILE_QUESTIONS_SECRET  :
+    VFILE_QUESTIONS_SOCIAL;
+  const storageKey = `${STORAGE_KEY}-${context}`;
 
   const [current, setCurrent] = useState(0);
   const [responses, setResponses] = useState<Record<string, number>>(() => {
@@ -41,8 +46,8 @@ export default function PriperQuestions() {
     } catch (e) { console.warn("localStorage parse failed:", e); }
   }, []);
 
-  const q = VFILE_QUESTIONS[current];
-  const progress = Math.round(((current) / VFILE_QUESTIONS.length) * 100);
+  const q = QUESTIONS[current];
+  const progress = Math.round(((current) / QUESTIONS.length) * 100);
   const isAnswered = responses[q.id] !== undefined;
 
   const contextLabel = VFILE_CONTEXT_LABELS[context];
@@ -55,10 +60,10 @@ export default function PriperQuestions() {
     const newR = { ...responses, [q.id]: score };
     setResponses(newR);
 
-    if (current < VFILE_QUESTIONS.length - 1) {
+    if (current < QUESTIONS.length - 1) {
       const next = current + 1;
       setCurrent(next);
-      setSliderVal(newR[VFILE_QUESTIONS[next].id] ?? 50);
+      setSliderVal(newR[QUESTIONS[next].id] ?? 50);
       saveProgress(newR, next);
     } else {
       localStorage.removeItem(storageKey);
@@ -72,7 +77,7 @@ export default function PriperQuestions() {
     if (current > 0) {
       const prev = current - 1;
       setCurrent(prev);
-      setSliderVal(responses[VFILE_QUESTIONS[prev].id] ?? 50);
+      setSliderVal(responses[QUESTIONS[prev].id] ?? 50);
     }
   };
 
@@ -109,7 +114,7 @@ export default function PriperQuestions() {
             </div>
           </div>
           <p className="text-2xl font-light leading-snug" style={{ color: '#F5F5F4' }}>
-            {current + 1} / {VFILE_QUESTIONS.length}<br />
+            {current + 1} / {QUESTIONS.length}<br />
             <span className="text-sm font-normal" style={{ color: '#9C9590' }}>{s.honestHint.split('\n').map((line, i) => <span key={i}>{line}{i === 0 && <br />}</span>)}</span>
           </p>
         </div>
@@ -120,21 +125,19 @@ export default function PriperQuestions() {
       <div className="flex flex-col flex-1 lg:flex-none lg:w-[520px] px-6 py-8">
       <div className="max-w-sm w-full mx-auto flex-1 flex flex-col">
         {/* 맥락 배지 */}
-        {context !== 'general' && (
-          <div className="mb-3">
-            <span
-              className="text-xs px-2.5 py-1 rounded-full font-medium"
-              style={{ background: '#E0B48A15', color: '#E0B48A', border: '1px solid #E0B48A30' }}
-            >
-              {contextLabel.icon} {contextLabel.ko}
-            </span>
-          </div>
-        )}
+        <div className="mb-3">
+          <span
+            className="text-xs px-2.5 py-1 rounded-full font-medium"
+            style={{ background: '#E0B48A15', color: '#E0B48A', border: '1px solid #E0B48A30' }}
+          >
+            {contextLabel.icon} {language === 'en' ? contextLabel.en : contextLabel.ko}
+          </span>
+        </div>
 
         {/* 진행바 */}
         <div className="mb-6">
           <div className="flex justify-between text-xs mb-2" style={{ color: '#B8B3AF' }}>
-            <span>{current + 1} / {VFILE_QUESTIONS.length}</span>
+            <span>{current + 1} / {QUESTIONS.length}</span>
             <span>{progress}%</span>
           </div>
           <div className="h-1.5 rounded-full" style={{ background: '#292524' }}>
