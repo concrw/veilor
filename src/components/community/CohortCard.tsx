@@ -92,7 +92,7 @@ export default function CohortCard() {
         <div key={c.id} className="flex items-center justify-between bg-muted/30 rounded-xl p-3">
           <div>
             <p className="text-xs font-medium">{c.name}</p>
-            <p className="text-[10px] text-muted-foreground">{c.member_count ?? 0}/{c.max_members ?? '∞'}명</p>
+            <p className="text-[10px] text-muted-foreground">{s.memberCount(c.member_count ?? 0, c.max_members ?? '∞')}</p>
           </div>
           <button
             onClick={() => joinMutation.mutate(c.id)}

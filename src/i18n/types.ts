@@ -1,6 +1,6 @@
 // i18n type definitions for VEILOR
 
-export type SupportedLanguage = 'ko' | 'en';
+export type SupportedLanguage = 'ko' | 'en' | 'ja';
 
 export type TranslationFunction = (
   key: string,
@@ -79,6 +79,21 @@ export interface LocaleResource {
       card3Desc: string;
       startButton: string;
       disclaimer: string;
+      step1: string;
+      step1Desc: string;
+      step2: string;
+      step2Desc: string;
+      step3: string;
+      step3Desc: string;
+      amberHello: string;
+      amberDesc: string;
+      question: string;
+      questionHint: string;
+      placeholder: string;
+      startWithAnswer: string;
+      start: string;
+      skipToVfile: string;
+      langLabel: string;
     };
     cq: {
       relationshipGoal: string;
@@ -269,6 +284,7 @@ export interface LocaleResource {
     optional: string;
     all: string;
     socraticHint: string;
+    hintPrefix: string;
     whyNudge: {
       title: string;
       desc: string;
@@ -333,6 +349,28 @@ export interface LocaleResource {
     postRegistered: string;
     commentRegistered: string;
     memberCount: string;
+    inlineEmbed: {
+      anonymousNote: string;
+      mostMentioned: string;
+      sharedGrowth: string;
+      overlapNote: string;
+      ventCount: (emotion: string, count: string) => string;
+      digCount: (pattern: string) => string;
+      getCount: (mask: string, count: string) => string;
+      setCount: (keyword: string, count: string) => string;
+      meCount: (count: string) => string;
+      mock: {
+        ventEmotionLabel: string;
+        ventLines: string[];
+        digPatternLabel: string;
+        digCards: string[];
+        getMaskLabel: string;
+        getTopMentioned: string[];
+        getGrowthExperiences: string[];
+        setKeyword: string;
+        setFeed: string[];
+      };
+    };
   };
   set: {
     header: string;
@@ -390,6 +428,8 @@ export interface LocaleResource {
       complete: string;
       repeatTimes: string;
       nextMantra: string;
+      mantras: Record<string, string[]>;
+      domainNames: Record<string, string>;
     };
     socialPivotNudge: {
       pivotDetected: string;
@@ -709,6 +749,8 @@ export interface LocaleResource {
       copyAriaLabel: string;
       shareAriaLabel: string;
       axisLabels: Record<string, string>;
+      shareText: (maskName: string, code: string, archetype: string) => string;
+      fallbackMask: string;
     };
     feedEvolution: {
       dismissAriaLabel: string;
@@ -968,7 +1010,19 @@ export interface LocaleResource {
   meExtra: {
     needSummary: { title: string; top3Label: string; layerBarTitle: string; emptyTitle: string; emptyBtn: string; reExploreBtn: string; assessedAt: string; gapUnit: string };
     renameSheet: { closeLabel: string; closeBtn: string; hint: string; srLabel: string; placeholder: string; apply: string };
-    settingsSheet: { title: string; close: string; sectionLang: string; langLabel: string; langSub: string; sectionAi: string; renameLabel: string; aiPersonalityLabel: string; toneLabel: string; personalityLabel: string; freqLabel: string; sectionNotif: string; amberNotif: string; amberNotifSub: string; reportNotif: string; reportNotifSub: string; sectionDomain: string; domainSelf: string; domainSelfSub: string; domainWork: string; domainWorkSub: string; domainRelation: string; domainRelationSub: string; domainSocial: string; domainSocialSub: string; domainActive: string; sectionMode: string; modeOriginal: string; modeOriginalSub: string; modeClear: string; modeClearSub: string; modeRoutine: string; modeRoutineSub: string; modeFocus: string; modeFocusSub: string; modeSprint: string; modeSprintSub: string; modeConnect: string; modeConnectSub: string; modeMirror: string; modeMirrorSub: string; modeSocial: string; modeSocialSub: string; modeActive: string; sectionApp: string; sectionSubscription: string; subscriptionLabel: string; subscriptionRenewal: string; sectionPrivacy: string; dataPrivacy: string; accountSettings: string; logout: string; sectionDanger: string; deleteAccount: string; deleteAccountSub: string; deleteConfirmTitle: string; deleteConfirmDesc: string; deleteCancel: string; deleteConfirmBtn: string; deleting: string; amberSub: string; frostSub: string };
+    settingsSheet: { title: string; close: string; sectionLang: string; langLabel: string; langSub: string; sectionAi: string; renameLabel: string; aiPersonalityLabel: string; toneLabel: string; personalityLabel: string; freqLabel: string; sectionNotif: string; amberNotif: string; amberNotifSub: string; reportNotif: string; reportNotifSub: string; sectionDomain: string; domainSelf: string; domainSelfSub: string; domainWork: string; domainWorkSub: string; domainRelation: string; domainRelationSub: string; domainSocial: string; domainSocialSub: string; domainActive: string; sectionMode: string; modeOriginal: string; modeOriginalSub: string; modeClear: string; modeClearSub: string; modeRoutine: string; modeRoutineSub: string; modeFocus: string; modeFocusSub: string; modeSprint: string; modeSprintSub: string; modeConnect: string; modeConnectSub: string; modeMirror: string; modeMirrorSub: string; modeSocial: string; modeSocialSub: string; modeActive: string; sectionApp: string; sectionSubscription: string; subscriptionLabel: string; subscriptionRenewal: string; sectionPrivacy: string; dataPrivacy: string; accountSettings: string; logout: string; sectionDanger: string; deleteAccount: string; deleteAccountSub: string; deleteConfirmTitle: string; deleteConfirmDesc: string; deleteCancel: string; deleteConfirmBtn: string; deleting: string; amberSub: string; frostSub: string; toneOptions: Record<string, { label: string; desc: string }>; personalityOptions: Record<string, string>; freqOptions: Record<string, string> };
+  };
+  codetalkHub: {
+    header: string;
+    daily: { title: string; badge: string; desc: string; cta: string; done: string };
+    category: { title: string; desc: string };
+    relation: { title: string; desc: string; addBtn: string; noneDesc: string; goBtn: string; directionOut: string; directionIn: string };
+    weeklyLabel: (n: number, streak: number) => string;
+    partnerCount: (n: number) => string;
+  };
+  socialInterest: {
+    statusLabels: { active: string; dormant: string; revisit: string };
+    l3: { question: string; placeholder: string; save: string; skip: string; openExisting: string; openNew: string };
   };
   relation: {
     connect: {
@@ -1125,7 +1179,7 @@ export interface LocaleResource {
     back: string;
     skipBtn: string;
     confirm: Record<string, string>;
-    domains: Record<string, { name: string; sub: string; desc: string }>;
+    domains: Record<string, { name: string; sub: string; desc: string; coreQ: string }>;
     modes: Record<string, { name: string; tagline: string; keywords: string[] }>;
   };
 
@@ -1232,6 +1286,7 @@ export interface LocaleResource {
 
   // ─── changeTraining ────────────────────────────────────────
   changeTraining: {
+    pageTitle: string;
     subtitle: string;
     cancel: string;
     newSession: string;
@@ -1623,6 +1678,8 @@ export interface LocaleResource {
     ariaStart: string;
     ariaStopInput: string;
     ariaStartInput: string;
+    ariaDisable: string;
+    offLabel: string;
   };
 
   // ─── codetalkKeywordCard ───────────────────────────────────
@@ -2079,6 +2136,7 @@ export interface LocaleResource {
       joinTitle: string;
       joinDesc: string;
       join: string;
+      memberCount: (cur: number | string, max: number | string) => string;
     };
     discussionBoard: {
       placeholder: string;
@@ -2098,6 +2156,8 @@ export interface LocaleResource {
       desc: (mask: string) => string;
       anon: string;
       connect: string;
+      defaultAliases: string[];
+      virtualNicknames: Record<string, string[]>;
     };
     partnerCodetalk: {
       title: string;
@@ -2752,6 +2812,7 @@ export interface LocaleResource {
 
   // ─── eventsPage ────────────────────────────────────────────────
   eventsPage: {
+    pageTitle: string;
     subtitle: string;
     newEvent: string;
     titlePlaceholder: string;
@@ -2771,6 +2832,7 @@ export interface LocaleResource {
 
   // ─── specialistPage ────────────────────────────────────────────
   specialistPage: {
+    pageTitle: string;
     subtitle: string;
     veilorFirst: string;
     veilorFirstDesc: string;
@@ -2794,6 +2856,7 @@ export interface LocaleResource {
 
   // ─── pairTrustPage ─────────────────────────────────────────────
   pairTrustPage: {
+    pageTitle: string;
     subtitle: string;
     grant: string;
     cancel: string;
@@ -2821,6 +2884,7 @@ export interface LocaleResource {
 
   // ─── contentImportPage ─────────────────────────────────────────
   contentImportPage: {
+    pageTitle: string;
     subtitle: string;
     pasteFromClipboard: string;
     historyTitle: string;
@@ -2873,6 +2937,25 @@ export interface LocaleResource {
     proFeatures: (n: number) => string[];
     ctaLater: string;
     webOnlyNotice: string;
+  };
+
+  // ─── errorBoundary ─────────────────────────────────────────
+  errorBoundary: {
+    title: string;
+    desc: string;
+    retry: string;
+    reload: string;
+  };
+
+  // ─── upgrade ───────────────────────────────────────────────
+  upgrade: {
+    triggers: Record<string, {
+      title: string;
+      description: string;
+      benefit: string;
+      benefitNative?: string;
+      ctaText: string;
+    }>;
   };
 }
 

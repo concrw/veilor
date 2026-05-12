@@ -73,6 +73,21 @@ export const ko: LocaleResource = {
       card3Desc: 'V-File · CODETALK · DIVE · Community',
       startButton: '시작하기',
       disclaimer: 'VEILOR은 자기탐색 도구이며, 전문 심리상담 또는 치료를 대체하지 않습니다.',
+      step1: '엠버와의 첫 대화',
+      step1Desc: '지금 관계에서 느끼는 것을 자유롭게 털어놓으세요.',
+      step2: '핵심 질문 4가지',
+      step2Desc: '나의 관계 방식과 감정 스타일을 파악합니다.',
+      step3: 'V-File 진단',
+      step3Desc: '12가지 관계 가면 중 당신의 패턴을 발견합니다.',
+      amberHello: '안녕하세요. 저는 엠버예요.',
+      amberDesc: '모든 관계에는 보이지 않는 패턴이 있어요. 당신만의 패턴을 함께 찾아볼까요?',
+      question: '요즘 관계에서 가장 마음에 걸리는 게 있다면, 한 줄로 말해줄 수 있어요?',
+      questionHint: '건너뛰어도 괜찮아요',
+      placeholder: '예: 가까워지면 왜 자꾸 밀어내게 되는지 모르겠어요',
+      startWithAnswer: '이 마음을 가지고 시작하기',
+      start: '시작하기',
+      skipToVfile: '바로 V-File 진단으로 →',
+      langLabel: '언어',
     },
     cq: {
       relationshipGoal: '지금 관계에서 가장 원하는 것은?',
@@ -273,6 +288,7 @@ export const ko: LocaleResource = {
       amberNudgeDeepButton: '살펴보기',
       patternDetectedTitle: '패턴 감지: {mask}',
       patternDetectedDesc: 'Me 탭에서 확인해보세요.',
+      digButton: 'Dig으로 이동 →',
     },
     socialEmotionHint: '사회적 감정은 개인의 감정만큼 중요해요',
     socialGreeting: '지금 사회에 대해 어떤 감정이 드나요?',
@@ -373,6 +389,39 @@ export const ko: LocaleResource = {
     postRegistered: '게시글이 등록되었습니다',
     commentRegistered: '댓글이 등록되었습니다',
     memberCount: '{count}명',
+    inlineEmbed: {
+      anonymousNote: '익명 한 줄. 댓글·반응 불가.',
+      mostMentioned: '가장 자주 언급',
+      sharedGrowth: '공통 성장 경험',
+      overlapNote: '↳ 겹침 % — 프로필 유사도 기준',
+      ventCount: (emotion: string, count: string) => `지금 ${emotion}한 사람이 ${count}명`,
+      digCount: (pattern: string) => `${pattern} 패턴을 가진 사람들이 발견한 것`,
+      getCount: (mask: string, count: string) => `같은 ${mask} 유형 ${count}명`,
+      setCount: (keyword: string, count: string) => `"${keyword}" 키워드로 실천하는 사람 ${count}명`,
+      meCount: (count: string) => `비슷한 V-Axis 프로필 ${count}명`,
+      mock: {
+        ventEmotionLabel: '불안',
+        ventLines: [
+          '오늘 또 이유 없이 심장이 빨라졌어요',
+          '연락이 늦어질 때마다 최악을 상상해요',
+          '혼자 있으면 괜찮은데 사람들 사이에서 더 외로워요',
+        ],
+        digPatternLabel: '회피-집착',
+        digCards: [
+          '가까워질수록 본능적으로 멀어지려는 나를 발견했어요',
+          '상대가 먼저 연락하면 오히려 불안해지는 패턴이 있었어요',
+        ],
+        getMaskLabel: '거울형',
+        getTopMentioned: ['공감 과부하', '경계 부재', '자기 지움'],
+        getGrowthExperiences: ['타인 기대에서 분리 연습', '자기 감정 먼저 명명하기'],
+        setKeyword: '거리두기',
+        setFeed: [
+          '오늘 한 가지 거절을 연습했어요',
+          '연락 답장을 30분 늦추는 것만으로 달랐어요',
+          '스스로 선택한 침묵을 지켰어요',
+        ],
+      },
+    },
   },
 
   // ─── dig ───────────────────────────────────────────────────
@@ -413,6 +462,7 @@ export const ko: LocaleResource = {
     optional: '선택',
     all: '전체',
     socraticHint: '탐색에 도움이 될 질문이에요 (선택)',
+    hintPrefix: '힌트',
     whyNudge: {
       title: '이 패턴이 반복되는 이유가 궁금하다면?',
       desc: 'WHY 분석으로 패턴 이면의 핵심 가치관을 발견할 수 있어요.',
@@ -593,6 +643,13 @@ export const ko: LocaleResource = {
       complete: '완료!',
       repeatTimes: '10회 반복',
       nextMantra: '다음 만트라로 →',
+      mantras: {
+        self:     ['내 페이스가 옳다', '오늘 한 걸음이면 충분하다', '쉼도 일이다', '비교는 내 일이 아니다', '나는 변해도 괜찮다'],
+        work:     ['깊게, 그러나 좁게', '끝낸 것만 일이다', '거절은 집중이다', '완벽보다 출시', '내 시간은 내 자산이다'],
+        relation: ['듣는 게 먼저다', '내 경계가 곧 사랑이다', '기대는 합의해야 한다', '거리도 친밀이다', '정직이 가장 부드럽다'],
+        social:   ['관심은 바뀌어도 된다', '작은 시선도 행동이다', '모든 걸 책임지지 않아도 된다', '쉬는 것이 곧 지속이다', '함께가 길이다'],
+      },
+      domainNames: { self: '자아', work: '일', relation: '관계', social: '사회' },
     },
     socialPivotNudge: {
       pivotDetected: '피보팅 감지',
@@ -980,6 +1037,8 @@ export const ko: LocaleResource = {
         C: '욕구',
         D: '역할',
       },
+      shareText: (maskName: string, code: string, archetype: string) => `나의 관계 가면은 "${maskName}" (${code})\n${archetype}\n\n#VEILOR #VFile #관계가면`,
+      fallbackMask: '모든 관계에서 나를 잃어버리는 사람',
     },
     feedEvolution: {
       dismissAriaLabel: '마일스톤 알림 닫기',
@@ -1713,6 +1772,65 @@ export const ko: LocaleResource = {
       deleting: '삭제 중...',
       amberSub: '비서 · F모드',
       frostSub: '닥터 · T모드',
+      toneOptions: {
+        friend: { label: '친구',   desc: '편하게 반말로' },
+        warm:   { label: '따뜻한', desc: '부드럽고 수용적으로' },
+        calm:   { label: '차분한', desc: '침착하고 안정적으로' },
+        expert: { label: '전문가', desc: '분석적이고 명확하게' },
+      },
+      personalityOptions: {
+        empathetic: '공감형',
+        direct:     '직설형',
+        curious:    '탐구형',
+        playful:    '유쾌형',
+      },
+      freqOptions: {
+        low:    '가끔',
+        normal: '보통',
+        high:   '자주',
+      },
+    },
+  },
+
+  codetalkHub: {
+    header: '◇ RAPAILLE IMPRINT METHOD · 3 MODES',
+    daily: {
+      title: '① 그날의 코드토크 · DAILY',
+      badge: '오늘 06:00 도착',
+      desc: '정의 + 각인을 쓰면, 같은 키워드를 작성한 N명의 익명 코드토크를 열람할 수 있어요.',
+      cta: '오늘 작성하기 →',
+      done: '오늘 작성 완료 ✓',
+    },
+    category: {
+      title: '② 카테고리별 · DEEP DIVE',
+      desc: '관계·심리 카테고리별로 원하는 키워드를 골라 각인할 수 있어요.',
+    },
+    relation: {
+      title: '③ 관계별 · WITH',
+      desc: '파트너와 함께 같은 키워드를 탐색해요. PairTrust 승인이 필요합니다.',
+      addBtn: '+ 파트너 추가',
+      noneDesc: 'PairTrust로 파트너를 연결해요',
+      goBtn: '파트너 연결하기 →',
+      directionOut: '→ 부여',
+      directionIn:  '← 수신',
+    },
+    weeklyLabel: (n: number, streak: number) => `이번 주 ${n}/7 · 연속 ${streak}일`,
+    partnerCount: (n: number) => `활성 파트너 ${n}명`,
+  },
+
+  socialInterest: {
+    statusLabels: {
+      active:  '관심 중',
+      dormant: '잠시 멀어짐',
+      revisit: '다시 보기',
+    },
+    l3: {
+      question:     '왜 이것이 문제라고 생각하나요? 떠오르는 대로 써보세요.',
+      placeholder:  '분량 제한 없어요...',
+      save:         '저장',
+      skip:         '나중에 쓸게요',
+      openExisting: '페인포인트 보기',
+      openNew:      '더 깊이 써볼까요?',
     },
   },
 
@@ -1877,10 +1995,10 @@ export const ko: LocaleResource = {
     skipBtn: '지금은 기본 모드로 시작할게요',
     confirm: { original: '털어놓으러 가기', clear: '대시보드 보러 가기', routine: '루틴 시작하기', focus: '집중 시작하기', sprint: '스프린트 시작하기', connect: '연결 시작하기', mirror: '패턴 보러 가기', social: '관심 영역 탐색하기' },
     domains: {
-      self:     { name: '나',    sub: '나의 퍼포먼스',    desc: '감정·에너지·루틴 중심 자기 관리' },
-      work:     { name: '업무',  sub: '업무 퍼포먼스',    desc: '집중·태스크·시간 예측으로 실행력 관리' },
-      relation: { name: '관계',  sub: '관계 퍼포먼스',    desc: '관계 온도·패턴 인식으로 연결 관리' },
-      social:   { name: '사회',  sub: '사회관리 퍼포먼스', desc: '관심 영역·기여·임팩트 중심 사회적 실천 관리' },
+      self:     { name: '나',    sub: '나의 퍼포먼스',    desc: '감정·에너지·루틴 중심 자기 관리',              coreQ: '나는 지금 무엇을 느끼고 있는가?' },
+      work:     { name: '업무',  sub: '업무 퍼포먼스',    desc: '집중·태스크·시간 예측으로 실행력 관리',        coreQ: '오늘 집중할 한 가지는 무엇인가?' },
+      relation: { name: '관계',  sub: '관계 퍼포먼스',    desc: '관계 온도·패턴 인식으로 연결 관리',            coreQ: '이 관계에서 나는 어떤 역할을 하고 있는가?' },
+      social:   { name: '사회',  sub: '사회관리 퍼포먼스', desc: '관심 영역·기여·임팩트 중심 사회적 실천 관리', coreQ: '나는 무엇에 기여하고 싶은가?' },
     },
     modes: {
       original: { name: '오리지널',  tagline: '말하지 않아도 알 것 같은 공간',     keywords: ['감성적', '비구조적', '대화 중심'] },
@@ -1997,6 +2115,7 @@ export const ko: LocaleResource = {
 
   // ─── changeTraining ────────────────────────────────────────
   changeTraining: {
+    pageTitle: 'Change Training',
     subtitle: '변화 훈련 · 일지 기록',
     cancel: '취소',
     newSession: '새 세션',
@@ -2469,6 +2588,8 @@ export const ko: LocaleResource = {
     ariaStart: '녹음 시작',
     ariaStopInput: '음성 입력 중지',
     ariaStartInput: '음성 입력 시작',
+    ariaDisable: '음성 모드 비활성화',
+    offLabel: '끄기',
   },
 
   // ─── codetalkKeywordCard ───────────────────────────────────
@@ -2969,6 +3090,7 @@ export const ko: LocaleResource = {
       joinTitle: '100일 코호트 참여하기',
       joinDesc: '같은 목표를 가진 사람들과 100일간 함께해요',
       join: '참여',
+      memberCount: (cur: number | string, max: number | string) => `${cur}/${max}명`,
     },
     discussionBoard: {
       placeholder: '생각을 나눠보세요...',
@@ -2988,6 +3110,21 @@ export const ko: LocaleResource = {
       desc: (mask: string) => `"${mask}" 가면을 가진 분들이에요. 함께 탐색하면 더 깊어져요.`,
       anon: '익명',
       connect: '연결',
+      defaultAliases: ['조용한 달', '깊은 안개', '차가운 불'],
+      virtualNicknames: {
+        '반항자':   ['조용한 달', '깊은 안개', '차가운 불'],
+        '돌보는자': ['따뜻한 벽', '느린 바람', '고요한 비'],
+        '거울':     ['유리 거울', '갈라진 거울', '투명한 강'],
+        '구원자':   ['숨은 달', '낮은 불꽃', '흔들리는 뿌리'],
+        '매혹자':   ['검은 나비', '먼 별', '작은 파도'],
+        '유희자':   ['무거운 빛', '긴 밤', '얇은 숲'],
+        '승인자':   ['닫힌 문', '깨진 시계', '조용한 달'],
+        '탐험자':   ['먼 별', '차가운 불', '깊은 안개'],
+        '의존자':   ['흔들리는 뿌리', '고요한 비', '따뜻한 벽'],
+        '회피자':   ['긴 밤', '닫힌 문', '얇은 숲'],
+        '통제자':   ['무거운 빛', '갈라진 거울', '낮은 불꽃'],
+        '공허자':   ['깨진 시계', '숨은 달', '유리 거울'],
+      },
     },
     partnerCodetalk: {
       title: '파트너 코드토크',
@@ -3648,6 +3785,17 @@ export const ko: LocaleResource = {
       fragCountLabels: ['0개', '1개', '2개', '3개', '4개+'],
       groupCountSuffix2: (n: string) => `${n}개`,
       userCountSuffix: '명',
+      funnelTableHeaders: { stage: '단계', userCount: '유저 수' },
+    },
+    aiInterestTab: {
+      sectionTitle: 'AI 관심 유저 목록',
+      sectionSub: 'AI 기능 진입 시도 후 미구독 유저 — 이메일로 구독 안내 발송',
+      loading: '로딩 중...',
+      empty: 'AI 기능 클릭 기록이 없습니다.',
+      stats: { unsubscribed: '미구독 관심 유저', subscribed: '이미 구독 중', total: '전체 클릭 유저' },
+      tableHeaders: { user: '유저', email: '이메일', clickCount: '클릭 수', lastClicked: '마지막 클릭', status: '상태', emailSend: '이메일 발송' },
+      statusLabels: { subscribed: '구독 중', freePeriod: '무료 기간', unsubscribed: '미구독' },
+      sendLabels: { unnecessary: '불필요', sent: '발송 완료', sending: '발송 중...', send: '이메일 발송' },
     },
     b2bTab: {
       statCards: {
@@ -3713,6 +3861,7 @@ export const ko: LocaleResource = {
 
   // ─── eventsPage ────────────────────────────────────────────────
   eventsPage: {
+    pageTitle: 'Events',
     subtitle: '커뮤니티 이벤트 · 모임',
     newEvent: '새 이벤트',
     titlePlaceholder: '이벤트 제목',
@@ -3732,6 +3881,7 @@ export const ko: LocaleResource = {
 
   // ─── specialistPage ────────────────────────────────────────────
   specialistPage: {
+    pageTitle: 'Specialists',
     subtitle: '전문가 연결 · 핸드오프',
     veilorFirst: '베일러 먼저 만나보기 →',
     veilorFirstDesc: '전문의 전에 동료 경청인과 이야기해 보세요',
@@ -3755,6 +3905,7 @@ export const ko: LocaleResource = {
 
   // ─── pairTrustPage ─────────────────────────────────────────────
   pairTrustPage: {
+    pageTitle: 'Pair Trust',
     subtitle: '트러스트 연결 · 공유 레벨',
     grant: '부여하기',
     cancel: '취소',
@@ -3782,6 +3933,7 @@ export const ko: LocaleResource = {
 
   // ─── contentImportPage ─────────────────────────────────────────
   contentImportPage: {
+    pageTitle: 'Content Import',
     subtitle: '외부 콘텐츠 · 신호 임포트',
     pasteFromClipboard: '클립보드에서 붙여넣기',
     historyTitle: '임포트 히스토리',
@@ -3846,5 +3998,74 @@ export const ko: LocaleResource = {
     ],
     ctaLater: '나중에 하기',
     webOnlyNotice: 'Pro 전용 기능입니다.',
+  },
+
+  // ─── errorBoundary ─────────────────────────────────────────
+  errorBoundary: {
+    title: '문제가 발생했습니다',
+    desc: '예상치 못한 오류가 발생했어요. 아래 버튼을 눌러 다시 시도해 주세요.',
+    retry: '다시 시도',
+    reload: '새로고침',
+  },
+
+  // ─── upgrade ───────────────────────────────────────────────
+  upgrade: {
+    triggers: {
+      priper_result: {
+        title: '패턴의 전체를 보세요',
+        description: '지금 보신 건 빙산의 일각이에요. 숨겨진 패턴과 변화 가능성이 더 있습니다.',
+        benefit: 'Premium에서는 AI가 당신의 관계 패턴을 심층 분석하고, 실제 변화를 위한 맞춤 인사이트를 매주 제공해요.',
+        ctaText: 'Premium으로 전체 분석 보기',
+      },
+      onboarding_complete: {
+        title: '베일러와 함께 더 깊이 탐색하세요',
+        description: 'V-File 완료를 축하해요. 이제 진짜 여정이 시작됩니다.',
+        benefit: 'Premium에서는 AI 상담, 파트너 교차 분석, 관계 변화 타임라인을 무제한으로 이용할 수 있어요.',
+        ctaText: 'Premium 시작하기',
+      },
+      partner_analysis: {
+        title: '우리의 패턴 — 전체 분석',
+        description: '파트너와의 관계 역학을 표면적 유형 비교 너머로 분석해요.',
+        benefit: 'Premium에서는 두 사람의 충돌 지점, 성장 방향, 관계 변화 가능성을 AI가 깊이 분석해 드려요.',
+        ctaText: 'Premium으로 파트너 분석 보기',
+      },
+      codetalk_ai_limit: {
+        title: '이번 달 AI 한도에 도달했어요',
+        description: '이번 달 기본 AI 크레딧을 모두 사용했어요.',
+        benefit: '추가 크레딧(₩4,900/$4)을 구매하면 바로 계속 이용할 수 있어요. 다음 달 1일에는 자동으로 한도가 초기화돼요.',
+        benefitNative: '추가 크레딧을 구매하면 바로 계속 이용할 수 있어요. 다음 달 1일에는 자동으로 한도가 초기화돼요.',
+        ctaText: '추가 크레딧 구매',
+      },
+      multi_persona_analysis: {
+        title: '멀티페르소나 분석',
+        description: '여러 페르소나 간의 충돌 패턴과 자원 배분을 시각화해요.',
+        benefit: '각 페르소나의 시간축 변화, 억압 패턴, 역할 간 긴장 관계를 볼 수 있어요.',
+        ctaText: 'Pro로 잠금 해제',
+      },
+      ikigai_design: {
+        title: 'Ikigai 설계',
+        description: '사랑, 재능, 소명, 천직의 교차점에서 삶의 방향을 설계해요.',
+        benefit: 'AI가 당신의 패턴을 분석해 개인화된 Ikigai 인사이트를 제공해요.',
+        ctaText: 'Pro로 설계 시작',
+      },
+      brand_identity: {
+        title: '브랜드 정체성 설계',
+        description: '나만의 언어와 방향성으로 개인 브랜드를 구축해요.',
+        benefit: 'AI가 당신의 Why, Ikigai를 기반으로 브랜드 전략을 설계해 줘요.',
+        ctaText: 'Pro로 브랜드 설계',
+      },
+      monthly_report_detail: {
+        title: '상세 월간 리포트',
+        description: '무료 플랜에서는 요약만 확인할 수 있어요.',
+        benefit: '감정 흐름, 패턴 변화, 성장 추이를 상세하게 분석한 풀 리포트를 받아보세요.',
+        ctaText: 'Pro로 전체 리포트 보기',
+      },
+      auto_translate: {
+        title: '자동번역 기능',
+        description: '콘텐츠를 하나만 입력하면 나머지 언어로 자동 번역해 드려요.',
+        benefit: 'Pro 플랜에서 자동번역을 무제한으로 사용할 수 있어요. 번역 1건당 1 크레딧이 차감돼요.',
+        ctaText: 'Pro로 자동번역 사용하기',
+      },
+    },
   },
 };

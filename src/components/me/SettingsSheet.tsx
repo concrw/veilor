@@ -37,11 +37,12 @@ const FREQ_OPTIONS: { value: AiSettings['frequency']; label: string; labelEn: st
   { value: 'high', label: '자주', labelEn: 'Often' },
 ];
 
-const DEFAULT_AI_SETTINGS: AiSettings = { name: '엠버', tone: 'warm', personality: 'empathetic', frequency: 'normal' };
+const DEFAULT_AI_SETTINGS: AiSettings = { name: 'Amber', tone: 'warm', personality: 'empathetic', frequency: 'normal' };
 
 const LANG_OPTIONS: { value: SupportedLanguage; label: string; code: string }[] = [
-  { value: 'ko', label: '한국어', code: 'KO' },
   { value: 'en', label: 'English', code: 'EN' },
+  { value: 'ko', label: '한국어', code: 'KO' },
+  { value: 'ja', label: '日本語', code: 'JA' },
 ];
 
 // 언어별 설정 시트 텍스트
@@ -170,7 +171,7 @@ function SettingsSheet({
                   padding: '12px 14px',
                   borderBottom: i < LANG_OPTIONS.length - 1 ? `1px solid ${C.border2}` : 'none',
                   cursor: 'pointer',
-                  background: language === opt.value ? `${C.amberGold}08` : 'transparent',
+                  background: language === opt.value ? `${C.amberGold}18` : C.bg2,
                   transition: 'background .15s',
                 }}
               >
@@ -208,10 +209,7 @@ function SettingsSheet({
             <div style={{ flex: 1 }}>
               <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 15, color: C.text, marginBottom: 1 }}>{s.aiPersonalityLabel}</p>
               <p style={{ fontSize: 10, color: C.text4 }}>
-                {language === 'en'
-                  ? `${TONE_OPTIONS.find(t => t.value === aiSettings.tone)?.labelEn} · ${PERSONALITY_OPTIONS.find(p => p.value === aiSettings.personality)?.labelEn}`
-                  : `${TONE_OPTIONS.find(t => t.value === aiSettings.tone)?.label} · ${PERSONALITY_OPTIONS.find(p => p.value === aiSettings.personality)?.label}`
-                }
+                {s.toneOptions[aiSettings.tone]?.label} · {s.personalityOptions[aiSettings.personality]}
               </p>
             </div>
             <span style={{ fontSize: 11, color: C.text5, transform: aiCustomOpen ? 'rotate(90deg)' : 'none', transition: 'transform .2s', display: 'inline-block' }}>›</span>
@@ -221,27 +219,24 @@ function SettingsSheet({
               <div>
                 <p style={{ fontSize: 10, color: C.text4, marginBottom: 6 }}>{s.toneLabel}</p>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                  {TONE_OPTIONS.map(t => (
-                    <button key={t.value} onClick={() => updateAiSetting('tone', t.value)}
-                      style={{ padding: '6px 12px', borderRadius: 8, fontSize: 12, cursor: 'pointer', border: aiSettings.tone === t.value ? `1px solid ${C.amberGold}` : `1px solid ${C.border}`, background: aiSettings.tone === t.value ? `${C.amberGold}15` : 'transparent', color: aiSettings.tone === t.value ? C.amberGold : C.text3 }}>
-                      {language === 'en' ? t.labelEn : t.label}
+                  {TONE_OPTIONS.map(opt => (
+                    <button key={opt.value} onClick={() => updateAiSetting('tone', opt.value)}
+                      style={{ padding: '6px 12px', borderRadius: 8, fontSize: 12, cursor: 'pointer', border: aiSettings.tone === opt.value ? `1px solid ${C.amberGold}` : `1px solid ${C.border}`, background: aiSettings.tone === opt.value ? `${C.amberGold}15` : 'transparent', color: aiSettings.tone === opt.value ? C.amberGold : C.text3 }}>
+                      {s.toneOptions[opt.value]?.label}
                     </button>
                   ))}
                 </div>
                 <p style={{ fontSize: 9, color: C.text5, marginTop: 4 }}>
-                  {language === 'en'
-                    ? TONE_OPTIONS.find(t => t.value === aiSettings.tone)?.descEn
-                    : TONE_OPTIONS.find(t => t.value === aiSettings.tone)?.desc
-                  }
+                  {s.toneOptions[aiSettings.tone]?.desc}
                 </p>
               </div>
               <div>
                 <p style={{ fontSize: 10, color: C.text4, marginBottom: 6 }}>{s.personalityLabel}</p>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                  {PERSONALITY_OPTIONS.map(p => (
-                    <button key={p.value} onClick={() => updateAiSetting('personality', p.value)}
-                      style={{ padding: '6px 12px', borderRadius: 8, fontSize: 12, cursor: 'pointer', border: aiSettings.personality === p.value ? `1px solid ${C.amberGold}` : `1px solid ${C.border}`, background: aiSettings.personality === p.value ? `${C.amberGold}15` : 'transparent', color: aiSettings.personality === p.value ? C.amberGold : C.text3 }}>
-                      {language === 'en' ? p.labelEn : p.label}
+                  {PERSONALITY_OPTIONS.map(opt => (
+                    <button key={opt.value} onClick={() => updateAiSetting('personality', opt.value)}
+                      style={{ padding: '6px 12px', borderRadius: 8, fontSize: 12, cursor: 'pointer', border: aiSettings.personality === opt.value ? `1px solid ${C.amberGold}` : `1px solid ${C.border}`, background: aiSettings.personality === opt.value ? `${C.amberGold}15` : 'transparent', color: aiSettings.personality === opt.value ? C.amberGold : C.text3 }}>
+                      {s.personalityOptions[opt.value]}
                     </button>
                   ))}
                 </div>
@@ -249,10 +244,10 @@ function SettingsSheet({
               <div>
                 <p style={{ fontSize: 10, color: C.text4, marginBottom: 6 }}>{s.freqLabel}</p>
                 <div style={{ display: 'flex', gap: 6 }}>
-                  {FREQ_OPTIONS.map(f => (
-                    <button key={f.value} onClick={() => updateAiSetting('frequency', f.value)}
-                      style={{ padding: '6px 12px', borderRadius: 8, fontSize: 12, cursor: 'pointer', flex: 1, border: aiSettings.frequency === f.value ? `1px solid ${C.amberGold}` : `1px solid ${C.border}`, background: aiSettings.frequency === f.value ? `${C.amberGold}15` : 'transparent', color: aiSettings.frequency === f.value ? C.amberGold : C.text3 }}>
-                      {language === 'en' ? f.labelEn : f.label}
+                  {FREQ_OPTIONS.map(opt => (
+                    <button key={opt.value} onClick={() => updateAiSetting('frequency', opt.value)}
+                      style={{ padding: '6px 12px', borderRadius: 8, fontSize: 12, cursor: 'pointer', flex: 1, border: aiSettings.frequency === opt.value ? `1px solid ${C.amberGold}` : `1px solid ${C.border}`, background: aiSettings.frequency === opt.value ? `${C.amberGold}15` : 'transparent', color: aiSettings.frequency === opt.value ? C.amberGold : C.text3 }}>
+                      {s.freqOptions[opt.value]}
                     </button>
                   ))}
                 </div>

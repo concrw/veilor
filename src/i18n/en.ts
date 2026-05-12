@@ -73,6 +73,21 @@ export const en: LocaleResource = {
       card3Desc: 'V-File · CODETALK · DIVE · Community',
       startButton: 'Get started',
       disclaimer: 'VEILOR is a self-exploration tool and does not replace professional counseling or therapy.',
+      step1: 'First chat with Amber',
+      step1Desc: 'Share what you\'re feeling in your relationships right now.',
+      step2: '4 core questions',
+      step2Desc: 'We\'ll understand your relationship style and emotional patterns.',
+      step3: 'V-File diagnosis',
+      step3Desc: 'Discover your pattern among 12 relationship masks.',
+      amberHello: 'Hi, I\'m Amber.',
+      amberDesc: 'Every relationship has invisible patterns. Let\'s discover yours together.',
+      question: 'Is there anything on your mind about relationships lately? Share in one line.',
+      questionHint: 'You can skip this',
+      placeholder: 'e.g. I don\'t know why I push people away when I get close',
+      startWithAnswer: 'Start with this in mind',
+      start: 'Get started',
+      skipToVfile: 'Go straight to V-File →',
+      langLabel: 'Language',
     },
     cq: {
       relationshipGoal: 'What do you want most in your relationships right now?',
@@ -273,6 +288,7 @@ export const en: LocaleResource = {
       amberNudgeDeepButton: 'Look inside',
       patternDetectedTitle: 'Pattern detected: {mask}',
       patternDetectedDesc: 'Check the Me tab for details.',
+      digButton: 'Go to Dig →',
     },
     socialEmotionHint: 'Social emotions matter as much as personal ones',
     socialGreeting: 'How are you feeling about the world right now?',
@@ -373,6 +389,39 @@ export const en: LocaleResource = {
     postRegistered: 'Post submitted',
     commentRegistered: 'Comment submitted',
     memberCount: '{count} members',
+    inlineEmbed: {
+      anonymousNote: 'Anonymous. No comments or reactions.',
+      mostMentioned: 'Most mentioned',
+      sharedGrowth: 'Shared growth',
+      overlapNote: '↳ overlap % based on profile similarity',
+      ventCount: (emotion: string, count: string) => `${count} people feel ${emotion} right now`,
+      digCount: (pattern: string) => `What people with ${pattern} pattern discovered`,
+      getCount: (mask: string, count: string) => `${count} people share the ${mask} type`,
+      setCount: (keyword: string, count: string) => `${count} people practicing "${keyword}"`,
+      meCount: (count: string) => `${count} people with similar V-Axis profile`,
+      mock: {
+        ventEmotionLabel: 'Anxiety',
+        ventLines: [
+          'My heart races for no reason today',
+          'I imagine the worst when a reply is delayed',
+          'I feel lonelier in crowds than when alone',
+        ],
+        digPatternLabel: 'Avoidance-Obsession',
+        digCards: [
+          'I noticed I instinctively pull away the closer someone gets',
+          'There was a pattern where I felt more anxious when the other person reached out first',
+        ],
+        getMaskLabel: 'Mirror Type',
+        getTopMentioned: ['Empathy overload', 'Lack of boundaries', 'Self-erasure'],
+        getGrowthExperiences: ['Practicing separation from others\' expectations', 'Naming my own emotions first'],
+        setKeyword: 'Distancing',
+        setFeed: [
+          'I practiced one refusal today',
+          'Just delaying my reply by 30 minutes made a difference',
+          'I kept a silence I chose for myself',
+        ],
+      },
+    },
   },
 
   // ─── dig ───────────────────────────────────────────────────
@@ -413,6 +462,7 @@ export const en: LocaleResource = {
     optional: 'optional',
     all: 'All',
     socraticHint: 'Questions to help your exploration (optional)',
+    hintPrefix: 'Hint',
     whyNudge: {
       title: 'Wondering why this pattern repeats?',
       desc: 'WHY analysis helps uncover the root values behind the pattern.',
@@ -593,6 +643,13 @@ export const en: LocaleResource = {
       complete: 'Complete!',
       repeatTimes: 'Repeat 10 times',
       nextMantra: 'Next mantra →',
+      mantras: {
+        self:     ['My pace is right', 'One step today is enough', 'Rest is also work', 'Comparison is not my job', "It's okay for me to change"],
+        work:     ['Deep, but narrow', 'Only finished work counts', 'Saying no is focus', 'Ship over perfect', 'My time is my asset'],
+        relation: ['Listening comes first', 'My boundary is love', 'Expectations need agreement', 'Distance can be intimacy', 'Honesty is the softest'],
+        social:   ['Interests can change', 'A small glance is action', "I don't have to own everything", 'Resting is sustaining', 'Together is the way'],
+      },
+      domainNames: { self: 'Self', work: 'Work', relation: 'Relation', social: 'Social' },
     },
     socialPivotNudge: {
       pivotDetected: 'Pivot detected',
@@ -980,6 +1037,8 @@ export const en: LocaleResource = {
         C: 'Desire',
         D: 'Role',
       },
+      shareText: (maskName: string, code: string, archetype: string) => `My relational mask is "${maskName}" (${code})\n${archetype}\n\n#VEILOR #VFile`,
+      fallbackMask: 'Unknown pattern',
     },
     feedEvolution: {
       dismissAriaLabel: 'Dismiss milestone notification',
@@ -1630,6 +1689,65 @@ export const en: LocaleResource = {
       deleting: 'Deleting...',
       amberSub: 'Assistant · F mode',
       frostSub: 'Doctor · T mode',
+      toneOptions: {
+        friend: { label: 'Casual', desc: 'Relaxed, informal tone' },
+        warm:   { label: 'Warm',   desc: 'Gentle and accepting' },
+        calm:   { label: 'Calm',   desc: 'Composed and steady' },
+        expert: { label: 'Expert', desc: 'Analytical and precise' },
+      },
+      personalityOptions: {
+        empathetic: 'Empathetic',
+        direct:     'Direct',
+        curious:    'Curious',
+        playful:    'Playful',
+      },
+      freqOptions: {
+        low:    'Rarely',
+        normal: 'Normal',
+        high:   'Often',
+      },
+    },
+  },
+
+  codetalkHub: {
+    header: '◇ RAPAILLE IMPRINT METHOD · 3 MODES',
+    daily: {
+      title: '① Daily Codetalk · DAILY',
+      badge: 'Arrives 06:00 today',
+      desc: 'Write a definition + imprint to read anonymous codetalk from others with the same keyword.',
+      cta: 'Write today →',
+      done: 'Today complete ✓',
+    },
+    category: {
+      title: '② By Category · DEEP DIVE',
+      desc: 'Choose any keyword by relationship or psychology category.',
+    },
+    relation: {
+      title: '③ By Relation · WITH',
+      desc: 'Explore the same keyword with a partner. PairTrust approval required.',
+      addBtn: '+ Add partner',
+      noneDesc: 'Connect partners via PairTrust',
+      goBtn: 'Connect partner →',
+      directionOut: '→ Granted',
+      directionIn:  '← Received',
+    },
+    weeklyLabel: (n: number, streak: number) => `This week ${n}/7 · ${streak}-day streak`,
+    partnerCount: (n: number) => `${n} active partner${n !== 1 ? 's' : ''}`,
+  },
+
+  socialInterest: {
+    statusLabels: {
+      active:  'Active',
+      dormant: 'Dormant',
+      revisit: 'Revisit',
+    },
+    l3: {
+      question:     'Why do you think this is a problem? Write whatever comes to mind.',
+      placeholder:  'No length limit...',
+      save:         'Save',
+      skip:         'Maybe later',
+      openExisting: 'View pain point',
+      openNew:      'Go deeper?',
     },
   },
 
@@ -1859,10 +1977,10 @@ export const en: LocaleResource = {
     skipBtn: 'Start with default mode for now',
     confirm: { original: 'Go vent', clear: 'View dashboard', routine: 'Start routine', focus: 'Start focus', sprint: 'Start sprint', connect: 'Start connecting', mirror: 'View patterns', social: 'Explore interests' },
     domains: {
-      self:     { name: 'Self',     sub: 'Self performance',     desc: 'Self-management centered on emotions, energy, and routines' },
-      work:     { name: 'Work',     sub: 'Work performance',     desc: 'Manage execution through focus, tasks, and time prediction' },
-      relation: { name: 'Relations', sub: 'Relationship performance', desc: 'Manage connections through relationship temperature and pattern recognition' },
-      social:   { name: 'Social',   sub: 'Social performance',   desc: 'Manage social practice centered on interests, contribution, and impact' },
+      self:     { name: 'Self',     sub: 'Self performance',     desc: 'Self-management centered on emotions, energy, and routines',              coreQ: 'What am I feeling right now?' },
+      work:     { name: 'Work',     sub: 'Work performance',     desc: 'Manage execution through focus, tasks, and time prediction',              coreQ: 'What is the one thing to focus on today?' },
+      relation: { name: 'Relations', sub: 'Relationship performance', desc: 'Manage connections through relationship temperature and pattern recognition', coreQ: 'What role am I playing in this relationship?' },
+      social:   { name: 'Social',   sub: 'Social performance',   desc: 'Manage social practice centered on interests, contribution, and impact',  coreQ: 'What do I want to contribute to?' },
     },
     modes: {
       original: { name: 'Original',  tagline: 'A space that feels like it knows without words', keywords: ['Emotional', 'Unstructured', 'Conversation-centered'] },
@@ -1979,6 +2097,7 @@ export const en: LocaleResource = {
 
   // ─── changeTraining ────────────────────────────────────────
   changeTraining: {
+    pageTitle: 'Change Training',
     subtitle: 'Change Training · Journal',
     cancel: 'Cancel',
     newSession: 'New session',
@@ -2451,6 +2570,8 @@ export const en: LocaleResource = {
     ariaStart: 'Start recording',
     ariaStopInput: 'Stop voice input',
     ariaStartInput: 'Start voice input',
+    ariaDisable: 'Disable voice mode',
+    offLabel: 'off',
   },
 
   // ─── codetalkKeywordCard ───────────────────────────────────
@@ -2951,6 +3072,7 @@ export const en: LocaleResource = {
       joinTitle: 'Join a 100-Day Cohort',
       joinDesc: 'Spend 100 days with people who share your goals',
       join: 'Join',
+      memberCount: (cur: number | string, max: number | string) => `${cur}/${max} members`,
     },
     discussionBoard: {
       placeholder: 'Share your thoughts...',
@@ -2970,6 +3092,21 @@ export const en: LocaleResource = {
       desc: (mask: string) => `These people share the "${mask}" mask. Exploring together goes deeper.`,
       anon: 'Anonymous',
       connect: 'Connect',
+      defaultAliases: ['Quiet Moon', 'Deep Mist', 'Cold Flame'],
+      virtualNicknames: {
+        'rebel':     ['Quiet Moon', 'Deep Mist', 'Cold Flame'],
+        'caregiver': ['Warm Wall', 'Slow Wind', 'Still Rain'],
+        'mirror':    ['Glass Mirror', 'Cracked Mirror', 'Clear River'],
+        'savior':    ['Hidden Moon', 'Low Flame', 'Trembling Root'],
+        'enchanter': ['Black Butterfly', 'Distant Star', 'Small Wave'],
+        'jester':    ['Heavy Light', 'Long Night', 'Thin Forest'],
+        'approver':  ['Closed Door', 'Broken Clock', 'Quiet Moon'],
+        'explorer':  ['Distant Star', 'Cold Flame', 'Deep Mist'],
+        'dependent': ['Trembling Root', 'Still Rain', 'Warm Wall'],
+        'avoider':   ['Long Night', 'Closed Door', 'Thin Forest'],
+        'controller':['Heavy Light', 'Cracked Mirror', 'Low Flame'],
+        'hollow':    ['Broken Clock', 'Hidden Moon', 'Glass Mirror'],
+      },
     },
     partnerCodetalk: {
       title: 'Partner Codetalk',
@@ -3630,6 +3767,17 @@ export const en: LocaleResource = {
       fragCountLabels: ['0', '1', '2', '3', '4+'],
       groupCountSuffix2: (n: string) => `${n} groups`,
       userCountSuffix: ' users',
+      funnelTableHeaders: { stage: 'Stage', userCount: 'Users' },
+    },
+    aiInterestTab: {
+      sectionTitle: 'AI Interest Users',
+      sectionSub: 'Users who attempted AI features but are not subscribed — send subscription nudge',
+      loading: 'Loading...',
+      empty: 'No AI feature click history.',
+      stats: { unsubscribed: 'Unsubscribed Interest', subscribed: 'Already Subscribed', total: 'Total Clickers' },
+      tableHeaders: { user: 'User', email: 'Email', clickCount: 'Clicks', lastClicked: 'Last Click', status: 'Status', emailSend: 'Send Email' },
+      statusLabels: { subscribed: 'Subscribed', freePeriod: 'Free Period', unsubscribed: 'Not Subscribed' },
+      sendLabels: { unnecessary: 'N/A', sent: 'Sent', sending: 'Sending...', send: 'Send Email' },
     },
     b2bTab: {
       statCards: {
@@ -3695,6 +3843,7 @@ export const en: LocaleResource = {
 
   // ─── eventsPage ────────────────────────────────────────────────
   eventsPage: {
+    pageTitle: 'Events',
     subtitle: 'Community events · meetups',
     newEvent: 'New event',
     titlePlaceholder: 'Event title',
@@ -3714,6 +3863,7 @@ export const en: LocaleResource = {
 
   // ─── specialistPage ────────────────────────────────────────────
   specialistPage: {
+    pageTitle: 'Specialists',
     subtitle: 'Specialist connect · handoff',
     veilorFirst: 'Try a peer listener first →',
     veilorFirstDesc: 'Talk with a peer listener before seeing a professional',
@@ -3737,6 +3887,7 @@ export const en: LocaleResource = {
 
   // ─── pairTrustPage ─────────────────────────────────────────────
   pairTrustPage: {
+    pageTitle: 'Pair Trust',
     subtitle: 'Trust connect · sharing level',
     grant: 'Grant',
     cancel: 'Cancel',
@@ -3764,6 +3915,7 @@ export const en: LocaleResource = {
 
   // ─── contentImportPage ─────────────────────────────────────────
   contentImportPage: {
+    pageTitle: 'Content Import',
     subtitle: 'External content · signal import',
     pasteFromClipboard: 'Paste from clipboard',
     historyTitle: 'Import history',
@@ -3828,5 +3980,74 @@ export const en: LocaleResource = {
     ],
     ctaLater: 'Maybe later',
     webOnlyNotice: 'This is a Pro feature.',
+  },
+
+  // ─── errorBoundary ─────────────────────────────────────────
+  errorBoundary: {
+    title: 'Something went wrong',
+    desc: 'An unexpected error occurred. Press the button below to try again.',
+    retry: 'Try again',
+    reload: 'Refresh',
+  },
+
+  // ─── upgrade ───────────────────────────────────────────────
+  upgrade: {
+    triggers: {
+      priper_result: {
+        title: 'See the full picture',
+        description: "What you've seen is just the tip of the iceberg. There are hidden patterns and more possibilities for change.",
+        benefit: 'With Premium, AI deeply analyzes your relationship patterns and delivers personalized insights every week.',
+        ctaText: 'See full analysis with Premium',
+      },
+      onboarding_complete: {
+        title: 'Explore deeper with VEILOR',
+        description: 'Congratulations on completing your V-File. Now the real journey begins.',
+        benefit: 'With Premium, enjoy unlimited AI counseling, partner cross-analysis, and relationship change timelines.',
+        ctaText: 'Start Premium',
+      },
+      partner_analysis: {
+        title: 'Our patterns — full analysis',
+        description: 'Analyze relationship dynamics with your partner beyond surface-level type comparisons.',
+        benefit: "With Premium, AI deeply analyzes both people's clash points, growth directions, and relationship change potential.",
+        ctaText: 'See partner analysis with Premium',
+      },
+      codetalk_ai_limit: {
+        title: "You've reached this month's AI limit",
+        description: "You've used your monthly AI credit for this month.",
+        benefit: 'Purchase extra credits (₩4,900/$4) to continue right away. Your limit resets automatically on the 1st of next month.',
+        benefitNative: 'Purchase extra credits to continue right away. Your limit resets automatically on the 1st of next month.',
+        ctaText: 'Buy extra credits',
+      },
+      multi_persona_analysis: {
+        title: 'Multi-persona analysis',
+        description: 'Visualize collision patterns and resource allocation across multiple personas.',
+        benefit: "See each persona's timeline changes, suppression patterns, and role tensions.",
+        ctaText: 'Unlock with Pro',
+      },
+      ikigai_design: {
+        title: 'Ikigai Design',
+        description: 'Design your life direction at the intersection of love, talent, calling, and vocation.',
+        benefit: 'AI analyzes your patterns to deliver personalized Ikigai insights.',
+        ctaText: 'Start designing with Pro',
+      },
+      brand_identity: {
+        title: 'Brand identity design',
+        description: 'Build your personal brand with your own language and direction.',
+        benefit: 'AI designs your brand strategy based on your Why and Ikigai.',
+        ctaText: 'Design your brand with Pro',
+      },
+      monthly_report_detail: {
+        title: 'Detailed monthly report',
+        description: 'The free plan only shows a summary.',
+        benefit: 'Receive a full report with detailed analysis of emotional flow, pattern changes, and growth trends.',
+        ctaText: 'See full report with Pro',
+      },
+      auto_translate: {
+        title: 'Auto-translation',
+        description: 'Enter content in one language and it will be automatically translated into others.',
+        benefit: 'With the Pro plan, use auto-translation unlimited. 1 credit per translation.',
+        ctaText: 'Use auto-translate with Pro',
+      },
+    },
   },
 };

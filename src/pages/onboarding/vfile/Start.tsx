@@ -3,6 +3,8 @@ import { useT } from '@/i18n/useT';
 import { VenetianMask } from 'lucide-react';
 import { useLanguageContext } from '@/context/LanguageContext';
 
+const LANG_LABELS: Record<string, string> = { ko: '한국어', en: 'EN', ja: '日本語' };
+
 export default function PriperStart() {
   const navigate = useNavigate();
   const t = useT();
@@ -40,7 +42,7 @@ export default function PriperStart() {
         {/* 언어 토글 */}
         <div className="flex justify-end">
           <div className="flex rounded-lg overflow-hidden" style={{ border: '1px solid #44403C' }}>
-            {(['ko', 'en'] as const).map(lang => (
+            {(['en', 'ko', 'ja'] as const).map(lang => (
               <button
                 key={lang}
                 onClick={() => setLanguage(lang)}
@@ -50,7 +52,7 @@ export default function PriperStart() {
                   color: language === lang ? '#1C1917' : '#B8B3AF',
                 }}
               >
-                {lang === 'ko' ? '한국어' : 'EN'}
+                {LANG_LABELS[lang] ?? lang.toUpperCase()}
               </button>
             ))}
           </div>
