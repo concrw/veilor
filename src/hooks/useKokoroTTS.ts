@@ -32,29 +32,24 @@ export function useKokoroTTS(options: UseKokoroTTSOptions = {}) {
   const langCode = lang.startsWith('ko') ? 'ko' : 'en';
   const resolvedVoice = voice ?? DEFAULT_VOICES[langCode];
 
-  // 모델 사전 로드 (컴포넌트 마운트 후 백그라운드에서)
-  useEffect(() => {
-    let cancelled = false;
-    async function preload() {
-      if (pipelineRef.current) return;
-      try {
-        setLoading(true);
-        const { KokoroTTS } = await import('kokoro-js');
-        if (cancelled) return;
-        // @ts-expect-error — kokoro-js 타입 정의 미완성
-        pipelineRef.current = await KokoroTTS.from_pretrained('onnx-community/Kokoro-82M-v1.0', {
-          dtype: 'q8',  // 양자화 — 모델 크기 축소, 품질 유지
-        });
-      } catch (err) {
-        if (cancelled) return;
-        console.warn('[KokoroTTS] 모델 로드 실패, Web Speech 폴백 사용:', err);
-        setSupported(false);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
+  // 모델 로드 함수 — speak() 최초 호출 시점에만 실행
+  const loadPipeline = useCallback(async (): Promise<KokoroPipeline | null> => {
+    if (pipelineRef.current) return pipelineRef.current;
+    try {
+      setLoading(true);
+      const { KokoroTTS } = await import('kokoro-js');
+      // @ts-expect-error — kokoro-js 타입 정의 미완성
+      pipelineRef.current = await KokoroTTS.from_pretrained('onnx-community/Kokoro-82M-v1.0', {
+        dtype: 'q8',
+      });
+      return pipelineRef.current;
+    } catch (err) {
+      console.warn('[KokoroTTS] 모델 로드 실패, Web Speech 폴백 사용:', err);
+      setSupported(false);
+      return null;
+    } finally {
+      setLoading(false);
     }
-    preload();
-    return () => { cancelled = true; };
   }, []);
 
   const stop = useCallback(() => {
@@ -71,7 +66,10 @@ export function useKokoroTTS(options: UseKokoroTTSOptions = {}) {
     stop();
 
     // 모델 미로드 시 폴백 (Web Speech API)
-    if (!pipelineRef.current) {
+    // 최초 speak() 시점에 모델 로드 시도
+    const pipeline = await loadPipeline();
+
+    if (!pipeline) {
       if (!('speechSynthesis' in window)) return;
       window.speechSynthesis.cancel();
       const utt = new SpeechSynthesisUtterance(text);
@@ -88,7 +86,7 @@ export function useKokoroTTS(options: UseKokoroTTSOptions = {}) {
     setError(null);
 
     try {
-      const result = await pipelineRef.current.generate(text, { voice: resolvedVoice });
+      const result = await pipeline.generate(text, { voice: resolvedVoice });
       const wav    = result.audio.toWav();
       const blob   = new Blob([wav], { type: 'audio/wav' });
       const url    = URL.createObjectURL(blob);
