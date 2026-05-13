@@ -1,5 +1,5 @@
 import { Suspense, lazy, useEffect } from "react";
-import GuestLanding from "./pages/GuestLanding";
+const GuestLanding = lazy(() => import("./pages/GuestLanding"));
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -166,7 +166,7 @@ const RootRedirect = () => {
   const { isFirstVisit, isReady } = useMode();
   if (loading || !isReady) return <PageLoader />;
   // 비로그인 → 게스트 랜딩
-  if (!user) return <GuestLanding />;
+  if (!user) return <Suspense fallback={<PageLoader />}><GuestLanding /></Suspense>;
   // 비로그인 진단 결과가 sessionStorage에 있으면 → result 페이지로 복귀
   const savedResult = sessionStorage.getItem('veilor:vfile-result');
   if (savedResult) {
