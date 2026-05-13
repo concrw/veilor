@@ -103,7 +103,6 @@ export default defineConfig(({ mode }) => ({
           'vendor-query': ['@tanstack/react-query'],
           'vendor-supabase': ['@supabase/supabase-js'],
           'vendor-pdf': ['jspdf', 'html2canvas'],
-          'vendor-recharts': ['recharts'],
         },
       },
     },
