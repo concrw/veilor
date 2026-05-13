@@ -6,7 +6,8 @@ import {
   useCallback,
   type ReactNode,
 } from 'react';
-import type { SupportedLanguage } from '@/i18n/types';
+import type { SupportedLanguage, LocaleResource } from '@/i18n/types';
+import { loadLocale, getLocaleSync } from '@/i18n/index';
 import { safeGetItem, safeSetItem } from '@/lib/storage';
 import { veilorDb } from '@/integrations/supabase/client';
 import { supabase } from '@/integrations/supabase/client';
@@ -15,13 +16,10 @@ interface LanguageContextValue {
   language: SupportedLanguage;
   setLanguage: (lang: SupportedLanguage) => void;
   isLoading: boolean;
+  translations: LocaleResource | null;
 }
 
 const STORAGE_KEY = 'veilor_lang';
-
-const LanguageContext = createContext<LanguageContextValue | undefined>(
-  undefined,
-);
 
 function getInitialLanguage(): SupportedLanguage {
   try {
@@ -30,7 +28,6 @@ function getInitialLanguage(): SupportedLanguage {
   } catch {
     // SSR or localStorage unavailable
   }
-  // 브라우저 언어 감지 (localStorage 미설정 시)
   if (typeof navigator !== 'undefined') {
     const browserLang = navigator.language?.slice(0, 2);
     if (browserLang === 'ko') return 'ko';
@@ -39,11 +36,21 @@ function getInitialLanguage(): SupportedLanguage {
   return 'en';
 }
 
+const LanguageContext = createContext<LanguageContextValue | undefined>(undefined);
+
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguageState] = useState<SupportedLanguage>(
-    getInitialLanguage,
-  );
+  const [language, setLanguageState] = useState<SupportedLanguage>(getInitialLanguage);
+  const [translations, setTranslations] = useState<LocaleResource | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // locale 동적 로드
+  useEffect(() => {
+    let cancelled = false;
+    loadLocale(language).then(t => {
+      if (!cancelled) setTranslations(t);
+    });
+    return () => { cancelled = true; };
+  }, [language]);
 
   // 로그인 상태에서 DB preferred_lang 로드 → localStorage보다 우선
   useEffect(() => {
@@ -69,7 +76,6 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     setLanguageState(lang);
     safeSetItem(STORAGE_KEY, lang);
     document.documentElement.lang = lang;
-    // 로그인 상태면 DB에도 저장
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) return;
       veilorDb
@@ -84,8 +90,11 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     document.documentElement.lang = language;
   }, [language]);
 
+  // translations 로드 전 앱 렌더 차단 — useT()가 항상 non-null 보장
+  if (!translations) return null;
+
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, isLoading }}>
+    <LanguageContext.Provider value={{ language, setLanguage, isLoading, translations }}>
       {children}
     </LanguageContext.Provider>
   );

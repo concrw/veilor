@@ -1,11 +1,10 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import * as Sentry from '@sentry/react';
-import { en } from '@/i18n/en';
-import { ko } from '@/i18n/ko';
+import { errorBoundaryStrings } from '@/i18n/errorBoundaryStrings';
 
 const getErrorStrings = () => {
-  const lang = (typeof localStorage !== 'undefined' && localStorage.getItem('veilor_lang')) || 'ko';
-  return lang === 'en' ? en.errorBoundary : ko.errorBoundary;
+  const lang = (typeof localStorage !== 'undefined' && localStorage.getItem('veilor_lang')) || 'en';
+  return errorBoundaryStrings[lang as keyof typeof errorBoundaryStrings] ?? errorBoundaryStrings.en;
 };
 
 interface Props {
