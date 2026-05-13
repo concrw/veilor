@@ -303,9 +303,14 @@ test.describe('CommunityPage (/home/community)', () => {
 // 9. GuestLanding (비로그인)
 // ══════════════════════════════════════════════════════════════════════════════
 test.describe('GuestLanding (비로그인 /)', () => {
-  test('비로그인 상태에서 / 접속 — 에러 없음 + 시작하기 버튼 노출', async ({ page }) => {
+  test('비로그인 상태에서 / 접속 — 에러 없음 + 시작하기 버튼 노출', async ({ page, context }) => {
     test.setTimeout(60_000);
-    // 로그인하지 않은 상태로 / 접속
+    // 이전 테스트에서 남은 세션 쿠키 제거 후 비로그인 상태로 접속
+    await context.clearCookies();
+    await page.evaluate(() => {
+      localStorage.clear();
+      sessionStorage.clear();
+    }).catch(() => null);
     await page.goto('/');
     await page
       .locator('.animate-spin')
@@ -314,20 +319,23 @@ test.describe('GuestLanding (비로그인 /)', () => {
 
     await expectNoError(page);
 
-    // GuestLanding 모바일(landing phase) 하단 버튼:
-    //   GuestLanding.tsx:244 — s.joinBtn = '가입하고 참여하기'
-    // 데스크톱 RightPanel 버튼(hidden lg:flex)은 375px에서 DOM에 없음
-    const joinBtn = page.locator('button', { hasText: '가입하고 참여하기' }).first();
-    const joinVisible = await joinBtn.isVisible({ timeout: 10_000 }).catch(() => false);
-    if (joinVisible) {
-      expect(joinVisible).toBe(true);
+    // GuestLanding 모바일 버튼 — phase별 텍스트:
+    //   entry phase: s.startFree = '시작하기 — 무료' (line 120)
+    //   chat phase after entry: s.joinBtn = '가입하고 참여하기' (line 195)
+    //   insight phase: s.insightCta = '가입하고 내 패턴 전체 보기' (line 240)
+    const ctaBtn = page.locator('button').filter({
+      hasText: /시작하기|가입하고|무료/i,
+    }).first();
+    const ctaVisible = await ctaBtn.isVisible({ timeout: 10_000 }).catch(() => false);
+    if (ctaVisible) {
+      expect(ctaVisible).toBe(true);
       return;
     }
 
     // RootRedirect가 비로그인 → GuestLanding 대신 /auth/login으로 리다이렉트할 수 있음
     const loginInput = page.locator('input[type="email"]');
     const loginInputVisible = await loginInput.isVisible({ timeout: 5_000 }).catch(() => false);
-    expect(joinVisible || loginInputVisible).toBe(true);
+    expect(ctaVisible || loginInputVisible).toBe(true);
   });
 });
 

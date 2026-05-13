@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMode, type UXMode, DOMAIN_MODES } from '@/context/ModeContext';
 import { useDomain, type Domain } from '@/context/DomainContext';
-import { useLanguageContext } from '@/context/LanguageContext';
 import { C, alpha } from '@/lib/colors';
 import { useT } from '@/i18n/useT';
 
@@ -14,44 +13,22 @@ const IKIGAI_CIRCLES: {
   id: Domain;
   cx: number; cy: number;
   lx: number; ly: number;
-  labelKo: string; labelEn: string;
   color: string;
-  coreQ: { ko: string; en: string };
 }[] = [
-  {
-    id: 'self',     cx: 0,   cy: -52, lx: 0,    ly: -135,
-    labelKo: '자기', labelEn: 'Self',
-    color: '#E0B48A',
-    coreQ: { ko: '나는 지금 무엇을 느끼고 있는가?', en: 'What am I feeling right now?' },
-  },
-  {
-    id: 'work',     cx: 52,  cy: 0,   lx: 135,  ly: 4,
-    labelKo: '사업', labelEn: 'Work',
-    color: '#38BDF8',
-    coreQ: { ko: '오늘 집중할 한 가지는 무엇인가?', en: 'What is the one thing to focus on today?' },
-  },
-  {
-    id: 'relation', cx: 0,   cy: 52,  lx: 0,    ly: 142,
-    labelKo: '관계', labelEn: 'Relation',
-    color: '#FB7185',
-    coreQ: { ko: '이 관계에서 나는 어떤 역할을 하고 있는가?', en: 'What role am I playing in this relationship?' },
-  },
-  {
-    id: 'social',   cx: -52, cy: 0,   lx: -135, ly: 4,
-    labelKo: '사회', labelEn: 'Social',
-    color: '#7FB89A',
-    coreQ: { ko: '나는 무엇에 기여하고 싶은가?', en: 'What do I want to contribute to?' },
-  },
+  { id: 'self',     cx: 0,   cy: -52, lx: 0,    ly: -135, color: '#E0B48A' },
+  { id: 'work',     cx: 52,  cy: 0,   lx: 135,  ly: 4,    color: '#38BDF8' },
+  { id: 'relation', cx: 0,   cy: 52,  lx: 0,    ly: 142,  color: '#FB7185' },
+  { id: 'social',   cx: -52, cy: 0,   lx: -135, ly: 4,    color: '#7FB89A' },
 ];
 
 interface IkigaiDiagramProps {
   selected: Domain;
   onSelect: (d: Domain) => void;
   size?: number;
-  language: 'ko' | 'en';
 }
 
-function IkigaiDiagram({ selected, onSelect, size = 280, language }: IkigaiDiagramProps) {
+function IkigaiDiagram({ selected, onSelect, size = 280 }: IkigaiDiagramProps) {
+  const domains = useT().modeSelect.domains;
   return (
     <svg
       viewBox="-160 -160 320 320"
@@ -79,7 +56,7 @@ function IkigaiDiagram({ selected, onSelect, size = 280, language }: IkigaiDiagr
       })}
       {IKIGAI_CIRCLES.map(c => {
         const isSelected = selected === c.id;
-        const label = language === 'ko' ? c.labelKo : c.labelEn;
+        const label = domains[c.id]?.name ?? c.id;
         const textAnchor =
           c.lx > 50 ? 'start' :
           c.lx < -50 ? 'end' :
@@ -140,7 +117,6 @@ export default function ModeSelect() {
   const { setMode, dismissFirstVisit } = useMode();
   const { setDomain } = useDomain();
   const navigate = useNavigate();
-  const { language } = useLanguageContext();
   const t = useT();
   const s = t.modeSelect;
 
@@ -186,7 +162,6 @@ export default function ModeSelect() {
                 selected={selectedDomain}
                 onSelect={setSelectedDomain}
                 size={280}
-                language={language}
               />
             </div>
           )}
@@ -245,16 +220,14 @@ export default function ModeSelect() {
                 selected={selectedDomain}
                 onSelect={setSelectedDomain}
                 size={280}
-                language={language}
               />
             </div>
 
             {/* 선택된 도메인 정보 카드 — key로 fade 효과 */}
             {(() => {
               const meta = DOMAIN_META.find(m => m.id === selectedDomain)!;
-              const circle = IKIGAI_CIRCLES.find(c => c.id === selectedDomain)!;
               const dt = s.domains[selectedDomain];
-              const coreQ = language === 'ko' ? circle.coreQ.ko : circle.coreQ.en;
+              const coreQ = dt.coreQ;
               return (
                 <div
                   key={selectedDomain}
@@ -287,7 +260,7 @@ export default function ModeSelect() {
               className="w-full max-w-sm font-semibold text-sm py-3.5 rounded-2xl transition-colors"
               style={{ background: C.amber, color: C.bg }}
             >
-              {language === 'ko' ? '다음' : 'Next'}
+              {t.common.next}
             </button>
 
             <button

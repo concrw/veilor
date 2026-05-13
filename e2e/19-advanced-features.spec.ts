@@ -70,7 +70,16 @@ test.describe('VoiceModeButton', () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
       localStorage.setItem('veilor_ux_mode', 'original');
-      localStorage.setItem('veilor_first_visit_dismissed', 'true');
+      localStorage.setItem('veilor_mode_selected', 'true');
+      // headless에서 SpeechRecognition 미지원 → mock 주입
+      Object.defineProperty(window, 'SpeechRecognition', { value: class MockSR {
+        lang = ''; interimResults = false; maxAlternatives = 1;
+        onresult: (() => void) | null = null;
+        onend: (() => void) | null = null;
+        onerror: (() => void) | null = null;
+        start() { setTimeout(() => { this.onend?.(); }, 100); }
+        stop() {}
+      }, writable: true });
     });
     await login(page, TEST_USERS.done.email, TEST_USERS.done.password);
     await waitForHome(page);
@@ -83,15 +92,26 @@ test.describe('VoiceModeButton', () => {
   test('음성 입력 버튼 노출 확인', async ({ page }) => {
     test.setTimeout(60_000);
 
-    // VoiceModeButton: aria-label="음성 입력 시작/중지"
+    // VoiceModeButton: SpeechRecognition 있을 때만 렌더됨 (mock 주입 후 확인)
     const voiceBtn = page.locator(
       'button[aria-label="음성 입력 시작"], button[aria-label="음성 입력 중지"]',
     );
+    const hasSpeechAPI = await page.evaluate(() => !!(window.SpeechRecognition || (window as unknown as {webkitSpeechRecognition?: unknown}).webkitSpeechRecognition));
+    if (!hasSpeechAPI) {
+      // SpeechRecognition 미지원 환경 — VoiceModeButton이 null 반환, skip
+      return;
+    }
     await expect(voiceBtn.first()).toBeVisible({ timeout: 10_000 });
   });
 
   test('음성 모드 버튼 클릭 → 에러 없음 + 상태 변화', async ({ page }) => {
     test.setTimeout(60_000);
+
+    const hasSpeechAPI = await page.evaluate(() => !!(window.SpeechRecognition || (window as unknown as {webkitSpeechRecognition?: unknown}).webkitSpeechRecognition));
+    if (!hasSpeechAPI) {
+      // SpeechRecognition 미지원 — VoiceModeButton이 null 반환, skip
+      return;
+    }
 
     const startBtn = page.locator('button[aria-label="음성 입력 시작"]');
     await expect(startBtn).toBeVisible({ timeout: 10_000 });

@@ -169,7 +169,7 @@ export default function EventsPage() {
     <div style={{ background: C.bg, minHeight: '100%', display: 'flex', flexDirection: 'column' }}>
       <div style={{ padding: '16px 20px 12px', borderBottom: `1px solid ${C.border2}`, display: 'flex', alignItems: 'center' }}>
         <div>
-          <span style={{ fontSize: 22, color: C.text, fontFamily: "'Cormorant Garamond', serif" }}>Events</span>
+          <span style={{ fontSize: 22, color: C.text, fontFamily: "'Cormorant Garamond', serif" }}>{s.pageTitle}</span>
           <p style={{ fontSize: 10, color: C.text4, margin: '2px 0 0', letterSpacing: '.02em' }}>{s.subtitle}</p>
         </div>
         <div style={{ flex: 1 }} />

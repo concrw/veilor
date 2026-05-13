@@ -199,7 +199,7 @@ export default function ChatView({
               className="text-[12px] font-medium px-5 py-2 rounded-full transition-all animate-pulse"
               style={{ border: `1px solid ${alpha(C.amber, 0.7)}`, color: C.amber, background: alpha(C.amber, 0.12) }}
             >
-              Dig으로 이동 →
+              {vent.chat.digButton}
             </button>
           </div>
         )}

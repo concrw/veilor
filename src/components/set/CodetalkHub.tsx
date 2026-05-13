@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { veilorDb } from '@/integrations/supabase/client';
 import { C, alpha } from '@/lib/colors';
 import { useLanguageContext } from '@/context/LanguageContext';
+import { useT } from '@/i18n/useT';
 import type { VeilorCodetalkKeyword } from '@/integrations/supabase/veilor-types';
 
 type CodetalkMode = 'hub' | 'daily' | 'category' | 'relation';
@@ -31,60 +32,11 @@ const PSYCH_CHIPS = [
   { code: 'psych_growth',   label: 'GROWTH' },
 ];
 
-const TEXTS = {
-  ko: {
-    header: '◇ RAPAILLE IMPRINT METHOD · 3 MODES',
-    daily: {
-      title: '① 그날의 코드토크 · DAILY',
-      badge: '오늘 06:00 도착',
-      desc: '정의 + 각인을 쓰면, 같은 키워드를 작성한 N명의 익명 코드토크를 열람할 수 있어요.',
-      cta: '오늘 작성하기 →',
-      done: '오늘 작성 완료 ✓',
-    },
-    category: {
-      title: '② 카테고리별 · DEEP DIVE',
-      desc: '관계·심리 카테고리별로 원하는 키워드를 골라 각인할 수 있어요.',
-    },
-    relation: {
-      title: '③ 관계별 · WITH',
-      desc: '파트너와 함께 같은 키워드를 탐색해요. PairTrust 승인이 필요합니다.',
-      addBtn: '+ 파트너 추가',
-      partnerCount: (n: number) => `활성 파트너 ${n}명`,
-      noneDesc: 'PairTrust로 파트너를 연결해요',
-      goBtn: '파트너 연결하기 →',
-    },
-    weeklyLabel: (n: number, streak: number) => `이번 주 ${n}/7 · 연속 ${streak}일`,
-  },
-  en: {
-    header: '◇ RAPAILLE IMPRINT METHOD · 3 MODES',
-    daily: {
-      title: '① Daily Codetalk · DAILY',
-      badge: 'Arrives 06:00 today',
-      desc: 'Write a definition + imprint to read anonymous codetalk from others with the same keyword.',
-      cta: 'Write today →',
-      done: 'Today complete ✓',
-    },
-    category: {
-      title: '② By Category · DEEP DIVE',
-      desc: 'Choose any keyword by relationship or psychology category.',
-    },
-    relation: {
-      title: '③ By Relation · WITH',
-      desc: 'Explore the same keyword with a partner. PairTrust approval required.',
-      addBtn: '+ Add partner',
-      partnerCount: (n: number) => `${n} active partner${n !== 1 ? 's' : ''}`,
-      noneDesc: 'Connect partners via PairTrust',
-      goBtn: 'Connect partner →',
-    },
-    weeklyLabel: (n: number, streak: number) => `This week ${n}/7 · ${streak}-day streak`,
-  },
-};
-
 export default function CodetalkHub({ onModeSelect, keyword, todayEntry }: CodetalkHubProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { language } = useLanguageContext();
-  const t = TEXTS[language === 'ko' ? 'ko' : 'en'];
+  const { language: _language } = useLanguageContext();
+  const t = useT().codetalkHub;
 
   const { data: profile } = useQuery({
     queryKey: ['user-profile-streak', user?.id],
@@ -315,7 +267,7 @@ export default function CodetalkHub({ onModeSelect, keyword, todayEntry }: Codet
               padding: '2px 8px',
               letterSpacing: '0.04em',
             }}>
-              {t.relation.partnerCount(partnerCount)}
+              {t.partnerCount(partnerCount)}
             </span>
           )}
         </div>
@@ -338,7 +290,7 @@ export default function CodetalkHub({ onModeSelect, keyword, todayEntry }: Codet
                   Lv.{p.trust_level}
                 </p>
                 <p style={{ fontSize: 10, color: C.text3, marginTop: 2 }}>
-                  {p.grantor_id === user?.id ? '→ 부여' : '← 수신'}
+                  {p.grantor_id === user?.id ? t.relation.directionOut : t.relation.directionIn}
                 </p>
               </div>
             ))}

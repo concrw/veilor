@@ -161,7 +161,7 @@ function DigPageInner() {
           isPending={searchMutation.isPending}
         />
 
-        {(situation === '연인/파트너' || situation === '가족' || situation === '친구') && (
+        {([dig.situations[0], dig.situations[1], dig.situations[2]].includes(situation)) && (
           <PartnerPatternInference
             onIntegrate={(inferredText) => setText(prev => prev ? `${prev}\n\n${inferredText}` : inferredText)}
           />

@@ -121,9 +121,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return;
       }
 
+      // syncOnboarding을 먼저 완료한 뒤 user/session/loading을 한 번에 세팅.
+      // setUser를 먼저 호출하면 Login.tsx useEffect가 loading=false 이전에
+      // navigate('/')를 실행해 onboardingStep 초기값('welcome')으로 RootRedirect 렌더됨.
+      await syncOnboarding(sess.user.id);
       setSession(sess);
       setUser(sess.user);
-      await syncOnboarding(sess.user.id);
       setLoading(false);
     });
 

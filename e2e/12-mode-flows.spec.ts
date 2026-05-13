@@ -18,7 +18,7 @@ import { login, waitForHome, TEST_USERS } from './helpers';
 async function setMode(page: import('@playwright/test').Page, mode: 'original' | 'clear' | 'routine') {
   await page.addInitScript((m) => {
     localStorage.setItem('veilor_ux_mode', m);
-    localStorage.setItem('veilor_first_visit_dismissed', 'true');
+    localStorage.setItem('veilor_mode_selected', 'true');
   }, mode);
 }
 
@@ -51,7 +51,7 @@ test.describe('ModeSelect 화면', () => {
   test('3개 모드 카드 렌더링', async ({ page }) => {
     // first_visit_dismissed 없이 로그인 → RootRedirect가 /onboarding/mode-select로 보냄
     await page.addInitScript(() => {
-      localStorage.removeItem('veilor_first_visit_dismissed');
+      localStorage.removeItem('veilor_mode_selected');
       localStorage.removeItem('veilor_ux_mode');
     });
     await login(page, TEST_USERS.done.email, TEST_USERS.done.password);
@@ -79,7 +79,7 @@ test.describe('모드별 홈 렌더링', () => {
   async function loginWithMode(page: import('@playwright/test').Page, mode: 'original' | 'clear' | 'routine') {
     await page.addInitScript((m) => {
       localStorage.setItem('veilor_ux_mode', m);
-      localStorage.setItem('veilor_first_visit_dismissed', 'true');
+      localStorage.setItem('veilor_mode_selected', 'true');
     }, mode);
     await login(page, TEST_USERS.done.email, TEST_USERS.done.password);
     await waitForHome(page);
@@ -118,7 +118,7 @@ test.describe('모드별 Dig 뷰 분기', () => {
     // addInitScript: 모든 탐색에 앞서 실행 → ModeContext 마운트 시 'clear' 읽음
     await page.addInitScript(() => {
       localStorage.setItem('veilor_ux_mode', 'clear');
-      localStorage.setItem('veilor_first_visit_dismissed', 'true');
+      localStorage.setItem('veilor_mode_selected', 'true');
     });
     await login(page, TEST_USERS.done.email, TEST_USERS.done.password);
     await waitForHome(page);
@@ -136,7 +136,7 @@ test.describe('모드별 Dig 뷰 분기', () => {
   test('[original] Dig → M43 패턴 뷰', async ({ page }) => {
     await page.addInitScript(() => {
       localStorage.setItem('veilor_ux_mode', 'original');
-      localStorage.setItem('veilor_first_visit_dismissed', 'true');
+      localStorage.setItem('veilor_mode_selected', 'true');
     });
     await login(page, TEST_USERS.done.email, TEST_USERS.done.password);
     await waitForHome(page);
@@ -152,7 +152,7 @@ test.describe('모드별 Me 뷰 분기', () => {
   test('[clear] Me → ClearMeView (캘린더 히트맵)', async ({ page }) => {
     await page.addInitScript(() => {
       localStorage.setItem('veilor_ux_mode', 'clear');
-      localStorage.setItem('veilor_first_visit_dismissed', 'true');
+      localStorage.setItem('veilor_mode_selected', 'true');
     });
     await login(page, TEST_USERS.done.email, TEST_USERS.done.password);
     await waitForHome(page);
@@ -170,7 +170,7 @@ test.describe('모드별 Me 뷰 분기', () => {
   test('[original] Me → 성장/사람/Zone 탭', async ({ page }) => {
     await page.addInitScript(() => {
       localStorage.setItem('veilor_ux_mode', 'original');
-      localStorage.setItem('veilor_first_visit_dismissed', 'true');
+      localStorage.setItem('veilor_mode_selected', 'true');
     });
     await login(page, TEST_USERS.done.email, TEST_USERS.done.password);
     await waitForHome(page);
@@ -186,7 +186,7 @@ test.describe('SexSelf 라우트', () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
       localStorage.setItem('veilor_ux_mode', 'original');
-      localStorage.setItem('veilor_first_visit_dismissed', 'true');
+      localStorage.setItem('veilor_mode_selected', 'true');
     });
     await login(page, TEST_USERS.done.email, TEST_USERS.done.password);
     await waitForHome(page);
@@ -243,7 +243,7 @@ test.describe('탭 네비게이션 전환 (original 모드)', () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
       localStorage.setItem('veilor_ux_mode', 'original');
-      localStorage.setItem('veilor_first_visit_dismissed', 'true');
+      localStorage.setItem('veilor_mode_selected', 'true');
     });
     await login(page, TEST_USERS.done.email, TEST_USERS.done.password);
     await waitForHome(page);

@@ -26,7 +26,7 @@ const LanguageContext = createContext<LanguageContextValue | undefined>(
 function getInitialLanguage(): SupportedLanguage {
   try {
     const stored = safeGetItem(STORAGE_KEY);
-    if (stored === 'ko' || stored === 'en') return stored;
+    if (stored === 'ko' || stored === 'en' || stored === 'ja') return stored;
   } catch {
     // SSR or localStorage unavailable
   }
@@ -34,6 +34,7 @@ function getInitialLanguage(): SupportedLanguage {
   if (typeof navigator !== 'undefined') {
     const browserLang = navigator.language?.slice(0, 2);
     if (browserLang === 'ko') return 'ko';
+    if (browserLang === 'ja') return 'ja';
   }
   return 'en';
 }
@@ -55,7 +56,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
         .eq('user_id', user.id)
         .single();
       if (cancelled) return;
-      if (data?.preferred_lang === 'ko' || data?.preferred_lang === 'en') {
+      if (data?.preferred_lang === 'ko' || data?.preferred_lang === 'en' || data?.preferred_lang === 'ja') {
         setLanguageState(data.preferred_lang as SupportedLanguage);
         safeSetItem(STORAGE_KEY, data.preferred_lang);
       }

@@ -6,29 +6,8 @@ import { useT } from '@/i18n/useT';
 import { veilorDb } from '@/integrations/supabase/client';
 import type { Domain } from '@/context/DomainContext';
 
-const MANTRAS: Record<Domain, string[]> = {
-  self:     ['내 페이스가 옳다', '오늘 한 걸음이면 충분하다', '쉼도 일이다', '비교는 내 일이 아니다', '나는 변해도 괜찮다'],
-  work:     ['깊게, 그러나 좁게', '끝낸 것만 일이다', '거절은 집중이다', '완벽보다 출시', '내 시간은 내 자산이다'],
-  relation: ['듣는 게 먼저다', '내 경계가 곧 사랑이다', '기대는 합의해야 한다', '거리도 친밀이다', '정직이 가장 부드럽다'],
-  social:   ['관심은 바뀌어도 된다', '작은 시선도 행동이다', '모든 걸 책임지지 않아도 된다', '쉬는 것이 곧 지속이다', '함께가 길이다'],
-};
-
-const MANTRAS_EN: Record<Domain, string[]> = {
-  self:     ['My pace is right', 'One step today is enough', 'Rest is also work', 'Comparison is not my job', "It's okay for me to change"],
-  work:     ['Deep, but narrow', 'Only finished work counts', 'Saying no is focus', 'Ship over perfect', 'My time is my asset'],
-  relation: ['Listening comes first', 'My boundary is love', 'Expectations need agreement', 'Distance can be intimacy', 'Honesty is the softest'],
-  social:   ['Interests can change', 'A small glance is action', "I don't have to own everything", 'Resting is sustaining', 'Together is the way'],
-};
-
 const DOMAIN_COLOR: Record<Domain, string> = {
   self: '#E0B48A', work: '#38BDF8', relation: '#FB7185', social: '#7FB89A',
-};
-
-const DOMAIN_NAME: Record<Domain, { ko: string; en: string }> = {
-  self:     { ko: '자아', en: 'Self' },
-  work:     { ko: '일', en: 'Work' },
-  relation: { ko: '관계', en: 'Relation' },
-  social:   { ko: '사회', en: 'Social' },
 };
 
 const TOTAL = 10;
@@ -43,9 +22,9 @@ export default function MantraCorner({ domain }: MantraCornerProps) {
   const t = useT();
   const s = t.set.mantraCorner;
 
-  const mantras = language === 'en' ? MANTRAS_EN[domain] : MANTRAS[domain];
+  const mantras = s.mantras[domain] ?? [];
   const color = DOMAIN_COLOR[domain];
-  const domainName = DOMAIN_NAME[domain][language === 'en' ? 'en' : 'ko'];
+  const domainName = s.domainNames[domain] ?? domain;
 
   const [mantraIdx, setMantraIdx] = useState(0);
   const [count, setCount] = useState(0);
@@ -186,7 +165,7 @@ export default function MantraCorner({ domain }: MantraCornerProps) {
             lineHeight: 1,
             padding: '4px',
           }}
-          aria-label="닫기"
+          aria-label={t.common.close}
         >
           ✕
         </button>

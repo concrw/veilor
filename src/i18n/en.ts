@@ -2000,7 +2000,7 @@ export const en: LocaleResource = {
     sidebarHeading: 'Discover your pattern\namong 12 relationship masks',
     sidebarSubtext: 'Composed of 40 questions.\nThe more honest your answers, the more accurate the result.',
     heading: 'Find your V-File',
-    subtext: 'Discover the pattern closest to you among 12 relationship masks',
+    subtext: 'Discover the pattern closest\nto you among 12 relationship masks',
     items: ['40 questions · about 8 minutes', 'More honest = more accurate', 'Results are visible only to you', 'You can pause and continue later'],
     btnStart: 'Start analysis',
     disclaimer: 'V-File is a self-exploration tool and does not replace professional psychological counseling or medical diagnosis.\nPlease use results as exploratory reference material.\nIf you are experiencing mental health difficulties, professional counseling is recommended.',

@@ -35,3 +35,12 @@ WHERE scope_ref = 'veilor' AND is_active = true;
 
 ## Code Quality Rules
 - Split a component when: (1) cyclomatic complexity > 20, (2) it has more than one reason to change, or (3) logic is reused in 2+ places
+
+## i18n 규칙 (위반 금지)
+
+**새 파일 작성 시 UI 텍스트는 처음부터 i18n 키로 작성한다. 하드코딩 임시 작성 후 나중에 상수화하는 방식 금지.**
+
+- 새 페이지/컴포넌트 생성 시: `useT()` import → i18n 키 추가(en.ts/ko.ts/ja.ts/types.ts) → `t.xxx` 사용. 이 순서 고정.
+- JSX 내 한국어/영어 문자열 리터럴 직접 삽입 금지. (`>텍스트<`, placeholder="텍스트", aria-label="텍스트" 포함)
+- 파일 내 로컬 `TEXT = {ko, en}` 패턴 신규 작성 금지. 기존 파일의 해당 패턴은 발견 시 i18n으로 이전.
+- 작업 완료 선언 전 반드시 실행: `grep -rn "[가-힣]" src/ --include="*.tsx" | grep -v "^\s*//"` → 렌더링 영역 한국어 0건 확인.

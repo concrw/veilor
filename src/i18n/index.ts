@@ -1,5 +1,6 @@
 export { ko } from './ko';
 export { en } from './en';
+export { ja } from './ja';
 export type {
   SupportedLanguage,
   TranslationFunction,
@@ -10,7 +11,8 @@ export type {
 
 import { ko } from './ko';
 import { en } from './en';
+import { ja } from './ja';
 import type { LocaleMap } from './types';
 
 /** All available locales keyed by language code */
-export const locales: LocaleMap = { ko, en };
+export const locales: LocaleMap = { ko, en, ja };

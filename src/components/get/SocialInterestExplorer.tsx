@@ -85,17 +85,6 @@ const STATUS_COLORS: Record<InterestStatus, string> = {
   revisit: '#C4A355',
 };
 
-const STATUS_LABELS_KO: Record<InterestStatus, string> = {
-  active:  '관심 중',
-  dormant: '잠시 멀어짐',
-  revisit: '다시 보기',
-};
-
-const STATUS_LABELS_EN: Record<InterestStatus, string> = {
-  active:  'Active',
-  dormant: 'Dormant',
-  revisit: 'Revisit',
-};
 
 // ────────────────────────────────────────────────────────────
 // 컴포넌트
@@ -106,6 +95,7 @@ export default function SocialInterestExplorer() {
   const { language } = useLanguageContext();
   const t = useT();
   const ti = t.me.impact;
+  const si = t.socialInterest;
   const qc = useQueryClient();
   const isKo = language === 'ko';
 
@@ -114,25 +104,7 @@ export default function SocialInterestExplorer() {
   const [level3Open, setLevel3Open] = useState<Record<string, boolean>>({});
   const [level3Text, setLevel3Text] = useState<Record<string, string>>({});
 
-  const L3 = {
-    ko: {
-      question: '왜 이것이 문제라고 생각하나요? 떠오르는 대로 써보세요.',
-      placeholder: '분량 제한 없어요...',
-      save: '저장',
-      skip: '나중에 쓸게요',
-      openExisting: '페인포인트 보기',
-      openNew: '더 깊이 써볼까요?',
-    },
-    en: {
-      question: 'Why do you think this is a problem? Write whatever comes to mind.',
-      placeholder: 'No length limit...',
-      save: 'Save',
-      skip: 'Maybe later',
-      openExisting: 'View pain point',
-      openNew: 'Go deeper?',
-    },
-  };
-  const l3 = isKo ? L3.ko : L3.en;
+  const l3 = si.l3;
 
   // 내 관심사 조회
   const { data: interests = [] } = useQuery<SocialInterest[]>({
@@ -306,7 +278,7 @@ export default function SocialInterestExplorer() {
                     padding: '2px 8px',
                   }}
                 >
-                  {isKo ? STATUS_LABELS_KO[lvl1Interest.status] : STATUS_LABELS_EN[lvl1Interest.status]}
+                  {si.statusLabels[lvl1Interest.status]}
                 </span>
               )}
 
@@ -343,7 +315,7 @@ export default function SocialInterestExplorer() {
                           transition: 'all .15s',
                         }}
                       >
-                        {isKo ? STATUS_LABELS_KO[st] : STATUS_LABELS_EN[st]}
+                        {si.statusLabels[st]}
                       </button>
                     ))}
                   </div>

@@ -8,6 +8,7 @@
  * loading=true 무한 스피너 현상 발생. pushState + popstate 방식으로 이동해야 함.
  */
 import { test, expect } from '@playwright/test';
+import { waitForHome } from './helpers';
 
 // e2e.test.1777802660865@gmail.com — SUPERADMIN_EMAILS 등록된 전용 e2e 관리자 계정
 const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL ?? 'e2e.test.1777802660865@gmail.com';
@@ -26,7 +27,7 @@ test.describe('관리자 대시보드 — 가상유저 활동 주입', () => {
     await page.locator('input[type="email"]').fill(ADMIN_EMAIL);
     await page.locator('input[type="password"]').fill(ADMIN_PW);
     await page.locator('button', { hasText: '로그인' }).first().click();
-    await page.waitForURL((url) => url.pathname.startsWith('/home'), { timeout: 40_000 });
+    await waitForHome(page);
   });
 
   test('/admin 진입 → B2C·가상유저 탭 렌더링', async ({ page }) => {

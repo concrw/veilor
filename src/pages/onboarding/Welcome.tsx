@@ -2,54 +2,13 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguageContext } from '@/context/LanguageContext';
+import { useT } from '@/i18n/useT';
 import type { SupportedLanguage } from '@/i18n/types';
 
 const LANG_OPTIONS: { value: SupportedLanguage; label: string; native: string }[] = [
-  { value: 'ko', label: '한국어', native: 'KO' },
-  { value: 'en', label: 'English', native: 'EN' },
+  { value: 'ko', label: 'KO', native: 'KO' },
+  { value: 'en', label: 'EN', native: 'EN' },
 ];
-
-// 온보딩 텍스트는 선택된 언어에 따라 직접 분기 (useTranslation 대신)
-const TEXT = {
-  ko: {
-    subtitle: '관계의 가면을 발견하는 여정',
-    step1: '엠버와의 첫 대화',
-    step1Desc: '지금 관계에서 느끼는 것을 자유롭게 털어놓으세요.',
-    step2: '핵심 질문 4가지',
-    step2Desc: '나의 관계 방식과 감정 스타일을 파악합니다.',
-    step3: 'V-File 진단',
-    step3Desc: '12가지 관계 가면 중 당신의 패턴을 발견합니다.',
-    amberhello: '안녕하세요. 저는 엠버예요.',
-    amberdesc: '모든 관계에는 보이지 않는 패턴이 있어요. 당신만의 패턴을 함께 찾아볼까요?',
-    question: '요즘 관계에서 가장 마음에 걸리는 게 있다면, 한 줄로 말해줄 수 있어요?',
-    questionHint: '건너뛰어도 괜찮아요',
-    placeholder: '예: 가까워지면 왜 자꾸 밀어내게 되는지 모르겠어요',
-    startWithAnswer: '이 마음을 가지고 시작하기',
-    start: '시작하기',
-    skipToVfile: '바로 V-File 진단으로 →',
-    disclaimer: 'VEILOR은 자기탐색 도구이며, 전문 심리상담 또는 치료를 대체하지 않습니다.',
-    langLabel: '언어',
-  },
-  en: {
-    subtitle: 'Discover your relationship language',
-    step1: 'First chat with Amber',
-    step1Desc: 'Share what you\'re feeling in your relationships right now.',
-    step2: '4 core questions',
-    step2Desc: 'We\'ll understand your relationship style and emotional patterns.',
-    step3: 'V-File diagnosis',
-    step3Desc: 'Discover your pattern among 12 relationship masks.',
-    amberhello: 'Hi, I\'m Amber.',
-    amberdesc: 'Every relationship has invisible patterns. Let\'s discover yours together.',
-    question: 'Is there anything on your mind about relationships lately? Share in one line.',
-    questionHint: 'You can skip this',
-    placeholder: 'e.g. I don\'t know why I push people away when I get close',
-    startWithAnswer: 'Start with this in mind',
-    start: 'Get started',
-    skipToVfile: 'Go straight to V-File →',
-    disclaimer: 'VEILOR is a self-exploration tool and does not replace professional counseling or therapy.',
-    langLabel: 'Language',
-  },
-};
 
 export default function Welcome() {
   const navigate = useNavigate();
@@ -58,7 +17,7 @@ export default function Welcome() {
   const [phase, setPhase] = useState<'greeting' | 'question' | 'ready'>('greeting');
   const [answer, setAnswer] = useState('');
 
-  const t = TEXT[language] ?? TEXT.ko;
+  const t = useT().onboarding.welcome;
 
   useEffect(() => {
     const t1 = setTimeout(() => setPhase('question'), 2000);
@@ -153,10 +112,10 @@ export default function Welcome() {
                   style={{ background: '#292524', border: '1px solid #44403C' }}
                 >
                   <p className="text-sm leading-relaxed" style={{ color: '#F5F5F4' }}>
-                    {t.amberhello}
+                    {t.amberHello}
                   </p>
                   <p className="text-sm leading-relaxed mt-2" style={{ color: '#B8B3AF' }}>
-                    {t.amberdesc}
+                    {t.amberDesc}
                   </p>
                 </div>
               </div>

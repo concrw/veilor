@@ -242,6 +242,7 @@ export default function HomeLayout() {
       <AILeadOverlay
         open={aiLeadOpen}
         onClose={() => setAiLeadOpen(false)}
+        aiName={t.vent.amberName}
         currentTab={currentTab}
       />
 

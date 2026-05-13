@@ -2,9 +2,6 @@ import { useState } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useDigTranslations } from '@/hooks/useTranslation';
-import { useLanguageContext } from '@/context/LanguageContext';
-
-const HINT_PREFIX = { ko: '힌트', en: 'Hint' } as const;
 
 interface Division {
   id: string;
@@ -34,8 +31,7 @@ export function DigSearchForm({
   onSubmit, isPending,
 }: DigSearchFormProps) {
   const dig = useDigTranslations();
-  const { language } = useLanguageContext();
-  const hintPrefix = HINT_PREFIX[language] ?? HINT_PREFIX.ko;
+  const hintPrefix = dig.hintPrefix;
   const [usedPrompt, setUsedPrompt] = useState<string | null>(null);
   const socraticPrompts = situation ? (dig.codetalk.socraticPrompts[situation] ?? []) : [];
 

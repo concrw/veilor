@@ -7,19 +7,25 @@
  */
 import { test, expect } from '@playwright/test';
 import { login, waitForHome, TEST_USERS } from './helpers';
+import type { Page } from '@playwright/test';
+
+async function reloadAndWaitForHome(page: Page) {
+  // reload 후 AuthContext가 INITIAL_SESSION을 재처리할 수 있음
+  // mode-select 인터셉트 포함 waitForHome 사용
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await waitForHome(page);
+}
 
 test.describe('CodetalkExplore — 혼자 하는 코드토크', () => {
   test.beforeEach(async ({ page }) => {
     test.setTimeout(90_000);
     await login(page, TEST_USERS.done.email, TEST_USERS.done.password);
     await waitForHome(page);
-    // localStorage에 언어 설정 (reload 후 영어 fallback 방지)
+    // localStorage에 언어 설정
     await page.evaluate(() => localStorage.setItem('veilor_lang', 'ko'));
-    // 전체 새로고침으로 모든 React 상태 초기화 (AmberSheet amberOpen 포함)
-    await page.reload({ waitUntil: 'domcontentloaded' });
-    // 새로고침 후 인증 세션 복원 및 홈으로 복귀 대기
-    await page.waitForURL(url => url.pathname.startsWith('/home'), { timeout: 30_000 });
-    await page.locator('.animate-spin').waitFor({ state: 'hidden', timeout: 20_000 }).catch(() => null);
+    // AmberSheet 등 오버레이가 열려 있을 수 있으면 닫기
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(300);
     // Dig 탭으로 이동
     await page.getByRole('link', { name: /Dig/i }).click();
     await page.waitForURL(/\/home\/dig/, { timeout: 15_000 });

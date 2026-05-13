@@ -126,7 +126,7 @@ test.describe('AdminDashboard — B2C·B2B 탭', () => {
 
   test.beforeEach(async ({ page }) => {
     await login(page, ADMIN_EMAIL, ADMIN_PW);
-    await page.waitForURL((url) => url.pathname.startsWith('/home'), { timeout: 40_000 });
+    await waitForHome(page);
     // pushState 방식으로 /admin 이동 (page.goto 시 loading 무한 현상 방지)
     await page.evaluate(() => {
       window.history.pushState({}, '', '/admin');

@@ -29,6 +29,8 @@ function AiInterestTab() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState<Record<string, boolean>>({});
   const [sent, setSent] = useState<Record<string, boolean>>({});
+  const t = useT();
+  const ai = t.adminDomain.aiInterestTab;
 
   useEffect(() => {
     veilorDb
@@ -56,7 +58,7 @@ function AiInterestTab() {
     }
   }, []);
 
-  if (loading) return <div className="text-white/40 text-sm p-8">로딩 중...</div>;
+  if (loading) return <div className="text-white/40 text-sm p-8">{ai.loading}</div>;
 
   const unsub = users.filter(u => !u.is_subscribed);
   const subbed = users.filter(u => u.is_subscribed);
@@ -66,15 +68,15 @@ function AiInterestTab() {
       <div className="flex gap-4">
         <div className="bg-white/5 rounded-xl p-4 flex-1 text-center">
           <p className="text-2xl font-semibold text-amber-400">{unsub.length}</p>
-          <p className="text-xs text-white/40 mt-1">미구독 관심 유저</p>
+          <p className="text-xs text-white/40 mt-1">{ai.stats.unsubscribed}</p>
         </div>
         <div className="bg-white/5 rounded-xl p-4 flex-1 text-center">
           <p className="text-2xl font-semibold text-emerald-400">{subbed.length}</p>
-          <p className="text-xs text-white/40 mt-1">이미 구독 중</p>
+          <p className="text-xs text-white/40 mt-1">{ai.stats.subscribed}</p>
         </div>
         <div className="bg-white/5 rounded-xl p-4 flex-1 text-center">
           <p className="text-2xl font-semibold text-white">{users.length}</p>
-          <p className="text-xs text-white/40 mt-1">전체 클릭 유저</p>
+          <p className="text-xs text-white/40 mt-1">{ai.stats.total}</p>
         </div>
       </div>
 
@@ -82,12 +84,12 @@ function AiInterestTab() {
         <table className="w-full text-sm">
           <thead>
             <tr className="text-white/40 text-left border-b border-white/10">
-              <th className="pb-2 pr-4">유저</th>
-              <th className="pb-2 pr-4">이메일</th>
-              <th className="pb-2 pr-4 text-right">클릭 수</th>
-              <th className="pb-2 pr-4">마지막 클릭</th>
-              <th className="pb-2 pr-4">상태</th>
-              <th className="pb-2">이메일 발송</th>
+              <th className="pb-2 pr-4">{ai.tableHeaders.user}</th>
+              <th className="pb-2 pr-4">{ai.tableHeaders.email}</th>
+              <th className="pb-2 pr-4 text-right">{ai.tableHeaders.clickCount}</th>
+              <th className="pb-2 pr-4">{ai.tableHeaders.lastClicked}</th>
+              <th className="pb-2 pr-4">{ai.tableHeaders.status}</th>
+              <th className="pb-2">{ai.tableHeaders.emailSend}</th>
             </tr>
           </thead>
           <tbody>
@@ -97,27 +99,27 @@ function AiInterestTab() {
                 <td className="py-2 pr-4 text-white/50 font-mono text-xs">{u.email}</td>
                 <td className="py-2 pr-4 text-right font-mono text-amber-400">{u.click_count}</td>
                 <td className="py-2 pr-4 text-white/40 text-xs">
-                  {new Date(u.last_clicked_at).toLocaleDateString('ko-KR')}
+                  {new Date(u.last_clicked_at).toLocaleDateString(language === 'en' ? 'en-US' : language === 'ja' ? 'ja-JP' : 'ko-KR')}
                 </td>
                 <td className="py-2 pr-4">
                   {u.is_subscribed
-                    ? <span className="text-xs text-emerald-400">구독 중</span>
+                    ? <span className="text-xs text-emerald-400">{ai.statusLabels.subscribed}</span>
                     : u.in_free_period
-                    ? <span className="text-xs text-amber-400">무료 기간</span>
-                    : <span className="text-xs text-red-400">미구독</span>}
+                    ? <span className="text-xs text-amber-400">{ai.statusLabels.freePeriod}</span>
+                    : <span className="text-xs text-red-400">{ai.statusLabels.unsubscribed}</span>}
                 </td>
                 <td className="py-2">
                   {u.is_subscribed ? (
-                    <span className="text-xs text-white/20">불필요</span>
+                    <span className="text-xs text-white/20">{ai.sendLabels.unnecessary}</span>
                   ) : sent[u.user_id] ? (
-                    <span className="text-xs text-emerald-400">발송 완료</span>
+                    <span className="text-xs text-emerald-400">{ai.sendLabels.sent}</span>
                   ) : (
                     <button
                       onClick={() => sendNudge(u)}
                       disabled={sending[u.user_id]}
                       style={{ background: '#E0B48A', color: '#1C1917', borderRadius: 20, padding: '4px 12px', fontSize: 12, border: 'none', cursor: 'pointer', opacity: sending[u.user_id] ? 0.5 : 1 }}
                     >
-                      {sending[u.user_id] ? '발송 중...' : '이메일 발송'}
+                      {sending[u.user_id] ? ai.sendLabels.sending : ai.sendLabels.send}
                     </button>
                   )}
                 </td>
@@ -126,7 +128,7 @@ function AiInterestTab() {
           </tbody>
         </table>
         {users.length === 0 && (
-          <p className="text-white/30 text-sm text-center py-8">AI 기능 클릭 기록이 없습니다.</p>
+          <p className="text-white/30 text-sm text-center py-8">{ai.empty}</p>
         )}
       </div>
     </div>
@@ -155,6 +157,7 @@ export default function AdminDashboard() {
   const { language } = useLanguageContext();
   const t = useT();
   const s = t.adminDomain.dashboard;
+  const ai = t.adminDomain.aiInterestTab;
 
   if (loading) return (
     <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">
@@ -229,7 +232,7 @@ export default function AdminDashboard() {
       {activeTab === 'b2b' && <B2BTab />}
       {activeTab === 'virtual' && <VirtualInjectTab />}
       {activeTab === 'ai_interest' && (
-        <Section title="AI 관심 유저 목록" sub="AI 기능 진입 시도 후 미구독 유저 — 이메일로 구독 안내 발송">
+        <Section title={ai.sectionTitle} sub={ai.sectionSub}>
           <AiInterestTab />
         </Section>
       )}
@@ -240,8 +243,8 @@ export default function AdminDashboard() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-white/40 text-left border-b border-white/10">
-                    <th className="pb-2 pr-4">단계</th>
-                    <th className="pb-2 pr-4 text-right">유저 수</th>
+                    <th className="pb-2 pr-4">{s.funnelTableHeaders.stage}</th>
+                    <th className="pb-2 pr-4 text-right">{s.funnelTableHeaders.userCount}</th>
                     <th className="pb-2 text-right">{s.sections.funnel.convRate}</th>
                   </tr>
                 </thead>

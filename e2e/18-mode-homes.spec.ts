@@ -18,7 +18,7 @@ async function loginWithMode(
 ) {
   await page.addInitScript((m: string) => {
     localStorage.setItem('veilor_ux_mode', m);
-    localStorage.setItem('veilor_first_visit_dismissed', 'true');
+    localStorage.setItem('veilor_mode_selected', 'true');
   }, mode);
   await login(page, TEST_USERS.done.email, TEST_USERS.done.password);
   await waitForHome(page);

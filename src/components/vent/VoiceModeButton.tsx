@@ -103,13 +103,13 @@ export default function VoiceModeButton({ onTranscript, accentColor = '#C97A6A' 
       {enabled && !listening && (
         <button
           onClick={toggleEnabled}
-          aria-label="음성 모드 비활성화"
+          aria-label={vr.ariaDisable}
           style={{
             fontSize: 9, color: 'rgba(231,229,228,0.3)', background: 'none',
             border: 'none', cursor: 'pointer', padding: '0 2px', lineHeight: 1,
           }}
         >
-          off
+          {vr.offLabel}
         </button>
       )}
     </div>

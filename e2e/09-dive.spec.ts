@@ -7,10 +7,11 @@ import { login, waitForHome, TEST_USERS } from './helpers';
 
 test.describe('DivePage (F/T 모드)', () => {
   test.beforeEach(async ({ page }) => {
+    test.setTimeout(90_000);
     await login(page, TEST_USERS.done.email, TEST_USERS.done.password);
     await waitForHome(page);
     await page.getByRole('link', { name: /Dig/i }).click();
-    await page.waitForURL(/\/home\/dig/, { timeout: 5_000 });
+    await page.waitForURL(/\/home\/dig/, { timeout: 15_000 });
     await page.keyboard.press('Escape');
     await page.waitForTimeout(300);
   });

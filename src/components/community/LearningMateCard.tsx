@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { veilorDb } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useT } from '@/i18n/useT';
+import { MASK_PROFILES } from '@/lib/vfileAlgorithm';
 
 interface Mate {
   user_id: string;
@@ -13,20 +14,6 @@ interface Mate {
   is_virtual?: boolean;
 }
 
-const VIRTUAL_NICKNAMES: Record<string, string[]> = {
-  '반항자': ['조용한 달', '깊은 안개', '차가운 불'],
-  '돌보는자': ['따뜻한 벽', '느린 바람', '고요한 비'],
-  '거울': ['유리 거울', '갈라진 거울', '투명한 강'],
-  '구원자': ['숨은 달', '낮은 불꽃', '흔들리는 뿌리'],
-  '매혹자': ['검은 나비', '먼 별', '작은 파도'],
-  '유희자': ['무거운 빛', '긴 밤', '얇은 숲'],
-  '승인자': ['닫힌 문', '깨진 시계', '조용한 달'],
-  '탐험자': ['먼 별', '차가운 불', '깊은 안개'],
-  '의존자': ['흔들리는 뿌리', '고요한 비', '따뜻한 벽'],
-  '회피자': ['긴 밤', '닫힌 문', '얇은 숲'],
-  '통제자': ['무거운 빛', '갈라진 거울', '낮은 불꽃'],
-  '공허자': ['깨진 시계', '숨은 달', '유리 거울'],
-};
 
 export default function LearningMateCard() {
   const { user, primaryMask } = useAuth();
@@ -52,15 +39,10 @@ export default function LearningMateCard() {
       // 실제 유저가 3명 미만이면 가상유저로 채움
       if (real.length < 3) {
         const needed = 3 - real.length;
-        const aliases = (VIRTUAL_NICKNAMES[primaryMask] ?? s.defaultAliases)
+        const aliases = (s.virtualNicknames[primaryMask] ?? s.defaultAliases)
           .slice(0, needed);
-        // msk_code는 primary_mask로 역조회
-        const MSK_CODE_MAP: Record<string, string> = {
-          '반항자':'SCP','돌보는자':'GVR','거울':'EMP','구원자':'SAV','매혹자':'MKV',
-          '유희자':'MNY','승인자':'APV','탐험자':'PSP','의존자':'DEP','회피자':'AVD',
-          '통제자':'PWR','공허자':'NRC',
-        };
-        const code = MSK_CODE_MAP[primaryMask] ?? 'UNK';
+        const maskProfile = MASK_PROFILES.find(m => m.nameKo === primaryMask || m.mskCode === primaryMask);
+        const code = maskProfile?.mskCode ?? (realUsers?.[0]?.msk_code) ?? 'UNK';
         const virtual: Mate[] = aliases.map((nickname, i) => ({
           user_id: `virtual-${code}-${i}`,
           nickname,

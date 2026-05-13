@@ -30,7 +30,7 @@ type VoiceState = 'idle' | 'listening' | 'thinking' | 'speaking';
 export default function AILeadOverlay({
   open,
   onClose,
-  aiName = '엠버',
+  aiName,
   currentTab,
 }: AILeadOverlayProps) {
   const { user, primaryMask, axisScores } = useAuth();

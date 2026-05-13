@@ -67,7 +67,7 @@ export default function PriperStart() {
 
         <div className="space-y-3">
           <h2 className="text-2xl font-bold" style={{ color: '#F5F5F4' }}>{s.heading}</h2>
-          <p className="text-sm leading-relaxed" style={{ color: '#B8B3AF' }}>
+          <p className="text-sm leading-relaxed whitespace-pre-line" style={{ color: '#B8B3AF' }}>
             {s.subtext}
           </p>
         </div>

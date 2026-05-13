@@ -24,23 +24,23 @@ export default function DiagnosisSection({ diagnosis: diag }: DiagnosisSectionPr
   const [diagOpen, setDiagOpen] = useState(false);
 
   const isEn = language === 'en';
-  const fallbackAxes = isEn
-    ? { axes: ['Attachment', 'Communication', 'Desire', 'Role'], vals: [52, 44, 38, 81] }
-    : { axes: ['애착', '소통', '욕구', '역할'], vals: [52, 44, 38, 81] };
+  const axisLabels = me.shareCard.axisLabels;
+  const koToLocale: Record<string, string> = {
+    '애착': axisLabels['A'], '소통': axisLabels['B'],
+    '욕구': axisLabels['C'], '역할': axisLabels['D'],
+  };
+  const fallbackAxes = { axes: Object.values(axisLabels), vals: [52, 44, 38, 81] };
   const rawAxes = diag?.axisScores ?? fallbackAxes;
-  const axisLabelMap: Record<string, string> = isEn
-    ? { '애착': 'Attachment', '소통': 'Communication', '욕구': 'Desire', '역할': 'Role' }
-    : {};
   const diagAxes = {
     vals: rawAxes.vals,
-    axes: rawAxes.axes.map(a => axisLabelMap[a] ?? a),
+    axes: rawAxes.axes.map(a => koToLocale[a] ?? a),
   };
 
   const rawMask = diag?.primaryMask ?? null;
   const maskProfile = rawMask ? MASK_PROFILES.find(m => m.nameKo === rawMask || m.mskCode === rawMask) : null;
   const maskLabel = maskProfile
     ? (isEn ? maskProfile.nameEn : maskProfile.nameKo)
-    : (rawMask ?? (isEn ? 'Unknown pattern' : '모든 관계에서 나를 잃어버리는 사람'));
+    : (rawMask ?? me.shareCard.fallbackMask);
 
   const maxIdx = diagAxes.vals.indexOf(Math.max(...diagAxes.vals));
   const maxAxis = diagAxes.axes[maxIdx];

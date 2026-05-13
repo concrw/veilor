@@ -20,11 +20,10 @@ export default function ShareCard() {
 
   const profile = MASK_PROFILES.find(m => m.nameKo === primaryMask || m.mskCode === primaryMask);
   const vProfile = classifyVProfile(axisScores as AxisScores);
-  const maskDisplayName = profile ? (isEn ? profile.nameEn : profile.nameKo) : primaryMask;
+  const maskDisplayName = profile ? (isEn ? profile.nameEn : profile.nameKo) : (primaryMask ?? t.fallbackMask);
+  const archetype = isEn ? (profile?.archetypeEn ?? '') : (profile?.archetype ?? '');
 
-  const shareText = isEn
-    ? `My relational mask is "${maskDisplayName}" (${vProfile.code})\n${profile?.archetype ?? ''}\n\n#VEILOR #VFile`
-    : `나의 관계 가면은 "${maskDisplayName}" (${vProfile.code})\n${profile?.archetype ?? ''}\n\n#VEILOR #VFile #관계가면`;
+  const shareText = t.shareText(maskDisplayName ?? '', vProfile.code, archetype);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(shareText).then(() => {
