@@ -43,10 +43,10 @@ function UserBubble({ text }: { text: string }) {
 
 export default function GuestLanding() {
   const navigate = useNavigate();
-  const { language } = useLanguageContext();
+  const { language, setLanguage } = useLanguageContext();
   const t = useT();
   const s = t.guestLanding;
-  const lang = language === 'en' ? 'en' : 'ko';
+  const lang = language === 'en' ? 'en' : 'ko'; // guestLandingData는 ko/en 2개 언어만 지원
 
   const [phase, setPhase] = useState<Phase>('gate');
   const [messages, setMessages] = useState<Message[]>([]);
@@ -147,6 +147,17 @@ export default function GuestLanding() {
       <div className="w-full flex-1 flex flex-col px-6 pt-5 pb-10">
 
         <div className="text-center mb-8">
+          <div className="flex justify-end mb-3">
+            <div className="flex rounded-lg overflow-hidden" style={{ border: '1px solid #44403C' }}>
+              {(['en', 'ko', 'ja'] as const).map(l => (
+                <button key={l} onClick={() => setLanguage(l)}
+                  className="px-3 py-1.5 text-xs font-medium transition-colors"
+                  style={{ background: language === l ? '#E0B48A' : 'transparent', color: language === l ? '#1C1917' : '#B8B3AF' }}>
+                  {l === 'en' ? 'EN' : l === 'ko' ? '한국어' : '日本語'}
+                </button>
+              ))}
+            </div>
+          </div>
           <img src="/icon-192x192.png" alt="VEILOR" className="w-14 h-14 rounded-2xl mx-auto mb-3" />
           <p className="text-xs mt-1" style={{ color: '#B8B3AF' }}>{s.subtitle}</p>
         </div>
