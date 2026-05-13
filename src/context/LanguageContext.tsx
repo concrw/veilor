@@ -28,11 +28,6 @@ function getInitialLanguage(): SupportedLanguage {
   } catch {
     // SSR or localStorage unavailable
   }
-  if (typeof navigator !== 'undefined') {
-    const browserLang = navigator.language?.slice(0, 2);
-    if (browserLang === 'ko') return 'ko';
-    if (browserLang === 'ja') return 'ja';
-  }
   return 'en';
 }
 
