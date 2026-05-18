@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useMemo, lazy, Suspense } from 'react
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
 import { useLongPress } from '@/hooks/useLongPress';
 import HoldCircle from '@/components/ai/HoldCircle';
-import AILeadOverlay from '@/components/ai/AILeadOverlay';
+const AILeadOverlay = lazy(() => import('@/components/ai/AILeadOverlay'));
 import UpgradeModal from '@/components/premium/UpgradeModal';
 import { useAuth } from '@/context/AuthContext';
 import { useMode } from '@/context/ModeContext';
@@ -239,12 +239,14 @@ export default function HomeLayout() {
       <HoldCircle active={holding} duration={600} />
 
       {/* AI 리드 모드 오버레이 */}
-      <AILeadOverlay
-        open={aiLeadOpen}
-        onClose={() => setAiLeadOpen(false)}
-        aiName={t.vent.amberName}
-        currentTab={currentTab}
-      />
+      <Suspense fallback={null}>
+        <AILeadOverlay
+          open={aiLeadOpen}
+          onClose={() => setAiLeadOpen(false)}
+          aiName={t.vent.amberName}
+          currentTab={currentTab}
+        />
+      </Suspense>
 
       {/* AI 월 한도 초과 모달 — veilor:ai-limit-reached 이벤트로 열림 */}
       <UpgradeModal open={aiLimitOpen} onClose={() => setAiLimitOpen(false)} trigger="codetalk_ai_limit" />
