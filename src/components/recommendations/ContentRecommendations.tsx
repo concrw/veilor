@@ -14,6 +14,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { useT } from "@/i18n/useT";
+import { isNativeApp } from "@/lib/platform";
 
 interface ContentRecommendation {
   id: string;
@@ -210,7 +211,14 @@ export const ContentRecommendations = () => {
                       variant="ghost"
                       size="sm"
                       className="h-8 w-8 p-0 flex-shrink-0"
-                      onClick={() => window.open(item.url, "_blank")}
+                      onClick={async () => {
+                        if (isNativeApp()) {
+                          const { Browser } = await import('@capacitor/browser');
+                          await Browser.open({ url: item.url! });
+                        } else {
+                          window.open(item.url, '_blank', 'noopener,noreferrer');
+                        }
+                      }}
                     >
                       <ExternalLink className="w-4 h-4" />
                     </Button>

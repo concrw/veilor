@@ -3,14 +3,15 @@ import { useLocation } from "react-router-dom";
 import posthog from "posthog-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
+import { isNativeApp } from "@/lib/platform";
 
-// PostHog 초기화 — VITE_POSTHOG_KEY가 있을 때만 활성화
+// PostHog 초기화 — 웹 전용, 네이티브 앱에서는 비활성화
 const POSTHOG_KEY = import.meta.env.VITE_POSTHOG_KEY as string | undefined;
-if (POSTHOG_KEY) {
+if (POSTHOG_KEY && !isNativeApp()) {
   posthog.init(POSTHOG_KEY, {
     api_host: 'https://app.posthog.com',
-    capture_pageview: false,   // 수동으로 page_view 추적
-    autocapture: false,        // 알고리즘 기반 앱 — 수동 이벤트만
+    capture_pageview: false,
+    autocapture: false,
     session_recording: { maskAllInputs: true },
     persistence: 'localStorage',
   });

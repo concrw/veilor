@@ -16,10 +16,12 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 import { OfflineBanner } from "./components/OfflineBanner";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
+import { isNativeApp } from "@/lib/platform";
 
 // ── Auth ─────────────────────────────────────────────────────────
 const Login    = lazy(() => import("./pages/auth/Login"));
 const Signup   = lazy(() => import("./pages/auth/Signup"));
+const AuthCallback = lazy(() => import("./pages/auth/Callback"));
 
 // ── Onboarding ───────────────────────────────────────────────────
 const Welcome        = lazy(() => import("./pages/onboarding/Welcome"));
@@ -216,6 +218,7 @@ const App = () => {
                 {/* Auth */}
                 <Route path="/auth/login"  element={<Login />} />
                 <Route path="/auth/signup" element={<Signup />} />
+                <Route path="/auth/callback" element={<AuthCallback />} />
 
                 {/* 온보딩 */}
                 <Route path="/onboarding/welcome" element={
@@ -313,8 +316,8 @@ const App = () => {
             </Suspense>
             </ErrorBoundary>
           </BrowserRouter>
-          <Analytics />
-          <SpeedInsights />
+          {!isNativeApp() && <Analytics />}
+          {!isNativeApp() && <SpeedInsights />}
         </AuthProvider>
       </TooltipProvider>
       </ModeProvider>
