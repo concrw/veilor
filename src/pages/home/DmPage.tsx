@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { veilorDb } from '@/integrations/supabase/client';
+import { veilorDb, supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
@@ -37,9 +37,17 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 
 async function checkMessageSafety(message: string): Promise<{ flagged: boolean; reason?: string }> {
   try {
+    // dm-message-filter는 인증된 사용자만 호출할 수 있다.
+    // Authorization 헤더가 없으면 401 → catch에서 flagged:false가 되어
+    // 안전 필터가 조용히 무력화되므로 반드시 세션 토큰을 보낸다.
+    const { data: { session } } = await supabase.auth.getSession();
     const res = await fetch(`${SUPABASE_URL}/functions/v1/dm-message-filter`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${session?.access_token ?? SUPABASE_ANON_KEY}`,
+      },
       body: JSON.stringify({ message }),
     });
     if (!res.ok) return { flagged: false };
