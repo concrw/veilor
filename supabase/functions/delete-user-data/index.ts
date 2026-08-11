@@ -16,7 +16,10 @@ serve(async (req) => {
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      throw new Error("Missing authorization header");
+      return new Response(
+        JSON.stringify({ success: false, error: "Missing authorization header" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
     const supabaseClient = createClient(
@@ -31,7 +34,10 @@ serve(async (req) => {
     } = await supabaseClient.auth.getUser();
 
     if (authError || !user) {
-      throw new Error("User not authenticated");
+      return new Response(
+        JSON.stringify({ success: false, error: "User not authenticated" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
     const userId = user.id;
@@ -42,89 +48,54 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    const errors: { schema: string; table: string; message: string }[] = [];
+    // 1. 개인 데이터 삭제
+    //
+    // 기존 구현은 (a) .schema("veilor")를 썼는데 veilor 스키마가 PostgREST에
+    // 노출되어 있지 않아 모든 삭제가 실패했고, (b) 실패해도 중단하지 않고
+    // auth 계정만 삭제해서 "계정은 사라지고 개인정보는 남는" 상태를 만들었으며,
+    // (c) 하드코딩 목록 15개만 지웠다(veilor에 user_id 보유 테이블은 68개 —
+    // user_signals 38k, emotion_checkins 5.9k, crisis_flags 등이 누락).
+    //
+    // public.fn_delete_user_data는 카탈로그에서 user_id 보유 테이블을 동적으로
+    // 찾아 전부 삭제하고, FK(NO ACTION) 순서 의존은 반복 재시도로 해소한다.
+    // 마이그레이션: delete_user_data_public_wrapper
+    const { data: result, error: deleteError } = await serviceClient.rpc(
+      "fn_delete_user_data",
+      { p_user_id: userId },
+    );
 
-    // 1. veilor schema tables
-    const veilorTables = [
-      "tab_conversations",
-      "codetalk_entries",
-      "cq_responses",
-      "priper_sessions",
-      "persona_zones",
-      "compatibility_matches",
-      "user_profiles",
-      // B2B 조직 연계 데이터 (GDPR: 개인이 탈퇴해도 org 데이터에서 제거)
-      "b2b_org_members",
-      "b2b_checkin_sessions",
-      "b2b_coaching_sessions",
-      "b2b_org_events",
-      // 추가 누락 테이블 (GDPR 필수)
-      "why_sessions",
-      "dive_sessions",
-      "m43_domain_answers",
-      "user_wellness_scores",
-      "persona_profiles",
-      "persona_relationships",
-    ];
-
-    for (const table of veilorTables) {
-      const { error } = await serviceClient
-        .schema("veilor")
-        .from(table)
-        .delete()
-        .eq("user_id", userId);
-      if (error) {
-        console.error(`Error deleting from veilor.${table}:`, error);
-        errors.push({ schema: "veilor", table, message: error.message });
-      }
+    if (deleteError || !result?.ok) {
+      // 데이터가 남은 채로 계정만 지우면 안 된다 — 여기서 중단한다.
+      console.error("fn_delete_user_data failed:", deleteError?.message, result?.failed);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "DATA_DELETION_FAILED",
+          message: "개인 데이터 삭제에 실패했습니다. 계정은 삭제되지 않았습니다.",
+          failed: result?.failed ?? null,
+        }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
-    // 2. public schema tables
-    const publicTables = [
-      "job_entries",
-      "analysis_results",
-      "brand_strategies",
-      "brainstorm_sessions",
-    ];
-
-    for (const table of publicTables) {
-      const { error } = await serviceClient
-        .from(table)
-        .delete()
-        .eq("user_id", userId);
-      if (error) {
-        console.error(`Error deleting from public.${table}:`, error);
-        errors.push({ schema: "public", table, message: error.message });
-      }
-    }
-
-    // 3. Delete auth user (must be last)
+    // 2. 데이터 삭제가 모두 성공한 뒤에만 auth 계정을 삭제한다.
     const { error: deleteAuthError } = await serviceClient.auth.admin.deleteUser(userId);
     if (deleteAuthError) {
       console.error("Error deleting auth user:", deleteAuthError);
       throw deleteAuthError;
     }
 
-    console.log("User data deleted:", userId);
-
-    // 부분 실패가 있었으면 207 Multi-Status 응답
-    if (errors.length > 0) {
-      return new Response(
-        JSON.stringify({
-          success: true,
-          partial: true,
-          message: "계정이 삭제되었지만 일부 데이터 정리에 실패했습니다.",
-          errors,
-        }),
-        {
-          status: 207,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
+    console.log(
+      `User data deleted: ${userId} (tables=${result.tables_scanned}, rows=${result.rows_deleted})`,
+    );
 
     return new Response(
-      JSON.stringify({ success: true, message: "모든 개인 데이터가 삭제되었습니다." }),
+      JSON.stringify({
+        success: true,
+        message: "모든 개인 데이터가 삭제되었습니다.",
+        tables_scanned: result.tables_scanned,
+        rows_deleted: result.rows_deleted,
+      }),
       {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
