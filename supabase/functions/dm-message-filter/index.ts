@@ -7,7 +7,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY')!;
 
 import { getCorsHeaders } from "../_shared/cors.ts";
-import { getAuthenticatedUser } from "../_shared/auth.ts";
+import { getAuthenticatedUser, AuthError } from "../_shared/auth.ts";
 import { checkRateLimit, rateLimitResponse } from "../_shared/rateLimit.ts";
 import { logAiUsage } from "../_shared/aiGate.ts";
 import { MODELS } from "../_shared/models.ts";
@@ -122,7 +122,15 @@ serve(async (req: Request) => {
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error('[dm-message-filter] 오류:', message);
-    // 오류 시 전송 허용
+    // 인증 실패까지 flagged:false로 넘기면 JWT 없이 호출하는 것만으로
+    // 안전 필터를 무력화할 수 있다 — 401로 명확히 거부한다.
+    if (err instanceof AuthError) {
+      return new Response(JSON.stringify({ ok: false, error: err.message }), {
+        status: err.status,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    // 그 외 오류(Claude 장애 등)는 전송 허용 — 대화를 막지 않기 위함
     return new Response(JSON.stringify({ ok: true, flagged: false }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
