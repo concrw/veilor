@@ -69,10 +69,10 @@ const EMAIL_TEMPLATES = {
         <p style="margin-bottom:24px;color:#B8B3AF;font-size:14px;line-height:1.7;">
           VEILOR 앱에서 AI 기능에 관심을 보여주셨네요.<br/>
           감정 대화, 패턴 분석, 관계 코칭 등 AI 기능은<br/>
-          <strong style="color:#E7E5E4;">veilor.kr</strong>에서 구독하시면 바로 이용하실 수 있습니다.
+          <strong style="color:#E7E5E4;">veilor.ai</strong>에서 구독하시면 바로 이용하실 수 있습니다.
         </p>
-        <a href="https://veilor.kr/pricing" style="display:inline-block;background:#E0B48A;color:#1C1917;font-weight:500;padding:14px 28px;border-radius:20px;text-decoration:none;font-size:14px;">
-          veilor.kr에서 구독하기
+        <a href="https://veilor.ai/pricing" style="display:inline-block;background:#E0B48A;color:#1C1917;font-weight:500;padding:14px 28px;border-radius:20px;text-decoration:none;font-size:14px;">
+          veilor.ai에서 구독하기
         </a>
         <p style="margin-top:24px;color:#87817C;font-size:12px;">
           구독 후 앱을 재실행하시면 AI 기능이 바로 활성화됩니다.
