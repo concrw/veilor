@@ -4,6 +4,8 @@ import { getCorsHeaders } from "../_shared/cors.ts";
 import { MODELS, TEMPERATURES } from "../_shared/models.ts";
 import { sanitizeUserInput } from "../_shared/sanitize.ts";
 import { checkRateLimit, rateLimitResponse } from "../_shared/rateLimit.ts";
+import { getAuthenticatedUser, AuthError } from "../_shared/auth.ts";
+import { checkAiAccess, aiGateResponse, logAiUsage } from "../_shared/aiGate.ts";
 
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
 
@@ -21,12 +23,20 @@ serve(async (req: Request) => {
       });
     }
 
+    // 인증된 user.id만 사용 (body.userId는 위조 가능하므로 신뢰하지 않음)
+    const { user: authUser } = await getAuthenticatedUser(req);
+
     const body = await req.json();
 
     // Rate limit: 유저당 분당 5회
-    const rateLimitKey = body.userId ?? req.headers.get('x-forwarded-for') ?? 'anon';
-    if (!checkRateLimit(rateLimitKey, 5, 60_000)) {
+    if (!checkRateLimit(authUser.id, 5, 60_000)) {
       return rateLimitResponse(corsHeaders);
+    }
+
+    // AI 비용 게이트 (구독 여부 + 월 $7 한도)
+    const gate = await checkAiAccess(authUser.id);
+    if (!gate.allowed) {
+      return aiGateResponse(gate, corsHeaders);
     }
 
     const situation = sanitizeUserInput(body.situation ?? '', 100);
@@ -83,6 +93,7 @@ serve(async (req: Request) => {
     }
 
     const data = await aiResp.json();
+    logAiUsage({ userId: authUser.id, model: MODELS.SONNET, usage: data?.usage, tab: 'dig' });
     const interpretation: string = data?.content?.[0]?.text?.trim() ?? '';
 
     return new Response(JSON.stringify({ interpretation }), {
@@ -91,7 +102,7 @@ serve(async (req: Request) => {
   } catch (error) {
     console.error('dig-interpret error:', error);
     return new Response(JSON.stringify({ error: '요청 처리 중 오류' }), {
-      status: 500,
+      status: error instanceof AuthError ? error.status : 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }

@@ -290,40 +290,31 @@ Deno.serve(async (req: Request) => {
   const headers = { ...getCorsHeaders(req), "Content-Type": "application/json" };
 
   try {
-    // veilor 스키마를 기본 스키마로 지정
+    // veilor 스키마는 PostgREST 미노출이므로 public 래퍼 RPC를 경유한다.
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-      { db: { schema: "veilor" } },
     );
 
     const body = await req.json().catch(() => ({}));
     const communityCount: number = body.community_count ?? 40;
     const codetalkCount: number = body.codetalk_count ?? 15;
 
-    // 가상유저 목록 조회 (veilor.user_profiles — anon_alias 없음, nickname 사용)
-    const { data: users, error: usersErr } = await supabase
-      .from("user_profiles")
-      .select("user_id, primary_mask, nickname")
-      .eq("onboarding_step", "completed")
-      .not("primary_mask", "is", null)
-      .limit(995);
+    // 가상유저 목록 + 오늘 이미 활동한 유저를 public 래퍼로 한 번에 조회.
+    // veilor 스키마는 PostgREST에 노출되어 있지 않아 직접 접근이
+    // "Invalid schema: veilor"로 실패한다.
+    // 마이그레이션: inject_virtual_activity_public_wrappers
+    const { data: ctx, error: usersErr } = await supabase.rpc("fn_virtual_activity_context", {
+      p_limit: 995,
+    });
 
-    if (usersErr || !users) throw new Error("유저 조회 실패: " + usersErr?.message);
+    if (usersErr || !ctx?.users) throw new Error("유저 조회 실패: " + usersErr?.message);
 
-    // 오늘 이미 활동한 유저 제외
+    const users = ctx.users as { user_id: string; primary_mask: string; nickname: string }[];
+
     const today = new Date().toISOString().slice(0, 10);
-    const { data: todayPosts } = await supabase
-      .from("community_posts")
-      .select("user_id")
-      .gte("created_at", today + "T00:00:00Z");
-    const alreadyPosted = new Set((todayPosts ?? []).map((p: { user_id: string }) => p.user_id));
-
-    const { data: todayCodetalk } = await supabase
-      .from("codetalk_entries")
-      .select("user_id")
-      .gte("created_at", today + "T00:00:00Z");
-    const alreadyCodetalk = new Set((todayCodetalk ?? []).map((p: { user_id: string }) => p.user_id));
+    const alreadyPosted = new Set((ctx.posted_today ?? []) as string[]);
+    const alreadyCodetalk = new Set((ctx.codetalk_today ?? []) as string[]);
 
     // 셔플
     const shuffled = [...users].sort(() => Math.random() - 0.5);
@@ -360,11 +351,11 @@ Deno.serve(async (req: Request) => {
 
     let communityInserted = 0;
     if (communityRows.length > 0) {
-      const { error: cErr } = await supabase
-        .from("community_posts")
-        .insert(communityRows);
+      const { data: cCount, error: cErr } = await supabase.rpc("fn_insert_community_posts", {
+        p_rows: communityRows,
+      });
       if (cErr) throw new Error("커뮤니티 삽입 실패: " + cErr.message);
-      communityInserted = communityRows.length;
+      communityInserted = cCount ?? communityRows.length;
     }
 
     // 코드탁 엔트리 ko + en 이중 삽입
@@ -407,11 +398,11 @@ Deno.serve(async (req: Request) => {
 
     let codetalkInserted = 0;
     if (codetalkRows.length > 0) {
-      const { error: ctErr } = await supabase
-        .from("codetalk_entries")
-        .insert(codetalkRows);
+      const { data: ctCount, error: ctErr } = await supabase.rpc("fn_insert_codetalk_entries", {
+        p_rows: codetalkRows,
+      });
       if (ctErr) throw new Error("코드탁 삽입 실패: " + ctErr.message);
-      codetalkInserted = codetalkRows.length;
+      codetalkInserted = ctCount ?? codetalkRows.length;
     }
 
     return new Response(

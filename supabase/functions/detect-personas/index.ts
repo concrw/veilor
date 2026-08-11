@@ -1,7 +1,8 @@
 // deno-lint-ignore-file no-explicit-any
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { getCorsHeaders } from "../_shared/cors.ts";
-import { getAuthenticatedUser } from "../_shared/auth.ts";
+import { getAuthenticatedUser , AuthError } from "../_shared/auth.ts";
+import { checkAiAccess, aiGateResponse, logAiUsage } from "../_shared/aiGate.ts";
 import { MODELS, TEMPERATURES } from "../_shared/models.ts";
 
 interface JobEntry {
@@ -40,6 +41,12 @@ serve(async (req) => {
 
   try {
     const { user, client: supabaseClient } = await getAuthenticatedUser(req);
+
+    // AI 비용 게이트 (구독 여부 + 월 $7 한도)
+    const gate = await checkAiAccess(user.id);
+    if (!gate.allowed) {
+      return aiGateResponse(gate, getCorsHeaders(req));
+    }
 
     // userId 파라미터는 무시하고 항상 인증된 user.id만 사용 (VS-01-2 BOLA 방지)
     await req.json().catch(() => ({})); // body consume (사용 안 함)
@@ -129,6 +136,7 @@ ${jobDescriptions}
     });
 
     const aiData = await response.json();
+    logAiUsage({ userId: targetUserId, model: MODELS.SONNET, usage: aiData?.usage, tab: "detect-personas" });
     const content = aiData.content?.[0]?.text || "[]";
 
     let clusters;
@@ -285,7 +293,7 @@ ${jobDescriptions}
     return new Response(
       JSON.stringify({ error: "Internal server error" }),
       {
-        status: 400,
+        status: error instanceof AuthError ? error.status : 400,
         headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       }
     );

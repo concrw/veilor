@@ -9,6 +9,9 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 import { getCorsHeaders } from "../_shared/cors.ts";
+import { getAuthenticatedUser, AuthError } from "../_shared/auth.ts";
+import { checkAiAccess, aiGateResponse, logAiUsage } from "../_shared/aiGate.ts";
+import { MODELS } from "../_shared/models.ts";
 
 async function dbQuery(query: string, method = 'GET', body?: string) {
   const url = `${SUPABASE_URL}/rest/v1/${query}`;
@@ -35,8 +38,15 @@ serve(async (req: Request) => {
   }
 
   try {
-    const { userId } = await req.json();
-    if (!userId) throw new Error('userId 필수');
+    // body.userId는 위조 가능하므로 인증된 user.id만 사용한다 (BOLA 방지)
+    const { user: authUser } = await getAuthenticatedUser(req);
+    const userId = authUser.id;
+
+    // AI 비용 게이트 (구독 여부 + 월 $7 한도)
+    const gate = await checkAiAccess(userId);
+    if (!gate.allowed) {
+      return aiGateResponse(gate, corsHeaders);
+    }
 
     // 이번 주 월요일 기준
     const now = new Date();
@@ -105,7 +115,7 @@ JSON으로 답하세요:
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
+        model: MODELS.HAIKU,
         max_tokens: 500,
         messages: [{ role: 'user', content: prompt }],
       }),
@@ -114,6 +124,7 @@ JSON으로 답하세요:
     let reportData = { summary: '', patterns: [] as string[], unresolved: '', encouragement: '' };
     if (aiRes.ok) {
       const aiBody = await aiRes.json();
+      logAiUsage({ userId, model: MODELS.HAIKU, usage: aiBody?.usage, tab: 'weekly-report' });
       const raw = aiBody.content?.[0]?.text ?? '{}';
       try { reportData = JSON.parse(raw); } catch { /* fallback */ }
     }
@@ -150,7 +161,7 @@ JSON으로 답하세요:
     const msg = err instanceof Error ? err.message : String(err);
     console.error('[generate-weekly-report]', msg);
     return new Response(JSON.stringify({ ok: false, error: msg }), {
-      status: 500,
+      status: err instanceof AuthError ? err.status : 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }

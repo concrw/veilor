@@ -1,6 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { getCorsHeaders } from "../_shared/cors.ts";
-import { getAuthenticatedUser, createServiceClient } from "../_shared/auth.ts";
+import { getAuthenticatedUser, createServiceClient, AuthError } from "../_shared/auth.ts";
+import { checkAiAccess, aiGateResponse, logAiUsage } from "../_shared/aiGate.ts";
+import { MODELS } from "../_shared/models.ts";
 
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
 
@@ -19,6 +21,13 @@ serve(async (req) => {
 
     // ── 1. 인증 확인 (요청자 = auth user)
     const { user: authUser } = await getAuthenticatedUser(req);
+
+    // AI 비용 게이트 (구독 여부 + 월 $7 한도)
+    const gate = await checkAiAccess(authUser.id);
+    if (!gate.allowed) {
+      return aiGateResponse(gate, getCorsHeaders(req));
+    }
+
     const supabaseAdmin = createServiceClient();
 
     // ── 2. 요청 body 파싱
@@ -135,7 +144,7 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
+        model: MODELS.HAIKU,
         max_tokens: 512,
         system: "당신은 관계 심리 전문 코치입니다. 반드시 유효한 JSON만 응답합니다. 다른 텍스트 없이 JSON만.",
         messages: [{ role: "user", content: prompt }],
@@ -147,6 +156,7 @@ serve(async (req) => {
     }
 
     const aiJson = await aiRes.json();
+    logAiUsage({ userId: authUser.id, model: MODELS.HAIKU, usage: aiJson?.usage, tab: "codetalk" });
     const rawText = aiJson?.content?.[0]?.text?.trim() ?? "{}";
 
     let insights: Record<string, string>;
@@ -168,7 +178,7 @@ serve(async (req) => {
   } catch (e: any) {
     console.error("codetalk-ai-insights error:", e);
     return new Response(JSON.stringify({ error: e?.message || String(e) }), {
-      status: 500,
+      status: e instanceof AuthError ? e.status : 500,
       headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
     });
   }

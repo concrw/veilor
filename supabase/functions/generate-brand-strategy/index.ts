@@ -3,6 +3,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { getCorsHeaders } from "../_shared/cors.ts";
 import { MODELS, TEMPERATURES } from "../_shared/models.ts";
 import { sanitizeUserInput } from "../_shared/sanitize.ts";
+import { getAuthenticatedUser, AuthError } from "../_shared/auth.ts";
+import { checkAiAccess, aiGateResponse, logAiUsage } from "../_shared/aiGate.ts";
 
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
 
@@ -17,6 +19,13 @@ serve(async (req) => {
         status: 500,
         headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       });
+    }
+
+    // 인증 + AI 비용 게이트 (구독 여부 + 월 $7 한도)
+    const { user: authUser } = await getAuthenticatedUser(req);
+    const gate = await checkAiAccess(authUser.id);
+    if (!gate.allowed) {
+      return aiGateResponse(gate, getCorsHeaders(req));
     }
 
     const body = await req.json();
@@ -134,6 +143,7 @@ ${whyContext}
     });
 
     const data = await res.json();
+    logAiUsage({ userId: authUser.id, model: MODELS.SONNET, usage: data?.usage, tab: "brand-strategy" });
     const content = data?.content?.[0]?.text || "{}";
 
     let parsed;
@@ -206,7 +216,7 @@ ${whyContext}
   } catch (error: any) {
     console.error("generate-brand-strategy error", error);
     return new Response(JSON.stringify({ error: error?.message || "Unknown error" }), {
-      status: 500,
+      status: error instanceof AuthError ? error.status : 500,
       headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
     });
   }

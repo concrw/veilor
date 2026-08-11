@@ -7,6 +7,10 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY')!;
 
 import { getCorsHeaders } from "../_shared/cors.ts";
+import { getAuthenticatedUser } from "../_shared/auth.ts";
+import { checkRateLimit, rateLimitResponse } from "../_shared/rateLimit.ts";
+import { logAiUsage } from "../_shared/aiGate.ts";
+import { MODELS } from "../_shared/models.ts";
 
 const SYSTEM_PROMPT = `You are a content safety classifier for a relationship coaching app.
 Classify the user message into one of:
@@ -25,7 +29,17 @@ serve(async (req: Request) => {
   }
 
   try {
-    const { message, userId } = await req.json();
+    // 안전 필터이므로 구독 게이트($7 한도)는 적용하지 않는다 —
+    // 미구독자의 유해 메시지가 필터를 우회하면 안 되기 때문.
+    // 대신 인증 + rate limit으로 남용을 막는다.
+    const { user: authUser } = await getAuthenticatedUser(req);
+    const userId = authUser.id;
+
+    if (!checkRateLimit(`dmfilter:${userId}`, 30, 60_000)) {
+      return rateLimitResponse(corsHeaders);
+    }
+
+    const { message } = await req.json();
 
     if (!message || typeof message !== 'string' || message.trim().length === 0) {
       return new Response(JSON.stringify({ ok: true, flagged: false }), {
@@ -48,7 +62,7 @@ serve(async (req: Request) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
+        model: MODELS.HAIKU,
         max_tokens: 100,
         system: SYSTEM_PROMPT,
         messages: [{ role: 'user', content: message }],
@@ -64,6 +78,7 @@ serve(async (req: Request) => {
     }
 
     const aiResp = await res.json();
+    logAiUsage({ userId, model: MODELS.HAIKU, usage: aiResp?.usage, tab: 'dm-filter' });
     const raw = aiResp.content?.[0]?.text ?? '{"verdict":"SAFE"}';
 
     let parsed: { verdict: string; reason?: string };

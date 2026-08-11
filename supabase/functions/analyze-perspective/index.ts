@@ -2,8 +2,9 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { getCorsHeaders } from "../_shared/cors.ts";
 import { MODELS, TEMPERATURES } from "../_shared/models.ts";
-import { getAuthenticatedUser } from "../_shared/auth.ts";
+import { getAuthenticatedUser, AuthError } from "../_shared/auth.ts";
 import { sanitizeUserInput } from "../_shared/sanitize.ts";
+import { checkAiAccess, aiGateResponse, logAiUsage } from "../_shared/aiGate.ts";
 
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
 
@@ -24,7 +25,13 @@ serve(async (req: Request) => {
     }
 
     // C3 수정: 인증 추가
-    await getAuthenticatedUser(req);
+    const { user: authUser } = await getAuthenticatedUser(req);
+
+    // AI 비용 게이트 (구독 여부 + 월 $7 한도)
+    const gate = await checkAiAccess(authUser.id);
+    if (!gate.allowed) {
+      return aiGateResponse(gate, corsHeaders);
+    }
 
     const body = await req.json();
     const happyJobs: JobItem[] = (body.happyJobs ?? []).map((j: JobItem) => ({
@@ -87,6 +94,7 @@ serve(async (req: Request) => {
     }
 
     const data = await aiResp.json();
+    logAiUsage({ userId: authUser.id, model: MODELS.SONNET, usage: data?.usage, tab: 'perspective' });
     const content: string = data?.content?.[0]?.text?.trim() ?? '';
 
     return new Response(JSON.stringify({ primePerspective: content }), {
@@ -95,7 +103,7 @@ serve(async (req: Request) => {
   } catch (error) {
     console.error('analyze-perspective error:', error);
     return new Response(JSON.stringify({ error: '요청 처리 중 오류' }), {
-      status: 500,
+      status: error instanceof AuthError ? error.status : 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }

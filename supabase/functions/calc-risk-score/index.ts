@@ -132,43 +132,28 @@ serve(async (req) => {
       });
     }
 
-    const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-      db: { schema: "veilor" },
+    // veilor 스키마는 PostgREST에 노출되어 있지 않아 db:{schema:"veilor"} 접근이
+    // 406으로 실패한다. public SECURITY DEFINER 래퍼를 경유한다.
+    // 마이그레이션: calc_risk_score_public_wrappers
+    const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+    // 1~3. 체크인 + 멤버타입 + 최근 5회를 한 번에 조회
+    const { data: ctx, error: cErr } = await sb.rpc("fn_b2b_checkin_context", {
+      p_checkin_id: checkin_id,
     });
 
-    // 1. 현재 체크인 조회
-    const { data: checkin, error: cErr } = await sb
-      .from("b2b_checkin_sessions")
-      .select("*")
-      .eq("id", checkin_id)
-      .single();
-
-    if (cErr || !checkin) {
+    if (cErr || !ctx?.found) {
+      if (cErr) console.error("fn_b2b_checkin_context failed:", cErr.message);
       return new Response(JSON.stringify({ error: "checkin not found" }), {
         status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // 2. 멤버 타입 조회 (트레이니 임계값 조정용)
-    const { data: memberRow } = await sb
-      .from("b2b_org_members")
-      .select("member_type")
-      .eq("user_id", checkin.member_id)
-      .eq("org_id", checkin.org_id)
-      .single();
-    const memberType = memberRow?.member_type ?? "member";
+    const checkin = ctx.checkin;
+    const memberType = ctx.member_type ?? "member";
 
-    // 3. 최근 5회 체크인 avg 조회 (신호 B)
-    const { data: recentCheckins } = await sb
-      .from("b2b_checkin_sessions")
-      .select("c_avg, created_at")
-      .eq("member_id", checkin.member_id)
-      .eq("org_id", checkin.org_id)
-      .order("created_at", { ascending: false })
-      .limit(5);
-
-    const recentAvgs = (recentCheckins ?? [])
-      .reverse()
+    // fn_b2b_checkin_context는 created_at 오름차순으로 반환한다 (기존 reverse()와 동일 순서)
+    const recentAvgs = (ctx.recent ?? [])
       .map((r: { c_avg: number }) => Number(r.c_avg ?? 0));
 
     // 4. 스코어 계산
@@ -193,49 +178,42 @@ serve(async (req) => {
     );
     const routing = determineRouting(level);
 
-    // 5. 체크인 업데이트
-    await sb
-      .from("b2b_checkin_sessions")
-      .update({
-        risk_score: finalScore,
-        risk_level: level,
-        routing_result: routing,
-        meta: {
-          ...(checkin.meta ?? {}),
-          score_breakdown: { signal_a: scoreA, signal_b: scoreB, signal_c: scoreC },
-        },
-      })
-      .eq("id", checkin_id);
+    // 5. 체크인 업데이트 (meta는 래퍼 안에서 기존 값과 병합된다)
+    const { error: applyErr } = await sb.rpc("fn_b2b_apply_risk", {
+      p_checkin_id: checkin_id,
+      p_risk_score: finalScore,
+      p_risk_level: level,
+      p_routing: routing,
+      p_breakdown: { signal_a: scoreA, signal_b: scoreB, signal_c: scoreC },
+    });
+    if (applyErr) console.error("fn_b2b_apply_risk failed:", applyErr.message);
 
     // 6. HIGH 키워드 → crisis_flags 기록
     if (isHighKeyword) {
-      await sb.from("crisis_flags").insert({
-        user_id: checkin.member_id,
-        trigger_text: checkin.free_text ?? "",
-        keywords: KEYWORDS_HIGH.filter(kw => (checkin.free_text ?? "").includes(kw)),
-        severity: "high",
-        status: "open",
+      const { error: flagErr } = await sb.rpc("fn_b2b_insert_crisis_flag", {
+        p_user_id: checkin.member_id,
+        p_trigger_text: checkin.free_text ?? "",
+        p_keywords: KEYWORDS_HIGH.filter(kw => (checkin.free_text ?? "").includes(kw)),
+        p_severity: "high",
+        p_status: "open",
       });
+      if (flagErr) console.error("fn_b2b_insert_crisis_flag failed:", flagErr.message);
     }
 
     // 7. MEDIUM / HIGH → 코치 알림 발송
     if (level === "medium" || level === "high") {
-      // 담당 코치 조회
-      const { data: coachSession } = await sb
-        .from("b2b_coaching_sessions")
-        .select("coach_id")
-        .eq("member_id", checkin.member_id)
-        .eq("status", "scheduled")
-        .order("scheduled_at", { ascending: true })
-        .limit(1)
-        .single();
+      // 담당 코치 + 보호자를 한 번에 조회
+      const { data: targets, error: tErr } = await sb.rpc("fn_b2b_alert_targets", {
+        p_member_id: checkin.member_id,
+        p_org_id: checkin.org_id,
+      });
+      if (tErr) console.error("fn_b2b_alert_targets failed:", tErr.message);
 
-      if (coachSession?.coach_id) {
+      if (targets?.coach_id) {
         // send-email Edge Function 호출 (비동기)
-        const supa = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-        supa.functions.invoke("send-email", {
+        sb.functions.invoke("send-email", {
           body: {
-            to_user_id: coachSession.coach_id,
+            to_user_id: targets.coach_id,
             template: "b2b_risk_alert",
             data: {
               risk_level: level,
@@ -250,24 +228,14 @@ serve(async (req) => {
       }
 
       // 트레이니 HIGH → 보호자 알림 추가
-      if (memberType === "trainee" && level === "high") {
-        const { data: traineeRow } = await sb
-          .from("b2b_org_members")
-          .select("guardian_user_id")
-          .eq("user_id", checkin.member_id)
-          .eq("org_id", checkin.org_id)
-          .single();
-
-        if (traineeRow?.guardian_user_id) {
-          const supa = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-          supa.functions.invoke("send-email", {
-            body: {
-              to_user_id: traineeRow.guardian_user_id,
-              template: "b2b_guardian_alert",
-              data: { risk_level: level, member_id: checkin.member_id },
-            },
-          }).catch(() => {});
-        }
+      if (memberType === "trainee" && level === "high" && targets?.guardian_user_id) {
+        sb.functions.invoke("send-email", {
+          body: {
+            to_user_id: targets.guardian_user_id,
+            template: "b2b_guardian_alert",
+            data: { risk_level: level, member_id: checkin.member_id },
+          },
+        }).catch(() => {});
       }
     }
 

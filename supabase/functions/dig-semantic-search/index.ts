@@ -14,7 +14,6 @@ import { getCorsHeaders } from "../_shared/cors.ts";
 import { sanitizeUserInput } from "../_shared/sanitize.ts";
 import { checkRateLimit, rateLimitResponse } from "../_shared/rateLimit.ts";
 
-const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 
@@ -23,12 +22,6 @@ serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
 
   try {
-    if (!ANTHROPIC_API_KEY) {
-      return new Response(JSON.stringify({ error: 'ANTHROPIC_API_KEY 미설정' }), {
-        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
     const body = await req.json();
     const rateLimitKey = body.userId ?? req.headers.get('x-forwarded-for') ?? 'anon';
     if (!checkRateLimit(rateLimitKey, 20, 60_000)) return rateLimitResponse(corsHeaders);
@@ -43,25 +36,8 @@ serve(async (req: Request) => {
       });
     }
 
-    // 1단계: 쿼리 임베딩 생성 (Anthropic voyage-multilingual-2)
-    const embedResp = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 10,
-        messages: [{ role: 'user', content: `임베딩 생성: ${query}` }],
-        // 실제로는 embedding API 사용; Claude message API로 대체 사용 불가
-        // → Supabase RPC fn_semantic_search로 서버사이드 처리
-      }),
-    });
-
-    // Anthropic은 별도 embedding endpoint가 없으므로
-    // Supabase RPC에서 pg_embedding/pgvector로 처리
+    // 임베딩은 Anthropic이 아니라 Supabase RPC(pgvector)에서 서버사이드로 처리한다.
+    // 과거에는 여기서 Haiku를 호출했으나 응답을 사용하지 않는 무의미한 과금이었으므로 제거함.
     const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
       auth: { autoRefreshToken: false, persistSession: false },
       db: { schema: 'veilor' },

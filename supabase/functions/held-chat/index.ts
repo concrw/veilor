@@ -5,6 +5,8 @@ import { getCorsHeaders } from "../_shared/cors.ts";
 import { MODELS, TEMPERATURES } from "../_shared/models.ts";
 import { sanitizeUserInput } from "../_shared/sanitize.ts";
 import { checkRateLimit, rateLimitResponse } from "../_shared/rateLimit.ts";
+import { checkAiAccess, aiGateResponse, logAiUsage } from "../_shared/aiGate.ts";
+import { getAuthenticatedUser, AuthError } from "../_shared/auth.ts";
 
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
@@ -355,11 +357,14 @@ serve(async (req: Request) => {
       });
     }
 
+    // body.userId는 위조 가능하므로 JWT에서 추출한 user.id만 사용한다 (BOLA / 한도 우회 방지)
+    const { user: authUser } = await getAuthenticatedUser(req);
+    const userId = authUser.id;
+
     const body = await req.json();
 
-    // Rate limit: 유저당 분당 10회
-    const rateLimitKey = body.userId ?? req.headers.get('x-forwarded-for') ?? 'anon';
-    if (!checkRateLimit(rateLimitKey, 10, 60_000)) {
+    // Rate limit: 유저당 분당 10회 (인증된 ID 기준 — body 값으로는 우회 불가)
+    if (!checkRateLimit(userId, 10, 60_000)) {
       return rateLimitResponse(corsHeaders);
     }
 
@@ -368,18 +373,13 @@ serve(async (req: Request) => {
     const mask = sanitizeUserInput(body.mask ?? '', 50);
     const axisScores = body.axisScores;
     const history = body.history;
-    const userId = body.userId;
 
     // AI 접근 권한 체크 (구독 여부 + 월 $7 한도)
-    if (userId && SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
-      const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-      const { data: access } = await sb.rpc('fn_check_ai_access', { p_user_id: userId });
-      if (access && !access.allowed) {
-        return new Response(
-          JSON.stringify({ error: access.reason, monthly_used_usd: access.monthly_used_usd ?? null }),
-          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
+    // 기존 인라인 로직은 RPC error를 버려서 실패 시 통과시켰고, veilor 스키마 미노출로
+    // 이 RPC는 항상 실패했다 → 캡이 발동한 적이 없다. aiGate는 실패 시 차단한다.
+    const gate = await checkAiAccess(userId);
+    if (!gate.allowed) {
+      return aiGateResponse(gate, corsHeaders);
     }
     const aiSettings = body.aiSettings ?? {};
     const aiName = sanitizeUserInput(aiSettings.name ?? '엠버', 20);
@@ -858,39 +858,28 @@ serve(async (req: Request) => {
     }
 
     // ── 토큰 사용량 비동기 로깅 (응답 지연 없음) ──
+    // aiGate.logAiUsage에 위임한다. 기존 인라인 구현의 두 가지 결함을 고치기 위함:
+    //   1. ai_token_usage 직접 insert → veilor 스키마 미노출로 항상 실패했다.
+    //      (public.fn_log_ai_usage 래퍼 경유로 변경)
+    //   2. Haiku 호출도 Sonnet 요금으로 계산 → 실제보다 과다 산정됐다.
+    //      (모델별 요금표 적용)
     function logTokenUsage(
       inputTokens: number,
       outputTokens: number,
       cacheReadTokens: number,
       cacheWriteTokens: number,
     ) {
-      if (!cachedSb || !userId) return;
-
-      // Sonnet 요금 기준 USD 원가 계산
-      // input: $3/1M, output: $15/1M, cache_read: $0.30/1M, cache_write: $3.75/1M
-      const costUsd =
-        (inputTokens * 3.00 +
-         outputTokens * 15.00 +
-         cacheReadTokens * 0.30 +
-         cacheWriteTokens * 3.75) / 1_000_000;
-
-      cachedSb.from('ai_token_usage').insert({
-        user_id: userId,
+      logAiUsage({
+        userId,
         model: selectedModel,
         tab: tab || null,
-        input_tokens: inputTokens,
-        output_tokens: outputTokens,
-        cache_read_tokens: cacheReadTokens,
-        cache_write_tokens: cacheWriteTokens,
-      }).then(() => {}).catch((e: unknown) => console.warn('token_usage log failed:', e));
-
-      // monthly_used_usd 누적
-      if (costUsd > 0) {
-        cachedSb.rpc('fn_increment_monthly_used_usd', {
-          p_user_id: userId,
-          p_cost_usd: costUsd,
-        }).then(() => {}).catch((e: unknown) => console.warn('monthly_used_usd update failed:', e));
-      }
+        usage: {
+          input_tokens: inputTokens,
+          output_tokens: outputTokens,
+          cache_read_input_tokens: cacheReadTokens,
+          cache_creation_input_tokens: cacheWriteTokens,
+        },
+      });
     }
 
     // SSE 스트리밍: 클라이언트가 Accept: text/event-stream 헤더 전송 시
@@ -989,6 +978,13 @@ serve(async (req: Request) => {
     });
   } catch (error) {
     console.error('held-chat error:', error);
+    // 인증 실패는 fallback 응답(200)으로 감추지 않고 그대로 노출한다.
+    if (error instanceof AuthError) {
+      return new Response(JSON.stringify({ error: error.message }), {
+        status: error.status,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
     // C11: catch 경로에서도 rule-based fallback 반환
     const fallback = getRuleBasedFallback('vent', '', 'none');
     return new Response(JSON.stringify({ response: fallback, fallback: true }), {

@@ -1,7 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { getCorsHeaders } from "../_shared/cors.ts";
 import { MODELS, TEMPERATURES } from "../_shared/models.ts";
-import { getAuthenticatedUser } from "../_shared/auth.ts";
+import { getAuthenticatedUser , AuthError } from "../_shared/auth.ts";
+import { checkAiAccess, aiGateResponse, logAiUsage } from "../_shared/aiGate.ts";
 
 interface PersonaProfile {
   id: string;
@@ -32,6 +33,12 @@ serve(async (req) => {
     const { userId } = await req.json();
     if (userId !== user.id) {
       throw new Error("Unauthorized");
+    }
+
+    // AI 비용 게이트 (구독 여부 + 월 $7 한도)
+    const gate = await checkAiAccess(user.id);
+    if (!gate.allowed) {
+      return aiGateResponse(gate, getCorsHeaders(req));
     }
 
     // Get all personas for the user
@@ -105,7 +112,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ error: "Internal server error" }),
       {
-        status: 400,
+        status: error instanceof AuthError ? error.status : 400,
         headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       }
     );
@@ -184,6 +191,7 @@ Respond in JSON format:
       });
 
       const aiData = await response.json();
+      logAiUsage({ userId: user.id, model: MODELS.SONNET, usage: aiData?.usage, tab: "persona-rel" });
       const content = aiData.content?.[0]?.text || "{}";
       const result = JSON.parse(content);
 

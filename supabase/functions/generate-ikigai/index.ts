@@ -2,7 +2,8 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { getCorsHeaders } from "../_shared/cors.ts";
 import { MODELS, TEMPERATURES } from "../_shared/models.ts";
-import { getAuthenticatedUser, createServiceClient } from "../_shared/auth.ts";
+import { getAuthenticatedUser, createServiceClient , AuthError } from "../_shared/auth.ts";
+import { checkAiAccess, aiGateResponse, logAiUsage } from "../_shared/aiGate.ts";
 
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
 
@@ -45,6 +46,13 @@ serve(async (req) => {
     }
 
     const { user } = await getAuthenticatedUser(req);
+
+    // AI 비용 게이트 (구독 여부 + 월 $7 한도)
+    const gate = await checkAiAccess(user.id);
+    if (!gate.allowed) {
+      return aiGateResponse(gate, getCorsHeaders(req));
+    }
+
     const supabaseAdmin = createServiceClient();
 
     // 1) Load user data
@@ -139,6 +147,7 @@ serve(async (req) => {
       }),
     });
     const aiJson = await aiRes.json();
+    logAiUsage({ userId: user.id, model: MODELS.SONNET, usage: aiJson?.usage, tab: "ikigai" });
     const finalSentence = aiJson?.content?.[0]?.text?.trim() || "당신의 강점과 열정, 시장의 필요와 수익 가능성이 만나는 지점을 실천으로 연결하세요.";
 
     const record = {
@@ -186,7 +195,7 @@ serve(async (req) => {
   } catch (e: any) {
     console.error("generate-ikigai error", e);
     return new Response(JSON.stringify({ error: e?.message || String(e) }), {
-      status: 500,
+      status: e instanceof AuthError ? e.status : 500,
       headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
     });
   }
