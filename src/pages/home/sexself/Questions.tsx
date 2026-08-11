@@ -19,6 +19,7 @@ import { Slider } from '@/components/ui/slider';
 import { C, alpha } from '@/lib/colors';
 
 const STORAGE_KEY = 'veilor:sexself-progress-v3';
+const AGE_GATE_KEY = 'veilor:sexself-age-confirmed';
 
 const AXIS_COLORS: Record<string, string> = {
   DES: '#10b981',
@@ -57,6 +58,10 @@ export default function SexSelfQuestions() {
   const { language } = useLanguageContext();
   const t = useT();
   const s = t.sexSelfQuestions;
+
+  const [ageConfirmed, setAgeConfirmed] = useState<boolean>(() => {
+    try { return localStorage.getItem(AGE_GATE_KEY) === '1'; } catch { return false; }
+  });
 
   const [current, setCurrent] = useState(0);
   const [responses, setResponses] = useState<Record<string, number>>(() => {
@@ -304,6 +309,42 @@ export default function SexSelfQuestions() {
     current < STAGE_1_END ? s.stageLabels[0] :
     current < STAGE_2_END ? s.stageLabels[1] : s.stageLabels[2];
 
+
+  if (!ageConfirmed) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center px-6" style={{ background: C.bg }}>
+        <div className="max-w-sm w-full space-y-6">
+          <div className="text-center space-y-2">
+            <p className="text-2xl" style={{ fontFamily: "'Cormorant Garamond', serif", color: C.text }}>
+              {s.ageGateTitle}
+            </p>
+            <p className="text-sm leading-relaxed" style={{ color: C.text2 }}>
+              {s.ageGateBody}
+            </p>
+          </div>
+          <div className="space-y-3">
+            <button
+              onClick={() => {
+                try { localStorage.setItem(AGE_GATE_KEY, '1'); } catch { /* ignore */ }
+                setAgeConfirmed(true);
+              }}
+              className="w-full py-3 rounded-xl text-sm font-medium"
+              style={{ background: C.amberGold, color: '#1C1917' }}
+            >
+              {s.ageGateConfirm}
+            </button>
+            <button
+              onClick={() => navigate(-1)}
+              className="w-full py-3 rounded-xl text-sm"
+              style={{ background: 'transparent', border: `1px solid ${C.border}`, color: C.text3 }}
+            >
+              {s.ageGateDecline}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col px-6 py-8" style={{ background: C.bg }}>

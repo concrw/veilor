@@ -240,7 +240,7 @@ const Signup = () => {
                 className="text-xs leading-relaxed cursor-pointer"
                 style={{ color: '#B8B3AF' }}
               >
-                {s.termsPrefix}{' '}
+                {s.termsPrefix && <>{s.termsPrefix}{' '}</>}
                 <a
                   href="/privacy.html"
                   target="_blank"
@@ -250,7 +250,16 @@ const Signup = () => {
                 >
                   {s.termsLink}
                 </a>
-                {s.termsSuffix && <>{' '}{s.termsSuffix}</>}
+                {s.termsSuffix && <>{' '}{s.termsSuffix}{' '}</>}
+                <a
+                  href="/terms.html"
+                  target="_blank"
+                  onClick={(e) => e.stopPropagation()}
+                  className="underline"
+                  style={{ color: '#E0B48A' }}
+                >
+                  {s.termsOfServiceLink}
+                </a>
               </label>
             </div>
 

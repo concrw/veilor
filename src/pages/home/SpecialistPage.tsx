@@ -8,6 +8,7 @@ import { C } from '@/lib/colors';
 import { UserCheck, ExternalLink, Send, Clock, ChevronRight } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useT } from '@/i18n/useT';
+import { isNativeApp } from '@/lib/platform';
 
 function HandoffBadge({ status }: { status: SpecialistHandoff['status'] }) {
   const hs = useT().specialistPage.handoffStatus;
@@ -77,10 +78,19 @@ function SpecialistCard({ specialist }: { specialist: SpecialistEntry }) {
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12 }}>
         {specialist.contact_url && (
-          <a href={specialist.contact_url} target="_blank" rel="noreferrer"
-            style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: C.text4, textDecoration: 'none' }}>
+          <button
+            onClick={async () => {
+              if (isNativeApp()) {
+                const { Browser } = await import('@capacitor/browser');
+                await Browser.open({ url: specialist.contact_url! });
+              } else {
+                window.open(specialist.contact_url, '_blank', 'noopener,noreferrer');
+              }
+            }}
+            style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: C.text4, background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'none' }}
+          >
             <ExternalLink size={11} />{s.profile}
-          </a>
+          </button>
         )}
         <div style={{ flex: 1 }} />
         {myHandoff ? (

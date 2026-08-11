@@ -2,7 +2,7 @@
 // 클라이언트에서 tier 비교 없이 DB에서 직접 검증
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
-import { supabase, veilorDb } from '@/integrations/supabase/client';
+import { veilorDb } from '@/integrations/supabase/client';
 
 export type SubscriptionTier = 'free' | 'basic' | 'pro' | 'premium';
 
@@ -20,7 +20,6 @@ interface AccessMap {
 export function useVeilorSubscription() {
   const { user } = useAuth();
 
-  // 역할/티어 조회
   const { data: role, isLoading: roleLoading } = useQuery<string>({
     queryKey: ['veilor-role', user?.id],
     queryFn: async () => {
@@ -29,10 +28,9 @@ export function useVeilorSubscription() {
       return (data as string) ?? 'basic';
     },
     enabled: !!user,
-    staleTime: 1000 * 60 * 5, // 5분 캐시
+    staleTime: 1000 * 60 * 5,
   });
 
-  // 주요 feature 접근 권한 일괄 조회
   const features: VeilorFeature[] = ['ai_insights', 'pattern_history', 'researcher_view', 'export_data'];
 
   const { data: accessMap, isLoading: accessLoading } = useQuery<AccessMap>({

@@ -3,6 +3,7 @@ import type { AuthError, Session, User } from "@supabase/supabase-js";
 import { supabase, veilorDb } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useT } from "@/i18n/useT";
+import { isNativeApp } from "@/lib/platform";
 
 export type OnboardingStep = 'welcome' | 'cq' | 'priper' | 'completed';
 
@@ -31,6 +32,7 @@ interface AuthContextValue {
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
   signUp: (email: string, password: string, nickname?: string) => Promise<{ error: AuthError | null }>;
   signInWithGoogle: () => Promise<{ error: AuthError | null }>;
+  signInWithApple: () => Promise<{ error: AuthError | Error | null }>;
   signOut: () => Promise<void>;
 }
 
@@ -206,9 +208,42 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signInWithGoogle = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/` },
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
     });
     if (error) toast({ title: t.auth.googleLoginFailTitle, description: error.message, variant: 'destructive' });
+    return { error };
+  };
+
+  const signInWithApple = async (): Promise<{ error: AuthError | Error | null }> => {
+    if (isNativeApp()) {
+      try {
+        const { registerPlugin } = await import('@capacitor/core');
+        const AppleSignIn = registerPlugin<{
+          authorize(options: { nonce: string }): Promise<{ response: { identityToken: string } }>;
+        }>('AppleSignIn');
+        const rawNonce = crypto.randomUUID();
+        const result = await AppleSignIn.authorize({ nonce: rawNonce });
+        const { error } = await supabase.auth.signInWithIdToken({
+          provider: 'apple',
+          token: result.response.identityToken,
+          nonce: rawNonce,
+        });
+        if (error) toast({ title: t.auth.appleLoginFailTitle, description: error.message, variant: 'destructive' });
+        return { error };
+      } catch (err) {
+        const error = err instanceof Error ? err : new Error('Apple Sign-In failed');
+        if (error.message !== 'SIGN_IN_CANCELLED') {
+          toast({ title: t.auth.appleLoginFailTitle, description: error.message, variant: 'destructive' });
+        }
+        return { error };
+      }
+    }
+    // 웹에서는 Supabase OAuth 플로우 사용
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'apple',
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
+    });
+    if (error) toast({ title: t.auth.appleLoginFailTitle, description: error.message, variant: 'destructive' });
     return { error };
   };
 
@@ -227,7 +262,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     user, session, loading, authError,
     onboardingStep, priperCompleted, primaryMask, secondaryMask, axisScores, personaContextsCompleted,
     setOnboardingStep, completePriper,
-    signIn, signUp, signInWithGoogle, signOut,
+    signIn, signUp, signInWithGoogle, signInWithApple, signOut,
   // eslint-disable-next-line react-hooks/exhaustive-deps -- stable function refs
   }), [user, session, loading, authError, onboardingStep, priperCompleted, primaryMask, secondaryMask, axisScores, personaContextsCompleted]);
 

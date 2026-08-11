@@ -130,7 +130,7 @@ export default function GuestLanding() {
         <div className="space-y-3">
           {PUBLIC_POSTS.map(post => (
             <div key={post.id} className="rounded-xl p-4" style={{ background: '#292524', border: '1px solid #44403C' }}>
-              <p className="text-xs mb-2" style={{ color: '#B8B3AF' }}>{post.mask} · {post.group[lang]}</p>
+              <p className="text-xs mb-2" style={{ color: '#B8B3AF' }}>{post.mask[lang]} · {post.group[lang]}</p>
               <p className="text-sm leading-relaxed" style={{ color: '#D4D4D0' }}>{post.content[lang]}</p>
               <p className="text-xs mt-2" style={{ color: '#87817C' }}>{s.postUpvotesLabel} {post.upvotes}</p>
             </div>
@@ -196,7 +196,7 @@ export default function GuestLanding() {
               <div className="space-y-3">
                 {PUBLIC_POSTS.map(post => (
                   <div key={post.id} className="rounded-xl p-4" style={{ background: '#292524', border: '1px solid #44403C' }}>
-                    <p className="text-xs mb-2" style={{ color: '#B8B3AF' }}>{post.mask} · {post.group[lang]}</p>
+                    <p className="text-xs mb-2" style={{ color: '#B8B3AF' }}>{post.mask[lang]} · {post.group[lang]}</p>
                     <p className="text-sm leading-relaxed" style={{ color: '#D4D4D0' }}>{post.content[lang]}</p>
                     <p className="text-xs mt-2" style={{ color: '#87817C' }}>{s.postUpvotesLabel} {post.upvotes}</p>
                   </div>
@@ -268,7 +268,7 @@ export default function GuestLanding() {
               <p className="text-xs" style={{ color: '#87817C' }}>{s.postsTitle}</p>
               {PUBLIC_POSTS.slice(0, 2).map(post => (
                 <div key={post.id} className="rounded-xl p-4" style={{ background: '#292524', border: '1px solid #44403C' }}>
-                  <p className="text-xs mb-2" style={{ color: '#B8B3AF' }}>{post.mask} · {post.group[lang]}</p>
+                  <p className="text-xs mb-2" style={{ color: '#B8B3AF' }}>{post.mask[lang]} · {post.group[lang]}</p>
                   <p className="text-sm leading-relaxed" style={{ color: '#D4D4D0' }}>{post.content[lang]}</p>
                 </div>
               ))}

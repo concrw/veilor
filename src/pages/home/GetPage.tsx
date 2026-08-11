@@ -41,6 +41,14 @@ export default function GetPage() {
   const { isPro, modalOpen, activeTrigger, tryAccess, closeModal } = usePremiumTrigger();
   const [tab, setTab] = useState<Tab>('identity');
 
+  const handleTabChange = (t: Tab) => {
+    if (t === 'couple' && !isPro) {
+      tryAccess('partner_analysis');
+      return;
+    }
+    setTab(t);
+  };
+
   // prime_perspectives 최신 레코드
   const { data: pp, isError: ppError, refetch: refetchPp } = useQuery({
     queryKey: ['prime-perspective', user?.id],
@@ -192,7 +200,7 @@ export default function GetPage() {
       <nav className="hidden lg:flex flex-col flex-shrink-0 py-6 px-3 border-r border-border" style={{ width: 140 }}>
         <p className="text-xs text-muted-foreground mb-4 px-2 tracking-wide">{get.header}</p>
         {tabs.map(([t, label]) => (
-          <button key={t} onClick={() => setTab(t)}
+          <button key={t} onClick={() => handleTabChange(t)}
             className={`text-left px-3 py-2.5 rounded-xl text-sm mb-1 transition-colors
               ${tab === t ? 'bg-card text-foreground font-medium' : 'text-muted-foreground hover:text-foreground'}`}>
             {label}
@@ -206,7 +214,7 @@ export default function GetPage() {
           {/* 모바일 탭 바 */}
           <div className="lg:hidden bg-card border rounded-2xl p-1 flex">
             {tabs.map(([t, label]) => (
-              <button key={t} onClick={() => setTab(t)}
+              <button key={t} onClick={() => handleTabChange(t)}
                 className={`flex-1 py-2 rounded-xl text-xs font-medium transition-colors
                   ${tab === t ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}>
                 {label}

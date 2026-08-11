@@ -34,6 +34,7 @@ export interface MaskProfile {
   color: string;
   pairCode: string;       // 끌림 대칭 상대 MSK 코드
   genPath: string;        // 주요 생성 경로 (GEN)
+  genPathEn: string;
 }
 
 export const MASK_PROFILES: MaskProfile[] = [
@@ -51,7 +52,7 @@ export const MASK_PROFILES: MaskProfile[] = [
     coreNeed: '안전하게 주도권을 내려놓는 경험', coreNeedEn: 'The experience of safely letting go of control',
     color: '#9CA3AF',
     pairCode: 'SAV',
-    genPath: '초기 불안정 애착',
+    genPath: '초기 불안정 애착', genPathEn: 'Early insecure attachment',
   },
   {
     id: 'achiever', mskCode: 'NRC', nameKo: '공허자', nameEn: 'Void',
@@ -65,7 +66,7 @@ export const MASK_PROFILES: MaskProfile[] = [
     coreNeed: '배신 없이 존재할 수 있는 관계', coreNeedEn: 'A relationship where you can exist without betrayal',
     color: '#6B7280',
     pairCode: 'EMP',
-    genPath: '반복 배신 학습',
+    genPath: '반복 배신 학습', genPathEn: 'Repeated betrayal learning',
   },
   {
     id: 'rebel', mskCode: 'SCP', nameKo: '반항자', nameEn: 'Rebel',
@@ -79,7 +80,7 @@ export const MASK_PROFILES: MaskProfile[] = [
     coreNeed: '자유와 연결이 공존하는 관계', coreNeedEn: 'A relationship where freedom and connection coexist',
     color: '#EF4444',
     pairCode: 'DEP',
-    genPath: '억압적 환경 저항',
+    genPath: '억압적 환경 저항', genPathEn: 'Resistance to oppressive environment',
   },
   {
     id: 'charmer', mskCode: 'MKV', nameKo: '매혹자', nameEn: 'Charmer',
@@ -93,7 +94,7 @@ export const MASK_PROFILES: MaskProfile[] = [
     coreNeed: '가면 없이도 원하는 존재', coreNeedEn: 'Being wanted without wearing a mask',
     color: '#C084FC',
     pairCode: 'APV',
-    genPath: '성적 자본 각성',
+    genPath: '성적 자본 각성', genPathEn: 'Awakening to social capital',
   },
   {
     id: 'player', mskCode: 'MNY', nameKo: '유희자', nameEn: 'Player',
@@ -107,7 +108,7 @@ export const MASK_PROFILES: MaskProfile[] = [
     coreNeed: '안전하게 감정을 가질 수 있는 관계', coreNeedEn: 'A relationship where it is safe to have feelings',
     color: '#F59E0B',
     pairCode: 'GVR',
-    genPath: '회피 전략 유머화',
+    genPath: '회피 전략 유머화', genPathEn: 'Avoidance through humor',
   },
   {
     id: 'explorer', mskCode: 'PSP', nameKo: '탐험자', nameEn: 'Explorer',
@@ -121,7 +122,7 @@ export const MASK_PROFILES: MaskProfile[] = [
     coreNeed: '떠나지 않는다는 확신', coreNeedEn: 'The certainty that someone will not leave',
     color: '#A78BFA',
     pairCode: 'AVD',
-    genPath: '안전기지 부재',
+    genPath: '안전기지 부재', genPathEn: 'Absence of a safe base',
   },
 
   // ── 피식형 6종 ──────────────────────────────────────────────────
@@ -137,7 +138,7 @@ export const MASK_PROFILES: MaskProfile[] = [
     coreNeed: '있는 그대로 받아들여지는 경험', coreNeedEn: 'The experience of being accepted as I am',
     color: '#8B9EFF',
     pairCode: 'NRC',
-    genPath: '정체성 취약',
+    genPath: '정체성 취약', genPathEn: 'Fragile sense of identity',
   },
   {
     id: 'caregiver', mskCode: 'GVR', nameKo: '돌봄자', nameEn: 'Caregiver',
@@ -151,7 +152,7 @@ export const MASK_PROFILES: MaskProfile[] = [
     coreNeed: '받는 것도 괜찮다는 허락', coreNeedEn: 'Permission to receive as well as give',
     color: '#F9A8D4',
     pairCode: 'MNY',
-    genPath: '역할 역전 아동기',
+    genPath: '역할 역전 아동기', genPathEn: 'Role reversal in childhood',
   },
   {
     id: 'striver', mskCode: 'APV', nameKo: '성취자', nameEn: 'Striver',
@@ -165,7 +166,7 @@ export const MASK_PROFILES: MaskProfile[] = [
     coreNeed: '성취 없이도 사랑받는 경험', coreNeedEn: 'The experience of being loved without achievement',
     color: '#F5C842',
     pairCode: 'MKV',
-    genPath: '조건부 사랑 경험',
+    genPath: '조건부 사랑 경험', genPathEn: 'Conditional love experience',
   },
   {
     id: 'victim', mskCode: 'DEP', nameKo: '희생자', nameEn: 'Victim',
@@ -179,7 +180,7 @@ export const MASK_PROFILES: MaskProfile[] = [
     coreNeed: '혼자서도 괜찮다는 경험', coreNeedEn: 'The experience of being okay on my own',
     color: '#7DD3F0',
     pairCode: 'SCP',
-    genPath: '무력감 학습',
+    genPath: '무력감 학습', genPathEn: 'Learned helplessness',
   },
   {
     id: 'sage', mskCode: 'AVD', nameKo: '현자', nameEn: 'Sage',
@@ -193,7 +194,7 @@ export const MASK_PROFILES: MaskProfile[] = [
     coreNeed: '명확함이 안전하다는 경험', coreNeedEn: 'The experience that being direct is safe',
     color: '#B5C4D3',
     pairCode: 'PSP',
-    genPath: '지적 철수 패턴',
+    genPath: '지적 철수 패턴', genPathEn: 'Intellectual withdrawal pattern',
   },
   {
     id: 'martyr', mskCode: 'SAV', nameKo: '순교자', nameEn: 'Martyr',
@@ -207,7 +208,7 @@ export const MASK_PROFILES: MaskProfile[] = [
     coreNeed: '구원자가 아니어도 사랑받는 경험', coreNeedEn: 'The experience of being loved without being a rescuer',
     color: '#93C5FD',
     pairCode: 'PWR',
-    genPath: '종교/문화적 규범',
+    genPath: '종교/문화적 규범', genPathEn: 'Religious or cultural norms',
   },
 ];
 

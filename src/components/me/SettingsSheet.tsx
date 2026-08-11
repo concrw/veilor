@@ -3,12 +3,14 @@ import { C } from '@/lib/colors';
 import { supabase, veilorDb } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { useT } from '@/i18n/useT';
+import { toast } from '@/hooks/use-toast';
 import { useLanguageContext } from '@/context/LanguageContext';
 import type { SupportedLanguage } from '@/i18n/types';
 import ZoneToggle from './ZoneToggle';
 import AppCustomization from '@/components/settings/AppCustomization';
 import { useMode, type UXMode, DOMAIN_MODES } from '@/context/ModeContext';
 import { useDomain, type Domain } from '@/context/DomainContext';
+import { isNativeApp } from '@/lib/platform';
 
 export interface AiSettings {
   name: string;
@@ -108,12 +110,20 @@ function SettingsSheet({
     if (!user || !deleteConfirm) return;
     setDeleting(true);
     try {
-      const { error } = await supabase.functions.invoke('delete-user-data', {
-        body: { userId: user.id },
-      });
+      // userId는 서버가 JWT에서 추출한다 (body 값은 사용하지 않음)
+      const { data, error } = await supabase.functions.invoke('delete-user-data');
       if (error) throw error;
+      if (data && data.success === false) {
+        throw new Error(data.message ?? s.deleteFailed);
+      }
       await signOut();
-    } catch {
+    } catch (err) {
+      // 삭제 실패를 조용히 넘기면 사용자는 계정이 지워진 줄 안다 — 반드시 알린다.
+      toast({
+        title: s.deleteFailed,
+        description: err instanceof Error ? err.message : undefined,
+        variant: 'destructive',
+      });
       setDeleting(false);
       setDeleteConfirm(false);
     }
@@ -315,11 +325,20 @@ function SettingsSheet({
 
           {/* ── 구독 ─────────────────────────────────── */}
           <p style={sectionStyle}>{s.sectionSubscription}</p>
-          <div style={rowStyle}>
+          <div
+            onClick={async () => {
+              if (isNativeApp()) {
+                // iOS: 시스템 구독 관리 화면으로 이동 (App Store 정책 준수)
+                const { Browser } = await import('@capacitor/browser');
+                await Browser.open({ url: 'https://apps.apple.com/account/subscriptions' });
+              }
+            }}
+            style={{ ...rowStyle, cursor: isNativeApp() ? 'pointer' : 'default' }}
+          >
             <div style={{ ...iconBox, fontSize: 14 }}>⭐</div>
             <div style={{ flex: 1 }}>
               <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 15, color: C.text, marginBottom: 1 }}>{s.subscriptionLabel}</p>
-              <p style={{ fontSize: 10, color: C.text4 }}>{s.subscriptionRenewal}</p>
+              <p style={{ fontSize: 10, color: C.text4 }}>{s.subscriptionManageHint}</p>
             </div>
             <span style={{ fontSize: 9, padding: '2px 7px', borderRadius: 99, border: `1px solid ${C.amberGold}44`, color: C.amberGold, background: `${C.amberGold}08` }}>Pro</span>
             <span style={{ fontSize: 11, color: C.text5 }}>›</span>

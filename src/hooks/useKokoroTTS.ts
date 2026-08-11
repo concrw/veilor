@@ -1,6 +1,8 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { Capacitor } from '@capacitor/core';
 
 // kokoro-js는 동적 임포트 — 초기 번들에 포함되지 않음 (150MB 모델)
+// iOS/Android 네이티브 앱에서는 WebAssembly ONNX 런타임 미지원 → 항상 Web Speech 폴백 사용
 type KokoroPipeline = {
   generate: (text: string, options: { voice: string }) => Promise<{ audio: { toWav: () => Uint8Array } }>;
 };
@@ -32,8 +34,12 @@ export function useKokoroTTS(options: UseKokoroTTSOptions = {}) {
   const langCode = lang.startsWith('ko') ? 'ko' : 'en';
   const resolvedVoice = voice ?? DEFAULT_VOICES[langCode];
 
+  const isNative = Capacitor.isNativePlatform();
+
   // 모델 로드 함수 — speak() 최초 호출 시점에만 실행
+  // 네이티브 앱(iOS/Android)은 ONNX WebAssembly 미지원이므로 즉시 null 반환
   const loadPipeline = useCallback(async (): Promise<KokoroPipeline | null> => {
+    if (isNative) return null;
     if (pipelineRef.current) return pipelineRef.current;
     try {
       setLoading(true);
@@ -50,7 +56,7 @@ export function useKokoroTTS(options: UseKokoroTTSOptions = {}) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isNative]);
 
   const stop = useCallback(() => {
     if (audioRef.current) {

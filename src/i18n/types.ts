@@ -63,6 +63,7 @@ export interface LocaleResource {
     sessionExpiredTitle: string;
     sessionExpiredDesc: string;
     googleLoginFailTitle: string;
+    appleLoginFailTitle: string;
     signOutTitle: string;
     signOutDesc: string;
     profileSyncFail: string;
@@ -1010,7 +1011,7 @@ export interface LocaleResource {
   meExtra: {
     needSummary: { title: string; top3Label: string; layerBarTitle: string; emptyTitle: string; emptyBtn: string; reExploreBtn: string; assessedAt: string; gapUnit: string };
     renameSheet: { closeLabel: string; closeBtn: string; hint: string; srLabel: string; placeholder: string; apply: string };
-    settingsSheet: { title: string; close: string; sectionLang: string; langLabel: string; langSub: string; sectionAi: string; renameLabel: string; aiPersonalityLabel: string; toneLabel: string; personalityLabel: string; freqLabel: string; sectionNotif: string; amberNotif: string; amberNotifSub: string; reportNotif: string; reportNotifSub: string; sectionDomain: string; domainSelf: string; domainSelfSub: string; domainWork: string; domainWorkSub: string; domainRelation: string; domainRelationSub: string; domainSocial: string; domainSocialSub: string; domainActive: string; sectionMode: string; modeOriginal: string; modeOriginalSub: string; modeClear: string; modeClearSub: string; modeRoutine: string; modeRoutineSub: string; modeFocus: string; modeFocusSub: string; modeSprint: string; modeSprintSub: string; modeConnect: string; modeConnectSub: string; modeMirror: string; modeMirrorSub: string; modeSocial: string; modeSocialSub: string; modeActive: string; sectionApp: string; sectionSubscription: string; subscriptionLabel: string; subscriptionRenewal: string; sectionPrivacy: string; dataPrivacy: string; accountSettings: string; logout: string; sectionDanger: string; deleteAccount: string; deleteAccountSub: string; deleteConfirmTitle: string; deleteConfirmDesc: string; deleteCancel: string; deleteConfirmBtn: string; deleting: string; amberSub: string; frostSub: string; toneOptions: Record<string, { label: string; desc: string }>; personalityOptions: Record<string, string>; freqOptions: Record<string, string> };
+    settingsSheet: { title: string; close: string; sectionLang: string; langLabel: string; langSub: string; sectionAi: string; renameLabel: string; aiPersonalityLabel: string; toneLabel: string; personalityLabel: string; freqLabel: string; sectionNotif: string; amberNotif: string; amberNotifSub: string; reportNotif: string; reportNotifSub: string; sectionDomain: string; domainSelf: string; domainSelfSub: string; domainWork: string; domainWorkSub: string; domainRelation: string; domainRelationSub: string; domainSocial: string; domainSocialSub: string; domainActive: string; sectionMode: string; modeOriginal: string; modeOriginalSub: string; modeClear: string; modeClearSub: string; modeRoutine: string; modeRoutineSub: string; modeFocus: string; modeFocusSub: string; modeSprint: string; modeSprintSub: string; modeConnect: string; modeConnectSub: string; modeMirror: string; modeMirrorSub: string; modeSocial: string; modeSocialSub: string; modeActive: string; sectionApp: string; sectionSubscription: string; subscriptionLabel: string; subscriptionRenewal: string; subscriptionManageHint: string; sectionPrivacy: string; dataPrivacy: string; accountSettings: string; logout: string; sectionDanger: string; deleteAccount: string; deleteAccountSub: string; deleteConfirmTitle: string; deleteConfirmDesc: string; deleteCancel: string; deleteConfirmBtn: string; deleteFailed: string; deleting: string; amberSub: string; frostSub: string; toneOptions: Record<string, { label: string; desc: string }>; personalityOptions: Record<string, string>; freqOptions: Record<string, string> };
   };
   codetalkHub: {
     header: string;
@@ -1223,6 +1224,7 @@ export interface LocaleResource {
     submit: string;
     divider: string;
     googleLogin: string;
+    appleLogin: string;
     noAccount: string;
     signup: string;
     errRequired: string;
@@ -1235,6 +1237,9 @@ export interface LocaleResource {
     errLoginFailed: string;
     errGoogleFailed: string;
     errGoogleGeneric: string;
+    errAppleFailed: string;
+    errAppleGeneric: string;
+    poweredBy: string;
   };
 
   // ─── signupPage ────────────────────────────────────────────
@@ -1261,10 +1266,12 @@ export interface LocaleResource {
     termsPrefix: string;
     termsLink: string;
     termsSuffix: string;
+    termsOfServiceLink: string;
     submitting: string;
     submit: string;
     divider: string;
     googleSignup: string;
+    appleSignup: string;
     hasAccount: string;
     login: string;
     successMessage: string;
@@ -1282,6 +1289,8 @@ export interface LocaleResource {
     errSignupFailed: string;
     errGoogleFailed: string;
     errGoogleGeneric: string;
+    errAppleFailed: string;
+    errAppleGeneric: string;
   };
 
   // ─── changeTraining ────────────────────────────────────────
@@ -1455,6 +1464,11 @@ export interface LocaleResource {
     gate2Note: string;
     gate2Continue: string;
     gate2Finish: string;
+    ageGateTitle: string;
+    ageGateBody: string;
+    ageGateConfirm: string;
+    ageGateDecline: string;
+    ageGateDeclined: string;
   };
 
   // ─── sexSelfResult ─────────────────────────────────────────

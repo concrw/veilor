@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>개인정보 처리방침 — VEILOR</title>
+  <title>개인정보 처리방침 / Privacy Policy — VEILOR</title>
   <style>
     body { margin:0; padding:24px; max-width:640px; margin:0 auto; background:#1C1917; color:#E7E5E4; font-family:system-ui,-apple-system,sans-serif; line-height:1.7; }
     h1 { font-family:serif; font-weight:300; font-size:24px; color:#E0B48A; margin-bottom:8px; }
@@ -11,63 +11,139 @@
     p, li { font-size:13px; color:#B8B3AF; }
     a { color:#95BDD6; }
     .date { font-size:11px; color:#87817C; }
+    .lang-toggle { display:flex; gap:12px; margin-bottom:24px; }
+    .lang-toggle a { font-size:12px; color:#95BDD6; text-decoration:none; }
+    .lang-toggle a:hover { text-decoration:underline; }
+    .section-en { display:none; }
+    .section-ko { display:block; }
   </style>
 </head>
 <body>
-  <h1>VEILOR 개인정보 처리방침</h1>
-  <p class="date">시행일: 2026년 4월 1일 | 최종 수정: 2026년 4월 4일</p>
 
-  <h2>1. 수집하는 개인정보</h2>
-  <p>VEILOR은 서비스 제공을 위해 다음 정보를 수집합니다:</p>
-  <ul>
-    <li><strong>계정 정보</strong>: 이메일, 비밀번호 (암호화 저장)</li>
-    <li><strong>프로필 정보</strong>: 닉네임, 나이, 성별 (선택)</li>
-    <li><strong>분석 데이터</strong>: PRIPER 응답, 4축 점수, 관계 가면</li>
-    <li><strong>대화 기록</strong>: Vent 대화, Dig 상황 입력, Set 키워드 정의</li>
-    <li><strong>시그널 데이터</strong>: 감정, 패턴, 관계 인물 (이름은 사용자 지정 별칭)</li>
-  </ul>
+  <div class="lang-toggle">
+    <a href="#" onclick="document.querySelectorAll('.section-ko').forEach(e=>e.style.display='block');document.querySelectorAll('.section-en').forEach(e=>e.style.display='none');return false;">한국어</a>
+    <a href="#" onclick="document.querySelectorAll('.section-en').forEach(e=>e.style.display='block');document.querySelectorAll('.section-ko').forEach(e=>e.style.display='none');return false;">English</a>
+  </div>
 
-  <h2>2. 개인정보 이용 목적</h2>
-  <ul>
-    <li>자기탐색 분석 결과 제공 (PRIPER, Why, Ikigai)</li>
-    <li>AI 감정 수용 대화 (엠버)</li>
-    <li>패턴 분석 및 시각화 (Me탭)</li>
-    <li>위기 감지 및 안전 안내 (자살예방상담전화 1393)</li>
-    <li>서비스 개선 (익명화된 통계 분석)</li>
-  </ul>
+  <!-- 한국어 -->
+  <div class="section-ko">
+    <h1>VEILOR 개인정보 처리방침</h1>
+    <p class="date">시행일: 2026년 4월 1일 | 최종 수정: 2026년 6월 5일</p>
 
-  <h2>3. 개인정보 보관 및 삭제</h2>
-  <p>개인정보는 계정 유지 기간 동안 보관됩니다. 계정 삭제 시 모든 데이터가 영구적으로 삭제되며 복구할 수 없습니다.</p>
-  <p>설정 > 개인정보 & 계정 > 계정 삭제에서 직접 삭제할 수 있습니다.</p>
+    <h2>1. 수집하는 개인정보</h2>
+    <p>VEILOR은 서비스 제공을 위해 다음 정보를 수집합니다:</p>
+    <ul>
+      <li><strong>계정 정보</strong>: 이메일, 비밀번호 (암호화 저장)</li>
+      <li><strong>프로필 정보</strong>: 닉네임, 나이, 성별 (선택)</li>
+      <li><strong>분석 데이터</strong>: PRIPER 응답, 4축 점수, 관계 가면</li>
+      <li><strong>대화 기록</strong>: Vent 대화, Dig 상황 입력, Set 키워드 정의</li>
+      <li><strong>시그널 데이터</strong>: 감정, 패턴, 관계 인물 (이름은 사용자 지정 별칭)</li>
+      <li><strong>음성 데이터</strong>: 마이크 입력 (음성 인식 및 음성 복제 기능 사용 시)</li>
+      <li><strong>성적 자기탐색 데이터</strong>: SexSelf 기능 이용 시 수집되는 욕구·수치심·역할·강도 등 7축 점수 및 프로파일 유형. 해당 데이터는 사용자 동의 하에 수집되며, 사용자 본인의 탐색 결과 제공 목적으로만 활용됩니다. 제3자에게 제공되지 않으며, 계정 삭제 시 즉시 파기됩니다.</li>
+    </ul>
 
-  <h2>4. 제3자 제공</h2>
-  <p>VEILOR은 사용자 동의 없이 개인정보를 제3자에게 제공하지 않습니다. 단, 다음의 경우 예외:</p>
-  <ul>
-    <li>법적 의무 이행 (법원 영장, 수사기관 요청)</li>
-    <li>생명·신체 위험 방지 (위기 감지 시 긴급 대응)</li>
-  </ul>
+    <h2>2. 개인정보 이용 목적</h2>
+    <ul>
+      <li>자기탐색 분석 결과 제공 (PRIPER, Why, Ikigai)</li>
+      <li>AI 감정 수용 대화 (엠버)</li>
+      <li>패턴 분석 및 시각화 (Me탭)</li>
+      <li>위기 감지 및 안전 안내 (자살예방상담전화 1393)</li>
+      <li>서비스 개선 (익명화된 통계 분석)</li>
+    </ul>
 
-  <h2>5. AI 데이터 처리</h2>
-  <p>VEILOR의 AI(엠버)는 Anthropic Claude API를 사용합니다. 대화 내용은 AI 응답 생성을 위해 Anthropic 서버로 전송되며, Anthropic의 <a href="https://www.anthropic.com/privacy" target="_blank">개인정보 처리방침</a>이 적용됩니다.</p>
-  <p><strong>중요:</strong> VEILOR은 자기탐색 도구이며, 전문 심리상담 또는 의료 진단을 대체하지 않습니다.</p>
+    <h2>3. 개인정보 보관 및 삭제</h2>
+    <p>개인정보는 계정 유지 기간 동안 보관됩니다. 계정 삭제 시 모든 데이터가 영구적으로 삭제되며 복구할 수 없습니다.</p>
+    <p>설정 &gt; 개인정보 &amp; 계정 &gt; 계정 삭제에서 직접 삭제할 수 있습니다.</p>
 
-  <h2>6. 데이터 보안</h2>
-  <ul>
-    <li>모든 통신은 TLS(HTTPS)로 암호화됩니다.</li>
-    <li>비밀번호는 bcrypt로 해시 처리됩니다.</li>
-    <li>데이터베이스는 Row Level Security(RLS)로 유저 간 격리됩니다.</li>
-    <li>Edge Function은 Rate Limit + Prompt Injection 방어가 적용됩니다.</li>
-  </ul>
+    <h2>4. 제3자 제공</h2>
+    <p>VEILOR은 사용자 동의 없이 개인정보를 제3자에게 제공하지 않습니다. 단, 다음의 경우 예외:</p>
+    <ul>
+      <li>법적 의무 이행 (법원 영장, 수사기관 요청)</li>
+      <li>생명·신체 위험 방지 (위기 감지 시 긴급 대응)</li>
+    </ul>
 
-  <h2>7. 이용자의 권리</h2>
-  <ul>
-    <li><strong>열람권</strong>: 본인의 데이터를 앱 내에서 확인할 수 있습니다.</li>
-    <li><strong>삭제권</strong>: 계정 삭제를 통해 모든 데이터를 영구 삭제할 수 있습니다.</li>
-    <li><strong>동의 철회</strong>: 알림 설정에서 데이터 수집 범위를 조정할 수 있습니다.</li>
-  </ul>
+    <h2>5. AI 데이터 처리</h2>
+    <p>VEILOR의 AI(엠버)는 Anthropic Claude API를 사용합니다. 대화 내용은 AI 응답 생성을 위해 Anthropic 서버로 전송되며, Anthropic의 <a href="https://www.anthropic.com/privacy" target="_blank">개인정보 처리방침</a>이 적용됩니다.</p>
+    <p><strong>중요:</strong> VEILOR은 자기탐색 도구이며, 전문 심리상담 또는 의료 진단을 대체하지 않습니다.</p>
 
-  <h2>8. 문의</h2>
-  <p>개인정보 관련 문의: <a href="mailto:privacy@veilor.ai">privacy@veilor.ai</a></p>
+    <h2>6. 데이터 보안</h2>
+    <ul>
+      <li>모든 통신은 TLS(HTTPS)로 암호화됩니다.</li>
+      <li>비밀번호는 bcrypt로 해시 처리됩니다.</li>
+      <li>데이터베이스는 Row Level Security(RLS)로 유저 간 격리됩니다.</li>
+      <li>Edge Function은 Rate Limit + Prompt Injection 방어가 적용됩니다.</li>
+    </ul>
+
+    <h2>7. 이용자의 권리</h2>
+    <ul>
+      <li><strong>열람권</strong>: 본인의 데이터를 앱 내에서 확인할 수 있습니다.</li>
+      <li><strong>삭제권</strong>: 계정 삭제를 통해 모든 데이터를 영구 삭제할 수 있습니다.</li>
+      <li><strong>동의 철회</strong>: 알림 설정에서 데이터 수집 범위를 조정할 수 있습니다.</li>
+    </ul>
+
+    <h2>8. 문의</h2>
+    <p>개인정보 관련 문의: <a href="mailto:privacy@veilor.ai">privacy@veilor.ai</a></p>
+  </div>
+
+  <!-- English -->
+  <div class="section-en">
+    <h1>VEILOR Privacy Policy</h1>
+    <p class="date">Effective: April 1, 2026 | Last updated: June 5, 2026</p>
+
+    <h2>1. Data We Collect</h2>
+    <p>VEILOR collects the following information to provide the Service:</p>
+    <ul>
+      <li><strong>Account information</strong>: Email address, password (encrypted)</li>
+      <li><strong>Profile information</strong>: Nickname, age, gender (optional)</li>
+      <li><strong>Analysis data</strong>: PRIPER responses, 4-axis scores, relationship personas</li>
+      <li><strong>Conversation logs</strong>: Vent chats, Dig situation input, Set keyword definitions</li>
+      <li><strong>Signal data</strong>: Emotions, patterns, relationship figures (names are user-defined aliases)</li>
+      <li><strong>Voice data</strong>: Microphone input (when using voice recognition or voice cloning features)</li>
+      <li><strong>Sexual self-exploration data</strong>: When using the SexSelf feature, 7-axis scores (desire, shame, power dynamics, body relationship, sexual history, fantasy acceptance, connection style) and profile type are collected with the user's explicit consent. This data is used solely to provide the user's personal exploration results, is never shared with third parties, and is permanently deleted upon account deletion.</li>
+    </ul>
+
+    <h2>2. How We Use Your Data</h2>
+    <ul>
+      <li>Delivering self-exploration analysis results (PRIPER, Why, Ikigai)</li>
+      <li>AI emotional support conversations (Amber)</li>
+      <li>Pattern analysis and visualization (Me tab)</li>
+      <li>Crisis detection and safety guidance (Suicide Prevention Hotline 1393)</li>
+      <li>Service improvement (anonymized statistical analysis)</li>
+    </ul>
+
+    <h2>3. Data Retention &amp; Deletion</h2>
+    <p>Your data is retained for the duration of your account. When you delete your account, all data is permanently and irreversibly deleted.</p>
+    <p>You can delete your account at Settings &gt; Privacy &amp; Account &gt; Delete Account.</p>
+
+    <h2>4. Third-Party Disclosure</h2>
+    <p>VEILOR does not share your personal data with third parties without your consent, except in the following cases:</p>
+    <ul>
+      <li>Legal obligations (court orders, law enforcement requests)</li>
+      <li>Prevention of imminent harm (emergency response upon crisis detection)</li>
+    </ul>
+
+    <h2>5. AI Data Processing</h2>
+    <p>VEILOR's AI (Amber) uses the Anthropic Claude API. Conversation content is sent to Anthropic's servers to generate AI responses and is subject to Anthropic's <a href="https://www.anthropic.com/privacy" target="_blank">Privacy Policy</a>.</p>
+    <p><strong>Important:</strong> VEILOR is a self-exploration tool and does not replace professional psychological counseling or medical diagnosis.</p>
+
+    <h2>6. Data Security</h2>
+    <ul>
+      <li>All communications are encrypted via TLS (HTTPS).</li>
+      <li>Passwords are hashed using bcrypt.</li>
+      <li>The database uses Row Level Security (RLS) to isolate user data.</li>
+      <li>Edge Functions include rate limiting and prompt injection defenses.</li>
+    </ul>
+
+    <h2>7. Your Rights</h2>
+    <ul>
+      <li><strong>Access</strong>: You can view your data within the app.</li>
+      <li><strong>Deletion</strong>: You can permanently delete all your data by deleting your account.</li>
+      <li><strong>Withdrawal of consent</strong>: You can adjust the scope of data collection in notification settings.</li>
+    </ul>
+
+    <h2>8. Contact</h2>
+    <p>Privacy inquiries: <a href="mailto:privacy@veilor.ai">privacy@veilor.ai</a></p>
+  </div>
 
   <p style="margin-top:40px; font-size:11px; color:#87817C;">© 2026 VEILOR. All rights reserved.</p>
 </body>

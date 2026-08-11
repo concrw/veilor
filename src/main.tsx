@@ -10,12 +10,13 @@ import { reportWebVitals } from './utils/reportWebVitals'
 const SENTRY_DSN = import.meta.env.VITE_SENTRY_DSN as string | undefined;
 
 if (SENTRY_DSN) {
+  const isNative = Capacitor.isNativePlatform();
   Sentry.init({
     dsn: SENTRY_DSN,
     environment: import.meta.env.MODE,
     tracesSampleRate: 0.2,
-    replaysOnErrorSampleRate: 1.0,
-    integrations: [Sentry.replayIntegration({ maskAllText: true, blockAllMedia: false })],
+    replaysOnErrorSampleRate: isNative ? 0 : 1.0,
+    integrations: isNative ? [] : [Sentry.replayIntegration({ maskAllText: true, blockAllMedia: true })],
   });
 }
 

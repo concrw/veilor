@@ -74,8 +74,8 @@ export async function trackActivity(
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    // PostHog 이벤트 전송
-    if (POSTHOG_KEY) {
+    // PostHog 이벤트 전송 — 웹 전용
+    if (POSTHOG_KEY && !isNativeApp()) {
       posthog.capture(activityType, {
         ...activityData,
         page_path: window.location.pathname,
@@ -102,7 +102,7 @@ export async function trackConversion(
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    if (POSTHOG_KEY) {
+    if (POSTHOG_KEY && !isNativeApp()) {
       posthog.capture(eventName, { ...eventData, user_id: user.id });
     }
 

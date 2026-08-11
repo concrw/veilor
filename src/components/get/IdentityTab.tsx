@@ -182,7 +182,7 @@ export default function IdentityTab({
                   </span>
                 </div>
                 {profile && (
-                  <p className="text-xs text-muted-foreground leading-relaxed">{profile.description}</p>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{language === 'en' ? profile.descriptionEn : profile.description}</p>
                 )}
               </div>
 
@@ -193,19 +193,19 @@ export default function IdentityTab({
                   <div className="grid gap-2">
                     <div className="bg-muted/50 rounded-xl px-3.5 py-2.5 space-y-0.5">
                       <p className="text-[10px] text-muted-foreground">{id.coreWound}</p>
-                      <p className="text-xs font-medium">{profile.coreWound}</p>
+                      <p className="text-xs font-medium">{language === 'en' ? profile.coreWoundEn : profile.coreWound}</p>
                     </div>
                     <div className="bg-muted/50 rounded-xl px-3.5 py-2.5 space-y-0.5">
                       <p className="text-[10px] text-muted-foreground">{id.coreFear}</p>
-                      <p className="text-xs font-medium">{profile.coreFear}</p>
+                      <p className="text-xs font-medium">{language === 'en' ? profile.coreFearEn : profile.coreFear}</p>
                     </div>
                     <div className="bg-muted/50 rounded-xl px-3.5 py-2.5 space-y-0.5">
                       <p className="text-[10px] text-muted-foreground">{id.coreNeed}</p>
-                      <p className="text-xs font-medium">{profile.coreNeed}</p>
+                      <p className="text-xs font-medium">{language === 'en' ? profile.coreNeedEn : profile.coreNeed}</p>
                     </div>
                     <div className="bg-muted/50 rounded-xl px-3.5 py-2.5 space-y-0.5">
                       <p className="text-[10px] text-muted-foreground">{id.genPath}</p>
-                      <p className="text-xs font-medium">{profile.genPath}</p>
+                      <p className="text-xs font-medium">{language === 'en' ? profile.genPathEn : profile.genPath}</p>
                     </div>
                   </div>
                   <button

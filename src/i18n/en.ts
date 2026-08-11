@@ -55,6 +55,7 @@ export const en: LocaleResource = {
     sessionExpiredTitle: 'Session Expired',
     sessionExpiredDesc: 'Please log in again.',
     googleLoginFailTitle: 'Google Sign-In Failed',
+    appleLoginFailTitle: 'Apple Sign-In Failed',
     signOutTitle: 'Signed Out',
     signOutDesc: 'See you next time!',
     profileSyncFail: 'Profile sync failed',
@@ -1675,6 +1676,7 @@ export const en: LocaleResource = {
       sectionSubscription: 'Subscription',
       subscriptionLabel: 'Manage subscription',
       subscriptionRenewal: 'Renews April 20, 2026',
+      subscriptionManageHint: 'Tap to manage or cancel in App Store',
       sectionPrivacy: 'Privacy & Account',
       dataPrivacy: 'Data & Privacy',
       accountSettings: 'Account settings',
@@ -1686,6 +1688,7 @@ export const en: LocaleResource = {
       deleteConfirmDesc: 'All conversations, analysis results, and signals will be permanently deleted and cannot be recovered.',
       deleteCancel: 'Cancel',
       deleteConfirmBtn: 'Delete permanently',
+      deleteFailed: 'Account deletion failed',
       deleting: 'Deleting...',
       amberSub: 'Assistant · F mode',
       frostSub: 'Doctor · T mode',
@@ -2034,6 +2037,7 @@ export const en: LocaleResource = {
     submit: 'Log in',
     divider: 'or',
     googleLogin: 'Log in with Google',
+    appleLogin: 'Sign in with Apple',
     noAccount: "Don't have an account?",
     signup: 'Sign up',
     errRequired: 'Please enter your email and password.',
@@ -2046,6 +2050,9 @@ export const en: LocaleResource = {
     errLoginFailed: 'Login failed. Please try again.',
     errGoogleFailed: 'Google login failed. Please try again in a moment.',
     errGoogleGeneric: 'An error occurred during Google login.',
+    errAppleFailed: 'Apple Sign-In failed. Please try again.',
+    errAppleGeneric: 'An error occurred during Apple Sign-In.',
+    poweredBy: 'VEILOR by AOSIS',
   },
 
   // ─── signupPage ────────────────────────────────────────────
@@ -2071,11 +2078,13 @@ export const en: LocaleResource = {
     passwordMismatch: '✗ Passwords do not match',
     termsPrefix: 'I agree to the',
     termsLink: 'Privacy Policy',
-    termsSuffix: 'and Terms of Service',
+    termsSuffix: 'and',
+    termsOfServiceLink: 'Terms of Service',
     submitting: 'Signing up...',
     submit: 'Sign up',
     divider: 'or',
     googleSignup: 'Continue with Google',
+    appleSignup: 'Continue with Apple',
     hasAccount: 'Already have an account?',
     login: 'Log in',
     successMessage: 'Sign up complete! Please check your email.',
@@ -2093,6 +2102,8 @@ export const en: LocaleResource = {
     errSignupFailed: 'Sign up failed. Please try again.',
     errGoogleFailed: 'Google login failed. Please try again in a moment.',
     errGoogleGeneric: 'An error occurred during Google login.',
+    errAppleFailed: 'Apple Sign-In failed. Please try again.',
+    errAppleGeneric: 'An error occurred during Apple Sign-In.',
   },
 
   // ─── changeTraining ────────────────────────────────────────
@@ -2272,6 +2283,11 @@ export const en: LocaleResource = {
     gate2Note: 'This is visible only to you.',
     gate2Continue: 'Go all the way →',
     gate2Finish: 'Get results here',
+    ageGateTitle: 'Age Verification Required',
+    ageGateBody: 'This section contains content intended for adults (19+). By continuing, you confirm that you are 19 years of age or older.',
+    ageGateConfirm: 'I am 19 or older — Continue',
+    ageGateDecline: 'Go back',
+    ageGateDeclined: 'This content is available for users aged 19 and above.',
   },
 
   // ─── sexSelfResult ─────────────────────────────────────────
@@ -2714,8 +2730,8 @@ export const en: LocaleResource = {
     processing: 'Processing...',
     notifyMe: 'Notify me at launch',
     dismiss: 'Later',
-    webOnlyNotice: 'Payment is only available in a web browser',
-    appNotice: 'This is a Pro feature. Subscription management is available on the web.',
+    webOnlyNotice: 'This is a Pro feature.',
+    appNotice: 'This is a Pro member feature.',
   },
 
   // ─── contentRecommendations ────────────────────────────────

@@ -74,7 +74,7 @@ export const DEFAULT_RESPONSE = {
 export const PUBLIC_POSTS = [
   {
     id: 'p1',
-    mask: '나비 가면',
+    mask: { ko: '나비 가면', en: 'Butterfly Mask' },
     content: {
       ko: '왜 나는 항상 먼저 연락을 끊을까요. 상대가 나를 떠날 것 같은 느낌이 들면 먼저 거리를 둬버려요.',
       en: "Why do I always cut contact first? Whenever I sense someone might leave me, I distance myself before they can.",
@@ -87,7 +87,7 @@ export const PUBLIC_POSTS = [
   },
   {
     id: 'p2',
-    mask: '유리 가면',
+    mask: { ko: '유리 가면', en: 'Glass Mask' },
     content: {
       ko: '감정을 표현했더니 "너무 예민하다"는 말을 들었어요. 앞으로 말을 안 하는 게 나을 것 같아서 더 무서워요.',
       en: "I expressed my feelings and was told I was \"too sensitive.\" Now I'm scared that staying silent is the safer option.",
@@ -100,7 +100,7 @@ export const PUBLIC_POSTS = [
   },
   {
     id: 'p3',
-    mask: '안개 가면',
+    mask: { ko: '안개 가면', en: 'Fog Mask' },
     content: {
       ko: '상대방이 화가 났을 때 나는 왜 무조건 내 잘못인 것 같을까요. 사과를 먼저 하고 나서야 숨을 쉴 수 있어요.',
       en: "When the other person is angry, why do I automatically assume it's my fault? I can only breathe again after I apologize first.",

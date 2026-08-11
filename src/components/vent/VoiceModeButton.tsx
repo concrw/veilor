@@ -44,7 +44,12 @@ export default function VoiceModeButton({ onTranscript, accentColor = '#C97A6A' 
       if (transcript) onTranscript(transcript);
     };
     rec.onend = () => setListening(false);
-    rec.onerror = () => setListening(false);
+    rec.onerror = (e) => {
+      setListening(false);
+      if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+        console.warn('[VoiceModeButton] Microphone permission denied:', e.error);
+      }
+    };
 
     recognitionRef.current = rec;
     rec.start();

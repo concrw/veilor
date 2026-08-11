@@ -15,7 +15,8 @@ export const FREE_LIMITS = {
 } as const;
 
 export function usePremiumTrigger() {
-  const { isPro, isLoading } = useVeilorSubscription();
+  const { isPro: isProFromDB, isLoading } = useVeilorSubscription();
+  const isPro = isProFromDB;
   const [modalOpen, setModalOpen] = useState(false);
   const [activeTrigger, setActiveTrigger] = useState<TriggerType>('codetalk_ai_limit');
 
