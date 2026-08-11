@@ -64,3 +64,6 @@ lerna-debug.log*
 AuthKey_*.p8
 veilor-testers.csv
 veilor_archive/
+
+# Supabase CLI 캐시 (소스 아님)
+supabase/.temp/
