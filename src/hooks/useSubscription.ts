@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, veilorDb } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 
 export const SUBSCRIPTION_TIERS = {
@@ -50,7 +50,7 @@ export function useSubscription() {
     queryFn: async () => {
       if (!user?.id) return null;
 
-      const { data, error } = await supabase
+      const { data, error } = await veilorDb
         .from("subscriptions")
         .select("*")
         .eq("user_id", user.id)

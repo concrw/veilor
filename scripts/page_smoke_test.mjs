@@ -61,7 +61,10 @@ async function visit(page, route) {
   let bodyLen = 0;
   try {
     const resp = await page.goto(BASE + route, { waitUntil: 'domcontentloaded', timeout: 45000 });
-    await page.waitForTimeout(2500); // 클라이언트 렌더링 대기
+    // 클라이언트 렌더링 + lazy 청크 로드 대기. 스피너가 사라질 때까지 기다린다.
+    await page.locator('.animate-spin').first()
+      .waitFor({ state: 'hidden', timeout: 20000 }).catch(() => null);
+    await page.waitForTimeout(1500);
     const text = await page.locator('body').innerText().catch(() => '');
     bodyLen = text.trim().length;
     if (!resp || resp.status() >= 400) status = `HTTP ${resp?.status() ?? '?'}`;
@@ -100,14 +103,15 @@ try {
   await page.waitForURL(/\/home|\/onboarding\//, { timeout: 45000 });
 
   if (page.url().includes('/onboarding/mode-select')) {
-    // 도메인 선택 → 모드 선택 두 단계를 통과한다.
-    for (let step = 0; step < 2; step++) {
-      const btn = page.getByRole('button', { name: /확인|선택|시작|Continue|Confirm|Start/i }).first();
-      await btn.waitFor({ timeout: 10000 }).catch(() => null);
-      await btn.click().catch(() => null);
-      await page.waitForTimeout(800);
-    }
+    // ModeSelect는 2단계다: step1 도메인 선택("Next") → step2 모드 확정("Go vent").
+    await page.waitForTimeout(2500);
+    await page.getByRole('button', { name: /^Next$/i }).first()
+      .click({ force: true }).catch(() => null);
+    await page.waitForTimeout(2500);
+    await page.getByRole('button', { name: /^Go vent$/i }).first()
+      .click({ force: true }).catch(() => null);
     await page.waitForURL(/\/home/, { timeout: 30000 }).catch(() => null);
+    await page.waitForTimeout(3000);
   }
 
   loggedIn = /\/home/.test(page.url());

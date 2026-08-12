@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, veilorDb } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguageContext } from "@/context/LanguageContext";
 import { getT } from "@/i18n/useT";
@@ -13,7 +13,7 @@ export const usePersonaRelationships = () => {
     queryFn: async () => {
       if (!user) throw new Error("Not authenticated");
 
-      const { data, error } = await supabase
+      const { data, error } = await veilorDb
         .from("persona_relationships")
         .select("*")
         .eq("user_id", user.id)

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, veilorDb } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { PersonaWithDetails } from "@/integrations/supabase/persona-types";
 
@@ -11,7 +11,7 @@ export const usePersonas = () => {
     queryFn: async () => {
       if (!user) throw new Error("Not authenticated");
 
-      const { data, error } = await supabase
+      const { data, error } = await veilorDb
         .from("persona_profiles")
         .select(
           `
@@ -60,7 +60,7 @@ export const usePersona = (personaId: string | null) => {
     queryFn: async () => {
       if (!user || !personaId) throw new Error("Missing required data");
 
-      const { data, error } = await supabase
+      const { data, error } = await veilorDb
         .from("persona_profiles")
         .select(
           `
@@ -89,7 +89,7 @@ export const useMainPersona = () => {
     queryFn: async () => {
       if (!user) throw new Error("Not authenticated");
 
-      const { data, error } = await supabase
+      const { data, error } = await veilorDb
         .from("persona_profiles")
         .select(
           `

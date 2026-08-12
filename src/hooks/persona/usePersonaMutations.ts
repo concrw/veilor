@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, veilorDb } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguageContext } from "@/context/LanguageContext";
 import { getT } from "@/i18n/useT";
@@ -54,7 +54,7 @@ export const useUpdatePersona = () => {
       personaId: string;
       updates: Partial<PersonaProfile>;
     }) => {
-      const { data, error } = await supabase
+      const { data, error } = await veilorDb
         .from("persona_profiles")
         .update(updates)
         .eq("id", personaId)
@@ -84,7 +84,7 @@ export const useVerifyPersona = () => {
 
   return useMutation({
     mutationFn: async (personaId: string) => {
-      const { data, error } = await supabase
+      const { data, error } = await veilorDb
         .from("persona_profiles")
         .update({ is_user_verified: true })
         .eq("id", personaId)
@@ -113,7 +113,7 @@ export const useDeactivatePersona = () => {
 
   return useMutation({
     mutationFn: async (personaId: string) => {
-      const { data, error } = await supabase
+      const { data, error } = await veilorDb
         .from("persona_profiles")
         .update({ is_active: false })
         .eq("id", personaId)
