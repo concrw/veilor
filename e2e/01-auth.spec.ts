@@ -33,7 +33,7 @@ test.describe('인증 플로우', () => {
 
     // Me 탭 → 설정 열기(Sheet 슬라이드업) → 로그아웃 클릭
     await page.getByRole('link', { name: /Me/i }).click();
-    await page.getByRole('button', { name: /설정 열기/i }).click();
+    await page.getByRole('button', { name: /Open settings|설정 열기/i }).click();
     // Sheet 애니메이션 완료 대기 후 로그아웃 클릭
     const logoutEl = page.getByText('로그아웃').last();
     await logoutEl.waitFor({ state: 'visible', timeout: 5_000 });

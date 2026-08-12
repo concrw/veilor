@@ -26,7 +26,9 @@ export async function login(page: Page, email: string, password: string) {
   await page.locator('input[type="email"]').fill(email);
   await page.locator('input[type="password"]').fill(password);
   // Login.tsx: button은 type 속성 없음, text로 찾음
-  await page.locator('button', { hasText: '로그인' }).first().click();
+  // UI 기본 언어가 영어이므로(ac32c0f: 브라우저 언어 감지 제거) 한/영 모두 매칭한다.
+  // 'Sign in with Apple' / 'Log in with Google' 같은 소셜 버튼과 구분하기 위해 정확히 일치시킨다.
+  await page.locator('button').filter({ hasText: /^\s*(Log in|로그인)\s*$/ }).first().click();
 }
 
 export async function waitForHome(page: Page) {
