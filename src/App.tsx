@@ -147,6 +147,7 @@ const RequireAuth = ({ children }: { children: JSX.Element }) => {
 
 const RequireOnboarding = ({ children }: { children: JSX.Element }) => {
   const { onboardingStep, loading } = useAuth();
+  console.info('[AuthDiag] RequireOnboarding loading=%s step=%s', loading, onboardingStep);
   if (loading) return <PageLoader />;
   const stepPath: Record<OnboardingStep, string> = {
     welcome: '/onboarding/vfile/start', cq: '/onboarding/vfile/start',
