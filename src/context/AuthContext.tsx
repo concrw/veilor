@@ -75,10 +75,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return;
     }
 
-    console.info('[AuthDiag] syncOnboarding result step=%s err=%s',
-      (data as { onboarding_step?: string } | null)?.onboarding_step ?? 'NO_DATA',
-      (error as { code?: string } | null)?.code ?? 'none');
-
     if (data) {
       setOnboardingStepState((data.onboarding_step as OnboardingStep) ?? 'welcome');
       setPriperCompleted(data.priper_completed ?? false);
@@ -90,9 +86,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   useEffect(() => {
-    console.info('[AuthDiag] AuthProvider mounted');
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, sess) => {
-      console.info('[AuthDiag] event=%s hasSession=%s', event, !!sess);
       // TOKEN_REFRESH_FAILED — 세션 만료 강제 로그아웃
       if (event === 'TOKEN_REFRESH_FAILED') {
         console.warn('Token refresh failed — signing out');

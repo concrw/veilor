@@ -59,17 +59,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
         .single();
       if (cancelled) return;
       if (data?.preferred_lang === 'ko' || data?.preferred_lang === 'en' || data?.preferred_lang === 'ja') {
-        // 현재 언어와 같으면 상태를 건드리지 않는다.
-        // LanguageProvider는 AuthProvider보다 상위이고 translations 로드 중
-        // children을 언마운트하므로(아래 `if (!translations) return null`),
-        // 불필요한 setLanguageState 한 번이 AuthProvider를 리마운트시켜
-        // onboardingStep을 초기값 'welcome'으로 되돌린다. 그러면 프로필이
-        // completed여도 RequireOnboarding이 온보딩으로 튕겨낸다.
-        // 함수형 업데이트로 현재 값과 비교한다 (effect 의존성 없이 최신 값 참조).
-        // 같은 값을 반환하면 React가 리렌더를 건너뛴다.
-        setLanguageState((prev) =>
-          prev === data.preferred_lang ? prev : (data.preferred_lang as SupportedLanguage)
-        );
+        setLanguageState(data.preferred_lang as SupportedLanguage);
         safeSetItem(STORAGE_KEY, data.preferred_lang);
       }
       setIsLoading(false);
