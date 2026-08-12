@@ -59,7 +59,12 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
         .single();
       if (cancelled) return;
       if (data?.preferred_lang === 'ko' || data?.preferred_lang === 'en' || data?.preferred_lang === 'ja') {
-        setLanguageState(data.preferred_lang as SupportedLanguage);
+        // 이미 같은 언어면 상태를 건드리지 않는다. 같은 값을 반환하면 React가
+        // 리렌더를 건너뛰므로, DB 값이 현재 언어와 같은 대부분의 경우
+        // locale 재로드와 하위 트리 리렌더가 발생하지 않는다.
+        setLanguageState((prev) =>
+          prev === data.preferred_lang ? prev : (data.preferred_lang as SupportedLanguage)
+        );
         safeSetItem(STORAGE_KEY, data.preferred_lang);
       }
       setIsLoading(false);
