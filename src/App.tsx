@@ -147,7 +147,11 @@ const RequireAuth = ({ children }: { children: JSX.Element }) => {
 
 const RequireOnboarding = ({ children }: { children: JSX.Element }) => {
   const { onboardingStep, loading } = useAuth();
-  console.info('[AuthDiag] RequireOnboarding loading=%s step=%s', loading, onboardingStep);
+  // drop_console: true 때문에 console 로그는 프로덕션에서 제거된다.
+  // 진단용으로 상태를 DOM에 노출한다 (원인 확인 후 제거).
+  if (typeof document !== 'undefined') {
+    document.documentElement.setAttribute('data-authdiag', `loading=${loading},step=${onboardingStep}`);
+  }
   if (loading) return <PageLoader />;
   const stepPath: Record<OnboardingStep, string> = {
     welcome: '/onboarding/vfile/start', cq: '/onboarding/vfile/start',
