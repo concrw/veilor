@@ -75,12 +75,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return;
     }
 
-    if (typeof window !== 'undefined') {
-      const w = window as unknown as { __authDiag?: string[] };
-      (w.__authDiag ??= []).push(
-        `${Date.now() % 1000000} sync step=${(data as { onboarding_step?: string } | null)?.onboarding_step ?? 'NO_DATA'} err=${(error as { code?: string } | null)?.code ?? 'none'}`
-      );
-    }
+    console.info('[AuthDiag] syncOnboarding result step=%s err=%s',
+      (data as { onboarding_step?: string } | null)?.onboarding_step ?? 'NO_DATA',
+      (error as { code?: string } | null)?.code ?? 'none');
 
     if (data) {
       setOnboardingStepState((data.onboarding_step as OnboardingStep) ?? 'welcome');
@@ -93,14 +90,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   useEffect(() => {
-    const diag = (msg: string) => {
-      if (typeof window === 'undefined') return;
-      const w = window as unknown as { __authDiag?: string[] };
-      (w.__authDiag ??= []).push(`${Date.now() % 1000000} ${msg}`);
-    };
-    diag('MOUNT');
+    console.info('[AuthDiag] AuthProvider mounted');
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, sess) => {
-      diag(`event=${event} hasSession=${!!sess}`);
+      console.info('[AuthDiag] event=%s hasSession=%s', event, !!sess);
       // TOKEN_REFRESH_FAILED — 세션 만료 강제 로그아웃
       if (event === 'TOKEN_REFRESH_FAILED') {
         console.warn('Token refresh failed — signing out');
