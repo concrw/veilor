@@ -120,10 +120,12 @@ export const useHasMultiplePersonas = () => {
     queryFn: async () => {
       if (!user) throw new Error("Not authenticated");
 
-      const { data, error } = await supabase
-        .from("profiles")
+      // 원 설계는 public.profiles를 확장하려 했으나 그 마이그레이션은 실행된 적이 없다.
+      // 현 구조에서 해당 역할은 veilor.user_profiles가 맡는다 (키는 id가 아닌 user_id).
+      const { data, error } = await veilorDb
+        .from("user_profiles")
         .select("has_multiple_personas, subscription_tier")
-        .eq("id", user.id)
+        .eq("user_id", user.id)
         .single();
 
       if (error) throw error;
