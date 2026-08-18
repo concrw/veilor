@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
-import { supabase, veilorDb } from '@/integrations/supabase/client';
+import { veilorDb } from '@/integrations/supabase/client';
 import { invokeHeldChat } from '@/lib/heldChatClient';
 import { saveVentMessage, saveVentSummary, saveVentSessionSummary, saveVentPartialSession } from '@/hooks/useSignalPipeline';
 import { useDynamicMaskSignal } from '@/hooks/useDynamicMaskSignal';
@@ -248,9 +248,15 @@ export default function VentPage() {
           });
         }
       });
-      supabase.functions.invoke('dm-message-filter', { body: { message: txt, userId: user.id } })
-        .then(({ data: filterData }) => { if (filterData?.verdict === 'CRISIS') setCrisisLevel('critical'); })
-        .catch(() => { console.warn('[VentPage] DM filter request failed'); });
+      // dm-message-filter(Haiku) 호출을 제거했다. 여기서 쓰던 값은 verdict === 'CRISIS'
+      // 하나뿐인데, 같은 메시지에 대해 위기 판정이 이미 두 번 돌고 있다:
+      //   1) 위 saveVentMessage → append_vent_signal → detect_and_flag_crisis
+      //      (키워드 매칭으로 critical/high/medium 판정 + crisis_flags 기록)
+      //   2) held-chat 내부 serverDetectCrisis (DIRECT/INDIRECT 키워드)
+      // 두 목록은 서로를 보완한다 — 예를 들어 "더 이상 버틸"은 DB 쪽이 놓치지만
+      // held-chat 쪽 INDIRECT_CRISIS_KW가 잡는다.
+      // Vent는 메시지를 보낼 때마다 실행되는 경로라 AI 중복 호출 비용이 가장 컸다.
+      // 문맥 판단이 필요한 HARASSMENT/EXPLICIT 필터링은 DmPage에서 계속 사용한다.
     }
 
     abortControllerRef.current?.abort();
