@@ -15,8 +15,14 @@ BEGIN
     FROM pg_proc p
     JOIN pg_namespace n ON n.oid = p.pronamespace
     WHERE n.nspname = 'veilor'
+<<<<<<< HEAD
       AND p.prosecdef = true
   LOOP
+=======
+      AND p.prosecdef = true  -- SECURITY DEFINER
+  LOOP
+    -- Set search_path = veilor, public, pg_temp (idempotent)
+>>>>>>> beb270f (feat: remove SUPERADMIN_EMAILS hardcoding and use role-based auth)
     EXECUTE format(
       'ALTER FUNCTION %I.%I(%s) SET search_path = veilor, public, pg_temp',
       fn.schema_name,
