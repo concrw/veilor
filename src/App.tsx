@@ -80,6 +80,7 @@ import { GrowthBookProvider } from "@growthbook/growthbook-react";
 import { growthbook } from "./lib/growthbook";
 import { safeGetItem } from "@/lib/storage";
 import { useT, getT } from "@/i18n/useT";
+import { useVeilorSubscription } from "@/hooks/useVeilorSubscription";
 
 function getLang(): 'ko' | 'en' {
   const stored = safeGetItem('veilor_lang');
@@ -127,13 +128,13 @@ const PageLoader = () => (
   </div>
 );
 
-const SUPERADMIN_EMAILS = ['concrecrw@gmail.com', 'elizabethcho1012@gmail.com', 'e2e.test.1777802660865@gmail.com'];
-
 const RequireAdmin = ({ children }: { children: JSX.Element }) => {
-  const { user, loading } = useAuth();
-  if (loading) return <PageLoader />;
+  const { user, loading: authLoading } = useAuth();
+  const { isAdmin, isRoleResolved } = useVeilorSubscription();
+  
+  if (authLoading || !isRoleResolved) return <PageLoader />;
   if (!user) return <Navigate to="/auth/login" replace />;
-  if (!SUPERADMIN_EMAILS.includes(user.email ?? '')) return <Navigate to="/home" replace />;
+  if (!isAdmin) return <Navigate to="/home" replace />;
   return children;
 };
 
