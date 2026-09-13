@@ -1,6 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { getCorsHeaders } from "../_shared/cors.ts";
 import { getAuthenticatedUser, createServiceClient } from "../_shared/auth.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const veilor = (supabase: ReturnType<typeof createClient>) => supabase.schema("veilor");
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -21,10 +24,10 @@ serve(async (req) => {
 
     const { variantId, tier } = await req.json();
 
-    const { data: profile } = await supabase
-      .from("profiles")
+    const { data: profile } = await veilor(supabase)
+      .from("user_profiles")
       .select("email")
-      .eq("id", user.id)
+      .eq("user_id", user.id)
       .single();
 
     const origin = req.headers.get("origin") ?? "";
