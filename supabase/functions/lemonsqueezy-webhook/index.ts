@@ -96,6 +96,12 @@ serve(async (req) => {
             })
             .eq("user_id", userId);
 
+          // Update user_roles (single source of truth for paywall)
+          await veilor(supabase).from("user_roles").upsert({
+            user_id: userId,
+            role: tier === "premium" ? "premium" : tier === "pro" ? "pro" : "basic",
+          }, { onConflict: "user_id" });
+
           log("info", "Subscription activated via order", { userId, tier });
         }
         break;
@@ -124,6 +130,12 @@ serve(async (req) => {
               subscription_expires_at: expiresAt,
             })
             .eq("user_id", userId);
+
+          // Update user_roles (single source of truth for paywall)
+          await veilor(supabase).from("user_roles").upsert({
+            user_id: userId,
+            role: tier === "premium" ? "premium" : tier === "pro" ? "pro" : "basic",
+          }, { onConflict: "user_id" });
 
           log("info", "Subscription created", { userId, tier });
         }
@@ -164,6 +176,12 @@ serve(async (req) => {
             .from("user_profiles")
             .update({ subscription_tier: "free", subscription_expires_at: null })
             .eq("user_id", sub.user_id);
+
+          // Update user_roles to free on cancellation
+          await veilor(supabase).from("user_roles").upsert({
+            user_id: sub.user_id,
+            role: "free",
+          }, { onConflict: "user_id" });
         }
 
         log("info", "Subscription canceled", { lsSubId });
