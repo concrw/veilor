@@ -1,16 +1,25 @@
 import { Page } from '@playwright/test';
 
+// E2E test credentials must be provided via environment variables
+function requireEnv(key: string): string {
+  const value = process.env[key];
+  if (!value) {
+    throw new Error(`Missing required environment variable: ${key}. Set it in .env or CI secrets.`);
+  }
+  return value;
+}
+
 // 테스트 전용 계정 (Supabase에 미리 생성된 시드 유저)
 export const TEST_USERS = {
   // 온보딩 미완료 유저 — 항상 /onboarding/welcome 에서 시작
   fresh: {
-    email: process.env.E2E_USER_FRESH_EMAIL ?? 'e2e.fresh@veilor.test',
-    password: process.env.E2E_USER_FRESH_PW ?? 'Veilor2026!',
+    email: requireEnv('E2E_USER_FRESH_EMAIL'),
+    password: requireEnv('E2E_USER_FRESH_PW'),
   },
   // 온보딩 완료 유저 — /home/vent 에서 시작
   done: {
-    email: process.env.E2E_USER_DONE_EMAIL ?? 'e2e.done@veilor.test',
-    password: process.env.E2E_USER_DONE_PW ?? 'Veilor2026!',
+    email: requireEnv('E2E_USER_DONE_EMAIL'),
+    password: requireEnv('E2E_USER_DONE_PW'),
   },
 };
 
