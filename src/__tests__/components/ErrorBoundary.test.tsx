@@ -20,16 +20,20 @@ describe('ErrorBoundary', () => {
   it('renders fallback UI when child throws', () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
+    // Mock localStorage to return 'ko'
+    const localStorageGetItemSpy = vi.spyOn(Storage.prototype, 'getItem').mockReturnValue('ko');
+
     render(
       <ErrorBoundary>
         <ThrowError shouldThrow={true} />
       </ErrorBoundary>
     );
 
-    expect(screen.getByText('문제가 발생했습니다')).toBeInTheDocument();
+    expect(screen.getByText('문제가 발생했어요')).toBeInTheDocument();
     expect(screen.getByText('다시 시도')).toBeInTheDocument();
     expect(screen.getByText('새로고침')).toBeInTheDocument();
 
+    localStorageGetItemSpy.mockRestore();
     consoleSpy.mockRestore();
   });
 
@@ -49,6 +53,7 @@ describe('ErrorBoundary', () => {
 
   it('clears error state when retry button is clicked', () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const localStorageGetItemSpy = vi.spyOn(Storage.prototype, 'getItem').mockReturnValue('ko');
 
     render(
       <ErrorBoundary>
@@ -56,15 +61,16 @@ describe('ErrorBoundary', () => {
       </ErrorBoundary>
     );
 
-    expect(screen.getByText('문제가 발생했습니다')).toBeInTheDocument();
+    expect(screen.getByText('문제가 발생했어요')).toBeInTheDocument();
 
     // Clicking retry resets hasError, but the same child will throw again
     // The important thing is that the error boundary resets its internal state
     fireEvent.click(screen.getByText('다시 시도'));
 
     // Since the child throws again on re-render, we should still see error UI
-    expect(screen.getByText('문제가 발생했습니다')).toBeInTheDocument();
+    expect(screen.getByText('문제가 발생했어요')).toBeInTheDocument();
 
+    localStorageGetItemSpy.mockRestore();
     consoleSpy.mockRestore();
   });
 });

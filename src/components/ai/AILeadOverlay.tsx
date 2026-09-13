@@ -7,6 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { invokeHeldChatStream } from '@/lib/heldChatClient';
 import { veilorDb } from '@/integrations/supabase/client';
 import { useLanguageContext } from '@/context/LanguageContext';
+import { useT } from '@/i18n/useT';
 import { AI_STRINGS } from './aiOverlayStrings';
 import { AIChatLog } from './AIChatLog';
 import { AIControlBar } from './AIControlBar';
@@ -35,7 +36,9 @@ export default function AILeadOverlay({
 }: AILeadOverlayProps) {
   const { user, primaryMask, axisScores } = useAuth();
   const { language } = useLanguageContext();
+  const t = useT();
   const ai = AI_STRINGS[language] ?? AI_STRINGS.ko;
+  const effectiveAiName = aiName ?? t.me.amberDefaultName;
 
   const [message,        setMessage]        = useState('');
   const [history,        setHistory]        = useState<ChatMessage[]>([]);
@@ -79,7 +82,7 @@ export default function AILeadOverlay({
     const userMsg: ChatMessage = { role: 'user', text: text.trim() };
     setHistory(prev => [...prev, userMsg]);
     setVoiceState('thinking');
-    setStatusAnnounce(ai.statusThinking(aiName));
+    setStatusAnnounce(ai.statusThinking(effectiveAiName));
     setErrorAnnounce('');
     abortRef.current?.abort();
     abortRef.current = new AbortController();
@@ -116,7 +119,7 @@ export default function AILeadOverlay({
       tts.speak(fallbackText);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [history, primaryMask, axisScores, currentTab, user?.id, ai, aiName]);
+  }, [history, primaryMask, axisScores, currentTab, user?.id, ai, effectiveAiName]);
 
   const stt = useSpeechRecognition({
     lang: sttLang,
@@ -208,7 +211,7 @@ export default function AILeadOverlay({
       key="ai-overlay"
       ref={overlayRef}
       role="dialog"
-      aria-label={ai.dialogLabel(aiName)}
+      aria-label={ai.dialogLabel(effectiveAiName)}
       aria-modal="true"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
@@ -225,7 +228,7 @@ export default function AILeadOverlay({
       <span id="voice-status" role="status" aria-live="polite" aria-atomic="true" className="sr-only">{statusAnnounce}</span>
       <div id="voice-error" role="alert" aria-live="assertive" aria-atomic="true" className="sr-only">{errorAnnounce}</div>
       <div id="voice-new-message" aria-live="polite" aria-relevant="additions text" aria-atomic="true" className="sr-only">
-        {latestAiMessage ? `${aiName}: ${latestAiMessage}` : ''}
+        {latestAiMessage ? `${effectiveAiName}: ${latestAiMessage}` : ''}
       </div>
 
       <AIControlBar
@@ -239,7 +242,7 @@ export default function AILeadOverlay({
         toggleMic={toggleMic}
         onClose={onClose}
         onTtsStop={() => { tts.stop(); setVoiceState('idle'); setStatusAnnounce(ai.statusReadStopped); }}
-        aiName={aiName}
+        aiName={effectiveAiName}
         s={controlBarStrings}
         micBtnRef={micBtnRef}
       />
@@ -247,7 +250,7 @@ export default function AILeadOverlay({
       <AIChatLog
         history={history}
         voiceState={voiceState}
-        aiName={aiName}
+        aiName={effectiveAiName}
         greeting={greeting}
         speakerMe={ai.speakerMe}
         chatLogLabel={ai.chatLogLabel}

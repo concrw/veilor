@@ -12,6 +12,10 @@ export default defineConfig(({ mode }) => ({
     globals: true,
     setupFiles: ['./src/__tests__/setup.ts'],
     include: ['src/**/*.{test,spec}.{ts,tsx}'],
+    env: {
+      VITE_SUPABASE_URL: 'https://test.supabase.co',
+      VITE_SUPABASE_ANON_KEY: 'test-anon-key',
+    },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'json-summary'],

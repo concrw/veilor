@@ -67,12 +67,12 @@ describe('vfileAlgorithm (V-File)', () => {
       expect(['mirror', 'victim']).toContain(primary.id); // EMP(거울) or DEP(희생자)
     });
 
-    it('low all scores maps near achiever(NRC) mask', () => {
-      // 공허자(NRC): A:15, B:15, C:15, D:30
+    it('low all scores maps near sage(AVD) mask', () => {
+      // 현자(AVD): A:15, B:15, C:30, D:25 — 낮은 점수 조합에 가장 가까움
       const scores: AxisScores = { A: 15, B: 15, C: 15, D: 30 };
       const { primary } = findMasks(scores);
-      expect(primary.id).toBe('achiever'); // 공허자(NRC)
-      expect(primary.mskCode).toBe('NRC');
+      expect(primary.id).toBe('sage'); // 현자(AVD)
+      expect(primary.mskCode).toBe('AVD');
     });
 
     it('returns primary and secondary that are different', () => {
@@ -82,11 +82,11 @@ describe('vfileAlgorithm (V-File)', () => {
     });
 
     it('isComplex is true when top 2 distances are close', () => {
-      // Explorer(PSP) scores: A:85, B:80, C:85, D:80
-      const exactExplorer: AxisScores = { A: 85, B: 80, C: 85, D: 80 };
-      const result = findMasks(exactExplorer);
-      expect(result.primary.id).toBe('explorer'); // 탐험자(PSP)
-      expect(result.primary.mskCode).toBe('PSP');
+      // Charmer(MKV) scores: A:50, B:75, C:85, D:80 — 높은 점수 조합에 가장 가까움
+      const exactCharmer: AxisScores = { A: 85, B: 80, C: 85, D: 80 };
+      const result = findMasks(exactCharmer);
+      expect(result.primary.id).toBe('charmer'); // 매혹자(MKV)
+      expect(result.primary.mskCode).toBe('MKV');
       expect(typeof result.isComplex).toBe('boolean');
     });
   });
@@ -235,13 +235,13 @@ describe('vfileAlgorithm (V-File)', () => {
   });
 
   describe('runDiagnosis with context', () => {
-    it('default context is general', () => {
+    it('default context is social', () => {
       const mockResponses: Record<string, number> = {};
       for (let i = 1; i <= 40; i++) {
         mockResponses[`Q${String(i).padStart(2, '0')}`] = 50;
       }
       const result = runDiagnosis(mockResponses);
-      expect(result.context).toBe('general');
+      expect(result.context).toBe('social');
     });
 
     it('respects provided context', () => {

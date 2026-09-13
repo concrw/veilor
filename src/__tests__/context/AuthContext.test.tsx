@@ -1,9 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '../test-utils';
 import type { OnboardingStep, AxisScores } from '@/context/AuthContext';
+import { ko } from '@/i18n/ko';
 
 vi.mock('@/context/LanguageContext', () => ({
-  useLanguageContext: () => ({ language: 'ko', setLanguage: vi.fn(), isLoading: false }),
+  useLanguageContext: () => ({ 
+    language: 'ko', 
+    setLanguage: vi.fn(), 
+    isLoading: false,
+    translations: ko
+  }),
   LanguageProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
 
@@ -52,6 +58,7 @@ vi.mock('@/integrations/supabase/client', () => ({
 
 vi.mock('@/hooks/use-toast', () => ({
   toast: vi.fn(),
+  useToast: () => ({ toast: vi.fn() }),
 }));
 
 // Import after mocks

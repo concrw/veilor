@@ -81,18 +81,18 @@ describe('vfileAlgorithm', () => {
 
     it('clamps values to 0-100 range', () => {
       // Even if raw response is out of range, it should be clamped
-      const scores = calculateAxisScores({ Q01: 150, Q11: -50 });
-      // Q01 is axis A, Q11 is axis B — both should be clamped
+      const scores = calculateAxisScores({ S01: 150, S11: -50 }, 'social');
+      // S01 is axis A, S11 is axis B — both should be clamped
       expect(scores.A).toBeGreaterThanOrEqual(0);
       expect(scores.A).toBeLessThanOrEqual(100);
       expect(scores.B).toBeGreaterThanOrEqual(0);
       expect(scores.B).toBeLessThanOrEqual(100);
     });
 
-    it('computes correct average for axis A with known responses', () => {
-      // Q01-Q10 are axis A questions (all non-reversed based on vfileQuestions)
-      const scores = calculateAxisScores({ Q01: 80, Q02: 60 });
-      // Both A-axis, non-reversed: avg of 80 and 60 = 70
+    it('computes correct average for axis A with known responses (social context)', () => {
+      // S01-S10 are axis A questions in social context
+      const scores = calculateAxisScores({ S01: 80, S02: 60 }, 'social');
+      // Both A-axis, averaging to 70
       expect(scores.A).toBe(70);
     });
   });
@@ -212,24 +212,24 @@ describe('vfileAlgorithm', () => {
   // ── runDiagnosis ──────────────────────────────────────────────────
   describe('runDiagnosis', () => {
     it('returns a complete DiagnosisResult', () => {
-      const result = runDiagnosis({ Q01: 80, Q02: 60 });
+      const result = runDiagnosis({ S01: 80, S02: 60 }, 'social');
       expect(result.scores).toBeDefined();
       expect(result.primary).toBeDefined();
       expect(result.secondary).toBeDefined();
       expect(result.insights).toHaveLength(3);
       expect(result.dataSource).toBe('priper');
-      expect(result.context).toBe('general');
+      expect(result.context).toBe('social');
       expect(result.vProfile).toBeDefined();
     });
 
     it('uses provided context', () => {
-      const result = runDiagnosis({ Q01: 50 }, 'social');
+      const result = runDiagnosis({ S01: 50 }, 'social');
       expect(result.context).toBe('social');
     });
 
-    it('defaults context to general', () => {
+    it('defaults context to social', () => {
       const result = runDiagnosis({});
-      expect(result.context).toBe('general');
+      expect(result.context).toBe('social');
     });
   });
 });
