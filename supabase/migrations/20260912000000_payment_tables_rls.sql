@@ -1,18 +1,12 @@
--- Payment & Conversion Tables RLS Hardening
--- Restrict payment_history, paywall_events, interest_registrations, lemonsqueezy_webhook_events
--- to minimum necessary client access
-<<<<<<< HEAD
--- 
--- IMPORTANT: These tables live in the VEILOR schema in the shared DEEPPLOT production DB
-=======
->>>>>>> beb270f (feat: remove SUPERADMIN_EMAILS hardcoding and use role-based auth)
+-- Payment & Conversion Tables RLS Hardening (VEILOR Schema Only)
+-- IMPORTANT: These tables live in the VEILOR schema in the shared DEEPPLOT production DB.
+-- This migration ONLY touches veilor.* tables. Legacy public.* tables are left untouched.
 
 -- ============================================================================
--- 1. payment_history: authenticated can only SELECT own rows
+-- 1. veilor.payment_history: authenticated can only SELECT own rows
 -- ============================================================================
 
--- Drop existing overly permissive policies
-<<<<<<< HEAD
+-- Drop existing overly permissive policies (if any)
 DROP POLICY IF EXISTS "Users can view their own payment history" ON veilor.payment_history;
 DROP POLICY IF EXISTS "Admin can view all payment history" ON veilor.payment_history;
 
@@ -24,19 +18,6 @@ GRANT SELECT ON veilor.payment_history TO authenticated;
 
 CREATE POLICY "payment_history_select_own"
   ON veilor.payment_history
-=======
-DROP POLICY IF EXISTS "Users can view their own payment history" ON public.payment_history;
-DROP POLICY IF EXISTS "Admin can view all payment history" ON public.payment_history;
-
--- Revoke broad table-level grants
-REVOKE ALL ON public.payment_history FROM anon, authenticated;
-
--- Authenticated users: SELECT only own rows
-GRANT SELECT ON public.payment_history TO authenticated;
-
-CREATE POLICY "payment_history_select_own"
-  ON public.payment_history
->>>>>>> beb270f (feat: remove SUPERADMIN_EMAILS hardcoding and use role-based auth)
   FOR SELECT
   TO authenticated
   USING (user_id = auth.uid());
@@ -44,7 +25,7 @@ CREATE POLICY "payment_history_select_own"
 -- Writes remain service_role/webhook only (no client INSERT/UPDATE/DELETE)
 
 -- ============================================================================
--- 2. paywall_events: authenticated can INSERT only own rows
+-- 2. veilor.paywall_events: authenticated can INSERT only own rows
 -- ============================================================================
 
 CREATE TABLE IF NOT EXISTS veilor.paywall_events (
@@ -75,7 +56,7 @@ CREATE POLICY "paywall_events_insert_own"
 -- No SELECT for clients; analytics/admin queries use service_role
 
 -- ============================================================================
--- 3. interest_registrations: authenticated can INSERT only own rows
+-- 3. veilor.interest_registrations: authenticated can INSERT only own rows
 -- ============================================================================
 
 CREATE TABLE IF NOT EXISTS veilor.interest_registrations (
@@ -106,19 +87,12 @@ CREATE POLICY "interest_registrations_insert_own"
   WITH CHECK (user_id = auth.uid() OR user_id IS NULL);
 
 -- ============================================================================
--- 4. lemonsqueezy_webhook_events: service_role only (already has policy)
+-- 4. veilor.lemonsqueezy_webhook_events: service_role only
 -- ============================================================================
 
--- Existing policy "service_role only" is correct; ensure no client grants
-<<<<<<< HEAD
+-- Ensure no client grants (service_role only)
 REVOKE ALL ON veilor.lemonsqueezy_webhook_events FROM anon, authenticated;
 
--- Policy already exists:
--- CREATE POLICY "service_role only" ON veilor.lemonsqueezy_webhook_events
-=======
-REVOKE ALL ON public.lemonsqueezy_webhook_events FROM anon, authenticated;
-
--- Policy already exists:
--- CREATE POLICY "service_role only" ON public.lemonsqueezy_webhook_events
->>>>>>> beb270f (feat: remove SUPERADMIN_EMAILS hardcoding and use role-based auth)
+-- Note: Assumes veilor.lemonsqueezy_webhook_events already has service_role-only policy.
+-- If not, create: CREATE POLICY "service_role only" ON veilor.lemonsqueezy_webhook_events
 --   FOR ALL USING (auth.role() = 'service_role');

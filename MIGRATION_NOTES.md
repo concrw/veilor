@@ -4,6 +4,8 @@
 
 These migrations operate on the **shared DEEPPLOT production database** where VEILOR tables live in the `veilor` schema, not `public`.
 
+**These migrations ONLY touch `veilor.*` tables.** Legacy `public.payment_history` and `public.lemonsqueezy_webhook_events` (if they exist unused) are left untouched for a separate DEEPPLOT-owned cleanup.
+
 **DO NOT APPLY UNTIL HUMAN APPROVES.**
 
 ## Tables Modified
