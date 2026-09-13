@@ -6,6 +6,22 @@ import { MODELS } from "../_shared/models.ts";
 
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
 
+type HeldSignal = {
+  emotion?: string;
+  type?: string;
+  [key: string]: unknown;
+};
+
+type DigSignal = {
+  domain?: string;
+  [key: string]: unknown;
+};
+
+type CodetalkSignal = {
+  keyword?: string;
+  [key: string]: unknown;
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: getCorsHeaders(req) });
@@ -100,19 +116,19 @@ serve(async (req) => {
       .eq("user_id", authUser.id)
       .maybeSingle();
 
-    const recentVent = ((pp?.held_signals ?? []) as any[])
+    const recentVent = ((pp?.held_signals ?? []) as HeldSignal[])
       .filter((s) => s.emotion && s.type !== "summary")
       .slice(-5)
       .map((s) => `감정: ${s.emotion}`)
       .join(", ");
 
-    const recentDomains = ((pp?.dig_signals ?? []) as any[])
+    const recentDomains = ((pp?.dig_signals ?? []) as DigSignal[])
       .slice(-5)
       .map((s) => s.domain)
       .filter(Boolean)
       .join(", ");
 
-    const recentKeywords = ((pp?.codetalk_signals ?? []) as any[])
+    const recentKeywords = ((pp?.codetalk_signals ?? []) as CodetalkSignal[])
       .slice(-10)
       .map((s) => s.keyword)
       .filter(Boolean)
@@ -175,9 +191,9 @@ serve(async (req) => {
       headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
     });
 
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error("codetalk-ai-insights error:", e);
-    return new Response(JSON.stringify({ error: e?.message || String(e) }), {
+    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : String(e) }), {
       status: e instanceof AuthError ? e.status : 500,
       headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
     });
