@@ -42,7 +42,7 @@ export function sanitizeUserInput(input: string, maxLength = 2000): string {
     sanitized = sanitized.replace(pattern, "[blocked]");
   }
   // leet speak 우회도 차단: 정규화 버전에서 매치되면 전체 경고
-  let normalizedCheck = normalized;
+  const normalizedCheck = normalized;
   for (const pattern of injectionPatterns) {
     if (pattern.test(normalizedCheck)) {
       sanitized = "[blocked] " + sanitized.replace(/^.*$/m, '').trim();
