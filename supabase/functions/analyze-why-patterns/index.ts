@@ -46,6 +46,17 @@ interface AnalysisResult {
   };
 }
 
+type JobGroupAnalysis = {
+  keywords: string[];
+  patterns: { keyword: string; frequency: number; jobs: string[] }[];
+};
+
+type RootCauseAnalysis = {
+  happy_root: string;
+  pain_root: string;
+  consistency_score: number;
+};
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -314,9 +325,9 @@ async function analyzeRootCauses(
  * Generate Prime Perspective using Claude
  */
 async function generatePrimePerspective(
-  happyAnalysis: any,
-  painAnalysis: any,
-  rootCauses: any,
+  happyAnalysis: JobGroupAnalysis,
+  painAnalysis: JobGroupAnalysis,
+  rootCauses: RootCauseAnalysis,
   userId: string
 ): Promise<string> {
   const anthropicApiKey = Deno.env.get("ANTHROPIC_API_KEY");
@@ -390,9 +401,9 @@ Prime Perspective는 다음 형식으로 작성해주세요:
  * Fallback Prime Perspective generation without AI
  */
 function generateFallbackPrimePerspective(
-  happyAnalysis: any,
-  painAnalysis: any,
-  rootCauses: any
+  happyAnalysis: JobGroupAnalysis,
+  painAnalysis: JobGroupAnalysis,
+  rootCauses: RootCauseAnalysis
 ): string {
   const topHappyKeywords = happyAnalysis.keywords.slice(0, 3);
   const topPainKeywords = painAnalysis.keywords.slice(0, 2);

@@ -124,7 +124,7 @@ describe('HomeLayout — dynamic bottom nav (#67)', () => {
     authMock.personaContextsCompleted = ['general', 'social'];
     renderWithRouter();
 
-    const badges = screen.queryAllByLabelText('새 기능 알림');
+    const badges = screen.queryAllByLabelText('NEW');
     expect(badges.length).toBeGreaterThan(0);
   });
 
@@ -133,12 +133,12 @@ describe('HomeLayout — dynamic bottom nav (#67)', () => {
     authMock.personaContextsCompleted = ['general'];
     renderWithRouter();
 
-    expect(screen.queryByLabelText('새 기능 알림')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('NEW')).not.toBeInTheDocument();
   });
 
   it('renders screen-reader AI button', () => {
     renderWithRouter();
-    expect(screen.getByText('AI 대화 모드 열기 (Ctrl+Shift+A)')).toBeInTheDocument();
+    expect(screen.getByText('AI 모드 열기')).toBeInTheDocument();
   });
 
   it('renders nav with correct aria-label', () => {

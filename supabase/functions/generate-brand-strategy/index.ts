@@ -8,6 +8,11 @@ import { checkAiAccess, aiGateResponse, logAiUsage } from "../_shared/aiGate.ts"
 
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
 
+type JobInfo = {
+  name: string;
+  reason?: string;
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: getCorsHeaders(req) });
@@ -56,8 +61,8 @@ Ikigai 분석 데이터:
     // Build context from Why Analysis
     const whyContext = whyAnalysis ? `
 Why 분석 데이터:
-- 행복한 직업들: ${whyAnalysis.happy_jobs?.map((j: any) => j.name + (j.reason ? ` (이유: ${j.reason})` : "")).join(", ") || "없음"}
-- 고통스러운 직업들: ${whyAnalysis.pain_jobs?.map((j: any) => j.name + (j.reason ? ` (이유: ${j.reason})` : "")).join(", ") || "없음"}
+- 행복한 직업들: ${whyAnalysis.happy_jobs?.map((j: JobInfo) => j.name + (j.reason ? ` (이유: ${j.reason})` : "")).join(", ") || "없음"}
+- 고통스러운 직업들: ${whyAnalysis.pain_jobs?.map((j: JobInfo) => j.name + (j.reason ? ` (이유: ${j.reason})` : "")).join(", ") || "없음"}
 - Prime Perspective: ${whyAnalysis.prime_perspective || "미설정"}
 ` : "Why 분석 데이터 없음";
 
@@ -213,9 +218,9 @@ ${whyContext}
     return new Response(JSON.stringify(safe), {
       headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("generate-brand-strategy error", error);
-    return new Response(JSON.stringify({ error: error?.message || "Unknown error" }), {
+    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }), {
       status: error instanceof AuthError ? error.status : 500,
       headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
     });

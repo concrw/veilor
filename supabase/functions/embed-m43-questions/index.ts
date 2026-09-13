@@ -120,9 +120,9 @@ serve(async (req) => {
       { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } },
     );
 
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error("embed-m43-questions error:", e);
-    return new Response(JSON.stringify({ error: e?.message || String(e) }), {
+    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : String(e) }), {
       status: 500,
       headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
     });

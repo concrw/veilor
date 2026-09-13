@@ -2705,7 +2705,7 @@ export const en: LocaleResource = {
     btnReflection: 'Go straight to reflection',
     btnSkip: 'Just close',
     breathingCountFmt: (n: number) => `Breath ${n}/3`,
-    breathDuration: { in: '4s', hold: '2s', out: '4s' },
+    breathDuration: { 'in': '4s', hold: '2s', out: '4s' },
     reflectionTitle: "Today's one line",
     placeholder: 'Write freely...',
     btnSave: 'Save and finish',

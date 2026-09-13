@@ -15,7 +15,10 @@ import { createClient } from '@supabase/supabase-js';
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL ?? '';
 const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY ?? '';
-const hasEnv = SUPABASE_URL.length > 0 && SUPABASE_ANON_KEY.length > 0;
+const hasEnv = SUPABASE_URL.length > 0 
+  && SUPABASE_ANON_KEY.length > 0 
+  && !SUPABASE_URL.includes('test.')
+  && SUPABASE_ANON_KEY !== 'test-anon-key';
 
 const describeIfEnv = hasEnv ? describe : describe.skip;
 

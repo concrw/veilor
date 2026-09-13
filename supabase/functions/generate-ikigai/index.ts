@@ -7,9 +7,21 @@ import { checkAiAccess, aiGateResponse, logAiUsage } from "../_shared/aiGate.ts"
 
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
 
-function toTokens(input: any): string[] {
+type JobEntry = {
+  category?: string;
+  reason?: string;
+  job_name: string;
+  has_experience?: boolean;
+  experience_note?: string;
+};
+
+type MatchEntry = {
+  match_reasons?: string[];
+};
+
+function toTokens(input: unknown): string[] {
   const arr: string[] = [];
-  const walk = (v: any) => {
+  const walk = (v: unknown) => {
     if (v == null) return;
     if (Array.isArray(v)) v.forEach(walk);
     else if (typeof v === "object") Object.values(v).forEach(walk);
@@ -78,14 +90,14 @@ serve(async (req) => {
 
     // 2) Extract four elements
     const loveFromJobs = (jobs || [])
-      .filter((j: any) => j.category === "happy" || /좋|사랑|행복|흥미|재미/.test(j.reason || ""))
-      .map((j: any) => j.job_name);
+      .filter((j: JobEntry) => j.category === "happy" || /좋|사랑|행복|흥미|재미/.test(j.reason || ""))
+      .map((j: JobEntry) => j.job_name);
     const loveFromBrand = toTokens(brand?.brand_direction?.core_message || brand?.selected_brand_name || brand?.brand_names || []);
     const LOVE = uniqueList([...loveFromJobs, ...loveFromBrand]).slice(0, 20);
 
     const goodFromJobs = (jobs || [])
-      .filter((j: any) => j.has_experience || (j.experience_note && j.experience_note.length > 0))
-      .flatMap((j: any) => [j.job_name, j.experience_note])
+      .filter((j: JobEntry) => j.has_experience || (j.experience_note && j.experience_note.length > 0))
+      .flatMap((j: JobEntry) => [j.job_name, j.experience_note])
       .filter(Boolean) as string[];
     const goodFromBrand = toTokens(brand?.brand_direction?.positioning || "");
     const GOOD_AT = uniqueList([...goodFromJobs, ...goodFromBrand]).slice(0, 20);
@@ -96,7 +108,7 @@ serve(async (req) => {
     ].map(String));
     const needsFromMatches = uniqueList(
       (matches || [])
-        .flatMap((m: any) => m.match_reasons || [])
+        .flatMap((m: MatchEntry) => m.match_reasons || [])
         .map(String)
         .flatMap((s: string) => toTokens(s))
     );
@@ -104,8 +116,8 @@ serve(async (req) => {
 
     const paidFromJobs = uniqueList(
       (jobs || [])
-        .filter((j: any) => /프리랜스|컨설팅|강의|수익|유료|판매|클라이언트|프로젝트/.test((j.reason || "") + " " + (j.experience_note || "")))
-        .map((j: any) => j.job_name)
+        .filter((j: JobEntry) => /프리랜스|컨설팅|강의|수익|유료|판매|클라이언트|프로젝트/.test((j.reason || "") + " " + (j.experience_note || "")))
+        .map((j: JobEntry) => j.job_name)
     );
     const paidFromBrand = uniqueList([
       ...(Array.isArray(brand?.content_strategy?.formats) ? brand!.content_strategy.formats : []),
@@ -192,9 +204,9 @@ serve(async (req) => {
     return new Response(JSON.stringify({ assessment: inserted }), {
       headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
     });
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error("generate-ikigai error", e);
-    return new Response(JSON.stringify({ error: e?.message || String(e) }), {
+    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : String(e) }), {
       status: e instanceof AuthError ? e.status : 500,
       headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
     });

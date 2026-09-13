@@ -2708,7 +2708,7 @@ export const ja: LocaleResource = {
     btnReflection: 'すぐ記録へ',
     btnSkip: 'そのまま終わる',
     breathingCountFmt: (n: number) => `呼吸 ${n}/3`,
-    breathDuration: { in: '4秒', hold: '2秒', out: '4秒' },
+    breathDuration: { 'in': '4秒', hold: '2秒', out: '4秒' },
     reflectionTitle: '今日の一言',
     placeholder: '自由に書いてみましょう...',
     btnSave: '保存して締めくくる',

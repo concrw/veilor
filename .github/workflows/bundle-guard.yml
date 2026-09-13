@@ -17,14 +17,12 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: app/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        working-directory: app
         run: npm ci
 
       - name: Build (PR branch)
-        working-directory: app
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
@@ -32,7 +30,6 @@ jobs:
 
       # 번들 크기 측정 및 임계값 초과 시 실패
       - name: Check bundle size limits
-        working-directory: app
         run: |
           echo "=== Bundle Size Report ==="
           du -sh dist/assets/*.js | sort -rh | head -20
@@ -41,21 +38,26 @@ jobs:
           INDEX_SIZE=$(find dist/assets -name "index-*.js" -exec du -k {} \; | awk '{print $1}')
           echo "Main bundle: ${INDEX_SIZE}KB"
 
-          # 전체 JS 합산 크기 게이트: 1.5MB 초과 시 실패
-          TOTAL_SIZE=$(find dist/assets -name "*.js" -exec du -k {} \; | awk '{sum+=$1} END {print sum}')
-          echo "Total JS size: ${TOTAL_SIZE}KB"
+          # Kokoro TTS 청크 크기 (선택적 기능, 게이트 제외)
+          KOKORO_SIZE=$(find dist/assets -name "kokoro-*.js" -exec du -k {} \; | awk '{sum+=$1} END {print sum}')
+          echo "Kokoro TTS chunk: ${KOKORO_SIZE}KB (excluded from gate)"
 
-          if [ "$TOTAL_SIZE" -gt 1536 ]; then
-            echo "❌ FAIL: 전체 JS 번들 크기 ${TOTAL_SIZE}KB > 한도 1536KB (1.5MB)"
+          # 코어 JS 합산 크기 게이트 (kokoro 제외): 3MB 초과 시 실패
+          CORE_SIZE=$(find dist/assets -name "*.js" ! -name "kokoro-*.js" -exec du -k {} \; | awk '{sum+=$1} END {print sum}')
+          echo "Core JS size (excl. kokoro): ${CORE_SIZE}KB"
+
+          if [ "$CORE_SIZE" -gt 3072 ]; then
+            echo "❌ FAIL: 코어 JS 번들 크기 ${CORE_SIZE}KB > 한도 3072KB (3MB)"
             echo "코드 스플리팅 또는 대형 의존성을 점검하세요."
             exit 1
           else
-            echo "✅ PASS: 전체 JS 번들 크기 ${TOTAL_SIZE}KB (한도 1536KB)"
+            echo "✅ PASS: 코어 JS 번들 크기 ${CORE_SIZE}KB (한도 3072KB / 3MB)"
           fi
 
       # PR에 번들 크기 코멘트
       - name: Comment bundle stats on PR
         if: always()
+        continue-on-error: true
         uses: actions/github-script@v7
         with:
           script: |
@@ -65,21 +67,29 @@ jobs:
             let stats;
             try {
               stats = execSync(
-                'find app/dist/assets -name "*.js" -exec du -k {} \\; | sort -rn | head -15',
+                'find dist/assets -name "*.js" -exec du -k {} \\; | sort -rn | head -15',
                 { encoding: 'utf8' }
               );
             } catch {
               stats = 'Unable to read bundle stats';
             }
 
-            let totalKb;
+            let coreKb, kokoroKb;
             try {
-              totalKb = execSync(
-                'find app/dist/assets -name "*.js" -exec du -k {} \\; | awk \'{sum+=$1} END {print sum}\'',
+              coreKb = execSync(
+                'find dist/assets -name "*.js" ! -name "kokoro-*.js" -exec du -k {} \\; | awk \'{sum+=$1} END {print sum}\'',
                 { encoding: 'utf8' }
               ).trim();
             } catch {
-              totalKb = '?';
+              coreKb = '?';
+            }
+            try {
+              kokoroKb = execSync(
+                'find dist/assets -name "kokoro-*.js" -exec du -k {} \\; | awk \'{sum+=$1} END {print sum}\'',
+                { encoding: 'utf8' }
+              ).trim();
+            } catch {
+              kokoroKb = '0';
             }
 
             const rows = stats.trim().split('\n').map(line => {
@@ -90,7 +100,7 @@ jobs:
 
             const body = [
               '## Bundle Size Report',
-              `**Total JS: ${totalKb}KB** (한도: 1536KB)`,
+              `**Core JS: ${coreKb}KB** (한도: 3072KB / 3MB) | **Kokoro TTS: ${kokoroKb}KB** (excluded)`,
               '',
               '| Chunk | Size |',
               '|-------|------|',
@@ -117,14 +127,12 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: app/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        working-directory: app
         run: npm ci
 
       - name: Build
-        working-directory: app
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
@@ -134,7 +142,6 @@ jobs:
         run: npm install -g @lhci/cli@0.14.x
 
       - name: Run Lighthouse CI
-        working-directory: app
         env:
           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |

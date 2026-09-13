@@ -1105,7 +1105,6 @@ export interface LocaleResource {
       cancel: string;
     };
   };
-}
 
   // ─── homeLayout ────────────────────────────────────────────
   homeLayout: {
@@ -1786,7 +1785,7 @@ export interface LocaleResource {
     btnReflection: string;
     btnSkip: string;
     breathingCountFmt: (n: number) => string;
-    breathDuration: { in: string; hold: string; out: string };
+    breathDuration: { 'in': string; hold: string; out: string };
     reflectionTitle: string;
     placeholder: string;
     btnSave: string;

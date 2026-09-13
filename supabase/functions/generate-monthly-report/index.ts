@@ -10,6 +10,22 @@ interface MonthData {
   top_emotions: string[];
 }
 
+type CodetalkDataRow = {
+  entry_date: string;
+};
+
+type SignalDataRow = {
+  keyword?: string;
+  emotion?: string;
+};
+
+type PsychSnapshotRow = {
+  snapshot_date: string;
+  attachment_security_score?: number;
+  communication_style_score?: number;
+  growth_areas?: string;
+};
+
 serve(async (req) => {
   const corsHeaders = getCorsHeaders(req);
   if (req.method === "OPTIONS") {
@@ -62,7 +78,7 @@ serve(async (req) => {
         .gte("created_at", start)
         .lt("created_at", end);
 
-      const uniqueDays = new Set((codetalkData || []).map((r: any) => r.entry_date)).size;
+      const uniqueDays = new Set((codetalkData || []).map((r: CodetalkDataRow) => r.entry_date)).size;
 
       // 4) Top keywords from user_signals
       const { data: signalData } = await supabase
@@ -130,7 +146,7 @@ serve(async (req) => {
       .order("snapshot_date", { ascending: true });
 
     // Group snapshots by month, take the latest snapshot per month
-    const psychByMonth: Record<string, any> = {};
+    const psychByMonth: Record<string, PsychSnapshotRow> = {};
     for (const snap of (psychSnapshots || [])) {
       const d = new Date(snap.snapshot_date);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
@@ -140,7 +156,7 @@ serve(async (req) => {
     const psychTrend = Object.entries(psychByMonth)
       .sort(([a], [b]) => a.localeCompare(b))
       .slice(-3)
-      .map(([key, snap]: [string, any]) => ({
+      .map(([key, snap]: [string, PsychSnapshotRow]) => ({
         month: `${parseInt(key.split('-')[1])}월`,
         attachment: Math.round((snap.attachment_security_score ?? 0) * 100),
         communication: Math.round((snap.communication_style_score ?? 0) * 100),

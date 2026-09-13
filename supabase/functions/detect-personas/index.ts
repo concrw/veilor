@@ -1,4 +1,3 @@
-// deno-lint-ignore-file no-explicit-any
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { getCorsHeaders } from "../_shared/cors.ts";
 import { getAuthenticatedUser , AuthError } from "../_shared/auth.ts";
@@ -19,6 +18,28 @@ interface PersonaTheme {
   persona_name: string;
   keywords: string[];
   archetype: string;
+}
+
+interface PersonaCluster {
+  theme: string;
+  persona_name: string;
+  keywords?: string[];
+  archetype: string;
+  job_indices?: number[];
+  strength_score?: number;
+}
+
+interface PersonaResult {
+  cluster_id: number;
+  jobs: JobEntry[];
+  theme: string;
+  persona_name: string;
+  keywords: string[];
+  archetype: string;
+  color_hex: string;
+  icon_name: string;
+  strength_score: number;
+  rank_order: number;
 }
 
 // Predefined archetype colors and icons
@@ -156,7 +177,7 @@ ${jobDescriptions}
     console.log(`Generated ${clusters.length} persona clusters`);
 
     // 3. Build personas from clusters
-    const personas = clusters.map((cluster: any, index: number) => {
+    const personas = clusters.map((cluster: PersonaCluster, index: number) => {
       const archetypeConfig =
         ARCHETYPE_CONFIG[cluster.archetype] || ARCHETYPE_CONFIG.Explorer;
 
@@ -184,7 +205,7 @@ ${jobDescriptions}
       await supabaseClient
         .from("persona_profiles")
         .insert(
-          personas.map((p: any) => ({
+          personas.map((p: PersonaResult) => ({
             user_id: targetUserId,
             persona_name: p.persona_name,
             persona_archetype: p.archetype,
@@ -206,7 +227,7 @@ ${jobDescriptions}
 
     // 5. Create persona-job mappings
     // cluster_confidence: AI가 반환한 strength_score(0~100)를 0~1로 정규화
-    const mappings = personas.flatMap((persona: any, index: number) =>
+    const mappings = personas.flatMap((persona: PersonaResult, index: number) =>
       persona.jobs.map((job: JobEntry) => ({
         persona_id: insertedPersonas![index].id,
         job_entry_id: job.id,
@@ -226,7 +247,7 @@ ${jobDescriptions}
     }
 
     // 6. Insert keywords
-    const keywordInserts = personas.flatMap((persona: any, index: number) =>
+    const keywordInserts = personas.flatMap((persona: PersonaResult, index: number) =>
       persona.keywords.map((keyword: string) => ({
         persona_id: insertedPersonas![index].id,
         keyword,
