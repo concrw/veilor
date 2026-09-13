@@ -3,7 +3,7 @@
  * 테스트 1: 설정 시트 언어 3종 표시 확인
  * 테스트 2: 첫 접속 로딩 시간 측정
  */
-import { test, expect, chromium } from '@playwright/test';
+import { test, expect, chromium, Page } from '@playwright/test';
 
 const BASE = 'https://veilor.ai';
 const DONE_EMAIL = 'e2e.done@veilor.test';
@@ -11,7 +11,7 @@ const DONE_PW = 'Veilor2026!';
 const SCREENSHOT_DIR = '/Users/brandactivist/Desktop/VEILOR/screenshots';
 
 // 로그인 헬퍼 (veilor.ai 전용)
-async function loginLive(page: any) {
+async function loginLive(page: Page) {
   await page.goto(`${BASE}/auth/login`, { waitUntil: 'networkidle', timeout: 30_000 });
 
   const raced = await Promise.race([

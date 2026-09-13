@@ -2,14 +2,35 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { getCorsHeaders } from "../_shared/cors.ts";
 import { getAuthenticatedUser, createServiceClient } from "../_shared/auth.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+type SupabaseClient = ReturnType<typeof createClient>;
+
+type JobEntryRow = {
+  job_name: string;
+  category: string;
+  reason: string | null;
+};
+
+type ProfileRow = {
+  id: string;
+};
+
+type BrandStrategyRow = {
+  user_id: string;
+};
+
+type IkigaiDesignRow = {
+  user_id: string;
+};
 
 // ============================================================================
 // UTILITY FUNCTIONS
 // ============================================================================
 
-function extractTokens(obj: any): Set<string> {
+function extractTokens(obj: unknown): Set<string> {
   const tokens = new Set<string>();
-  const walk = (val: any) => {
+  const walk = (val: unknown) => {
     if (val == null) return;
     if (Array.isArray(val)) val.forEach(walk);
     else if (typeof val === "object") Object.values(val).forEach(walk);
@@ -82,7 +103,7 @@ interface UserProfile {
 }
 
 async function getUserProfile(
-  supabase: any,
+  supabase: SupabaseClient,
   userId: string
 ): Promise<UserProfile | null> {
   const profile: UserProfile = {
@@ -138,8 +159,8 @@ async function getUserProfile(
       .eq("session_id", session.id);
 
     if (jobs && jobs.length > 0) {
-      const happyJobs = jobs.filter((j: any) => j.category === "happy").map((j: any) => j.job_name);
-      const painJobs = jobs.filter((j: any) => j.category === "pain").map((j: any) => j.job_name);
+      const happyJobs = jobs.filter((j: JobEntryRow) => j.category === "happy").map((j: JobEntryRow) => j.job_name);
+      const painJobs = jobs.filter((j: JobEntryRow) => j.category === "pain").map((j: JobEntryRow) => j.job_name);
 
       profile.whyAnalysis = {
         happyJobs,
@@ -149,7 +170,7 @@ async function getUserProfile(
       // Add to tokens
       extractTokens(happyJobs).forEach((t) => profile.tokens.add(t));
       extractTokens(painJobs).forEach((t) => profile.tokens.add(t));
-      jobs.forEach((j: any) => {
+      jobs.forEach((j: JobEntryRow) => {
         if (j.reason) extractTokens(j.reason).forEach((t) => profile.tokens.add(t));
       });
     }
@@ -407,7 +428,7 @@ serve(async (req) => {
       .eq("has_completed_analysis", true)
       .neq("id", user.id);
 
-    const candidateIds = completedUsers?.map((u: any) => u.id) || [];
+    const candidateIds = completedUsers?.map((u: ProfileRow) => u.id) || [];
 
     // Also include users with brand strategies or ikigai designs
     const { data: strategyUsers } = await supabaseAdmin
@@ -422,8 +443,8 @@ serve(async (req) => {
 
     const allCandidateIds = new Set([
       ...candidateIds,
-      ...(strategyUsers?.map((s: any) => s.user_id) || []),
-      ...(ikigaiUsers?.map((i: any) => i.user_id) || []),
+      ...(strategyUsers?.map((s: BrandStrategyRow) => s.user_id) || []),
+      ...(ikigaiUsers?.map((i: IkigaiDesignRow) => i.user_id) || []),
     ]);
 
     // Calculate matches for each candidate
@@ -470,9 +491,9 @@ serve(async (req) => {
       JSON.stringify({ matches: allMatches }),
       { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
     );
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error("calculate-compatibility error", e);
-    return new Response(JSON.stringify({ error: e?.message || String(e) }), {
+    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : String(e) }), {
       status: 500,
       headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
     });
