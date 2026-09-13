@@ -2723,7 +2723,7 @@ export const ko: LocaleResource = {
     btnReflection: '바로 기록으로',
     btnSkip: '그냥 끝내기',
     breathingCountFmt: (n: number) => `호흡 ${n}/3`,
-    breathDuration: { in: '4초', hold: '2초', out: '4초' },
+    breathDuration: { 'in': '4초', hold: '2초', out: '4초' },
     reflectionTitle: '오늘의 한 줄',
     placeholder: '자유롭게 적어보세요...',
     btnSave: '저장하고 마무리',
